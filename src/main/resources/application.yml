@@ -55,6 +55,13 @@ app:
     base-url: ${GROBID_BASE_URL:http://localhost:8070}
     timeout: ${GROBID_TIMEOUT:60000}
 
+  mail:
+    from: ${MAIL_FROM:noreply@paperreader.local}
+
+  github:
+    client-id: ${GITHUB_CLIENT_ID:}
+    client-secret: ${GITHUB_CLIENT_SECRET:}
+
   ai:
     openai:
       api-key: ${OPENAI_API_KEY:}

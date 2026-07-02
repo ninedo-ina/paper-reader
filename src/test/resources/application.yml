@@ -31,6 +31,13 @@ app:
   dufs:
     url: http://localhost:8400
 
+  mail:
+    from: test@test.local
+
+  github:
+    client-id: test
+    client-secret: test
+
   grobid:
     base-url: http://localhost:8070
     timeout: 5000

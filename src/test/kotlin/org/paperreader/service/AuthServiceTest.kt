@@ -1,21 +1,22 @@
 package org.paperreader.service
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
-import io.mockk.verify
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
-import org.paperreader.dto.LoginRequest
-import org.paperreader.dto.RegisterRequest
+import org.paperreader.dto.*
 import org.paperreader.model.User
 import org.paperreader.repository.UserRepository
 import org.paperreader.security.JwtUtil
+import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.data.redis.core.ValueOperations
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.web.client.RestTemplate
 import java.util.*
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 
 @ExtendWith(MockKExtension::class)
 class AuthServiceTest {
@@ -29,7 +30,22 @@ class AuthServiceTest {
     @MockK
     private lateinit var jwtUtil: JwtUtil
 
-    private fun createService() = AuthService(userRepository, passwordEncoder, jwtUtil)
+    @MockK
+    private lateinit var redisTemplate: RedisTemplate<String, String>
+
+    @MockK
+    private lateinit var valueOps: ValueOperations<String, String>
+
+    @MockK
+    private lateinit var restTemplate: RestTemplate
+
+    private val objectMapper = ObjectMapper()
+
+    private fun createService() = AuthService(
+        userRepository, passwordEncoder, jwtUtil,
+        redisTemplate, restTemplate, objectMapper,
+        "test-client-id", "test-client-secret", "test@test.local",
+    )
 
     @Test
     fun `register should create user and return tokens`() {
@@ -91,6 +107,45 @@ class AuthServiceTest {
 
         assertThrows<IllegalArgumentException> {
             createService().login(LoginRequest(user.email, "wrong"))
+        }
+    }
+
+    @Test
+    fun `login should reject user without password (oauth user)`() {
+        val user = User(id = 1, email = "gh@test.com", passwordHash = null, authProvider = "github")
+        every { userRepository.findByEmail(user.email) } returns Optional.of(user)
+
+        assertThrows<IllegalArgumentException> {
+            createService().login(LoginRequest(user.email, "any"))
+        }
+    }
+
+    @Test
+    fun `email login should create user when not exists`() {
+        val request = EmailLoginRequest("new@example.com", "123456")
+        val mockUser = User(id = 2, email = request.email, authProvider = "email")
+
+        every { redisTemplate.opsForValue() } returns valueOps
+        every { valueOps.get("pr:email_code:new@example.com") } returns "123456"
+        every { valueOps.getAndDelete(any()) } returns "123456"
+        every { redisTemplate.delete(any<String>()) } returns true
+        every { userRepository.findByEmail(request.email) } returns Optional.empty()
+        every { userRepository.save(any()) } returns mockUser
+        every { jwtUtil.generateAccessToken(2, request.email) } returns "access-token"
+        every { jwtUtil.generateRefreshToken(2, request.email) } returns "refresh-token"
+
+        val result = createService().emailCodeLogin(request)
+
+        assertEquals("access-token", result.accessToken)
+    }
+
+    @Test
+    fun `email login should reject invalid code`() {
+        every { redisTemplate.opsForValue() } returns valueOps
+        every { valueOps.get("pr:email_code:test@example.com") } returns "999999"
+
+        assertThrows<IllegalArgumentException> {
+            createService().emailCodeLogin(EmailLoginRequest("test@example.com", "123456"))
         }
     }
 }

@@ -17,6 +17,19 @@ data class RegisterRequest(
     val displayName: String? = null,
 )
 
+data class SendCodeRequest(
+    val email: String,
+)
+
+data class EmailLoginRequest(
+    val email: String,
+    val code: String,
+)
+
+data class GitHubAuthRequest(
+    val code: String,
+)
+
 data class TokenResponse(
     val accessToken: String,
     val refreshToken: String,

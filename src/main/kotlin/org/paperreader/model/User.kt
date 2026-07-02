@@ -13,20 +13,27 @@ data class User(
     @Column(unique = true, nullable = false, length = 255)
     val email: String,
 
-    @Column(nullable = false)
-    val passwordHash: String,
+    @Column(name = "password_hash")
+    val passwordHash: String? = null,
 
-    @Column(length = 100)
+    @Column(name = "github_id", unique = true)
+    val githubId: Long? = null,
+
+    @Column(name = "auth_provider", nullable = false, length = 20)
+    val authProvider: String = "local",
+
+    @Column(name = "display_name", length = 100)
     val displayName: String? = null,
 
-    @Column(length = 500)
+    @Column(name = "avatar_url", length = 500)
     val avatarUrl: String? = null,
 
-    @Column(nullable = false)
+    @Column(name = "created_at", nullable = false)
     val createdAt: Instant = Instant.now(),
 
+    @Column(name = "updated_at")
     val updatedAt: Instant = Instant.now(),
 
-    @Column(nullable = false)
+    @Column(name = "is_active", nullable = false)
     val isActive: Boolean = true,
 )
