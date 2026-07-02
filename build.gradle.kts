@@ -12,7 +12,7 @@ version = "0.1.0"
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(17)
     }
 }
 
@@ -46,8 +46,8 @@ dependencies {
     // MinIO
     implementation("io.minio:minio:8.5.13")
 
-    // AI SDK
-    implementation("io.github.pig-mesh.ai:spring-ai-openai-spring-boot-starter:1.6.0")
+    // HTTP Client (for AI API calls)
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
 
     // Testing
     testImplementation("org.springframework.boot:spring-boot-starter-test")
