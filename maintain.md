@@ -11,7 +11,8 @@
   - AI Chat（多模型支持：openai/claude/deepseek/qwen）
   - UserSettings 用户设置
 - GROBID 集成：通过 REST API 对接独立 Docker 服务实例
-- 文件存储：支持 MinIO / 本地文件系统双后端
+- 文件存储：支持 Dufs（轻量 HTTP 文件服务器）/ 本地文件系统双后端
+- Docker Compose：PostgreSQL + Redis + Dufs + GROBID 四服务
 - 异常处理：4位错误码体系（1001-1004）+ GlobalExceptionHandler
 - 数据库：PostgreSQL + Flyway 迁移，表前缀 pr_
 - 安全：Spring Security + JWT + BCrypt

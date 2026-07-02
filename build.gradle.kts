@@ -43,10 +43,7 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
 
-    // MinIO
-    implementation("io.minio:minio:8.5.13")
-
-    // HTTP Client (for AI API calls)
+    // HTTP Client (for AI API + Dufs storage)
     implementation("org.springframework.boot:spring-boot-starter-webflux")
 
     // Testing

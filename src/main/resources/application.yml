@@ -45,14 +45,11 @@ app:
     refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
 
   storage:
-    type: ${STORAGE_TYPE:minio}
+    type: ${STORAGE_TYPE:dufs}
     local-path: ${STORAGE_LOCAL_PATH:./uploads}
 
-  minio:
-    endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
-    access-key: ${MINIO_ACCESS_KEY:minioadmin}
-    secret-key: ${MINIO_SECRET_KEY:minioadmin}
-    bucket: ${MINIO_BUCKET:paper-reader}
+  dufs:
+    url: ${DUFS_URL:http://localhost:8400}
 
   grobid:
     base-url: ${GROBID_BASE_URL:http://localhost:8070}

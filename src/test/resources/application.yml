@@ -28,12 +28,9 @@ app:
     type: local
     local-path: ./test-uploads
 
+  dufs:
+    url: http://localhost:8400
+
   grobid:
     base-url: http://localhost:8070
     timeout: 5000
-
-  minio:
-    endpoint: http://localhost:9000
-    access-key: test
-    secret-key: test
-    bucket: test

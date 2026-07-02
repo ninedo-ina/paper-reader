@@ -1,11 +1,13 @@
 package org.paperreader.service
 
-import io.minio.*
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpMethod
+import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
+import org.springframework.web.client.RestTemplate
 import org.springframework.web.multipart.MultipartFile
-import java.io.ByteArrayInputStream
+import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -15,8 +17,8 @@ import java.util.*
 class FileStorageService(
     @Value("\${app.storage.type}") private val storageType: String,
     @Value("\${app.storage.local-path}") private val localPath: String,
-    private val minioClient: MinioClient,
-    @Value("\${app.minio.bucket}") private val bucket: String,
+    @Value("\${app.dufs.url}") private val dufsUrl: String,
+    private val restTemplate: RestTemplate,
 ) {
     private val logger = LoggerFactory.getLogger(FileStorageService::class.java)
 
@@ -26,21 +28,15 @@ class FileStorageService(
 
         return when (storageType) {
             "local" -> {
-                val targetPath = Paths.get(localPath, objectPath)
-                Files.createDirectories(targetPath.parent)
-                file.transferTo(targetPath)
-                targetPath.toString()
+                val target = Paths.get(localPath, objectPath)
+                Files.createDirectories(target.parent)
+                file.transferTo(target)
+                target.toString()
             }
             else -> {
-                ensureBucket()
-                minioClient.putObject(
-                    PutObjectArgs.builder()
-                        .bucket(bucket)
-                        .`object`(objectPath)
-                        .stream(file.inputStream, file.size, -1)
-                        .contentType(file.contentType ?: "application/pdf")
-                        .build()
-                )
+                val req = RequestEntity.put(URI("$dufsUrl/$objectPath"))
+                    .body(file.bytes)
+                restTemplate.exchange(req, Void::class.java)
                 objectPath
             }
         }.also { logger.info("Stored file: {}", it) }
@@ -52,20 +48,14 @@ class FileStorageService(
 
         when (storageType) {
             "local" -> {
-                val targetPath = Paths.get(localPath, objectPath)
-                Files.createDirectories(targetPath.parent)
-                Files.write(targetPath, bytes)
+                val target = Paths.get(localPath, objectPath)
+                Files.createDirectories(target.parent)
+                Files.write(target, bytes)
             }
             else -> {
-                ensureBucket()
-                minioClient.putObject(
-                    PutObjectArgs.builder()
-                        .bucket(bucket)
-                        .`object`(objectPath)
-                        .stream(ByteArrayInputStream(bytes), bytes.size.toLong(), -1)
-                        .contentType("application/pdf")
-                        .build()
-                )
+                val req = RequestEntity.put(URI("$dufsUrl/$objectPath"))
+                    .body(bytes)
+                restTemplate.exchange(req, Void::class.java)
             }
         }
 
@@ -77,9 +67,8 @@ class FileStorageService(
         return when (storageType) {
             "local" -> Files.readAllBytes(Path.of(filePath))
             else -> {
-                minioClient.getObject(
-                    GetObjectArgs.builder().bucket(bucket).`object`(filePath).build()
-                ).use { it.readAllBytes() }
+                val req = RequestEntity.get(URI("$dufsUrl/$filePath")).build()
+                restTemplate.exchange(req, ByteArray::class.java).body!!
             }
         }
     }
@@ -88,29 +77,21 @@ class FileStorageService(
         try {
             when (storageType) {
                 "local" -> Files.deleteIfExists(Path.of(filePath))
-                else -> minioClient.removeObject(
-                    RemoveObjectArgs.builder().bucket(bucket).`object`(filePath).build()
-                )
+                else -> {
+                    restTemplate.exchange(
+                        RequestEntity.delete(URI("$dufsUrl/$filePath")).build(),
+                        Void::class.java,
+                    )
+                }
             }
         } catch (e: Exception) {
             logger.warn("Failed to delete file: {}", filePath, e)
         }
     }
 
-    private fun ensureBucket() {
-        try {
-            val found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build())
-            if (!found) {
-                minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucket).build())
-            }
-        } catch (e: Exception) {
-            logger.warn("MinIO bucket check failed: {}", e.message)
-        }
-    }
-
     private fun downloadPdf(url: String): ByteArray {
         return try {
-            java.net.URI(url).toURL().openStream().use { it.readAllBytes() }
+            URI(url).toURL().openStream().use { it.readAllBytes() }
         } catch (e: Exception) {
             throw RuntimeException("Failed to download PDF from URL: ${e.message}")
         }
