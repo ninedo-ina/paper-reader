@@ -38,15 +38,15 @@ export default function Home() {
   )
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="h-screen flex flex-col overflow-hidden" style={{ background: "var(--bg-root)" }}>
       <Topbar />
       <div className="flex-1 flex overflow-hidden">
         <Sidebar activePanel={sidebarPanel} onNavigate={handleSidebarClick} />
 
         {/* Paper list panel (slides in from sidebar) */}
         {sidebarPanel === "library" && (
-          <aside className="w-72 border-r border-[var(--border-color)] glass-surface flex flex-col shrink-0">
-            <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-color)]">
+          <aside className="w-72 border-r border-[var(--border-subtle)] glass-surface flex flex-col shrink-0">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-subtle)]">
               <span className="text-xs font-semibold text-[var(--text-secondary)]">My Library</span>
               <button
                 type="button"

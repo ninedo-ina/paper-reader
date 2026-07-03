@@ -4,11 +4,13 @@
     "tagline": "论文在线阅读平台"
   },
   "nav": {
-    "library": "我的论文库",
+    "library": "我的论文",
     "upload": "上传论文",
     "history": "阅读历史",
     "notes": "我的笔记",
-    "settings": "设置"
+    "starred": "收藏论文",
+    "tags": "分类标签",
+    "settings": "偏好设置"
   },
   "reader": {
     "uploadPdf": "上传 PDF",

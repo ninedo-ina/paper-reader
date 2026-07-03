@@ -23,17 +23,18 @@ export function RightPanel({ paper }: RightPanelProps) {
   ]
 
   return (
-    <aside className="w-95 border-l border-[var(--border-color)] glass-surface flex flex-col select-none shrink-0">
-      <nav className="flex border-b border-[var(--border-color)] h-10">
+    <aside className="w-[380px] border-l border-[var(--border-subtle)] flex flex-col select-none shrink-0"
+      style={{ background: "var(--surface-1)", backdropFilter: "blur(20px) saturate(180%)" }}>
+      <nav className="flex border-b border-[var(--border-subtle)] px-2 pt-1.5 gap-0.5">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={cn(
-              "flex-1 text-xs font-medium transition-all duration-150",
+              "px-4 py-2.5 text-[12.5px] font-[540] rounded-t-lg border-b-2 border-transparent transition-all duration-150 -mb-px",
               "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]",
               activeTab === tab.key &&
-                "text-[var(--text-primary)] shadow-[inset_0_-2px_0_var(--accent)]",
+                "text-[var(--text-primary)] border-[var(--text-primary)]",
             )}
           >
             {tab.label}
@@ -61,48 +62,40 @@ function MetadataContent({ paper }: { paper?: PaperDetailDto | null }) {
   if (!paper) {
     return (
       <div className="flex items-center justify-center h-full">
-        <span className="text-sm text-[var(--text-tertiary)]">Select a paper</span>
+        <p className="text-sm text-[var(--text-tertiary)]">Select a paper</p>
       </div>
     )
   }
 
+  const rows = [
+    { label: t("authors"), value: paper.authors },
+    { label: t("year"), value: paper.year },
+    { label: t("journal"), value: paper.journal },
+    { label: t("doi"), value: paper.doi, mono: true },
+  ].filter((r) => r.value)
+
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-[var(--text-primary)] leading-snug">
-        {paper.title || "Untitled"}
-      </h2>
-      <div className="space-y-2 text-sm">
-        {paper.authors && (
-          <div>
-            <span className="text-[var(--text-tertiary)]">{t("authors")}: </span>
-            <span className="text-[var(--text-secondary)]">{paper.authors}</span>
+    <div className="space-y-2.5">
+      <div className="rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface-2)] shadow-[var(--shadow-sm)] p-4">
+        <h3 className="text-[11px] font-[650] text-[var(--text-tertiary)] uppercase tracking-[0.6px] mb-2.5">
+          Paper Metadata
+        </h3>
+        {rows.map((row) => (
+          <div key={row.label} className="flex justify-between items-start py-1.5 border-b border-[var(--border-subtle)] last:border-0 text-[13px]">
+            <span className="text-[12px] text-[var(--text-tertiary)] min-w-[60px]">{row.label}</span>
+            <span className={row.mono ? "font-mono text-[11px] text-[var(--text-primary)] text-right" : "text-[var(--text-primary)] text-right font-[470]"}>
+              {String(row.value)}
+            </span>
           </div>
-        )}
-        {paper.year && (
-          <div>
-            <span className="text-[var(--text-tertiary)]">{t("year")}: </span>
-            <span className="text-[var(--text-secondary)]">{paper.year}</span>
-          </div>
-        )}
-        {paper.journal && (
-          <div>
-            <span className="text-[var(--text-tertiary)]">{t("journal")}: </span>
-            <span className="text-[var(--text-secondary)]">{paper.journal}</span>
-          </div>
-        )}
-        {paper.doi && (
-          <div>
-            <span className="text-[var(--text-tertiary)]">{t("doi")}: </span>
-            <span className="text-[var(--text-secondary)] text-xs break-all">{paper.doi}</span>
-          </div>
-        )}
+        ))}
       </div>
+
       {paper.abstractText && (
-        <div>
-          <h3 className="text-xs font-medium text-[var(--text-tertiary)] mb-1">
-            {t("abstract")}
+        <div className="rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface-2)] shadow-[var(--shadow-sm)] p-4">
+          <h3 className="text-[11px] font-[650] text-[var(--text-tertiary)] uppercase tracking-[0.6px] mb-2">
+            Abstract
           </h3>
-          <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+          <p className="text-[12.5px] text-[var(--text-secondary)] leading-[1.65]">
             {paper.abstractText}
           </p>
         </div>

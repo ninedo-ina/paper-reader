@@ -13,27 +13,47 @@
 }
 
 :root {
+  --bg-root: #eeeff2;
   --surface-0: #ffffff;
-  --surface-1: #f5f5f7;
-  --surface-2: #e8e8ed;
-  --text-primary: #1d1d1f;
-  --text-secondary: #6e6e73;
-  --text-tertiary: #aeaeb2;
-  --border-color: #d2d2d7;
-  --accent: #1d1d1f;
-  --accent-hover: #3a3a3c;
+  --surface-1: rgba(255,255,255,0.92);
+  --surface-2: rgba(255,255,255,0.82);
+  --bg-hover: rgba(0,0,0,0.05);
+  --bg-active: rgba(0,0,0,0.10);
+  --bg-glass: rgba(255,255,255,0.68);
+  --text-primary: rgba(0,0,0,0.88);
+  --text-secondary: rgba(0,0,0,0.56);
+  --text-tertiary: rgba(0,0,0,0.36);
+  --text-placeholder: rgba(0,0,0,0.26);
+  --border-color: rgba(0,0,0,0.14);
+  --border-subtle: rgba(0,0,0,0.08);
+  --accent: #1a1a1a;
+  --accent-hover: #333333;
+  --accent-soft: rgba(0,0,0,0.07);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.10);
+  --shadow-lg: 0 12px 44px rgba(0,0,0,0.14);
 }
 
 [data-theme="dark"] {
-  --surface-0: #0a0a0a;
-  --surface-1: #141414;
-  --surface-2: #1c1c1e;
-  --text-primary: #f5f5f7;
-  --text-secondary: #a1a1a6;
-  --text-tertiary: #6e6e73;
-  --border-color: #333336;
-  --accent: #f5f5f7;
-  --accent-hover: #e8e8ed;
+  --bg-root: #18181a;
+  --surface-0: #242428;
+  --surface-1: rgba(36,36,40,0.95);
+  --surface-2: rgba(50,50,56,0.92);
+  --bg-hover: rgba(255,255,255,0.06);
+  --bg-active: rgba(255,255,255,0.12);
+  --bg-glass: rgba(36,36,40,0.64);
+  --text-primary: rgba(255,255,255,0.92);
+  --text-secondary: rgba(255,255,255,0.56);
+  --text-tertiary: rgba(255,255,255,0.34);
+  --text-placeholder: rgba(255,255,255,0.22);
+  --border-color: rgba(255,255,255,0.14);
+  --border-subtle: rgba(255,255,255,0.08);
+  --accent: #f0f0f0;
+  --accent-hover: #d0d0d0;
+  --accent-soft: rgba(255,255,255,0.10);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.48);
+  --shadow-lg: 0 12px 44px rgba(0,0,0,0.56);
 }
 
 html {
@@ -43,19 +63,19 @@ html {
 }
 
 body {
-  background-color: var(--surface-0);
+  background-color: var(--bg-root);
   color: var(--text-primary);
 }
 
 /* macOS glass effect utilities */
 .glass-surface {
-  background: color-mix(in oklab, var(--surface-1) 70%, transparent);
+  background: var(--bg-glass);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
 }
 
 .glass-surface-strong {
-  background: color-mix(in oklab, var(--surface-1) 85%, transparent);
+  background: var(--surface-1);
   backdrop-filter: blur(40px) saturate(200%);
   -webkit-backdrop-filter: blur(40px) saturate(200%);
 }

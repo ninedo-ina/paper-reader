@@ -35,7 +35,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
   return (
     <div className="h-full flex flex-col bg-[var(--surface-1)]">
       {/* Toolbar */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-[var(--border-color)] bg-[var(--surface-0)]">
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-[var(--border-subtle)] bg-[var(--surface-0)]">
         <h1 className="text-sm font-medium text-[var(--text-primary)] truncate flex-1">
           {paper.title || "Untitled"}
         </h1>
@@ -86,7 +86,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
       </div>
 
       {/* PDF Canvas */}
-      <div className="flex-1 overflow-auto flex justify-center bg-[var(--surface-2)]">
+      <div className="flex-1 overflow-auto flex justify-center" style={{ background: "var(--bg-root)" }}>
         <Document
           file={pdfUrl}
           onLoadSuccess={onDocumentLoadSuccess}

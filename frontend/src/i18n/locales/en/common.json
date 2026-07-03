@@ -4,11 +4,13 @@
     "tagline": "Academic Paper Reading Platform"
   },
   "nav": {
-    "library": "My Library",
+    "library": "My Papers",
     "upload": "Upload",
     "history": "Reading History",
     "notes": "My Notes",
-    "settings": "Settings"
+    "starred": "Starred",
+    "tags": "Tags",
+    "settings": "Preferences"
   },
   "reader": {
     "uploadPdf": "Upload PDF",

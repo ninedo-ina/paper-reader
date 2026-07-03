@@ -17,11 +17,11 @@ export function PaperCard({ paper, isActive, onClick, onDelete }: PaperCardProps
       type="button"
       onClick={onClick}
       className={cn(
-        "w-full text-left p-4 rounded-lg border transition-all duration-150",
-        "hover:border-[var(--accent)] hover:shadow-sm",
+        "w-full text-left p-3 rounded-[10px] border transition-all duration-150",
+        "hover:bg-[var(--bg-hover)] hover:shadow-[var(--shadow-sm)]",
         isActive
-          ? "border-[var(--accent)] bg-[var(--surface-2)]"
-          : "border-[var(--border-color)] bg-[var(--surface-0)]",
+          ? "border-[var(--accent)] bg-[var(--bg-active)]"
+          : "border-[var(--border-subtle)] bg-[var(--surface-2)]",
       )}
     >
       <div className="flex items-start gap-3">

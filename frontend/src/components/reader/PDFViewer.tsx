@@ -1,9 +1,18 @@
 "use client"
 
+import dynamic from "next/dynamic"
 import { useTranslations } from "next-intl"
-import { Upload, Link, FileText } from "lucide-react"
+import { Upload } from "lucide-react"
 import type { PaperDetailDto } from "@/lib/api/types"
-import { PDFReader } from "./PDFReader"
+
+const PDFReader = dynamic(() => import("./PDFReader").then((m) => m.PDFReader), {
+  ssr: false,
+  loading: () => (
+    <div className="h-full flex items-center justify-center" style={{ background: "var(--bg-root)" }}>
+      <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>Loading PDF…</p>
+    </div>
+  ),
+})
 
 interface PDFViewerProps {
   paper?: PaperDetailDto | null
@@ -18,34 +27,24 @@ export function PDFViewer({ paper, onUploadClick }: PDFViewerProps) {
   }
 
   return (
-    <div className="h-full flex items-center justify-center bg-[var(--surface-1)]">
-      <div className="flex flex-col items-center gap-4 p-12 rounded-2xl border-2 border-dashed border-[var(--border-color)]">
-        <div className="w-16 h-16 rounded-2xl bg-[var(--surface-2)] flex items-center justify-center">
-          <FileText className="w-8 h-8 text-[var(--text-tertiary)]" />
-        </div>
-        <div className="text-center">
-          <p className="text-sm text-[var(--text-secondary)] mb-3">
-            {t("noPaperSelected")}
-          </p>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={onUploadClick}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-[var(--accent)] text-[var(--surface-0)] hover:opacity-90 transition-opacity"
-            >
-              <Upload className="w-4 h-4" />
-              {t("uploadPdf")}
-            </button>
-            <button
-              type="button"
-              onClick={onUploadClick}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-2)] transition-all"
-            >
-              <Link className="w-4 h-4" />
-              {t("openUrl")}
-            </button>
-          </div>
-        </div>
+    <div className="h-full flex items-center justify-center" style={{ background: "var(--bg-root)" }}>
+      <div className="flex flex-col items-center gap-3 p-10 rounded-[16px] text-center"
+        style={{ background: "var(--bg-glass)", backdropFilter: "blur(12px)" }}>
+        <Upload className="w-12 h-12" style={{ color: "var(--text-tertiary)", strokeWidth: 1.2 }} />
+        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+          {t("noPaperSelected")}
+        </p>
+        <button
+          type="button"
+          onClick={onUploadClick}
+          className="mt-1 px-6 py-2.5 rounded-[20px] text-sm font-[560] transition-all hover:-translate-y-px"
+          style={{ background: "var(--accent)", color: "var(--bg-root, #eeeff2)", boxShadow: "var(--shadow-md)" }}
+        >
+          {t("uploadPdf")}
+        </button>
+        <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+          支持 PDF 直链 | 本地上传
+        </p>
       </div>
     </div>
   )

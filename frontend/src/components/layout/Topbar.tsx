@@ -9,10 +9,13 @@ export function Topbar() {
   const t = useTranslations();
 
   return (
-    <header className="h-13 glass-surface border-b border-[var(--border-color)] flex items-center px-4 gap-3 select-none">
+    <header className="h-[52px] glass-surface border-b border-[var(--border-subtle)] flex items-center px-4 gap-3 select-none z-50">
       <div className="flex items-center gap-2 mr-4">
-        <BookOpen className="w-5 h-5 text-[var(--text-primary)]" />
-        <span className="font-semibold text-sm text-[var(--text-primary)]">
+        <span
+          className="inline-block w-[7px] h-[7px] rounded-full mr-1"
+          style={{ background: "var(--text-primary)" }}
+        />
+        <span className="font-[680] text-[15px] tracking-[-0.3px] text-[var(--text-primary)]">
           {t("app.name")}
         </span>
       </div>
@@ -31,6 +34,13 @@ export function Topbar() {
       <div className="flex items-center gap-1">
         <LangToggle />
         <ThemeToggle />
+        <div
+          className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold ml-2 cursor-pointer"
+          style={{ background: "var(--text-primary)", color: "var(--bg-root, #eeeff2)" }}
+          title="用户"
+        >
+          Y
+        </div>
       </div>
     </header>
   );
