@@ -1,0 +1,110 @@
+{
+  "app": {
+    "name": "Paper Reader",
+    "tagline": "Academic Paper Reading Platform"
+  },
+  "nav": {
+    "library": "My Library",
+    "upload": "Upload",
+    "history": "Reading History",
+    "notes": "My Notes",
+    "settings": "Settings"
+  },
+  "reader": {
+    "uploadPdf": "Upload PDF",
+    "openUrl": "Open URL",
+    "dragOrClick": "Drag PDF here or click to upload",
+    "page": "Page",
+    "zoom": "Zoom",
+    "search": "Search text",
+    "noPaperSelected": "Upload a paper or select one from your library to start reading"
+  },
+  "panel": {
+    "metadata": "Metadata",
+    "annotations": "Annotations",
+    "notes": "Notes",
+    "aiChat": "AI Chat"
+  },
+  "metadata": {
+    "title": "Title",
+    "authors": "Authors",
+    "year": "Year",
+    "journal": "Journal",
+    "doi": "DOI",
+    "abstract": "Abstract"
+  },
+  "annotation": {
+    "highlight": "Highlight",
+    "underline": "Underline",
+    "strikethrough": "Strikethrough",
+    "note": "Note",
+    "color": "Color",
+    "addComment": "Add Comment",
+    "delete": "Delete"
+  },
+  "notes": {
+    "newNote": "New Note",
+    "save": "Save",
+    "exportPdf": "Export PDF",
+    "tags": "Tags",
+    "edit": "Edit",
+    "preview": "Preview",
+    "noNotes": "No notes yet"
+  },
+  "ai": {
+    "selectModel": "Select Model",
+    "send": "Send",
+    "placeholder": "Ask a question about this paper...",
+    "summarize": "Summarize this paper",
+    "explain": "Explain selected text",
+    "translate": "Translate to English",
+    "emptyChat": "Start a conversation with AI to discuss this paper"
+  },
+  "auth": {
+    "login": "Log In",
+    "loginTitle": "Welcome Back",
+    "loginSubtitle": "Sign in to your Paper Reader account",
+    "register": "Register",
+    "registerTitle": "Create Account",
+    "registerSubtitle": "Start your academic paper reading journey",
+    "logout": "Log Out",
+    "email": "Email",
+    "password": "Password",
+    "displayName": "Display Name",
+    "confirmPassword": "Confirm Password",
+    "sendCode": "Send Code",
+    "emailCodeLogin": "Code Login",
+    "githubLogin": "GitHub Login",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "goRegister": "Create one",
+    "goLogin": "Sign in",
+    "emailPlaceholder": "Enter your email address",
+    "passwordPlaceholder": "Enter your password",
+    "displayNamePlaceholder": "Enter your display name",
+    "confirmPasswordPlaceholder": "Re-enter your password",
+    "codeSent": "Code Sent",
+    "codeSentTo": "Verification code sent to {email}",
+    "passwordMismatch": "Passwords do not match",
+    "loggingIn": "Logging in...",
+    "registering": "Creating account...",
+    "sendingCode": "Sending...",
+    "codeSentCountdown": "Resend in {seconds}s"
+  },
+  "theme": {
+    "light": "Light Mode",
+    "dark": "Dark Mode"
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "search": "Search",
+    "noData": "No data",
+    "myPapers": "My Papers",
+    "papers": "papers",
+    "error": "Something went wrong"
+  }
+}

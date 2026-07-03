@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PaperReader — 论文在线阅读</title>
+<style>
+/* ===== CSS Variables / Design Tokens ===== */
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+}
+
+/* Light Theme */
+[data-theme="light"] {
+  --bg-root: #eeeff2;
+  --bg-surface: rgba(255,255,255,0.92);
+  --bg-surface-solid: #ffffff;
+  --bg-elevated: rgba(255,255,255,0.82);
+  --bg-hover: rgba(0,0,0,0.05);
+  --bg-active: rgba(0,0,0,0.10);
+  --bg-glass: rgba(255,255,255,0.68);
+  --border-subtle: rgba(0,0,0,0.08);
+  --border-default: rgba(0,0,0,0.14);
+  --border-strong: rgba(0,0,0,0.22);
+  --text-primary: rgba(0,0,0,0.88);
+  --text-secondary: rgba(0,0,0,0.56);
+  --text-tertiary: rgba(0,0,0,0.36);
+  --text-placeholder: rgba(0,0,0,0.26);
+  --accent: #1a1a1a;
+  --accent-hover: #333333;
+  --accent-soft: rgba(0,0,0,0.07);
+  --highlight-yellow: rgba(255,212,0,0.38);
+  --highlight-green: rgba(0,200,117,0.30);
+  --highlight-blue: rgba(0,122,255,0.30);
+  --highlight-pink: rgba(255,45,85,0.26);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.10);
+  --shadow-lg: 0 12px 44px rgba(0,0,0,0.14);
+  --shadow-xl: 0 24px 72px rgba(0,0,0,0.20);
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+  --bg-root: #18181a;
+  --bg-surface: rgba(36,36,40,0.95);
+  --bg-surface-solid: #242428;
+  --bg-elevated: rgba(50,50,56,0.92);
+  --bg-hover: rgba(255,255,255,0.06);
+  --bg-active: rgba(255,255,255,0.12);
+  --bg-glass: rgba(36,36,40,0.64);
+  --border-subtle: rgba(255,255,255,0.08);
+  --border-default: rgba(255,255,255,0.14);
+  --border-strong: rgba(255,255,255,0.22);
+  --text-primary: rgba(255,255,255,0.92);
+  --text-secondary: rgba(255,255,255,0.56);
+  --text-tertiary: rgba(255,255,255,0.34);
+  --text-placeholder: rgba(255,255,255,0.22);
+  --accent: #f0f0f0;
+  --accent-hover: #d0d0d0;
+  --accent-soft: rgba(255,255,255,0.10);
+  --highlight-yellow: rgba(255,212,0,0.32);
+  --highlight-green: rgba(0,200,117,0.26);
+  --highlight-blue: rgba(64,156,255,0.30);
+  --highlight-pink: rgba(255,55,95,0.26);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.48);
+  --shadow-lg: 0 12px 44px rgba(0,0,0,0.56);
+  --shadow-xl: 0 24px 72px rgba(0,0,0,0.68);
+}
+
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--text-primary);
+  background: var(--bg-root);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background var(--duration-normal) var(--ease-out-expo), color var(--duration-normal) var(--ease-out-expo);
+}
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; font-size: inherit; }
+input { font-family: inherit; font-size: inherit; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
+/* ===== App Layout ===== */
+.app {
+  display: grid;
+  grid-template-columns: 220px 1fr 380px;
+  grid-template-rows: 52px 1fr;
+  height: 100vh;
+  gap: 1px;
+}
+/* Explicit grid placement for clarity */
+.topbar  { grid-column: 1 / -1; grid-row: 1; }
+.sidebar { grid-column: 1; grid-row: 2; }
+.main    { grid-column: 2; grid-row: 2; }
+.right-panel { grid-column: 3; grid-row: 2; }
+
+/* ===== Top Bar ===== */
+.topbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: var(--bg-glass);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-bottom: 1px solid var(--border-subtle);
+  z-index: 100;
+}
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.logo {
+  font-size: 15px;
+  font-weight: 680;
+  letter-spacing: -0.3px;
+  color: var(--text-primary);
+}
+.logo-dot {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  margin-right: 6px;
+}
+.topbar-center {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  max-width: 520px;
+  margin: 0 24px;
+}
+.search-box {
+  flex: 1;
+  position: relative;
+}
+.search-box input {
+  width: 100%;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  background: var(--bg-hover);
+  padding: 0 12px 0 32px;
+  color: var(--text-primary);
+  outline: none;
+  transition: all var(--duration-fast) var(--ease-out-expo);
+  font-size: 13px;
+}
+.search-box input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.search-box input::placeholder { color: var(--text-placeholder); }
+.search-icon {
+  position: absolute;
+  left: 10px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  width: 14px; height: 14px;
+}
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.topbar-btn {
+  width: 32px; height: 32px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: all var(--duration-fast) var(--ease-out-expo);
+}
+.topbar-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.topbar-btn.active { background: var(--bg-active); color: var(--text-primary); }
+.avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  color: var(--bg-root);
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+}
+
+/* ===== Left Sidebar ===== */
+.sidebar {
+  background: var(--bg-surface);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-right: 1px solid var(--border-subtle);
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+.sidebar-section {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-tertiary);
+  padding: 16px 12px 6px;
+}
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  transition: all var(--duration-fast) var(--ease-out-expo);
+  font-size: 13.5px;
+  font-weight: 470;
+}
+.sidebar-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.sidebar-item.active {
+  background: var(--bg-active);
+  color: var(--text-primary);
+  font-weight: 550;
+  box-shadow: inset 2px 0 0 var(--text-primary);
+}
+.sidebar-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+.sidebar-item .badge {
+  margin-left: auto;
+  background: var(--accent-soft);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+.sidebar-spacer { flex: 1; }
+
+/* ===== Main Content ===== */
+.main {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-root);
+  overflow: hidden;
+}
+.main-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface-solid);
+}
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.toolbar-sep {
+  width: 1px; height: 22px;
+  background: var(--border-default);
+  margin: 0 8px;
+}
+.tool-btn {
+  width: 32px; height: 32px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: all var(--duration-fast) var(--ease-out-expo);
+}
+.tool-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.tool-btn.primary { background: var(--accent); color: var(--bg-root); }
+.tool-btn.primary:hover { background: var(--accent-hover); }
+.page-indicator {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* PDF Viewer Area */
+.pdf-viewer {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  padding: 24px;
+  position: relative;
+}
+.pdf-page {
+  background: var(--bg-surface-solid);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 720px;
+  min-height: 400px;
+  position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: all var(--duration-normal) var(--ease-out-expo);
+}
+.pdf-page:hover {
+  box-shadow: var(--shadow-xl);
+}
+/* Simulated PDF content */
+.pdf-content {
+  padding: 32px 36px 28px 40px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.pdf-content h1 {
+  font-size: 22px;
+  font-weight: 680;
+  line-height: 1.3;
+  letter-spacing: -0.3px;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+.pdf-content .authors {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.pdf-content .affiliation {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-style: italic;
+  margin-bottom: 16px;
+}
+.pdf-content .abstract-label {
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-tertiary);
+  margin-bottom: 6px;
+}
+.pdf-content .abstract-text {
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+.pdf-content .section-title {
+  font-size: 14px;
+  font-weight: 650;
+  margin: 18px 0 8px;
+  color: var(--text-primary);
+}
+.pdf-content .section-text {
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+/* Highlight spans (simulated) */
+.hl-yellow { background: var(--highlight-yellow); border-radius: 2px; padding: 0 1px; }
+.hl-blue   { background: var(--highlight-blue); border-radius: 2px; padding: 0 1px; }
+.hl-green  { background: var(--highlight-green); border-radius: 2px; padding: 0 1px; }
+.hl-pink   { background: var(--highlight-pink); border-radius: 2px; padding: 0 1px; }
+
+/* ===== Right Panel ===== */
+.right-panel {
+  background: var(--bg-surface);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-left: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.panel-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 6px 8px 0;
+  gap: 2px;
+}
+.panel-tab {
+  padding: 10px 16px;
+  font-size: 12.5px;
+  font-weight: 540;
+  color: var(--text-tertiary);
+  border-bottom: 2px solid transparent;
+  border-radius: 8px 8px 0 0;
+  transition: all var(--duration-fast) var(--ease-out-expo);
+  margin-bottom: -1px;
+}
+.panel-tab:hover { color: var(--text-secondary); }
+.panel-tab.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--text-primary);
+}
+.panel-tab .count {
+  display: inline-block;
+  background: var(--accent-soft);
+  color: var(--text-tertiary);
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 8px;
+  margin-left: 4px;
+}
+.panel-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Paper metadata card */
+.meta-card {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+.meta-card h3 {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 10px;
+}
+.meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 13px;
+}
+.meta-row:last-child { border-bottom: none; }
+.meta-label { color: var(--text-tertiary); font-size: 12px; min-width: 60px; }
+.meta-value { color: var(--text-primary); text-align: right; font-weight: 470; }
+.meta-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  font-weight: 530;
+  margin: 2px;
+}
+
+/* Annotation item */
+.annotation-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  transition: all var(--duration-fast) var(--ease-out-expo);
+}
+.annotation-item:hover {
+  background: var(--bg-hover);
+  box-shadow: var(--shadow-sm);
+}
+.annotation-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+.annotation-dot.yellow { background: #ffd400; }
+.annotation-dot.blue   { background: #007aff; }
+.annotation-dot.green  { background: #00c875; }
+.annotation-dot.pink   { background: #ff2d55; }
+.annotation-text { flex: 1; }
+.annotation-quote {
+  font-size: 12.5px;
+  color: var(--text-primary);
+  line-height: 1.5;
+  margin-bottom: 4px;
+  font-style: italic;
+}
+.annotation-note {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+.annotation-page {
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+
+/* Note card */
+.note-card {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+.note-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.note-card-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.note-card-date {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+.note-card-body {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  font-family: var(--font-sans);
+}
+.note-card-body code {
+  background: var(--accent-soft);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+}
+.note-card-footer {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+.note-tag {
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--text-tertiary);
+  font-size: 11px;
+  font-weight: 530;
+}
+
+/* AI Chat */
+.ai-chat {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.ai-messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ai-msg {
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  font-size: 12.5px;
+  line-height: 1.55;
+  max-width: 92%;
+}
+.ai-msg.user {
+  align-self: flex-end;
+  background: var(--accent);
+  color: var(--bg-root);
+  border-bottom-right-radius: 4px;
+}
+.ai-msg.assistant {
+  align-self: flex-start;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-bottom-left-radius: 4px;
+  color: var(--text-primary);
+}
+.ai-input-area {
+  display: flex;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 8px;
+}
+.ai-input-area input {
+  flex: 1;
+  height: 34px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+  background: var(--bg-hover);
+  padding: 0 12px;
+  color: var(--text-primary);
+  outline: none;
+  font-size: 13px;
+  transition: all var(--duration-fast) var(--ease-out-expo);
+}
+.ai-input-area input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.ai-input-area button {
+  width: 34px; height: 34px;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: var(--bg-root);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--duration-fast) var(--ease-out-expo);
+}
+.ai-input-area button:hover { background: var(--accent-hover); }
+.ai-model-select {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-family: var(--font-sans);
+  margin-bottom: 8px;
+  outline: none;
+}
+
+/* Upload overlay */
+.upload-prompt {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--radius-md);
+  z-index: 10;
+}
+.upload-prompt p { color: var(--text-secondary); font-size: 14px; }
+.upload-btn {
+  padding: 10px 24px;
+  border-radius: var(--radius-xl);
+  background: var(--accent);
+  color: var(--bg-root);
+  font-size: 14px;
+  font-weight: 560;
+  transition: all var(--duration-fast) var(--ease-out-expo);
+  box-shadow: var(--shadow-md);
+}
+.upload-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Skeleton texts for PDF body */
+.skeleton-line {
+  height: 10px; border-radius: 3px;
+  background: linear-gradient(90deg, var(--border-default) 25%, var(--border-subtle) 50%, var(--border-default) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+  margin-bottom: 8px;
+}
+.skeleton-line:last-child { width: 60%; }
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Tooltip / Floating */
+.float-actions {
+  position: absolute;
+  display: none;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 50;
+}
+.float-actions button {
+  width: 28px; height: 28px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.float-actions button:hover { background: var(--bg-hover); }
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .app { grid-template-columns: 200px 1fr 300px; }
+}
+@media (max-width: 960px) {
+  .right-panel { display: none; }
+  .app { grid-template-columns: 200px 1fr; }
+  .pdf-page { max-width: 100%; border-radius: var(--radius-sm); }
+}
+@media (max-width: 640px) {
+  .sidebar { width: 180px; }
+  .app { grid-template-columns: 180px 1fr; }
+  .pdf-content { padding: 20px 16px 16px 20px; }
+  .pdf-content h1 { font-size: 18px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- ===== Top Bar ===== -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="logo"><span class="logo-dot"></span>PaperReader</span>
+    </div>
+    <div class="topbar-center">
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="搜索论文、笔记或标签..." />
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="topbar-btn" id="langToggle" title="English" onclick="toggleLang()">中</button>
+      <button class="topbar-btn" id="themeToggle" title="Toggle theme" onclick="toggleTheme()">
+        <svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+      <div class="avatar" title="用户">Y</div>
+    </div>
+  </header>
+
+  <!-- ===== Left Sidebar ===== -->
+  <nav class="sidebar">
+    <div class="sidebar-section">Library</div>
+    <button class="sidebar-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      我的论文
+    </button>
+    <button class="sidebar-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      阅读历史
+      <span class="badge">12</span>
+    </button>
+    <button class="sidebar-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      我的笔记
+      <span class="badge">8</span>
+    </button>
+    <div class="sidebar-section">Discover</div>
+    <button class="sidebar-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      收藏论文
+    </button>
+    <button class="sidebar-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+      分类标签
+    </button>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-section">Settings</div>
+    <button class="sidebar-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      偏好设置
+    </button>
+  </nav>
+
+  <!-- ===== Main Content ===== -->
+  <main class="main">
+    <div class="main-toolbar">
+      <div class="toolbar-group">
+        <button class="tool-btn" title="目录">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="toolbar-sep"></div>
+      <div class="toolbar-group">
+        <button class="tool-btn" title="缩小">−</button>
+        <span class="page-indicator">120%</span>
+        <button class="tool-btn" title="放大">+</button>
+      </div>
+      <div class="toolbar-sep"></div>
+      <div class="toolbar-group">
+        <button class="tool-btn" title="上一页">‹</button>
+        <span class="page-indicator">1 / 14</span>
+        <button class="tool-btn" title="下一页">›</button>
+      </div>
+      <div class="toolbar-sep"></div>
+      <div class="toolbar-group">
+        <button class="tool-btn" title="高亮" style="color:#ffd400">▬</button>
+        <button class="tool-btn" title="下划线">U̲</button>
+        <button class="tool-btn" title="批注">💬</button>
+      </div>
+      <div style="flex:1"></div>
+      <div class="toolbar-group">
+        <button class="tool-btn primary" title="打开论文">+ 打开论文</button>
+      </div>
+    </div>
+
+    <div class="pdf-viewer">
+      <div class="pdf-page">
+        <!-- Simulated PDF Content -->
+        <div class="pdf-content">
+          <h1>Attention Is All You Need</h1>
+          <p class="authors">
+            <span class="hl-yellow">Ashish Vaswani</span>, <span class="hl-blue">Noam Shazeer</span>,
+            Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Łukasz Kaiser, Illia Polosukhin
+          </p>
+          <p class="affiliation">Google Brain · arXiv:1706.03762</p>
+
+          <p class="abstract-label">Abstract</p>
+          <p class="abstract-text">
+            The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder. The best performing models also connect the encoder and decoder through an <span class="hl-green">attention mechanism</span>. We propose a new simple network architecture, the <span class="hl-yellow">Transformer</span>, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely.
+          </p>
+
+          <p class="section-title">1. Introduction</p>
+          <p class="section-text">
+            Recurrent neural networks, long short-term memory and gated recurrent neural networks in particular, have been firmly established as state of the art approaches in sequence modeling and transduction problems such as language modeling and machine translation. Numerous efforts have since continued to push the boundaries of recurrent language models and encoder-decoder architectures.
+          </p>
+          <p class="section-text">
+            Recurrent models typically factor computation along the symbol positions of the input and output sequences. Aligning the positions to steps in computation time, they generate a sequence of <span class="hl-blue">hidden states</span> h<sub>t</sub>, as a function of the previous hidden state h<sub>t−1</sub> and the input for position t.
+          </p>
+
+          <p class="section-title">2. Background</p>
+          <p class="section-text">
+            The goal of reducing sequential computation also forms the foundation of the Extended Neural GPU, ByteNet and ConvS2S, all of which use <span class="hl-pink">convolutional neural networks</span> as basic building blocks, computing hidden representations in parallel for all input and output positions.
+          </p>
+
+          <!-- Skeleton for additional content -->
+          <div class="skeleton-line" style="width:95%"></div>
+          <div class="skeleton-line" style="width:88%"></div>
+          <div class="skeleton-line" style="width:92%"></div>
+          <div class="skeleton-line" style="width:72%"></div>
+          <br>
+          <p class="section-title">3. Model Architecture</p>
+          <div class="skeleton-line" style="width:90%"></div>
+          <div class="skeleton-line" style="width:85%"></div>
+          <div class="skeleton-line" style="width:94%"></div>
+          <div class="skeleton-line" style="width:78%"></div>
+          <div class="skeleton-line" style="width:91%"></div>
+          <div class="skeleton-line" style="width:60%"></div>
+        </div>
+
+        <!-- Open Paper overlay -->
+        <div class="upload-prompt" onclick="this.style.display='none'" style="cursor:default;">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="1.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <p>拖拽 PDF 到此处，或点击下方按钮打开论文</p>
+          <button class="upload-btn">打开 PDF 论文</button>
+          <p style="font-size:12px;color:var(--text-tertiary);margin-top:4px;">支持 PDF 直链 | 本地上传</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== Right Panel ===== -->
+  <aside class="right-panel">
+    <div class="panel-tabs">
+      <button class="panel-tab active" onclick="switchPanel('meta')">论文信息</button>
+      <button class="panel-tab" onclick="switchPanel('annotations')">批注<span class="count">4</span></button>
+      <button class="panel-tab" onclick="switchPanel('notes')">笔记<span class="count">3</span></button>
+      <button class="panel-tab" onclick="switchPanel('ai')">AI</button>
+    </div>
+
+    <!-- Panel: Metadata -->
+    <div class="panel-content" id="panel-meta">
+      <div class="meta-card">
+        <h3>Paper Metadata · GROBID Extracted</h3>
+        <div class="meta-row"><span class="meta-label">Title</span><span class="meta-value">Attention Is All You Need</span></div>
+        <div class="meta-row"><span class="meta-label">Authors</span><span class="meta-value">Vaswani et al. (8)</span></div>
+        <div class="meta-row"><span class="meta-label">Year</span><span class="meta-value">2017</span></div>
+        <div class="meta-row"><span class="meta-label">DOI</span><span class="meta-value" style="font-family:var(--font-mono);font-size:11px">10.48550/arXiv.1706.03762</span></div>
+        <div class="meta-row"><span class="meta-label">Journal</span><span class="meta-value">NeurIPS 2017</span></div>
+        <div class="meta-row"><span class="meta-label">Keywords</span>
+          <span class="meta-value">
+            <span class="meta-tag">Transformer</span>
+            <span class="meta-tag">Attention</span>
+            <span class="meta-tag">NLP</span>
+            <span class="meta-tag">Deep Learning</span>
+          </span>
+        </div>
+        <div class="meta-row"><span class="meta-label">Citations</span><span class="meta-value" style="color:var(--highlight-blue)">150,000+</span></div>
+      </div>
+      <div class="meta-card">
+        <h3>Reading Stats</h3>
+        <div class="meta-row"><span class="meta-label">Progress</span><span class="meta-value" style="color:var(--text-primary);font-weight:600">42% · Page 6/14</span></div>
+        <div class="meta-row"><span class="meta-label">Time</span><span class="meta-value">1h 23min</span></div>
+        <div class="meta-row"><span class="meta-label">Last Read</span><span class="meta-value">2026-07-02 14:30</span></div>
+      </div>
+    </div>
+
+    <!-- Panel: Annotations -->
+    <div class="panel-content" id="panel-annotations" style="display:none;">
+      <div class="annotation-item">
+        <div class="annotation-dot yellow"></div>
+        <div class="annotation-text">
+          <div class="annotation-quote">"We propose a new simple network architecture, the Transformer..."</div>
+          <div class="annotation-note">核心创新点——用纯注意力机制替代RNN/CNN</div>
+          <div class="annotation-page">Page 1 · §Abstract</div>
+        </div>
+      </div>
+      <div class="annotation-item">
+        <div class="annotation-dot blue"></div>
+        <div class="annotation-text">
+          <div class="annotation-quote">"Ashish Vaswani, Noam Shazeer, Niki Parmar..."</div>
+          <div class="annotation-note">全部来自 Google Brain 团队</div>
+          <div class="annotation-page">Page 1 · Authors</div>
+        </div>
+      </div>
+      <div class="annotation-item">
+        <div class="annotation-dot green"></div>
+        <div class="annotation-text">
+          <div class="annotation-quote">"attention mechanism — dispensing with recurrence and convolutions entirely"</div>
+          <div class="annotation-note">关键词：dispensing with — 彻底抛弃</div>
+          <div class="annotation-page">Page 1 · Abstract</div>
+        </div>
+      </div>
+      <div class="annotation-item">
+        <div class="annotation-dot pink"></div>
+        <div class="annotation-text">
+          <div class="annotation-quote">"hidden states h<sub>t</sub>, as a function of the previous hidden state h<sub>t−1</sub>"</div>
+          <div class="annotation-note">RNN本质缺陷：串行计算无法并行</div>
+          <div class="annotation-page">Page 2 · §Introduction</div>
+        </div>
+      </div>
+      <div style="text-align:center;padding:20px;color:var(--text-tertiary);font-size:12px;">
+        ← 在左侧 PDF 中选中文本即可添加批注
+      </div>
+    </div>
+
+    <!-- Panel: Notes -->
+    <div class="panel-content" id="panel-notes" style="display:none;">
+      <div class="note-card">
+        <div class="note-card-header">
+          <span class="note-card-title">Transformer 核心架构理解</span>
+          <span class="note-card-date">Jul 2</span>
+        </div>
+        <div class="note-card-body">
+          <p>Transformer 的三个核心组件：</p>
+          <p>1. <code>Self-Attention</code> — 每个位置都可以直接关注所有其他位置</p>
+          <p>2. <code>Multi-Head Attention</code> — 多个注意力头并行学习不同表示</p>
+          <p>3. <code>Positional Encoding</code> — 弥补无位置信息的缺陷</p>
+          <br>
+          <p>**关键公式**：Attention(Q,K,V) = softmax(QK^T/√d_k)V</p>
+        </div>
+        <div class="note-card-footer">
+          <span class="note-tag">#transformer</span>
+          <span class="note-tag">#核心概念</span>
+          <span class="note-tag">#attention</span>
+        </div>
+      </div>
+      <div class="note-card">
+        <div class="note-card-header">
+          <span class="note-card-title">与 BERT/GPT 的关系</span>
+          <span class="note-card-date">Jul 1</span>
+        </div>
+        <div class="note-card-body">
+          Transformer 是基础架构，BERT 使用 Encoder-only，GPT 使用 Decoder-only。两者都基于本文提出的 Self-Attention 机制。
+        </div>
+        <div class="note-card-footer">
+          <span class="note-tag">#扩展阅读</span>
+          <span class="note-tag">#BERT</span>
+          <span class="note-tag">#GPT</span>
+        </div>
+      </div>
+      <div class="note-card">
+        <div class="note-card-header">
+          <span class="note-card-title">值得复现的实验</span>
+          <span class="note-card-date">Jun 30</span>
+        </div>
+        <div class="note-card-body">
+          Table 2 中的 BLEU 分数对比实验值得自己跑一遍——特别是 (h=8, d_k=64) vs (h=16, d_k=32) 的对比。
+        </div>
+        <div class="note-card-footer">
+          <span class="note-tag">#实验</span>
+          <span class="note-tag">#TODO</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel: AI Chat -->
+    <div class="panel-content" id="panel-ai" style="display:none;">
+      <div class="ai-chat">
+        <select class="ai-model-select">
+          <option>Claude (Sonnet 4.6)</option>
+          <option>GPT-4o</option>
+          <option>DeepSeek V3</option>
+          <option>Qwen-Max</option>
+        </select>
+        <div class="ai-messages">
+          <div class="ai-msg assistant">
+            我是你的 AI 阅读助手。你可以向我提问关于当前论文的任何问题，包括概念解释、段落翻译、公式推导等。
+          </div>
+          <div class="ai-msg user">
+            What is the key innovation of this paper?
+          </div>
+          <div class="ai-msg assistant">
+            The key innovation is the <strong>Transformer architecture</strong> — a model that relies entirely on <strong>self-attention mechanisms</strong> without using any recurrent (RNN/LSTM) or convolutional layers.<br><br>
+            This enables <strong>massively parallel computation</strong> during training (unlike RNNs which process tokens sequentially) and achieves state-of-the-art results on machine translation tasks with significantly less training time.<br><br>
+            The core idea is the <strong>Scaled Dot-Product Attention</strong>:<br>
+            <code>Attention(Q,K,V) = softmax(QK^T/√d_k)·V</code>
+          </div>
+          <div class="ai-msg user">
+            How does Multi-Head Attention work?
+          </div>
+          <div class="ai-msg assistant">
+            Multi-Head Attention runs the attention mechanism multiple times <strong>in parallel</strong> (with different learned linear projections), then concatenates the outputs:<br><br>
+            1. Project Q, K, V through h different weight matrices<br>
+            2. Apply scaled dot-product attention to each set<br>
+            3. Concatenate all h outputs<br>
+            4. Project back to the model dimension<br><br>
+            This allows each "head" to attend to different aspects of the input (e.g., one head for syntax, another for semantics).
+          </div>
+        </div>
+        <div class="ai-input-area">
+          <input type="text" placeholder="向 AI 提问关于本文的问题..." />
+          <button>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script>
+// ===== Theme Toggle (with persistence) =====
+(function initTheme() {
+  const saved = localStorage.getItem('paperreader-theme');
+  if (saved) document.documentElement.setAttribute('data-theme', saved);
+  updateThemeIcon(document.documentElement.getAttribute('data-theme'));
+})();
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme');
+  const next = current === 'light' ? 'dark' : 'light';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('paperreader-theme', next);
+  updateThemeIcon(next);
+}
+
+function updateThemeIcon(theme) {
+  const icon = document.getElementById('themeIcon');
+  if (theme === 'dark') {
+    icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  } else {
+    icon.innerHTML = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+  }
+}
+
+// ===== Language Toggle =====
+let lang = 'zh';
+function toggleLang() {
+  lang = lang === 'zh' ? 'en' : 'zh';
+  document.getElementById('langToggle').textContent = lang === 'zh' ? '中' : 'EN';
+}
+
+// ===== Right Panel Tabs =====
+function switchPanel(name) {
+  document.querySelectorAll('.panel-content').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.panel-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('panel-' + name).style.display = 'flex';
+  const clicked = document.querySelector(`.panel-tab[onclick*="${name}"]`);
+  if (clicked) clicked.classList.add('active');
+}
+
+// ===== Sidebar Active State =====
+document.querySelectorAll('.sidebar-item').forEach(item => {
+  item.addEventListener('click', function() {
+    document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+</script>
+
+</body>
+</html>
