@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useTranslations } from "next-intl"
+import { PanelRightClose, PanelRightOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { PaperDetailDto } from "@/lib/api/types"
 
@@ -14,6 +15,7 @@ interface RightPanelProps {
 export function RightPanel({ paper }: RightPanelProps) {
   const t = useTranslations("panel")
   const [activeTab, setActiveTab] = useState<PanelTab>("metadata")
+  const [collapsed, setCollapsed] = useState(false)
 
   const tabs: { key: PanelTab; label: string }[] = [
     { key: "metadata", label: t("metadata") },
@@ -22,24 +24,52 @@ export function RightPanel({ paper }: RightPanelProps) {
     { key: "aiChat", label: t("aiChat") },
   ]
 
+  if (collapsed) {
+    return (
+      <aside
+        className="w-[44px] border-l border-[var(--border-subtle)] flex items-center justify-center shrink-0 transition-all duration-200"
+        style={{ background: "var(--surface-1)", backdropFilter: "blur(20px) saturate(180%)" }}
+      >
+        <button
+          onClick={() => setCollapsed(false)}
+          title="Expand panel"
+          className="p-1 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all"
+        >
+          <PanelRightOpen className="w-[15px] h-[15px]" />
+        </button>
+      </aside>
+    )
+  }
+
   return (
-    <aside className="w-[380px] border-l border-[var(--border-subtle)] flex flex-col select-none shrink-0"
-      style={{ background: "var(--surface-1)", backdropFilter: "blur(20px) saturate(180%)" }}>
-      <nav className="flex border-b border-[var(--border-subtle)] px-2 pt-1.5 gap-0.5">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={cn(
-              "px-4 py-2.5 text-[12.5px] font-[540] rounded-t-lg border-b-2 border-transparent transition-all duration-150 -mb-px",
-              "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]",
-              activeTab === tab.key &&
-                "text-[var(--text-primary)] border-[var(--text-primary)]",
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
+    <aside
+      className="w-[380px] border-l border-[var(--border-subtle)] flex flex-col select-none shrink-0 transition-all duration-200"
+      style={{ background: "var(--surface-1)", backdropFilter: "blur(20px) saturate(180%)" }}
+    >
+      <nav className="flex border-b border-[var(--border-subtle)] px-2 pt-1.5 gap-0.5 items-center">
+        <div className="flex gap-0.5">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={cn(
+                "px-4 py-2.5 text-[12.5px] font-[540] rounded-t-lg border-b-2 border-transparent transition-all duration-150 -mb-px",
+                "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]",
+                activeTab === tab.key &&
+                  "text-[var(--text-primary)] border-[var(--text-primary)]",
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => setCollapsed(true)}
+          title="Collapse panel"
+          className="ml-auto mr-1 p-1 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all shrink-0"
+        >
+          <PanelRightClose className="w-[15px] h-[15px]" />
+        </button>
       </nav>
 
       <div className="flex-1 overflow-auto p-4">

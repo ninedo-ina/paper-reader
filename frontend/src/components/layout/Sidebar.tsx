@@ -1,8 +1,8 @@
 "use client"
 
-import type { ElementType } from "react"
+import { useState, type ElementType } from "react"
 import { useTranslations } from "next-intl"
-import { Library, Upload, Clock, FileText, Settings, Star, Tag } from "lucide-react"
+import { Library, Upload, Clock, FileText, Settings, Star, Tag, PanelLeftClose, PanelLeftOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const sections = [
@@ -34,8 +34,25 @@ interface SidebarProps {
 
 export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
   const t = useTranslations("nav")
+  const [collapsed, setCollapsed] = useState(false)
 
-  const renderItem = (item: { key: string; icon: ElementType; badge: string | null }) => (
+  const renderCollapsedItem = (item: { key: string; icon: ElementType; badge: string | null }) => (
+    <button
+      key={item.key}
+      onClick={() => onNavigate?.(item.key)}
+      title={t(item.key)}
+      className={cn(
+        "flex items-center justify-center w-9 h-9 mx-auto rounded-[10px] transition-all duration-150",
+        "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]",
+        activePanel === item.key &&
+          "bg-[var(--bg-active)] text-[var(--text-primary)]",
+      )}
+    >
+      <item.icon className="w-[18px] h-[18px]" />
+    </button>
+  )
+
+  const renderExpandedItem = (item: { key: string; icon: ElementType; badge: string | null }) => (
     <button
       key={item.key}
       onClick={() => onNavigate?.(item.key)}
@@ -57,25 +74,77 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
   )
 
   return (
-    <aside className="w-[220px] border-r border-[var(--border-subtle)] flex flex-col py-3 select-none shrink-0"
-      style={{ background: "var(--surface-1)", backdropFilter: "blur(20px) saturate(180%)" }}>
-      {sections.map((section) => (
-        <div key={section.label}>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.6px] text-[var(--text-tertiary)] px-3 pt-4 pb-1.5">
-            {section.label}
+    <aside
+      className={cn(
+        "border-r border-[var(--border-subtle)] flex flex-col py-3 select-none shrink-0 transition-all duration-200",
+        collapsed ? "w-[52px]" : "w-[220px]",
+      )}
+      style={{ background: "var(--surface-1)", backdropFilter: "blur(20px) saturate(180%)" }}
+    >
+      {/* Header */}
+      {collapsed ? (
+        <div className="flex justify-center mb-1">
+          <button
+            onClick={() => setCollapsed(false)}
+            title="Expand sidebar"
+            className="p-1 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all"
+          >
+            <PanelLeftOpen className="w-[15px] h-[15px]" />
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center justify-between px-3 mb-4">
+          <div className="flex flex-col gap-1.5 text-center flex-1">
+            <span className="font-[680] text-[14px] tracking-[-0.3px] text-[var(--text-primary)]">
+              PaperReader
+            </span>
+            <span className="text-[11px] text-[var(--text-tertiary)]">
+              More Interest Less Interests
+            </span>
           </div>
-          {section.items.map(renderItem)}
+          <button
+            onClick={() => setCollapsed(true)}
+            title="Collapse sidebar"
+            className="p-1 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all shrink-0"
+          >
+            <PanelLeftClose className="w-[15px] h-[15px]" />
+          </button>
         </div>
-      ))}
+      )}
 
-      <div className="flex-1" />
+      {collapsed ? (
+        <>
+          {sections.map((section) => (
+            <div key={section.label} className="flex flex-col items-center gap-1 mt-3">
+              {section.items.map(renderCollapsedItem)}
+            </div>
+          ))}
+          <div className="flex-1" />
+          <div className="flex flex-col items-center gap-1">
+            {bottomItems.map(renderCollapsedItem)}
+          </div>
+        </>
+      ) : (
+        <>
+          {sections.map((section) => (
+            <div key={section.label}>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.6px] text-[var(--text-tertiary)] px-3 pt-4 pb-1.5">
+                {section.label}
+              </div>
+              {section.items.map(renderExpandedItem)}
+            </div>
+          ))}
 
-      <div>
-        <div className="text-[11px] font-semibold uppercase tracking-[0.6px] text-[var(--text-tertiary)] px-3 pt-4 pb-1.5">
-          Settings
-        </div>
-        {bottomItems.map(renderItem)}
-      </div>
+          <div className="flex-1" />
+
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.6px] text-[var(--text-tertiary)] px-3 pt-4 pb-1.5">
+              Settings
+            </div>
+            {bottomItems.map(renderExpandedItem)}
+          </div>
+        </>
+      )}
     </aside>
   )
 }

@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "org.paperreader"
-version = "0.1.0"
+version = "0.1.3"
 
 java {
     toolchain {
