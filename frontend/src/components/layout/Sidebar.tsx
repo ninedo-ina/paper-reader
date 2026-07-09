@@ -1,15 +1,16 @@
 "use client"
 
-import { useState, type ElementType } from "react"
+import { useState, useEffect, type ElementType } from "react"
 import { useTranslations } from "next-intl"
 import { Library, Upload, Clock, FileText, Settings, Star, Tag, PanelLeftClose, PanelLeftOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { usePaperStore } from "@/stores/paper-store"
 
 const sections = [
   {
     label: "Library",
     items: [
-      { key: "library", icon: Library, badge: null },
+      { key: "library", icon: Library, dynamicBadge: true },
       { key: "history", icon: Clock, badge: "12" },
       { key: "notes", icon: FileText, badge: "8" },
     ],
@@ -17,8 +18,8 @@ const sections = [
   {
     label: "Discover",
     items: [
-      { key: "starred", icon: Star, badge: null },
-      { key: "tags", icon: Tag, badge: null },
+      { key: "starred", icon: Star, badge: "0" },
+      { key: "tags", icon: Tag, badge: "0" },
     ],
   },
 ]
@@ -32,17 +33,32 @@ interface SidebarProps {
   onNavigate?: (key: string) => void
 }
 
+interface SidebarItem {
+  key: string
+  icon: ElementType
+  badge?: string | null
+  dynamicBadge?: boolean
+}
+
 export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
   const t = useTranslations("nav")
   const [collapsed, setCollapsed] = useState(false)
+  const { total, loadPapers } = usePaperStore()
 
-  const renderCollapsedItem = (item: { key: string; icon: ElementType; badge: string | null }) => (
+  useEffect(() => {
+    loadPapers(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const papersBadge = total > 99 ? "99+" : String(total)
+
+  const renderCollapsedItem = (item: SidebarItem) => (
     <button
       key={item.key}
       onClick={() => onNavigate?.(item.key)}
       title={t(item.key)}
       className={cn(
-        "flex items-center justify-center w-9 h-9 mx-auto rounded-[10px] transition-all duration-150",
+        "flex items-center justify-center w-9 h-9 mx-auto mb-0.5 rounded-[10px] transition-all duration-150",
         "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]",
         activePanel === item.key &&
           "bg-[var(--bg-active)] text-[var(--text-primary)]",
@@ -52,26 +68,30 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
     </button>
   )
 
-  const renderExpandedItem = (item: { key: string; icon: ElementType; badge: string | null }) => (
-    <button
-      key={item.key}
-      onClick={() => onNavigate?.(item.key)}
-      className={cn(
-        "flex items-center gap-2.5 px-3 py-2 mx-2 rounded-[10px] text-[13.5px] font-[470] transition-all duration-150",
-        "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]",
-        activePanel === item.key &&
-          "bg-[var(--bg-active)] text-[var(--text-primary)] font-[550] shadow-[inset_2px_0_0_var(--text-primary)]",
-      )}
-    >
-      <item.icon className="w-[18px] h-[18px] shrink-0" />
-      <span className="flex-1 text-left">{t(item.key)}</span>
-      {item.badge && (
-        <span className="ml-auto bg-[var(--accent-soft)] text-[var(--text-secondary)] text-[11px] font-semibold px-[7px] py-[2px] rounded-[10px]">
-          {item.badge}
-        </span>
-      )}
-    </button>
-  )
+  const renderExpandedItem = (item: SidebarItem) => {
+    const badge = item.dynamicBadge ? papersBadge : item.badge
+
+    return (
+      <button
+        key={item.key}
+        onClick={() => onNavigate?.(item.key)}
+        className={cn(
+          "flex items-center gap-2.5 px-3 py-2 mx-1 mb-0.5 rounded-[10px] text-[13.5px] font-[470] transition-all duration-150",
+          "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]",
+          activePanel === item.key &&
+            "bg-[var(--bg-active)] text-[var(--text-primary)] font-[550]",
+        )}
+      >
+        <item.icon className="w-[18px] h-[18px] shrink-0" />
+        <span className="flex-1 text-left">{t(item.key)}</span>
+        {badge && (
+          <span className="ml-auto bg-[var(--accent-soft)] text-[var(--text-secondary)] text-[11px] font-semibold px-[7px] py-[2px] rounded-[10px]">
+            {badge}
+          </span>
+        )}
+      </button>
+    )
+  }
 
   return (
     <aside
