@@ -22,6 +22,9 @@ data class Paper(
     @Column(columnDefinition = "TEXT")
     val abstractText: String? = null,
 
+    @Column(length = 2000)
+    val participants: String? = null,
+
     @Column(length = 500)
     val doi: String? = null,
 
@@ -32,13 +35,13 @@ data class Paper(
     val journal: String? = null,
 
     @Column(nullable = false, length = 50)
-    val sourceType: String, // UPLOAD or URL
+    val sourceType: String, // UPLOAD, URL, or MANUAL
 
     @Column(length = 1000)
     val sourceUrl: String? = null,
 
-    @Column(nullable = false)
-    val filePath: String,
+    @Column
+    val filePath: String? = null,
 
     @Column(columnDefinition = "jsonb")
     val grobidResult: String? = null,

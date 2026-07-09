@@ -31,6 +31,13 @@ class PaperController(
     ): ApiResponse<PaperDetailDto> =
         ApiResponse(data = paperService.uploadFromUrl(request, principal.userId))
 
+    @PostMapping
+    fun create(
+        @RequestBody request: CreatePaperRequest,
+        @AuthenticationPrincipal principal: UserPrincipal,
+    ): ApiResponse<PaperDetailDto> =
+        ApiResponse(data = paperService.createPaper(request, principal.userId))
+
     @GetMapping
     fun list(
         @RequestParam(defaultValue = "0") page: Int,

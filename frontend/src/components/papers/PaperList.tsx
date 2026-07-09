@@ -1,18 +1,21 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { usePaperStore } from "@/stores/paper-store"
 import { PaperCard } from "./PaperCard"
 import { Button } from "@/components/ui/Button"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, Plus, Upload, RefreshCw, X } from "lucide-react"
 
 interface PaperListProps {
   activeId?: number | null
   onSelect?: (id: number) => void
+  onUpload?: () => void
+  onCreate?: () => void
+  onClose?: () => void
 }
 
-export function PaperList({ activeId, onSelect }: PaperListProps) {
+export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose }: PaperListProps) {
   const t = useTranslations("common")
   const { papers, total, page, isListLoading, loadPapers, deletePaper } = usePaperStore()
   const pageSize = 20
@@ -22,15 +25,41 @@ export function PaperList({ activeId, onSelect }: PaperListProps) {
     loadPapers(1)
   }, [loadPapers])
 
+  const handleRefresh = useCallback(() => {
+    loadPapers(page)
+  }, [loadPapers, page])
+
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border-color)]">
-        <h2 className="text-sm font-semibold text-[var(--text-primary)]">
-          {t("myPapers") || "My Papers"}
-        </h2>
-        <span className="text-xs text-[var(--text-tertiary)]">
-          {total} {t("papers") || "papers"}
-        </span>
+      <div className="px-4 py-3 border-b border-[var(--border-subtle)]">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+            {t("myPapers") || "我的论文"}
+          </h2>
+          <div className="flex items-center gap-0.5">
+            <button onClick={onCreate} title="创建论文"
+              className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all">
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+            <button onClick={onUpload} title="导入论文"
+              className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all">
+              <Upload className="w-3.5 h-3.5" />
+            </button>
+            <button onClick={handleRefresh} title="刷新"
+              className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all">
+              <RefreshCw className="w-3.5 h-3.5" />
+            </button>
+            {onClose && (
+              <button onClick={onClose} title="关闭"
+                className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+        <p className="text-[11px] text-[var(--text-tertiary)] mt-0.5">
+          {total} 篇论文
+        </p>
       </div>
 
       {isListLoading ? (

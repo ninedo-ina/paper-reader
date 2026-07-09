@@ -4,7 +4,7 @@
 
 import { create } from "zustand"
 import * as papersApi from "@/lib/api/papers"
-import type { PaperListDto, PaperDetailDto } from "@/lib/api/types"
+import type { PaperListDto, PaperDetailDto, CreatePaperRequest } from "@/lib/api/types"
 
 interface PaperState {
   // 论文列表
@@ -25,6 +25,7 @@ interface PaperState {
   loadPaper: (id: number) => Promise<void>
   uploadPdf: (file: File) => Promise<PaperDetailDto>
   uploadFromUrl: (url: string, title?: string) => Promise<PaperDetailDto>
+  createPaper: (data: CreatePaperRequest) => Promise<PaperDetailDto>
   deletePaper: (id: number) => Promise<void>
   clearCurrentPaper: () => void
   clearError: () => void
@@ -70,6 +71,14 @@ export const usePaperStore = create<PaperState>((set) => ({
     set({ error: null })
     const paper = await papersApi.uploadFromUrl({ url, title })
     set((s) => ({ papers: [paper as unknown as PaperListDto, ...s.papers], currentPaper: paper }))
+    return paper
+  },
+
+  createPaper: async (data) => {
+    set({ error: null })
+    const paper = await papersApi.createPaper(data)
+    const list = await papersApi.listPapers(1)
+    set({ papers: list.items, total: list.total, page: list.page, currentPaper: paper })
     return paper
   },
 

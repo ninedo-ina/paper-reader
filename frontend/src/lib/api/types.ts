@@ -51,7 +51,7 @@ export interface GitHubAuthRequest {
 
 // --- 论文 ---
 
-export type SourceType = "UPLOAD" | "URL"
+export type SourceType = "UPLOAD" | "URL" | "MANUAL"
 
 export interface PaperListDto {
   id: number
@@ -70,6 +70,7 @@ export interface PaperDetailDto {
   title: string
   authors?: string
   abstractText?: string
+  participants?: string
   doi?: string
   year?: number
   journal?: string
@@ -85,6 +86,13 @@ export interface PaperDetailDto {
 export interface UploadFromUrlRequest {
   url: string
   title?: string
+}
+
+export interface CreatePaperRequest {
+  title: string
+  authors?: string
+  participants?: string
+  abstractText?: string
 }
 
 // --- 批注 ---

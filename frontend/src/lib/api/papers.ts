@@ -3,7 +3,7 @@
 // =============================================================================
 
 import { get, post, postForm, del } from "./client"
-import type { PaperListDto, PaperDetailDto, PageResponse, UploadFromUrlRequest } from "./types"
+import type { PaperListDto, PaperDetailDto, PageResponse, UploadFromUrlRequest, CreatePaperRequest } from "./types"
 
 /** 获取用户论文列表（分页） */
 export function listPapers(page = 1, pageSize = 20): Promise<PageResponse<PaperListDto>> {
@@ -25,6 +25,11 @@ export function uploadPdf(file: File): Promise<PaperDetailDto> {
 /** 从 URL 导入论文 */
 export function uploadFromUrl(data: UploadFromUrlRequest): Promise<PaperDetailDto> {
   return post<PaperDetailDto>("/papers/upload-url", data)
+}
+
+/** 手动创建论文 */
+export function createPaper(data: CreatePaperRequest): Promise<PaperDetailDto> {
+  return post<PaperDetailDto>("/papers", data)
 }
 
 /** 下载论文 PDF */

@@ -14,7 +14,7 @@ data class PaperDto(
     val journal: String?,
     val sourceType: String,
     val sourceUrl: String?,
-    val filePath: String,
+    val filePath: String?,
     val pageCount: Int,
     val fileSize: Long,
     val createdAt: Instant,
@@ -40,6 +40,7 @@ data class PaperDetailDto(
     val title: String,
     val authors: String?,
     val abstractText: String?,
+    val participants: String?,
     val doi: String?,
     val year: String?,
     val journal: String?,
@@ -55,6 +56,13 @@ data class PaperDetailDto(
 data class UploadFromUrlRequest(
     val url: String,
     val title: String? = null,
+)
+
+data class CreatePaperRequest(
+    val title: String,
+    val authors: String? = null,
+    val participants: String? = null,
+    val abstractText: String? = null,
 )
 
 // ==== Annotation ====

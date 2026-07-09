@@ -1,0 +1,2 @@
+ALTER TABLE pr_papers ALTER COLUMN file_path DROP NOT NULL;
+ALTER TABLE pr_papers ADD COLUMN participants VARCHAR(2000);

@@ -19,7 +19,17 @@
     "page": "页码",
     "zoom": "缩放",
     "search": "搜索文本",
-    "noPaperSelected": "请从左侧上传论文或选择已上传的论文开始阅读"
+    "noPaperSelected": "请从左侧上传论文或选择已上传的论文开始阅读",
+    "createPaper": "创建论文",
+    "paperTitle": "论文标题",
+    "paperTitlePlaceholder": "输入论文标题",
+    "paperAuthors": "作者",
+    "paperAuthorsPlaceholder": "作者姓名",
+    "paperParticipants": "参与者",
+    "paperParticipantsPlaceholder": "参与者姓名",
+    "paperAbstract": "摘要",
+    "paperAbstractPlaceholder": "输入或粘贴摘要...",
+    "creating": "创建中..."
   },
   "panel": {
     "metadata": "论文信息",

@@ -7,16 +7,18 @@ import { RightPanel } from "@/components/layout/RightPanel"
 import { PDFViewer } from "@/components/reader/PDFViewer"
 import { PaperList } from "@/components/papers/PaperList"
 import { UploadDialog } from "@/components/papers/UploadDialog"
+import { CreatePaperDialog } from "@/components/papers/CreatePaperDialog"
+import { PaperEditor } from "@/components/papers/PaperEditor"
 import { ThemeToggle } from "@/components/ui/ThemeToggle"
 import { LangToggle } from "@/components/ui/LangToggle"
 import { usePaperStore } from "@/stores/paper-store"
-import { X } from "lucide-react"
 
 type SidebarPanel = "library" | null
 
 export default function Home() {
   const [sidebarPanel, setSidebarPanel] = useState<SidebarPanel>(null)
   const [showUpload, setShowUpload] = useState(false)
+  const [showCreate, setShowCreate] = useState(false)
   const { currentPaper, loadPaper } = usePaperStore()
 
   const handleSidebarClick = useCallback((key: string) => {
@@ -63,25 +65,22 @@ export default function Home() {
           {/* Paper list panel (slides in from sidebar) */}
           {sidebarPanel === "library" && (
             <aside className="w-72 border-r border-[var(--border-subtle)] glass-surface flex flex-col shrink-0">
-              <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-subtle)]">
-                <span className="text-xs font-semibold text-[var(--text-secondary)]">My Library</span>
-                <button
-                  type="button"
-                  onClick={() => setSidebarPanel(null)}
-                  className="p-0.5 rounded hover:bg-[var(--surface-2)] text-[var(--text-tertiary)]"
-                >
-                  <X className="size-4" />
-                </button>
-              </div>
               <PaperList
                 activeId={currentPaper?.id ?? null}
                 onSelect={handlePaperSelect}
+                onUpload={() => setShowUpload(true)}
+                onCreate={() => setShowCreate(true)}
+                onClose={() => setSidebarPanel(null)}
               />
             </aside>
           )}
 
           <main className="flex-1 overflow-hidden">
-            <PDFViewer paper={currentPaper} onUploadClick={() => setShowUpload(true)} />
+            {currentPaper?.sourceType === "MANUAL" ? (
+              <PaperEditor paper={currentPaper} />
+            ) : (
+              <PDFViewer paper={currentPaper} onUploadClick={() => setShowUpload(true)} />
+            )}
           </main>
 
           <RightPanel paper={currentPaper} />
@@ -89,6 +88,7 @@ export default function Home() {
       </div>
 
       <UploadDialog open={showUpload} onClose={() => setShowUpload(false)} />
+      <CreatePaperDialog open={showCreate} onClose={() => setShowCreate(false)} />
     </div>
   )
 }

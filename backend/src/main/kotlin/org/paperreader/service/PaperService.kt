@@ -68,6 +68,26 @@ class PaperService(
         return paperRepository.save(grobidResult).toDetailDto()
     }
 
+    @Transactional
+    fun createPaper(request: CreatePaperRequest, userId: Long): PaperDetailDto {
+        require(request.title.isNotBlank()) { "Title is required" }
+        val paper = paperRepository.save(
+            Paper(
+                userId = userId,
+                title = request.title,
+                authors = request.authors,
+                participants = request.participants,
+                abstractText = request.abstractText,
+                sourceType = "MANUAL",
+                sourceUrl = null,
+                filePath = null,
+                pageCount = 0,
+                fileSize = 0,
+            )
+        )
+        return paper.toDetailDto()
+    }
+
     fun getPaper(id: Long, userId: Long): PaperDetailDto {
         val paper = paperRepository.findByIdAndUserId(id, userId)
             ?: throw ResourceNotFoundException("Paper", id)
@@ -88,7 +108,9 @@ class PaperService(
     fun downloadPaper(id: Long, userId: Long): Pair<String, ByteArray> {
         val paper = paperRepository.findByIdAndUserId(id, userId)
             ?: throw ResourceNotFoundException("Paper", id)
-        val bytes = fileStorageService.read(paper.filePath)
+        val filePath = paper.filePath
+            ?: throw IllegalArgumentException("This paper has no downloadable file")
+        val bytes = fileStorageService.read(filePath)
         return "${paper.title}.pdf" to bytes
     }
 
@@ -96,7 +118,7 @@ class PaperService(
     fun deletePaper(id: Long, userId: Long) {
         val paper = paperRepository.findByIdAndUserId(id, userId)
             ?: throw ResourceNotFoundException("Paper", id)
-        fileStorageService.delete(paper.filePath)
+        paper.filePath?.let { fileStorageService.delete(it) }
         paperRepository.delete(paper)
     }
 
@@ -118,6 +140,7 @@ class PaperService(
         title = title,
         authors = authors,
         abstractText = abstractText,
+        participants = participants,
         doi = doi,
         year = year,
         journal = journal,

@@ -19,7 +19,17 @@
     "page": "Page",
     "zoom": "Zoom",
     "search": "Search text",
-    "noPaperSelected": "Upload a paper or select one from your library to start reading"
+    "noPaperSelected": "Upload a paper or select one from your library to start reading",
+    "createPaper": "Create Paper",
+    "paperTitle": "Paper Title",
+    "paperTitlePlaceholder": "Enter paper title",
+    "paperAuthors": "Authors",
+    "paperAuthorsPlaceholder": "Author names",
+    "paperParticipants": "Participants",
+    "paperParticipantsPlaceholder": "Participant names",
+    "paperAbstract": "Abstract",
+    "paperAbstractPlaceholder": "Enter or paste abstract...",
+    "creating": "Creating..."
   },
   "panel": {
     "metadata": "Metadata",

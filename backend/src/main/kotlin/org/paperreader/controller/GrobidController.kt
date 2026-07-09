@@ -39,7 +39,8 @@ class GrobidController(
         val paper = paperRepository.findByIdAndUserId(paperId, principal.userId)
             ?: throw ResourceNotFoundException("Paper", paperId)
 
-        val pdfBytes = fileStorageService.read(paper.filePath)
+        val path = paper.filePath ?: throw IllegalArgumentException("This paper has no file to reparse")
+        val pdfBytes = fileStorageService.read(path)
         val teiXml = grobidClient.processHeader(pdfBytes)
         paperRepository.save(paper.copy(grobidResult = teiXml, updatedAt = Instant.now()))
 
