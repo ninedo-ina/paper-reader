@@ -110,7 +110,7 @@ export function SearchDialog() {
       </button>
 
       {/* Portal 到 body 确保全局遮罩 / portal to body for global overlay */}
-      {createPortal(overlay, document.body)}
+      {mounted && createPortal(overlay, document.body)}
     </>
   )
 }
