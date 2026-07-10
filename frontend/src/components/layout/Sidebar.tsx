@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl"
 import { Library, Clock, FileText, Settings, Star, Tag, PanelLeftClose, PanelLeftOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { usePaperStore } from "@/stores/paper-store"
+import { useAuthStore } from "@/stores/auth-store"
 
 const sections = [
   {
@@ -44,11 +45,13 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
   const t = useTranslations("nav")
   const [collapsed, setCollapsed] = useState(false)
   const { total, loadPapers } = usePaperStore()
+  const accessToken = useAuthStore((s) => s.accessToken)
 
   useEffect(() => {
-    loadPapers(0)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    if (accessToken) {
+      loadPapers(0)
+    }
+  }, [accessToken, loadPapers])
 
   const papersBadge = total > 99 ? "99+" : String(total)
 

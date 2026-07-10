@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { usePaperStore } from "@/stores/paper-store"
+import { useAuthStore } from "@/stores/auth-store"
 import { PaperCard } from "./PaperCard"
 import { TabBar } from "@/components/ui/TabBar"
 import { TagDialog } from "./TagDialog"
@@ -22,18 +23,22 @@ export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose }: P
   const t = useTranslations("common")
   const tp = useTranslations("papers")
   const {
-    papers, total, page, isListLoading, activeTab, loadPapers,
+    papers, total, page, isListLoading, error, activeTab, loadPapers,
     setActiveTab, deletePaper,
   } = usePaperStore()
   const pageSize = 20
   const totalPages = Math.ceil(total / pageSize)
 
+  const accessToken = useAuthStore((s) => s.accessToken)
+
   const [tagPaperId, setTagPaperId] = useState<number | null>(null)
   const [sharePaperId, setSharePaperId] = useState<number | null>(null)
 
   useEffect(() => {
-    loadPapers(0)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    if (accessToken) {
+      loadPapers(0)
+    }
+  }, [accessToken, loadPapers])
 
   const handleRefresh = useCallback(() => { loadPapers(page) }, [loadPapers, page])
 
@@ -85,10 +90,13 @@ export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose }: P
           <p className="text-sm text-[var(--text-tertiary)]">{t("loading")}</p>
         </div>
       ) : papers.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center p-4">
+        <div className="flex-1 flex flex-col items-center justify-center gap-2 p-4">
           <p className="text-sm text-[var(--text-tertiary)] text-center">
             {t("noData")}
           </p>
+          {error && (
+            <p className="text-xs text-red-400 text-center max-w-[200px]">{error}</p>
+          )}
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
