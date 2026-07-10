@@ -34,6 +34,7 @@ data class TokenResponse(
     val accessToken: String,
     val refreshToken: String,
     val expiresIn: Long,
+    val isNewUser: Boolean = false,
 )
 
 data class PageResponse<T>(
@@ -41,4 +42,16 @@ data class PageResponse<T>(
     val total: Long,
     val page: Int,
     val pageSize: Int,
+)
+
+data class RefreshTokenRequest(
+    val refreshToken: String,
+)
+
+data class UserProfile(
+    val id: Long,
+    val email: String,
+    val displayName: String?,
+    val avatarUrl: String?,
+    val authProvider: String,
 )

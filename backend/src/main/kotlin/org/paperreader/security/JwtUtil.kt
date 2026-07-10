@@ -3,6 +3,7 @@ package org.paperreader.security
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
+import org.paperreader.dto.TokenResponse
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.util.*
@@ -43,5 +44,23 @@ class JwtUtil(
         true
     } catch (e: Exception) {
         false
+    }
+
+    fun extractUserId(token: String): Long =
+        extractClaims(token).subject.toLong()
+
+    fun extractEmail(token: String): String =
+        extractClaims(token)["email"] as? String ?: throw IllegalArgumentException("Invalid token: missing email claim")
+
+    fun refreshAccessToken(refreshToken: String): TokenResponse {
+        val claims = extractClaims(refreshToken)
+        val userId = claims.subject.toLong()
+        val email = claims["email"] as? String ?: throw IllegalArgumentException("Invalid refresh token")
+        return TokenResponse(
+            accessToken = generateAccessToken(userId, email),
+            refreshToken = generateRefreshToken(userId, email),
+            expiresIn = accessTokenExpiration,
+            isNewUser = false,
+        )
     }
 }

@@ -42,20 +42,31 @@ class AuthService(
                 authProvider = "local",
             )
         )
-        return generateTokens(user)
+        return generateTokens(user, isNewUser = true)
     }
 
     fun login(request: LoginRequest): TokenResponse {
-        val user = userRepository.findByEmail(request.email)
-            .orElseThrow { IllegalArgumentException("Invalid credentials") }
-
-        require(user.passwordHash != null) {
-            "This account uses ${user.authProvider} login, not password"
+        val existing = userRepository.findByEmail(request.email)
+        val (user, isNew) = if (existing.isPresent) {
+            val u = existing.get()
+            require(u.passwordHash != null) {
+                "This account uses ${u.authProvider} login, not password"
+            }
+            require(passwordEncoder.matches(request.password, u.passwordHash)) {
+                "Invalid credentials"
+            }
+            u to false
+        } else {
+            userRepository.save(
+                User(
+                    email = request.email.trim().lowercase(),
+                    passwordHash = passwordEncoder.encode(request.password),
+                    displayName = request.email.trim().lowercase().substringBefore('@'),
+                    authProvider = "local",
+                )
+            ) to true
         }
-        require(passwordEncoder.matches(request.password, user.passwordHash)) {
-            "Invalid credentials"
-        }
-        return generateTokens(user)
+        return generateTokens(user, isNewUser = isNew)
     }
 
     fun sendEmailCode(request: SendCodeRequest) {
@@ -80,42 +91,48 @@ class AuthService(
 
         redisTemplate.delete("pr:email_code:$email")
 
-        val user = userRepository.findByEmail(email).orElseGet {
+        val existing = userRepository.findByEmail(email)
+        val (user, isNew) = if (existing.isPresent) {
+            existing.get() to false
+        } else {
             userRepository.save(
                 User(
                     email = email,
                     displayName = email.substringBefore('@'),
                     authProvider = "email",
                 )
-            )
+            ) to true
         }
-        return generateTokens(user)
+        return generateTokens(user, isNewUser = isNew)
     }
 
     fun githubLogin(request: GitHubAuthRequest): TokenResponse {
         val accessToken = exchangeGithubToken(request.code)
         val githubUser = fetchGithubUser(accessToken)
 
-        val user = userRepository.findByGithubId(githubUser.id).orElseGet {
-            userRepository.findByEmail(githubUser.email ?: "${githubUser.login}@github.user")
-                .map { existing ->
-                    existing.copy(githubId = githubUser.id, avatarUrl = githubUser.avatarUrl)
-                        .let { userRepository.save(it) }
-                }
-                .orElseGet {
-                    userRepository.save(
-                        User(
-                            email = githubUser.email ?: "${githubUser.login}@github.user",
-                            githubId = githubUser.id,
-                            displayName = githubUser.name ?: githubUser.login,
-                            avatarUrl = githubUser.avatarUrl,
-                            authProvider = "github",
-                        )
-                    )
-                }
+        val byGithubId = userRepository.findByGithubId(githubUser.id)
+        if (byGithubId.isPresent) {
+            return generateTokens(byGithubId.get(), isNewUser = false)
         }
 
-        return generateTokens(user)
+        val email = githubUser.email ?: "${githubUser.login}@github.user"
+        val byEmail = userRepository.findByEmail(email)
+        if (byEmail.isPresent) {
+            val linked = byEmail.get().copy(githubId = githubUser.id, avatarUrl = githubUser.avatarUrl)
+                .let { userRepository.save(it) }
+            return generateTokens(linked, isNewUser = false)
+        }
+
+        val newUser = userRepository.save(
+            User(
+                email = email,
+                githubId = githubUser.id,
+                displayName = githubUser.name ?: githubUser.login,
+                avatarUrl = githubUser.avatarUrl,
+                authProvider = "github",
+            )
+        )
+        return generateTokens(newUser, isNewUser = true)
     }
 
     private fun exchangeGithubToken(code: String): String {
@@ -159,13 +176,14 @@ class AuthService(
         )
     }
 
-    private fun generateTokens(user: User): TokenResponse {
+    private fun generateTokens(user: User, isNewUser: Boolean = false): TokenResponse {
         val accessToken = jwtUtil.generateAccessToken(user.id, user.email)
         val refreshToken = jwtUtil.generateRefreshToken(user.id, user.email)
         return TokenResponse(
             accessToken = accessToken,
             refreshToken = refreshToken,
             expiresIn = 3600000,
+            isNewUser = isNewUser,
         )
     }
 

@@ -23,12 +23,7 @@ export interface TokenResponse {
   accessToken: string
   refreshToken: string
   expiresIn: number // 毫秒
-}
-
-export interface RegisterRequest {
-  email: string
-  password: string
-  displayName?: string
+  isNewUser: boolean // 首次登录（新创建用户）时为 true
 }
 
 export interface LoginRequest {
@@ -47,6 +42,18 @@ export interface EmailLoginRequest {
 
 export interface GitHubAuthRequest {
   code: string
+}
+
+export interface RefreshTokenRequest {
+  refreshToken: string
+}
+
+export interface UserProfile {
+  id: number
+  email: string
+  displayName: string | null
+  avatarUrl: string | null
+  authProvider: string
 }
 
 // --- 论文 ---

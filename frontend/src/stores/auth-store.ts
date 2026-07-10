@@ -4,8 +4,8 @@
 
 import { create } from "zustand"
 import * as authApi from "@/lib/api/auth"
+import type { TokenResponse, LoginRequest, EmailLoginRequest } from "@/lib/api/types"
 import { setTokens, clearTokens } from "@/lib/api/client"
-import type { TokenResponse, LoginRequest, RegisterRequest, EmailLoginRequest } from "@/lib/api/types"
 
 interface AuthState {
   // 状态
@@ -14,15 +14,18 @@ interface AuthState {
   expiresIn: number | null
   isLoading: boolean
   error: string | null
+  isNewUser: boolean | null
 
   // 派生
   isAuthenticated: () => boolean
 
   // 操作
   login: (data: LoginRequest) => Promise<void>
-  register: (data: RegisterRequest) => Promise<void>
   emailCodeLogin: (data: EmailLoginRequest) => Promise<void>
+  githubLogin: (code: string) => Promise<void>
+  refreshSession: () => Promise<void>
   restoreSession: (tokens: TokenResponse) => void
+  consumeNewUserFlag: () => void
   logout: () => void
   clearError: () => void
 }
@@ -33,6 +36,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   expiresIn: null,
   isLoading: false,
   error: null,
+  isNewUser: null,
 
   isAuthenticated: () => !!get().accessToken,
 
@@ -46,24 +50,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,
         expiresIn: tokens.expiresIn,
-        isLoading: false,
-      })
-    } catch (e) {
-      set({ isLoading: false, error: (e as Error).message })
-      throw e
-    }
-  },
-
-  register: async (data) => {
-    set({ isLoading: true, error: null })
-    try {
-      const tokens = await authApi.register(data)
-      setTokens(tokens.accessToken, tokens.refreshToken)
-      persistSession(tokens)
-      set({
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-        expiresIn: tokens.expiresIn,
+        isNewUser: tokens.isNewUser,
         isLoading: false,
       })
     } catch (e) {
@@ -82,12 +69,45 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,
         expiresIn: tokens.expiresIn,
+        isNewUser: tokens.isNewUser,
         isLoading: false,
       })
     } catch (e) {
       set({ isLoading: false, error: (e as Error).message })
       throw e
     }
+  },
+
+  githubLogin: async (code) => {
+    set({ isLoading: true, error: null })
+    try {
+      const tokens = await authApi.githubLogin({ code })
+      setTokens(tokens.accessToken, tokens.refreshToken)
+      persistSession(tokens)
+      set({
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        expiresIn: tokens.expiresIn,
+        isNewUser: tokens.isNewUser,
+        isLoading: false,
+      })
+    } catch (e) {
+      set({ isLoading: false, error: (e as Error).message })
+      throw e
+    }
+  },
+
+  refreshSession: async () => {
+    const rt = get().refreshToken
+    if (!rt) throw new Error("No refresh token")
+    const tokens = await authApi.refreshToken({ refreshToken: rt })
+    setTokens(tokens.accessToken, tokens.refreshToken)
+    persistSession(tokens)
+    set({
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      expiresIn: tokens.expiresIn,
+    })
   },
 
   restoreSession: (tokens) => {
@@ -99,10 +119,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     })
   },
 
+  consumeNewUserFlag: () => set({ isNewUser: null }),
+
   logout: () => {
     clearTokens()
     clearPersistedSession()
-    set({ accessToken: null, refreshToken: null, expiresIn: null, error: null })
+    set({ accessToken: null, refreshToken: null, expiresIn: null, isNewUser: null, error: null })
   },
 
   clearError: () => set({ error: null }),
@@ -113,15 +135,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 const SESSION_KEY = "pr_session"
 
 function persistSession(tokens: TokenResponse) {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(tokens))
-  }
+  if (typeof window === "undefined") return
+  localStorage.setItem(SESSION_KEY, JSON.stringify(tokens))
+  document.cookie = `pr_session=1; path=/; max-age=2592000; SameSite=Lax`
 }
 
 function clearPersistedSession() {
-  if (typeof window !== "undefined") {
-    localStorage.removeItem(SESSION_KEY)
-  }
+  if (typeof window === "undefined") return
+  localStorage.removeItem(SESSION_KEY)
+  document.cookie = "pr_session=; path=/; max-age=0"
 }
 
 /** 从 localStorage 恢复 session（应用启动时调用） */

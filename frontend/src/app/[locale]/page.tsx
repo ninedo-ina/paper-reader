@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { Topbar } from "@/components/layout/Topbar"
 import { Sidebar } from "@/components/layout/Sidebar"
 import { RightPanel } from "@/components/layout/RightPanel"
@@ -9,9 +9,9 @@ import { PaperList } from "@/components/papers/PaperList"
 import { UploadDialog } from "@/components/papers/UploadDialog"
 import { CreatePaperDialog } from "@/components/papers/CreatePaperDialog"
 import { PaperEditor } from "@/components/papers/PaperEditor"
-import { ThemeToggle } from "@/components/ui/ThemeToggle"
-import { LangToggle } from "@/components/ui/LangToggle"
+import { VersionPopup } from "@/components/layout/VersionPopup"
 import { usePaperStore } from "@/stores/paper-store"
+import { useNotificationStore } from "@/stores/notification-store"
 
 type SidebarPanel = "library" | null
 
@@ -20,6 +20,11 @@ export default function Home() {
   const [showUpload, setShowUpload] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
   const { currentPaper, loadPaper } = usePaperStore()
+  const initSystemNotifications = useNotificationStore((s) => s.initSystemNotifications)
+
+  useEffect(() => {
+    initSystemNotifications()
+  }, [initSystemNotifications])
 
   const handleSidebarClick = useCallback((key: string) => {
     if (key === "upload") {
@@ -47,19 +52,6 @@ export default function Home() {
 
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <Topbar />
-
-        {/* Top-right icon group */}
-        <div className="absolute top-0 right-0 flex items-center gap-1 px-3 h-[52px] z-50">
-          <LangToggle />
-          <ThemeToggle />
-          <div
-            className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold ml-2 cursor-pointer"
-            style={{ background: "var(--text-primary)", color: "var(--bg-root, #eeeff2)" }}
-            title="用户"
-          >
-            Y
-          </div>
-        </div>
 
         <div className="flex-1 flex overflow-hidden">
           {/* Paper list panel (slides in from sidebar) */}
@@ -89,6 +81,7 @@ export default function Home() {
 
       <UploadDialog open={showUpload} onClose={() => setShowUpload(false)} />
       <CreatePaperDialog open={showCreate} onClose={() => setShowCreate(false)} />
+      <VersionPopup />
     </div>
   )
 }
