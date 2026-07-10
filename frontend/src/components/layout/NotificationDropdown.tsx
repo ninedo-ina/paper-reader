@@ -34,9 +34,9 @@ export function NotificationDropdown() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="relative flex size-9 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-2)] transition-colors"
+        className="relative flex size-8 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-2)] transition-colors"
       >
-        <Bell className="size-5" />
+        <Bell className="size-4" />
         {unreadCount() > 0 && (
           <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
             {unreadCount() > 9 ? "9+" : unreadCount()}

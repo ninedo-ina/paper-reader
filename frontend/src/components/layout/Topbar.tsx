@@ -11,7 +11,7 @@ export function Topbar() {
   const t = useTranslations();
 
   return (
-    <header className="h-[52px] glass-surface border-b border-[var(--border-subtle)] flex items-center px-4 select-none justify-between">
+    <header className="h-[52px] glass-surface border-b border-[var(--border-subtle)] flex items-center px-4 select-none justify-between relative z-10">
       <div className="flex-1 max-w-xl">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" />
