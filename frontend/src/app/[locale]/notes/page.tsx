@@ -21,7 +21,7 @@ export default function NotesPage() {
   const loadNotes = useCallback(async () => {
     setIsLoading(true)
     try {
-      const res = await listNotes(1, 100)
+      const res = await listNotes(0, 100)
       setNotes(res.items)
     } catch {
       // silent

@@ -1,7 +1,7 @@
 import { get, post, put, del } from "./client"
 import type { NoteDto, CreateNoteRequest, UpdateNoteRequest, PageResponse } from "./types"
 
-export function listNotes(page = 1, pageSize = 20): Promise<PageResponse<NoteDto>> {
+export function listNotes(page = 0, pageSize = 20): Promise<PageResponse<NoteDto>> {
   return get<PageResponse<NoteDto>>(`/notes?page=${page}&pageSize=${pageSize}`)
 }
 

@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { PaperCard } from "@/components/papers/PaperCard"
 import { usePaperStore } from "@/stores/paper-store"
+import { useAuthStore } from "@/stores/auth-store"
 import { useEffect } from "react"
 import Link from "next/link"
 import { FileText } from "lucide-react"
@@ -13,11 +14,14 @@ export default function PapersPage() {
   const t = useTranslations("nav")
   const c = useTranslations("common")
   const { papers, isListLoading, loadPapers, deletePaper } = usePaperStore()
+  const accessToken = useAuthStore((s) => s.accessToken)
   const router = useRouter()
 
   useEffect(() => {
-    loadPapers(0)
-  }, [loadPapers])
+    if (accessToken) {
+      loadPapers(0)
+    }
+  }, [accessToken, loadPapers])
 
   return (
     <div className="min-h-screen bg-[var(--surface-1)]">

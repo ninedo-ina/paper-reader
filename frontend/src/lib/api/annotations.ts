@@ -13,7 +13,7 @@ import type {
 /** 获取论文的所有批注 */
 export function listAnnotations(
   paperId: number,
-  page = 1,
+  page = 0,
   pageSize = 100,
 ): Promise<PageResponse<AnnotationDto>> {
   return get<PageResponse<AnnotationDto>>(

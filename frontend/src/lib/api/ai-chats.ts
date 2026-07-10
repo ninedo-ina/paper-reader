@@ -1,7 +1,7 @@
 import { get, post, del } from "./client"
 import type { AiChatListDto, AiChatDetailDto, CreateChatRequest, ChatRequest, AiMessageDto } from "./types"
 
-export function listChats(page = 1, pageSize = 20): Promise<{ items: AiChatListDto[]; total: number }> {
+export function listChats(page = 0, pageSize = 20): Promise<{ items: AiChatListDto[]; total: number }> {
   return get<{ items: AiChatListDto[]; total: number }>(`/ai-chats?page=${page}&pageSize=${pageSize}`)
 }
 
