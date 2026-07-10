@@ -10,10 +10,13 @@ import { UploadDialog } from "@/components/papers/UploadDialog"
 import { CreatePaperDialog } from "@/components/papers/CreatePaperDialog"
 import { PaperEditor } from "@/components/papers/PaperEditor"
 import { VersionPopup } from "@/components/layout/VersionPopup"
+import { HistoryPanel } from "@/components/history/HistoryPanel"
+import { NotesPanel } from "@/components/notes/NotesPanel"
 import { usePaperStore } from "@/stores/paper-store"
 import { useNotificationStore } from "@/stores/notification-store"
+import type { NoteDto } from "@/lib/api/types"
 
-type SidebarPanel = "library" | null
+type SidebarPanel = "library" | "history" | "notes" | null
 
 export default function Home() {
   const [sidebarPanel, setSidebarPanel] = useState<SidebarPanel>(null)
@@ -31,8 +34,8 @@ export default function Home() {
       setShowUpload(true)
       return
     }
-    if (key === "library") {
-      setSidebarPanel((p) => (p === "library" ? null : "library"))
+    if (key === "library" || key === "history" || key === "notes") {
+      setSidebarPanel((p) => (p === key ? null : key as SidebarPanel))
       return
     }
     setSidebarPanel(null)
@@ -62,6 +65,27 @@ export default function Home() {
                 onSelect={handlePaperSelect}
                 onUpload={() => setShowUpload(true)}
                 onCreate={() => setShowCreate(true)}
+                onClose={() => setSidebarPanel(null)}
+              />
+            </aside>
+          )}
+
+          {/* History panel */}
+          {sidebarPanel === "history" && (
+            <aside className="w-72 border-r border-[var(--border-subtle)] glass-surface flex flex-col shrink-0">
+              <HistoryPanel
+                onSelect={handlePaperSelect}
+                onClose={() => setSidebarPanel(null)}
+              />
+            </aside>
+          )}
+
+          {/* Notes panel */}
+          {sidebarPanel === "notes" && (
+            <aside className="w-72 border-r border-[var(--border-subtle)] glass-surface flex flex-col shrink-0">
+              <NotesPanel
+                activeNoteId={null}
+                onSelect={(note: NoteDto) => handlePaperSelect(note.paperId)}
                 onClose={() => setSidebarPanel(null)}
               />
             </aside>
