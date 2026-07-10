@@ -1,6 +1,7 @@
 "use client"
 
 import { useTranslations } from "next-intl"
+import { useRouter } from "next/navigation"
 import { PaperCard } from "@/components/papers/PaperCard"
 import { usePaperStore } from "@/stores/paper-store"
 import { useEffect } from "react"
@@ -12,6 +13,7 @@ export default function PapersPage() {
   const t = useTranslations("nav")
   const c = useTranslations("common")
   const { papers, isListLoading, loadPapers, deletePaper } = usePaperStore()
+  const router = useRouter()
 
   useEffect(() => {
     loadPapers(1)
@@ -44,7 +46,7 @@ export default function PapersPage() {
               <PaperCard
                 key={paper.id}
                 paper={paper}
-                onClick={() => window.location.href = "/"}
+                onClick={() => router.push(`/papers/${paper.id}`)}
                 onDelete={() => { if (confirm("Delete this paper?")) deletePaper(paper.id) }}
               />
             ))}

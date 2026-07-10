@@ -6,9 +6,9 @@ export function logProgress(data: CreateReadingLogRequest): Promise<ReadingLogDt
 }
 
 export function getProgress(paperId: number): Promise<ReadingLogDto[]> {
-  return get<ReadingLogDto[]>(`/reading-logs/${paperId}`)
+  return get<ReadingLogDto[]>(`/reading-logs/paper/${paperId}`)
 }
 
-export function getRecent(page = 1, pageSize = 20): Promise<{ items: ReadingLogDto[]; total: number }> {
-  return get<{ items: ReadingLogDto[]; total: number }>(`/reading-logs?page=${page}&pageSize=${pageSize}`)
+export function getRecent(limit = 50): Promise<ReadingLogDto[]> {
+  return get<ReadingLogDto[]>(`/reading-logs/recent?limit=${limit}`)
 }

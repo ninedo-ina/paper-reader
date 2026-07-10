@@ -1,6 +1,8 @@
 package org.paperreader.model
 
 import jakarta.persistence.*
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.time.Instant
 
 @Entity
@@ -35,6 +37,15 @@ data class Paper(
     val journal: String? = null,
 
     @Column(nullable = false, length = 50)
+    val category: String = "JOURNAL",
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    val extraFields: String? = null,
+
+    val storageConfigId: Long? = null,
+
+    @Column(nullable = false, length = 50)
     val sourceType: String, // UPLOAD, URL, or MANUAL
 
     @Column(length = 1000)
@@ -43,6 +54,7 @@ data class Paper(
     @Column
     val filePath: String? = null,
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     val grobidResult: String? = null,
 

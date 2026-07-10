@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useTranslations } from "next-intl"
-import { Clock, BookOpen, ChevronLeft, ChevronRight, X } from "lucide-react"
+import { Clock, BookOpen, X } from "lucide-react"
 import { getRecent } from "@/lib/api/reading-logs"
 import { cn } from "@/lib/utils"
 import type { ReadingLogDto } from "@/lib/api/types"
@@ -12,20 +12,18 @@ interface HistoryPanelProps {
   onClose?: () => void
 }
 
+const DISPLAY_LIMIT = 50
+
 export function HistoryPanel({ onSelect, onClose }: HistoryPanelProps) {
   const t = useTranslations()
   const [logs, setLogs] = useState<ReadingLogDto[]>([])
-  const [total, setTotal] = useState(0)
-  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
-  const pageSize = 20
 
-  const fetchLogs = useCallback(async (p: number) => {
+  const fetchLogs = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await getRecent(p, pageSize)
-      setLogs(res.items)
-      setTotal(res.total)
+      const data = await getRecent(DISPLAY_LIMIT)
+      setLogs(data)
     } catch {
       // ignore
     } finally {
@@ -34,10 +32,8 @@ export function HistoryPanel({ onSelect, onClose }: HistoryPanelProps) {
   }, [])
 
   useEffect(() => {
-    fetchLogs(page)
-  }, [page, fetchLogs])
-
-  const totalPages = Math.ceil(total / pageSize)
+    fetchLogs()
+  }, [fetchLogs])
 
   return (
     <div className="flex flex-col h-full">
@@ -54,7 +50,7 @@ export function HistoryPanel({ onSelect, onClose }: HistoryPanelProps) {
           )}
         </div>
         <p className="text-[11px] text-[var(--text-tertiary)] mt-0.5">
-          {total} {t("reader.readingSessions") || "reading sessions"}
+          {t("reader.readingSessions") || "Recent reading sessions"}
         </p>
       </div>
 
@@ -92,11 +88,11 @@ export function HistoryPanel({ onSelect, onClose }: HistoryPanelProps) {
                       <Clock className="size-3" />
                       {new Date(log.createdAt).toLocaleDateString()}
                     </span>
-                    {log.durationSeconds && (
+                    {log.durationSeconds ? (
                       <span>
                         {Math.round(log.durationSeconds / 60)} min
                       </span>
-                    )}
+                    ) : null}
                     <span>
                       p.{log.currentPage}/{log.totalPages}
                     </span>
@@ -105,28 +101,6 @@ export function HistoryPanel({ onSelect, onClose }: HistoryPanelProps) {
               </div>
             </button>
           ))}
-        </div>
-      )}
-
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-2 border-t border-[var(--border-subtle)]">
-          <button
-            disabled={page <= 1}
-            onClick={() => setPage(page - 1)}
-            className="p-1 rounded-md text-[var(--text-tertiary)] disabled:opacity-30 hover:text-[var(--text-primary)] transition-all"
-          >
-            <ChevronLeft className="size-4" />
-          </button>
-          <span className="text-xs text-[var(--text-tertiary)]">
-            {page}/{totalPages}
-          </span>
-          <button
-            disabled={page >= totalPages}
-            onClick={() => setPage(page + 1)}
-            className="p-1 rounded-md text-[var(--text-tertiary)] disabled:opacity-30 hover:text-[var(--text-primary)] transition-all"
-          >
-            <ChevronRight className="size-4" />
-          </button>
         </div>
       )}
     </div>

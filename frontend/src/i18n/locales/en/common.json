@@ -29,7 +29,37 @@
     "paperParticipantsPlaceholder": "Participant names",
     "paperAbstract": "Abstract",
     "paperAbstractPlaceholder": "Enter or paste abstract...",
-    "creating": "Creating..."
+    "creating": "Creating...",
+    "readingSessions": "Recent reading sessions",
+    "paperCategory": "Category"
+  },
+  "paper": {
+    "basicInfo": "Basic Info",
+    "versionHistory": "Version History",
+    "storageInfo": "Storage Info",
+    "publish": "Publish",
+    "publishVersion": "Publish Version",
+    "versionNumber": "Version Number",
+    "versionRemark": "Remark",
+    "publishNewVersion": "Publish New Version",
+    "noVersions": "No versions yet",
+    "createFirstVersion": "Click Publish to create the first version",
+    "storageConfig": "Storage Config",
+    "storageType": "Storage Type",
+    "noStorage": "No storage configured",
+    "noStorageHint": "Versions will not be pushed to any storage platform",
+    "details": "Details",
+    "downloadPdf": "Download PDF",
+    "default": "Default",
+    "yes": "Yes",
+    "no": "No",
+    "pushStatus": "Push Status",
+    "viewDetails": "View Details",
+    "category": "Category",
+    "publishing": "Publishing...",
+    "selectStorage": "Select storage location (optional)",
+    "noStorageConfig": "No storage configs. Create one in Settings.",
+    "back": "Back"
   },
   "panel": {
     "metadata": "Metadata",
@@ -61,7 +91,8 @@
     "tags": "Tags",
     "edit": "Edit",
     "preview": "Preview",
-    "noNotes": "No notes yet"
+    "noNotes": "No notes yet",
+    "totalNotes": "notes"
   },
   "ai": {
     "selectModel": "Select Model",

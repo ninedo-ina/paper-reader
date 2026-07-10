@@ -96,8 +96,8 @@ export async function request<T>(
 
   let res = await fetch(url, { ...options, headers })
 
-  // 401 → 尝试刷新 token → 重试
-  if (res.status === 401 && refreshToken) {
+  // 401/403 → 尝试刷新 token → 重试
+  if ((res.status === 401 || res.status === 403) && refreshToken) {
     const refreshed = await refreshIfNeeded()
     if (refreshed) {
       headers["Authorization"] = `Bearer ${accessToken}`
@@ -105,8 +105,18 @@ export async function request<T>(
     }
   }
 
-  // 解析 JSON 响应
-  const json: ApiResponse<T> = await res.json()
+  // 解析 JSON 响应（处理空 body 等非 JSON 情况）
+  let json: ApiResponse<T>
+  try {
+    json = await res.json()
+  } catch {
+    const text = await res.text().catch(() => "")
+    throw new ApiError(res.status, text || `Request failed (HTTP ${res.status})`)
+  }
+
+  if (!json || typeof json.code === "undefined") {
+    throw new ApiError(res.status, `Unexpected response (HTTP ${res.status})`)
+  }
 
   if (json.code !== 0) {
     throw new ApiError(json.code, errorMessage(json.code, json.message))

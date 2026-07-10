@@ -4,6 +4,19 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import java.time.Instant
 
 // ==== Paper ====
+enum class PaperCategory {
+    THESIS,       // 学位论文
+    JOURNAL,      // 期刊/会议论文
+    PREPRINT,     // 预印本
+    COURSE,       // 课程论文/作业
+    TECH_REPORT,  // 研究报告/技术报告
+    PATENT        // 专利文献
+}
+
+enum class StorageType {
+    GITHUB, GITEE, OSS, S3
+}
+
 data class PaperDto(
     val id: Long,
     val title: String,
@@ -12,6 +25,7 @@ data class PaperDto(
     val doi: String?,
     val year: String?,
     val journal: String?,
+    val category: String,
     val sourceType: String,
     val sourceUrl: String?,
     val filePath: String?,
@@ -29,6 +43,7 @@ data class PaperListDto(
     val doi: String?,
     val year: String?,
     val journal: String?,
+    val category: String,
     val sourceType: String,
     val pageCount: Int,
     val createdAt: Instant,
@@ -44,6 +59,9 @@ data class PaperDetailDto(
     val doi: String?,
     val year: String?,
     val journal: String?,
+    val category: String,
+    val extraFields: Map<String, Any?>?,
+    val storageConfigId: Long?,
     val sourceType: String,
     val sourceUrl: String?,
     val pageCount: Int,
@@ -63,6 +81,47 @@ data class CreatePaperRequest(
     val authors: String? = null,
     val participants: String? = null,
     val abstractText: String? = null,
+    val category: String? = null,
+    val extraFields: Map<String, Any?>? = null,
+    val storageConfigId: Long? = null,
+)
+
+// ==== Paper Version ====
+data class CreateVersionRequest(
+    val version: String,
+    val remark: String? = null,
+)
+
+data class PaperVersionDto(
+    val id: Long,
+    val paperId: Long,
+    val version: String,
+    val remark: String?,
+    val storagePushStatus: String,
+    val createdAt: Instant,
+)
+
+// ==== Storage Config ====
+data class StorageConfigDto(
+    val id: Long,
+    val name: String,
+    val storageType: String,
+    val config: Map<String, Any?>,
+    val isDefault: Boolean,
+    val createdAt: Instant,
+)
+
+data class CreateStorageConfigRequest(
+    val name: String,
+    val storageType: String,
+    val config: Map<String, Any?>,
+    val isDefault: Boolean = false,
+)
+
+data class UpdateStorageConfigRequest(
+    val name: String? = null,
+    val config: Map<String, Any?>? = null,
+    val isDefault: Boolean? = null,
 )
 
 // ==== Annotation ====

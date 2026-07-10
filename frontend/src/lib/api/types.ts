@@ -59,6 +59,8 @@ export interface UserProfile {
 // --- 论文 ---
 
 export type SourceType = "UPLOAD" | "URL" | "MANUAL"
+export type Category = "THESIS" | "JOURNAL" | "PREPRINT" | "COURSE" | "TECH_REPORT" | "PATENT"
+export type StorageType = "GITHUB" | "GITEE" | "OSS" | "S3"
 
 export interface PaperListDto {
   id: number
@@ -67,6 +69,7 @@ export interface PaperListDto {
   doi?: string
   year?: number
   journal?: string
+  category: Category
   sourceType: SourceType
   pageCount?: number
   createdAt: string
@@ -81,6 +84,9 @@ export interface PaperDetailDto {
   doi?: string
   year?: number
   journal?: string
+  category: Category
+  extraFields?: Record<string, unknown>
+  storageConfigId?: number
   sourceType: SourceType
   sourceUrl?: string
   pageCount?: number
@@ -100,6 +106,49 @@ export interface CreatePaperRequest {
   authors?: string
   participants?: string
   abstractText?: string
+  category?: Category
+  extraFields?: Record<string, unknown>
+  storageConfigId?: number
+}
+
+// --- 论文版本 ---
+
+export interface CreateVersionRequest {
+  version: string
+  remark?: string
+}
+
+export interface PaperVersionDto {
+  id: number
+  paperId: number
+  version: string
+  remark?: string
+  storagePushStatus: string
+  createdAt: string
+}
+
+// --- 存储配置 ---
+
+export interface StorageConfigDto {
+  id: number
+  name: string
+  storageType: StorageType
+  config: Record<string, unknown>
+  isDefault: boolean
+  createdAt: string
+}
+
+export interface CreateStorageConfigRequest {
+  name: string
+  storageType: StorageType
+  config: Record<string, unknown>
+  isDefault?: boolean
+}
+
+export interface UpdateStorageConfigRequest {
+  name?: string
+  config?: Record<string, unknown>
+  isDefault?: boolean
 }
 
 // --- 批注 ---

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, type ElementType } from "react"
 import { useTranslations } from "next-intl"
-import { Library, Upload, Clock, FileText, Settings, Star, Tag, PanelLeftClose, PanelLeftOpen } from "lucide-react"
+import { Library, Clock, FileText, Settings, Star, Tag, PanelLeftClose, PanelLeftOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { usePaperStore } from "@/stores/paper-store"
 

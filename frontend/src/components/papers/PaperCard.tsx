@@ -1,8 +1,10 @@
 "use client"
 
 import type { PaperListDto } from "@/lib/api/types"
+import { getCategory } from "@/lib/paper-categories"
 import { formatDate, cn } from "@/lib/utils"
-import { FileText, Globe, Trash2 } from "lucide-react"
+import { FileText, Globe, Trash2, ExternalLink } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 interface PaperCardProps {
   paper: PaperListDto
@@ -12,6 +14,9 @@ interface PaperCardProps {
 }
 
 export function PaperCard({ paper, isActive, onClick, onDelete }: PaperCardProps) {
+  const router = useRouter()
+  const catDef = getCategory(paper.category)
+
   return (
     <button
       type="button"
@@ -33,9 +38,22 @@ export function PaperCard({ paper, isActive, onClick, onDelete }: PaperCardProps
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <h4 className="text-sm font-medium text-[var(--text-primary)] truncate">
-            {paper.title || "Untitled"}
-          </h4>
+          <div className="flex items-center gap-1.5">
+            <h4 className="text-sm font-medium text-[var(--text-primary)] truncate flex-1">
+              {paper.title || "Untitled"}
+            </h4>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                router.push(`/papers/${paper.id}`)
+              }}
+              className="shrink-0 p-0.5 rounded text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors"
+              aria-label="View details"
+            >
+              <ExternalLink className="size-3.5" />
+            </button>
+          </div>
           <p className="text-xs text-[var(--text-secondary)] mt-0.5 truncate">
             {paper.authors || "Unknown authors"}
           </p>
@@ -49,9 +67,14 @@ export function PaperCard({ paper, isActive, onClick, onDelete }: PaperCardProps
               </span>
             )}
           </div>
-          <p className="text-[10px] text-[var(--text-tertiary)] mt-1">
-            {formatDate(paper.createdAt)}
-          </p>
+          <div className="flex items-center gap-1.5 mt-1.5">
+            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20">
+              {catDef?.label ?? paper.category}
+            </span>
+            <p className="text-[10px] text-[var(--text-tertiary)]">
+              {formatDate(paper.createdAt)}
+            </p>
+          </div>
         </div>
         {onDelete && (
           <button

@@ -29,7 +29,37 @@
     "paperParticipantsPlaceholder": "参与者姓名",
     "paperAbstract": "摘要",
     "paperAbstractPlaceholder": "输入或粘贴摘要...",
-    "creating": "创建中..."
+    "creating": "创建中...",
+    "readingSessions": "最近阅读记录",
+    "paperCategory": "分类"
+  },
+  "paper": {
+    "basicInfo": "基本信息",
+    "versionHistory": "历史版本",
+    "storageInfo": "存储信息",
+    "publish": "发布",
+    "publishVersion": "发布版本",
+    "versionNumber": "版本号",
+    "versionRemark": "备注",
+    "publishNewVersion": "发布新版本",
+    "noVersions": "暂无版本记录",
+    "createFirstVersion": "点击「发布」创建第一个版本",
+    "storageConfig": "存储配置",
+    "storageType": "存储类型",
+    "noStorage": "未关联存储配置",
+    "noStorageHint": "发布版本时无需推送到存储平台",
+    "details": "详细信息",
+    "downloadPdf": "下载 PDF",
+    "default": "默认",
+    "yes": "是",
+    "no": "否",
+    "pushStatus": "推送状态",
+    "viewDetails": "查看详情",
+    "category": "分类",
+    "publishing": "发布中...",
+    "selectStorage": "选择论文存储位置（可选）",
+    "noStorageConfig": "暂无存储配置，可在设置中创建",
+    "back": "返回"
   },
   "panel": {
     "metadata": "论文信息",
@@ -61,7 +91,8 @@
     "tags": "标签",
     "edit": "编辑",
     "preview": "预览",
-    "noNotes": "暂无笔记"
+    "noNotes": "暂无笔记",
+    "totalNotes": "条笔记"
   },
   "ai": {
     "selectModel": "选择模型",

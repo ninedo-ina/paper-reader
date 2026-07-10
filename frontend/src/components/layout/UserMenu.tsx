@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAuthStore } from "@/stores/auth-store"
 import { useUserStore } from "@/stores/user-store"
-import { LogOut, User } from "lucide-react"
+import { LogOut } from "lucide-react"
 
 export function UserMenu() {
   const t = useTranslations("auth")

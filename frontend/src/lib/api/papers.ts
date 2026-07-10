@@ -24,7 +24,7 @@ export function uploadPdf(file: File): Promise<PaperDetailDto> {
 
 /** 从 URL 导入论文 */
 export function uploadFromUrl(data: UploadFromUrlRequest): Promise<PaperDetailDto> {
-  return post<PaperDetailDto>("/papers/upload-url", data)
+  return post<PaperDetailDto>("/papers/url", data)
 }
 
 /** 手动创建论文 */
