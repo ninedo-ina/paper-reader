@@ -72,6 +72,7 @@ export interface PaperListDto {
   category: Category
   sourceType: SourceType
   pageCount?: number
+  favorite: boolean
   createdAt: string
 }
 
@@ -87,6 +88,7 @@ export interface PaperDetailDto {
   category: Category
   extraFields?: Record<string, unknown>
   storageConfigId?: number
+  favorite: boolean
   sourceType: SourceType
   sourceUrl?: string
   pageCount?: number
@@ -284,4 +286,29 @@ export interface UpdateUserSettingsRequest {
   theme?: "light" | "dark"
   language?: "zh" | "en"
   defaultAiModel?: string
+}
+
+// --- Paper Edit ---
+
+export interface UpdatePaperRequest {
+  title?: string
+  authors?: string
+  participants?: string
+  abstractText?: string
+  category?: Category
+  extraFields?: Record<string, unknown>
+  doi?: string
+  year?: string
+  journal?: string
+}
+
+export interface PaperTagDto {
+  id: number
+  paperId: number
+  tag: string
+  createdAt: string
+}
+
+export interface SharePaperResponse {
+  shareText: string
 }

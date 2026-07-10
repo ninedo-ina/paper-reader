@@ -46,6 +46,7 @@ data class PaperListDto(
     val category: String,
     val sourceType: String,
     val pageCount: Int,
+    val favorite: Boolean = false,
     val createdAt: Instant,
 )
 
@@ -62,6 +63,7 @@ data class PaperDetailDto(
     val category: String,
     val extraFields: Map<String, Any?>?,
     val storageConfigId: Long?,
+    val favorite: Boolean = false,
     val sourceType: String,
     val sourceUrl: String?,
     val pageCount: Int,
@@ -84,6 +86,41 @@ data class CreatePaperRequest(
     val category: String? = null,
     val extraFields: Map<String, Any?>? = null,
     val storageConfigId: Long? = null,
+)
+
+data class UpdatePaperRequest(
+    val title: String? = null,
+    val authors: String? = null,
+    val participants: String? = null,
+    val abstractText: String? = null,
+    val category: String? = null,
+    val extraFields: Map<String, Any?>? = null,
+    val doi: String? = null,
+    val year: String? = null,
+    val journal: String? = null,
+)
+
+data class ToggleFavoriteRequest(
+    val favorite: Boolean,
+)
+
+data class AddTagRequest(
+    val tag: String,
+)
+
+data class PaperTagDto(
+    val id: Long,
+    val paperId: Long,
+    val tag: String,
+    val createdAt: Instant,
+)
+
+data class SharePaperResponse(
+    val shareText: String,
+)
+
+data class SharePaperRequest(
+    val description: String? = null,
 )
 
 // ==== Paper Version ====

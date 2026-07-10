@@ -4,11 +4,10 @@ import { useState, useCallback, useEffect } from "react"
 import { Topbar } from "@/components/layout/Topbar"
 import { Sidebar } from "@/components/layout/Sidebar"
 import { RightPanel } from "@/components/layout/RightPanel"
-import { PDFViewer } from "@/components/reader/PDFViewer"
 import { PaperList } from "@/components/papers/PaperList"
 import { UploadDialog } from "@/components/papers/UploadDialog"
 import { CreatePaperDialog } from "@/components/papers/CreatePaperDialog"
-import { PaperEditor } from "@/components/papers/PaperEditor"
+import { PaperContentArea } from "@/components/papers/PaperContentArea"
 import { VersionPopup } from "@/components/layout/VersionPopup"
 import { HistoryPanel } from "@/components/history/HistoryPanel"
 import { NotesPanel } from "@/components/notes/NotesPanel"
@@ -91,19 +90,19 @@ export default function Home() {
             </aside>
           )}
 
-          <main className="flex-1 overflow-hidden">
-            {currentPaper?.sourceType === "MANUAL" ? (
-              <PaperEditor paper={currentPaper} />
-            ) : (
-              <PDFViewer paper={currentPaper} onUploadClick={() => setShowUpload(true)} />
-            )}
+          <main className="flex-1 overflow-hidden flex flex-col">
+            <PaperContentArea paper={currentPaper} onUploadClick={() => setShowUpload(true)} />
           </main>
 
           <RightPanel paper={currentPaper} />
         </div>
       </div>
 
-      <UploadDialog open={showUpload} onClose={() => setShowUpload(false)} />
+      <UploadDialog
+        open={showUpload}
+        onClose={() => setShowUpload(false)}
+        onUploaded={() => setSidebarPanel("library")}
+      />
       <CreatePaperDialog open={showCreate} onClose={() => setShowCreate(false)} />
       <VersionPopup />
     </div>

@@ -151,6 +151,14 @@ export function postForm<T>(path: string, formData: FormData): Promise<T> {
   })
 }
 
+/** PATCH 请求 */
+export function patch<T>(path: string, body?: unknown): Promise<T> {
+  return request<T>(path, {
+    method: "PATCH",
+    body: body ? JSON.stringify(body) : undefined,
+  })
+}
+
 /** PUT 请求 */
 export function put<T>(path: string, body?: unknown): Promise<T> {
   return request<T>(path, {

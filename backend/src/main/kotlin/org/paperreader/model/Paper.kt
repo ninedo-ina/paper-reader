@@ -62,6 +62,9 @@ data class Paper(
     val pageCount: Int = 0,
 
     @Column(nullable = false)
+    val favorite: Boolean = false,
+
+    @Column(nullable = false)
     val fileSize: Long = 0,
 
     @Column(nullable = false)

@@ -1,0 +1,11 @@
+ALTER TABLE pr_papers ADD COLUMN IF NOT EXISTS favorite BOOLEAN NOT NULL DEFAULT FALSE;
+
+CREATE TABLE IF NOT EXISTS pr_paper_tags (
+    id BIGSERIAL PRIMARY KEY,
+    paper_id BIGINT NOT NULL REFERENCES pr_papers(id) ON DELETE CASCADE,
+    tag VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    UNIQUE(paper_id, tag)
+);
+
+CREATE INDEX IF NOT EXISTS idx_paper_tags_paper_id ON pr_paper_tags(paper_id);

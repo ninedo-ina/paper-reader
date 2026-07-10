@@ -1,9 +1,12 @@
 "use client"
 
-import { useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { usePaperStore } from "@/stores/paper-store"
 import { PaperCard } from "./PaperCard"
+import { TabBar } from "@/components/ui/TabBar"
+import { TagDialog } from "./TagDialog"
+import { ShareDialog } from "./ShareDialog"
 import { Button } from "@/components/ui/Button"
 import { ChevronLeft, ChevronRight, Plus, Upload, RefreshCw, X } from "lucide-react"
 
@@ -17,17 +20,25 @@ interface PaperListProps {
 
 export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose }: PaperListProps) {
   const t = useTranslations("common")
-  const { papers, total, page, isListLoading, loadPapers, deletePaper } = usePaperStore()
+  const tp = useTranslations("papers")
+  const {
+    papers, total, page, isListLoading, activeTab, loadPapers,
+    setActiveTab, deletePaper,
+  } = usePaperStore()
   const pageSize = 20
   const totalPages = Math.ceil(total / pageSize)
 
-  useEffect(() => {
-    loadPapers(1)
-  }, [loadPapers])
+  const [tagPaperId, setTagPaperId] = useState<number | null>(null)
+  const [sharePaperId, setSharePaperId] = useState<number | null>(null)
 
-  const handleRefresh = useCallback(() => {
-    loadPapers(page)
-  }, [loadPapers, page])
+  useEffect(() => {
+    loadPapers(0, activeTab)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleRefresh = useCallback(() => { loadPapers(page, activeTab) }, [loadPapers, page, activeTab])
+
+  const createCount = papers.filter((p) => p.sourceType === "MANUAL").length
+  const importCount = papers.filter((p) => p.sourceType === "UPLOAD" || p.sourceType === "URL").length
 
   return (
     <div className="flex flex-col h-full">
@@ -57,10 +68,17 @@ export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose }: P
             )}
           </div>
         </div>
-        <p className="text-[11px] text-[var(--text-tertiary)] mt-0.5">
-          {total} 篇论文
-        </p>
       </div>
+
+      {/* TabBar */}
+      <TabBar
+        tabs={[
+          { key: "create", label: tp("createTab"), count: createCount },
+          { key: "import", label: tp("importTab"), count: importCount },
+        ]}
+        activeKey={activeTab}
+        onChange={(key) => setActiveTab(key as "create" | "import")}
+      />
 
       {isListLoading ? (
         <div className="flex-1 flex items-center justify-center">
@@ -81,6 +99,8 @@ export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose }: P
               isActive={paper.id === activeId}
               onClick={() => onSelect?.(paper.id)}
               onDelete={() => deletePaper(paper.id)}
+              onTag={() => setTagPaperId(paper.id)}
+              onShare={() => setSharePaperId(paper.id)}
             />
           ))}
         </div>
@@ -91,24 +111,27 @@ export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose }: P
           <Button
             variant="ghost"
             size="sm"
-            disabled={page <= 1}
-            onClick={() => loadPapers(page - 1)}
+            disabled={page <= 0}
+            onClick={() => loadPapers(page - 1, activeTab)}
           >
             <ChevronLeft className="size-4" />
           </Button>
           <span className="text-xs text-[var(--text-tertiary)]">
-            {page}/{totalPages}
+            {page + 1}/{totalPages}
           </span>
           <Button
             variant="ghost"
             size="sm"
             disabled={page >= totalPages}
-            onClick={() => loadPapers(page + 1)}
+            onClick={() => loadPapers(page + 1, activeTab)}
           >
             <ChevronRight className="size-4" />
           </Button>
         </div>
       )}
+
+      <TagDialog open={tagPaperId !== null} paperId={tagPaperId} onClose={() => setTagPaperId(null)} />
+      <ShareDialog open={sharePaperId !== null} paperId={sharePaperId} onClose={() => setSharePaperId(null)} />
     </div>
   )
 }

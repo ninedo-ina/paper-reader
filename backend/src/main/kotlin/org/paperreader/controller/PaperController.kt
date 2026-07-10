@@ -42,9 +42,16 @@ class PaperController(
     fun list(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") pageSize: Int,
+        @RequestParam(required = false) sourceType: String?,
         @AuthenticationPrincipal principal: UserPrincipal,
-    ): ApiResponse<PageResponse<PaperListDto>> =
-        ApiResponse(data = paperService.listPapers(principal.userId, page, pageSize))
+    ): ApiResponse<PageResponse<PaperListDto>> {
+        val sourceTypes = when (sourceType) {
+            "create" -> listOf("MANUAL")
+            "import" -> listOf("UPLOAD", "URL")
+            else -> null
+        }
+        return ApiResponse(data = paperService.listPapers(principal.userId, page, pageSize, sourceTypes))
+    }
 
     @GetMapping("/{id}")
     fun get(
@@ -52,6 +59,55 @@ class PaperController(
         @AuthenticationPrincipal principal: UserPrincipal,
     ): ApiResponse<PaperDetailDto> =
         ApiResponse(data = paperService.getPaper(id, principal.userId))
+
+    @PatchMapping("/{id}")
+    fun update(
+        @PathVariable id: Long,
+        @RequestBody request: UpdatePaperRequest,
+        @AuthenticationPrincipal principal: UserPrincipal,
+    ): ApiResponse<PaperDetailDto> =
+        ApiResponse(data = paperService.updatePaper(id, principal.userId, request))
+
+    @PutMapping("/{id}/favorite")
+    fun toggleFavorite(
+        @PathVariable id: Long,
+        @RequestBody request: ToggleFavoriteRequest,
+        @AuthenticationPrincipal principal: UserPrincipal,
+    ): ApiResponse<PaperDetailDto> =
+        ApiResponse(data = paperService.toggleFavorite(id, principal.userId, request.favorite))
+
+    @GetMapping("/{id}/tags")
+    fun listTags(
+        @PathVariable id: Long,
+        @AuthenticationPrincipal principal: UserPrincipal,
+    ): ApiResponse<List<PaperTagDto>> =
+        ApiResponse(data = paperService.listTags(id, principal.userId))
+
+    @PostMapping("/{id}/tags")
+    fun addTag(
+        @PathVariable id: Long,
+        @RequestBody request: AddTagRequest,
+        @AuthenticationPrincipal principal: UserPrincipal,
+    ): ApiResponse<PaperTagDto> =
+        ApiResponse(data = paperService.addTag(id, principal.userId, request.tag))
+
+    @DeleteMapping("/{id}/tags/{tag}")
+    fun removeTag(
+        @PathVariable id: Long,
+        @PathVariable tag: String,
+        @AuthenticationPrincipal principal: UserPrincipal,
+    ): ApiResponse<Nothing> {
+        paperService.removeTag(id, principal.userId, tag)
+        return ApiResponse(message = "Deleted")
+    }
+
+    @PostMapping("/{id}/share")
+    fun share(
+        @PathVariable id: Long,
+        @RequestBody request: SharePaperRequest,
+        @AuthenticationPrincipal principal: UserPrincipal,
+    ): ApiResponse<SharePaperResponse> =
+        ApiResponse(data = paperService.sharePaper(id, principal.userId, request.description))
 
     @GetMapping("/{id}/download")
     fun download(

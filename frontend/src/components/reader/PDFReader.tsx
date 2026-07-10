@@ -46,6 +46,19 @@ export function PDFReader({ paper }: PDFReaderProps) {
       <div className="flex items-center gap-2 px-3 py-2 border-b border-[var(--border-subtle)] bg-[var(--surface-0)]">
         <h1 className="text-sm font-medium text-[var(--text-primary)] truncate flex-1">
           {paper.title || "Untitled"}
+          {paper.authors && (
+            <>
+              <span className="font-normal text-[var(--text-tertiary)]"> {" / "} </span>
+              <span className="font-normal text-[var(--text-secondary)]">
+                {paper.authors.split(",")[0]?.trim()}
+              </span>
+            </>
+          )}
+          {paper.participants && (
+            <span className="font-normal text-[var(--text-tertiary)]">
+              {"（"}{paper.participants}{"）"}
+            </span>
+          )}
         </h1>
 
         <div className="flex items-center gap-1">

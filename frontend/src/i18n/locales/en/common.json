@@ -149,6 +149,28 @@
     "light": "Light Mode",
     "dark": "Dark Mode"
   },
+  "papers": {
+    "favorite": "Favorite",
+    "unfavorite": "Unfavorite",
+    "tags": "Tags",
+    "share": "Share",
+    "download": "Download",
+    "addTag": "Add Tag",
+    "tagPlaceholder": "Enter tag name",
+    "noTags": "No tags",
+    "shareDescription": "Description",
+    "shareDescriptionPlaceholder": "Add a description...",
+    "shareHint": "Add a share description. It will be copied to clipboard on confirmation.",
+    "shareSuccess": "Copied to clipboard",
+    "shareConfirm": "Confirm Share",
+    "paperInfo": "Paper Info",
+    "pdfView": "PDF View",
+    "createTab": "Created",
+    "importTab": "Imported",
+    "saved": "Saved",
+    "participants": "Participants",
+    "noPaperSelected": "Upload a paper or select one from your library to start reading"
+  },
   "common": {
     "loading": "Loading...",
     "save": "Save",

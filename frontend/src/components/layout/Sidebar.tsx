@@ -46,7 +46,7 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
   const { total, loadPapers } = usePaperStore()
 
   useEffect(() => {
-    loadPapers(1)
+    loadPapers(0)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

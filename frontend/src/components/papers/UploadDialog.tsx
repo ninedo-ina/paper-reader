@@ -11,11 +11,12 @@ import { X, Upload, Link, Loader2 } from "lucide-react"
 interface UploadDialogProps {
   open: boolean
   onClose: () => void
+  onUploaded?: () => void
 }
 
 type Tab = "file" | "url"
 
-export function UploadDialog({ open, onClose }: UploadDialogProps) {
+export function UploadDialog({ open, onClose, onUploaded }: UploadDialogProps) {
   const t = useTranslations("reader")
   const c = useTranslations("common")
   const { uploadPdf, uploadFromUrl, error } = usePaperStore()
@@ -33,6 +34,7 @@ export function UploadDialog({ open, onClose }: UploadDialogProps) {
       setIsUploading(true)
       try {
         await uploadPdf(file)
+        onUploaded?.()
         onClose()
       } catch {
         // error in store
@@ -40,7 +42,7 @@ export function UploadDialog({ open, onClose }: UploadDialogProps) {
         setIsUploading(false)
       }
     },
-    [uploadPdf, onClose],
+    [uploadPdf, onUploaded, onClose],
   )
 
   const handleDrop = useCallback(
@@ -52,6 +54,7 @@ export function UploadDialog({ open, onClose }: UploadDialogProps) {
       setIsUploading(true)
       try {
         await uploadPdf(file)
+        onUploaded?.()
         onClose()
       } catch {
         // error in store
@@ -59,7 +62,7 @@ export function UploadDialog({ open, onClose }: UploadDialogProps) {
         setIsUploading(false)
       }
     },
-    [uploadPdf, onClose],
+    [uploadPdf, onUploaded, onClose],
   )
 
   const handleUrlSubmit = async (e: React.FormEvent) => {
@@ -68,6 +71,7 @@ export function UploadDialog({ open, onClose }: UploadDialogProps) {
     setIsUploading(true)
     try {
       await uploadFromUrl(url, urlTitle || undefined)
+      onUploaded?.()
       onClose()
     } catch {
       // error in store

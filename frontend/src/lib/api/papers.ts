@@ -1,13 +1,28 @@
 // =============================================================================
-// 论文 API — 上传、列表、详情、下载、删除
+// 论文 API — 上传、列表、详情、下载、删除、编辑、收藏、标签、分享
 // =============================================================================
 
-import { get, post, postForm, del, downloadBlob } from "./client"
-import type { PaperListDto, PaperDetailDto, PageResponse, UploadFromUrlRequest, CreatePaperRequest } from "./types"
+import { get, post, postForm, put, patch, del, downloadBlob } from "./client"
+import type {
+  PaperListDto,
+  PaperDetailDto,
+  PageResponse,
+  UploadFromUrlRequest,
+  CreatePaperRequest,
+  UpdatePaperRequest,
+  PaperTagDto,
+  SharePaperResponse,
+} from "./types"
 
-/** 获取用户论文列表（分页） */
-export function listPapers(page = 1, pageSize = 20): Promise<PageResponse<PaperListDto>> {
-  return get<PageResponse<PaperListDto>>(`/papers?page=${page}&pageSize=${pageSize}`)
+/** 获取用户论文列表（分页，可选 sourceType 过滤: "create" | "import"） */
+export function listPapers(
+  page = 0,
+  pageSize = 20,
+  sourceType?: string,
+): Promise<PageResponse<PaperListDto>> {
+  let url = `/papers?page=${page}&pageSize=${pageSize}`
+  if (sourceType) url += `&sourceType=${sourceType}`
+  return get<PageResponse<PaperListDto>>(url)
 }
 
 /** 获取论文详情 */
@@ -30,6 +45,36 @@ export function uploadFromUrl(data: UploadFromUrlRequest): Promise<PaperDetailDt
 /** 手动创建论文 */
 export function createPaper(data: CreatePaperRequest): Promise<PaperDetailDto> {
   return post<PaperDetailDto>("/papers", data)
+}
+
+/** 更新论文元数据 */
+export function updatePaper(id: number, data: UpdatePaperRequest): Promise<PaperDetailDto> {
+  return patch<PaperDetailDto>(`/papers/${id}`, data)
+}
+
+/** 切换收藏 */
+export function toggleFavorite(id: number, favorite: boolean): Promise<PaperDetailDto> {
+  return put<PaperDetailDto>(`/papers/${id}/favorite`, { favorite })
+}
+
+/** 获取论文标签列表 */
+export function listPaperTags(id: number): Promise<PaperTagDto[]> {
+  return get<PaperTagDto[]>(`/papers/${id}/tags`)
+}
+
+/** 添加标签 */
+export function addPaperTag(id: number, tag: string): Promise<PaperTagDto> {
+  return post<PaperTagDto>(`/papers/${id}/tags`, { tag })
+}
+
+/** 删除标签 */
+export function removePaperTag(id: number, tag: string): Promise<null> {
+  return del<null>(`/papers/${id}/tags/${encodeURIComponent(tag)}`)
+}
+
+/** 生成分享文案 */
+export function sharePaper(id: number, description?: string): Promise<SharePaperResponse> {
+  return post<SharePaperResponse>(`/papers/${id}/share`, { description })
 }
 
 /** 下载论文 PDF */

@@ -8,5 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 interface PaperRepository : JpaRepository<Paper, Long> {
     fun findByUserIdOrderByCreatedAtDesc(userId: Long): List<Paper>
     fun findByUserIdOrderByCreatedAtDesc(userId: Long, pageable: Pageable): Page<Paper>
+    fun findByUserIdAndSourceTypeInOrderByCreatedAtDesc(userId: Long, sourceTypes: List<String>, pageable: Pageable): Page<Paper>
     fun findByIdAndUserId(id: Long, userId: Long): Paper?
 }
