@@ -32,10 +32,10 @@ export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose }: P
   const [sharePaperId, setSharePaperId] = useState<number | null>(null)
 
   useEffect(() => {
-    loadPapers(0, activeTab)
+    loadPapers(0)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleRefresh = useCallback(() => { loadPapers(page, activeTab) }, [loadPapers, page, activeTab])
+  const handleRefresh = useCallback(() => { loadPapers(page) }, [loadPapers, page])
 
   const createCount = papers.filter((p) => p.sourceType === "MANUAL").length
   const importCount = papers.filter((p) => p.sourceType === "UPLOAD" || p.sourceType === "URL").length
@@ -77,7 +77,7 @@ export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose }: P
           { key: "import", label: tp("importTab"), count: importCount },
         ]}
         activeKey={activeTab}
-        onChange={(key) => setActiveTab(key as "create" | "import")}
+        onChange={(key) => { setActiveTab(key as "create" | "import"); key === "create" ? onCreate?.() : onUpload?.() }}
       />
 
       {isListLoading ? (
@@ -112,7 +112,7 @@ export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose }: P
             variant="ghost"
             size="sm"
             disabled={page <= 0}
-            onClick={() => loadPapers(page - 1, activeTab)}
+            onClick={() => loadPapers(page - 1)}
           >
             <ChevronLeft className="size-4" />
           </Button>
@@ -123,7 +123,7 @@ export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose }: P
             variant="ghost"
             size="sm"
             disabled={page >= totalPages}
-            onClick={() => loadPapers(page + 1, activeTab)}
+            onClick={() => loadPapers(page + 1)}
           >
             <ChevronRight className="size-4" />
           </Button>

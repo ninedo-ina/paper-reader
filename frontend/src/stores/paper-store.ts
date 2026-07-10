@@ -89,13 +89,12 @@ export const usePaperStore = create<PaperState>((set, get) => ({
 
   setActiveTab: (tab) => {
     set({ activeTab: tab, sourceTypeFilter: tab })
-    get().loadPapers(0, tab)
   },
 
   uploadPdf: async (file) => {
     set({ error: null })
     const paper = await papersApi.uploadPdf(file)
-    const list = await papersApi.listPapers(0, 20, "import")
+    const list = await papersApi.listPapers(0, 20)
     set({
       papers: list.items,
       total: list.total,
@@ -111,7 +110,7 @@ export const usePaperStore = create<PaperState>((set, get) => ({
   uploadFromUrl: async (url, title) => {
     set({ error: null })
     const paper = await papersApi.uploadFromUrl({ url, title })
-    const list = await papersApi.listPapers(0, 20, "import")
+    const list = await papersApi.listPapers(0, 20)
     set({
       papers: list.items,
       total: list.total,
@@ -127,7 +126,7 @@ export const usePaperStore = create<PaperState>((set, get) => ({
   createPaper: async (data) => {
     set({ error: null })
     const paper = await papersApi.createPaper(data)
-    const list = await papersApi.listPapers(0, 20, "create")
+    const list = await papersApi.listPapers(0, 20)
     set({
       papers: list.items,
       total: list.total,

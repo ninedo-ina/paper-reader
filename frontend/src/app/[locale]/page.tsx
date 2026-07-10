@@ -18,7 +18,7 @@ import type { NoteDto } from "@/lib/api/types"
 type SidebarPanel = "library" | "history" | "notes" | null
 
 export default function Home() {
-  const [sidebarPanel, setSidebarPanel] = useState<SidebarPanel>(null)
+  const [sidebarPanel, setSidebarPanel] = useState<SidebarPanel>("library")
   const [showUpload, setShowUpload] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
   const { currentPaper, loadPaper } = usePaperStore()
