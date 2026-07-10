@@ -2,7 +2,7 @@
 // 论文 API — 上传、列表、详情、下载、删除
 // =============================================================================
 
-import { get, post, postForm, del } from "./client"
+import { get, post, postForm, del, downloadBlob } from "./client"
 import type { PaperListDto, PaperDetailDto, PageResponse, UploadFromUrlRequest, CreatePaperRequest } from "./types"
 
 /** 获取用户论文列表（分页） */
@@ -36,6 +36,19 @@ export function createPaper(data: CreatePaperRequest): Promise<PaperDetailDto> {
 export function getDownloadUrl(id: number): string {
   const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
   return `${base}/papers/${id}/download`
+}
+
+/** 带 JWT 认证下载 PDF 并触发浏览器保存 */
+export async function downloadPdf(id: number, filename = "paper.pdf"): Promise<void> {
+  const blob = await downloadBlob(`/papers/${id}/download`)
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }
 
 /** 删除论文 */

@@ -16,6 +16,11 @@ export function setTokens(access: string, refresh: string) {
   refreshToken = refresh
 }
 
+/** 获取当前 access token（供 react-pdf 等直接 fetch 的场景使用） */
+export function getAccessToken(): string | null {
+  return accessToken
+}
+
 /** 清除 token（登出时调用） */
 export function clearTokens() {
   accessToken = null
@@ -157,4 +162,21 @@ export function put<T>(path: string, body?: unknown): Promise<T> {
 /** DELETE 请求 */
 export function del<T>(path: string): Promise<T> {
   return request<T>(path, { method: "DELETE" })
+}
+
+/**
+ * 下载文件（Blob），带 JWT 认证。
+ * 用于 PDF 等非 JSON 二进制响应。
+ */
+export async function downloadBlob(path: string): Promise<Blob> {
+  const url = `${API_URL}${path}`
+  const headers: Record<string, string> = {}
+  if (accessToken) {
+    headers["Authorization"] = `Bearer ${accessToken}`
+  }
+  const res = await fetch(url, { headers })
+  if (!res.ok) {
+    throw new ApiError(res.status, `Download failed (HTTP ${res.status})`)
+  }
+  return res.blob()
 }

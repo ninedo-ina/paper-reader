@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { Document, Page, pdfjs } from "react-pdf"
 import "react-pdf/dist/Page/AnnotationLayer.css"
 import "react-pdf/dist/Page/TextLayer.css"
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button"
 import { cn } from "@/lib/utils"
 import type { PaperDetailDto } from "@/lib/api/types"
 import { getDownloadUrl } from "@/lib/api/papers"
+import { getAccessToken } from "@/lib/api/client"
 
 // 设置 pdf.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
@@ -31,6 +32,13 @@ export function PDFReader({ paper }: PDFReaderProps) {
   }, [paper.pageCount])
 
   const pdfUrl = getDownloadUrl(paper.id)
+
+  // react-pdf 直接 fetch PDF 不经过我们封装的 client，需手动附加 JWT
+  const file = useMemo(() => {
+    const token = getAccessToken()
+    if (!token) return pdfUrl
+    return { url: pdfUrl, httpHeaders: { Authorization: `Bearer ${token}` } }
+  }, [pdfUrl])
 
   return (
     <div className="h-full flex flex-col bg-[var(--surface-1)]">
@@ -88,7 +96,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
       {/* PDF Canvas */}
       <div className="flex-1 overflow-auto flex justify-center" style={{ background: "var(--bg-root)" }}>
         <Document
-          file={pdfUrl}
+          file={file}
           onLoadSuccess={onDocumentLoadSuccess}
           onLoadProgress={({ loaded, total }) => {
             if (total) setLoadingProgress(Math.round((loaded / total) * 100))

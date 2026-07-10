@@ -2,3 +2,5 @@ allowBuilds:
   esbuild: true
   sharp: true
   unrs-resolver: true
+patchedDependencies:
+  pdfjs-dist@5.4.296: patches/pdfjs-dist@5.4.296.patch

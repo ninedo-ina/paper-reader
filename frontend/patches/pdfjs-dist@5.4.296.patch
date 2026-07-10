@@ -1,0 +1,25 @@
+diff --git a/build/pdf.mjs b/build/pdf.mjs
+index a33949b08e35e2edf09321c382b9ee34b3a56a8d..4988ea785d41e4e335de4a51add1e3c6194f3c5c 100644
+--- a/build/pdf.mjs
++++ b/build/pdf.mjs
+@@ -403,12 +403,14 @@ function updateUrlHash(url, hash, allowRel = false) {
+   return "";
+ }
+ function shadow(obj, prop, value, nonSerializable = false) {
+-  Object.defineProperty(obj, prop, {
+-    value,
+-    enumerable: !nonSerializable,
+-    configurable: true,
+-    writable: false
+-  });
++  if (obj && typeof obj === "object") {
++    Object.defineProperty(obj, prop, {
++      value,
++      enumerable: !nonSerializable,
++      configurable: true,
++      writable: false
++    });
++  }
+   return value;
+ }
+ const BaseException = function BaseExceptionClosure() {

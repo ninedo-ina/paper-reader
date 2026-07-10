@@ -12,7 +12,7 @@ import { PublishDialog } from "@/components/papers/PublishDialog"
 import { Button } from "@/components/ui/Button"
 import { ArrowLeft, Info, GitBranch, HardDrive, Upload, Loader2, Download } from "lucide-react"
 import { formatDate } from "@/lib/utils"
-import { getDownloadUrl } from "@/lib/api/papers"
+import { downloadPdf } from "@/lib/api/papers"
 
 type TabKey = "info" | "versions" | "storage"
 
@@ -204,15 +204,18 @@ export default function PaperDetailPage() {
               )}
 
               {/* Download */}
-              <div>
-                <a
-                  href={getDownloadUrl(currentPaper.id)}
-                  className="inline-flex items-center gap-1.5 text-sm text-[var(--accent)] hover:underline"
-                >
-                  <Download className="size-4" />
-                  下载 PDF
-                </a>
-              </div>
+              {currentPaper.sourceType !== "MANUAL" && (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => downloadPdf(currentPaper.id, `${currentPaper.title}.pdf`)}
+                    className="inline-flex items-center gap-1.5 text-sm text-[var(--accent)] hover:underline"
+                  >
+                    <Download className="size-4" />
+                    下载 PDF
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

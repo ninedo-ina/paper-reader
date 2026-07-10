@@ -2,7 +2,6 @@ package org.paperreader.service
 
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.http.HttpMethod
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
@@ -34,6 +33,7 @@ class FileStorageService(
                 target.toString()
             }
             else -> {
+                ensureDufsDirectory(objectPath)
                 val req = RequestEntity.put(URI("$dufsUrl/$objectPath"))
                     .body(file.bytes)
                 restTemplate.exchange(req, Void::class.java)
@@ -53,6 +53,7 @@ class FileStorageService(
                 Files.write(target, bytes)
             }
             else -> {
+                ensureDufsDirectory(objectPath)
                 val req = RequestEntity.put(URI("$dufsUrl/$objectPath"))
                     .body(bytes)
                 restTemplate.exchange(req, Void::class.java)
@@ -86,6 +87,32 @@ class FileStorageService(
             }
         } catch (e: Exception) {
             logger.warn("Failed to delete file: {}", filePath, e)
+        }
+    }
+
+    /**
+     * dufs 不会自动创建中间目录，PUT 到不存在的路径会返回 404。
+     * RestTemplate.put 会标准化 URI 去掉尾部斜杠，导致 dufs 创建文件而非目录。
+     * 这里用 Java 11+ HttpClient 发 MKCOL（WebDAV 创建目录）。
+     */
+    private val mkcolClient = java.net.http.HttpClient.newHttpClient()
+
+    private fun ensureDufsDirectory(objectPath: String) {
+        val parts = objectPath.split("/")
+        var current = StringBuilder()
+        for (part in parts.dropLast(1)) {
+            current.append(part).append("/")
+            val dirUrl = "$dufsUrl/$current"
+            try {
+                val req = java.net.http.HttpRequest.newBuilder()
+                    .uri(URI.create(dirUrl))
+                    .method("MKCOL", java.net.http.HttpRequest.BodyPublishers.noBody())
+                    .build()
+                val resp = mkcolClient.send(req, java.net.http.HttpResponse.BodyHandlers.discarding())
+                logger.debug("MKCOL {} -> {}", dirUrl, resp.statusCode())
+            } catch (_: Exception) {
+                // 目录已存在或网络异常均忽略，后续 PUT 会暴露真正的问题
+            }
         }
     }
 
