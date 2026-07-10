@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useLayoutEffect } from "react"
 import { useAuthStore, loadPersistedSession } from "@/stores/auth-store"
 import { useUserStore } from "@/stores/user-store"
 
@@ -8,14 +8,14 @@ export function SessionLoader({ children }: { children: React.ReactNode }) {
   const restoreSession = useAuthStore((s) => s.restoreSession)
   const loadProfile = useUserStore((s) => s.loadProfile)
 
-  // 在 render 阶段同步恢复 session，确保子组件 mount 时 token 已就绪
-  // 避免子组件 useEffect（bottom-up 先触发）在 token 恢复之前发出无认证的 API 请求
-  useState(() => {
+  // useLayoutEffect 是 top-down 触发（父 → 子），先于子组件的 useEffect（bottom-up）
+  // 确保 token 在 PaperList/Sidebar 发起 API 请求前已恢复到 API client
+  useLayoutEffect(() => {
     const tokens = loadPersistedSession()
     if (tokens) {
       restoreSession(tokens)
     }
-  })
+  }, [restoreSession])
 
   useEffect(() => {
     const tokens = loadPersistedSession()
