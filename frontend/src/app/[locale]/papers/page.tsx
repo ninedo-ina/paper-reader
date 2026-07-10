@@ -16,7 +16,7 @@ export default function PapersPage() {
   const router = useRouter()
 
   useEffect(() => {
-    loadPapers(1)
+    loadPapers(0)
   }, [loadPapers])
 
   return (
