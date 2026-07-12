@@ -1,10 +1,12 @@
 "use client"
 
 import { useState, useCallback } from "react"
+import { createPortal } from "react-dom"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/Button"
-import { X, Loader2, Copy, Check } from "lucide-react"
+import { X, Loader2, Copy } from "lucide-react"
 import * as papersApi from "@/lib/api/papers"
+import { useToastStore } from "@/stores/toast-store"
 
 interface ShareDialogProps {
   open: boolean
@@ -17,7 +19,6 @@ export function ShareDialog({ open, paperId, onClose }: ShareDialogProps) {
   const tc = useTranslations("common")
   const [description, setDescription] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [copied, setCopied] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const handleConfirm = useCallback(async () => {
@@ -27,23 +28,19 @@ export function ShareDialog({ open, paperId, onClose }: ShareDialogProps) {
     try {
       const result = await papersApi.sharePaper(paperId, description.trim() || undefined)
       await navigator.clipboard.writeText(result.shareText)
-      setCopied(true)
-      setTimeout(() => {
-        setCopied(false)
-        setDescription("")
-        onClose()
-      }, 1500)
+      useToastStore.getState().addToast({ message: t("shareSuccess") })
+      setDescription("")
+      onClose()
     } catch (e) {
       setError((e as Error).message)
     } finally {
       setIsLoading(false)
     }
-  }, [paperId, description, onClose])
+  }, [paperId, description, onClose, t])
 
   const handleClose = useCallback(() => {
     if (!isLoading) {
       setDescription("")
-      setCopied(false)
       setError(null)
       onClose()
     }
@@ -51,7 +48,7 @@ export function ShareDialog({ open, paperId, onClose }: ShareDialogProps) {
 
   if (!open) return null
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={handleClose} />
       <div className="relative w-full max-w-sm mx-4 glass-surface-strong rounded-xl border border-white/10 p-6 shadow-2xl">
@@ -76,12 +73,6 @@ export function ShareDialog({ open, paperId, onClose }: ShareDialogProps) {
           />
         </div>
 
-        {copied && (
-          <p className="text-sm text-green-500 mt-3 flex items-center gap-1">
-            <Check className="size-3.5" />
-            {t("shareSuccess")}
-          </p>
-        )}
         {error && <p className="text-sm text-red-500 mt-3">{error}</p>}
 
         <div className="flex justify-end gap-2 mt-4">
@@ -103,6 +94,7 @@ export function ShareDialog({ open, paperId, onClose }: ShareDialogProps) {
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

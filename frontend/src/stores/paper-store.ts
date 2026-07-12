@@ -36,6 +36,7 @@ interface PaperState {
   // 操作
   loadPapers: (page?: number, sourceType?: string) => Promise<void>
   loadPaper: (id: number) => Promise<void>
+  loadCounts: () => Promise<void>
   setActiveTab: (tab: TabKey) => void
   uploadPdf: (file: File) => Promise<PaperDetailDto>
   uploadFromUrl: (url: string, title?: string) => Promise<PaperDetailDto>
@@ -60,11 +61,19 @@ export const usePaperStore = create<PaperState>((set, get) => ({
   error: null,
   showInfoPanel: false,
 
-  get createCount(): number {
-    return get().papers.filter((p) => p.sourceType === "MANUAL").length
-  },
-  get importCount(): number {
-    return get().papers.filter((p) => p.sourceType === "UPLOAD" || p.sourceType === "URL").length
+  createCount: 0,
+  importCount: 0,
+
+  loadCounts: async () => {
+    try {
+      const [createRes, importRes] = await Promise.all([
+        papersApi.listPapers(0, 1, "create"),
+        papersApi.listPapers(0, 1, "import"),
+      ])
+      set({ createCount: createRes.total, importCount: importRes.total })
+    } catch {
+      // 静默失败，保留旧值
+    }
   },
 
   loadPapers: async (page = 0, sourceType) => {
@@ -88,7 +97,9 @@ export const usePaperStore = create<PaperState>((set, get) => ({
   },
 
   setActiveTab: (tab) => {
-    set({ activeTab: tab, sourceTypeFilter: tab })
+    const sourceType = tab === "create" ? "create" : "import"
+    set({ activeTab: tab, sourceTypeFilter: sourceType, page: 0 })
+    get().loadPapers(0, sourceType)
   },
 
   uploadPdf: async (file) => {
@@ -104,6 +115,7 @@ export const usePaperStore = create<PaperState>((set, get) => ({
       sourceTypeFilter: "import",
       showInfoPanel: true,
     })
+    get().loadCounts().catch(() => {})
     return paper
   },
 
@@ -120,6 +132,7 @@ export const usePaperStore = create<PaperState>((set, get) => ({
       sourceTypeFilter: "import",
       showInfoPanel: true,
     })
+    get().loadCounts().catch(() => {})
     return paper
   },
 
@@ -135,6 +148,7 @@ export const usePaperStore = create<PaperState>((set, get) => ({
       activeTab: "create",
       sourceTypeFilter: "create",
     })
+    get().loadCounts().catch(() => {})
     return paper
   },
 
@@ -165,6 +179,7 @@ export const usePaperStore = create<PaperState>((set, get) => ({
       papers: s.papers.filter((p) => p.id !== id),
       currentPaper: s.currentPaper?.id === id ? null : s.currentPaper,
     }))
+    get().loadCounts().catch(() => {})
   },
 
   clearCurrentPaper: () => set({ currentPaper: null }),

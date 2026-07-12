@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { createPortal } from "react-dom"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/Button"
 import { X, Plus, Loader2 } from "lucide-react"
@@ -66,7 +67,7 @@ export function TagDialog({ open, paperId, onClose }: TagDialogProps) {
 
   if (!open) return null
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-sm mx-4 glass-surface-strong rounded-xl border border-white/10 p-6 shadow-2xl">
@@ -124,6 +125,7 @@ export function TagDialog({ open, paperId, onClose }: TagDialogProps) {
           <Button variant="secondary" size="sm" onClick={onClose}>{tc("cancel")}</Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

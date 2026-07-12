@@ -58,7 +58,8 @@ export function DropdownMenu({ items, open, onClose, triggerRef }: DropdownMenuP
         <button
           key={i}
           type="button"
-          onClick={() => {
+          onClick={(e) => {
+            e.stopPropagation()
             item.onClick()
             onClose()
           }}

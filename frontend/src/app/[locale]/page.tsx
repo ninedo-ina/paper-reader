@@ -9,6 +9,7 @@ import { UploadDialog } from "@/components/papers/UploadDialog"
 import { CreatePaperDialog } from "@/components/papers/CreatePaperDialog"
 import { PaperContentArea } from "@/components/papers/PaperContentArea"
 import { VersionPopup } from "@/components/layout/VersionPopup"
+import { ToastContainer } from "@/components/ui/Toast"
 import { HistoryPanel } from "@/components/history/HistoryPanel"
 import { NotesPanel } from "@/components/notes/NotesPanel"
 import { usePaperStore } from "@/stores/paper-store"
@@ -105,6 +106,7 @@ export default function Home() {
       />
       <CreatePaperDialog open={showCreate} onClose={() => setShowCreate(false)} />
       <VersionPopup />
+      <ToastContainer />
     </div>
   )
 }

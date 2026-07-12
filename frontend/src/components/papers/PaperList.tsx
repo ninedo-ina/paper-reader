@@ -23,7 +23,8 @@ export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose }: P
   const t = useTranslations("common")
   const tp = useTranslations("papers")
   const {
-    papers, total, page, isListLoading, error, activeTab, loadPapers,
+    papers, total, page, isListLoading, error, activeTab,
+    createCount, importCount, loadPapers, loadCounts,
     setActiveTab, deletePaper,
   } = usePaperStore()
   const pageSize = 20
@@ -37,13 +38,11 @@ export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose }: P
   useEffect(() => {
     if (accessToken) {
       loadPapers(0)
+      loadCounts()
     }
-  }, [accessToken, loadPapers])
+  }, [accessToken, loadPapers, loadCounts])
 
   const handleRefresh = useCallback(() => { loadPapers(page) }, [loadPapers, page])
-
-  const createCount = papers.filter((p) => p.sourceType === "MANUAL").length
-  const importCount = papers.filter((p) => p.sourceType === "UPLOAD" || p.sourceType === "URL").length
 
   return (
     <div className="flex flex-col h-full">
@@ -82,7 +81,7 @@ export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose }: P
           { key: "import", label: tp("importTab"), count: importCount },
         ]}
         activeKey={activeTab}
-        onChange={(key) => { setActiveTab(key as "create" | "import"); key === "create" ? onCreate?.() : onUpload?.() }}
+        onChange={(key) => setActiveTab(key as "create" | "import")}
       />
 
       {isListLoading ? (
