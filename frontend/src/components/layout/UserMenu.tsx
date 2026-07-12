@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAuthStore } from "@/stores/auth-store"
 import { useUserStore } from "@/stores/user-store"
-import { LogOut } from "lucide-react"
+import { LogOut, User } from "lucide-react"
 
 export function UserMenu() {
   const t = useTranslations("auth")
@@ -61,6 +61,13 @@ export function UserMenu() {
               {profile?.email}
             </p>
           </div>
+          <button
+            onClick={() => { setOpen(false); router.push("/profile") }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors"
+          >
+            <User className="size-4" />
+            个人中心
+          </button>
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors"

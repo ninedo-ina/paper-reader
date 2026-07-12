@@ -2,12 +2,16 @@
 
 import { useState, useCallback, useEffect } from "react"
 import { useTranslations } from "next-intl"
-import { PanelRightClose, PanelRightOpen, Pencil, Save, Loader2 } from "lucide-react"
+import { PanelRightClose, PanelRightOpen, Pencil, Save, Loader2, MessageSquare, StickyNote } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { usePaperStore } from "@/stores/paper-store"
+import { useReaderStore } from "@/stores/reader-store"
+import type { ReaderAnnotation, ReaderNote } from "@/stores/reader-store"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { getCategory, CATEGORIES } from "@/lib/paper-categories"
+import { MarkdownContent } from "@/components/reader/MarkdownContent"
+import { ChatPanel } from "@/components/chat/ChatPanel"
 import type { PaperDetailDto, Category } from "@/lib/api/types"
 
 type PanelTab = "metadata" | "annotations" | "notes" | "aiChat"
@@ -78,13 +82,9 @@ export function RightPanel({ paper }: RightPanelProps) {
 
       <div className="flex-1 overflow-auto p-4">
         {activeTab === "metadata" && <MetadataContent paper={paper} />}
-        {activeTab === "annotations" && (
-          <EmptyState message="No annotations yet" />
-        )}
-        {activeTab === "notes" && <EmptyState message="No notes yet" />}
-        {activeTab === "aiChat" && (
-          <EmptyState message="Start an AI conversation" />
-        )}
+        {activeTab === "annotations" && <AnnotationList />}
+        {activeTab === "notes" && <NoteList />}
+        {activeTab === "aiChat" && <ChatPanel />}
       </div>
     </aside>
   )
@@ -429,6 +429,103 @@ function MetadataContent({ paper }: { paper?: PaperDetailDto | null }) {
           </pre>
         </SectionCard>
       )}
+    </div>
+  )
+}
+
+function AnnotationList() {
+  const annotations = useReaderStore((s) => s.annotations)
+
+  if (annotations.length === 0) {
+    return <EmptyState message="暂无批注" />
+  }
+
+  const sorted = [...annotations].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  )
+
+  return (
+    <div className="space-y-3 pb-6">
+      {sorted.map((a) => (
+        <div key={a.id} className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] overflow-hidden">
+          {/* 引用原文 */}
+          <div className="px-4 py-2.5 bg-[var(--bg-hover)] border-b border-[var(--border-subtle)]">
+            <div className="flex items-center gap-1.5 mb-1">
+              <MessageSquare className="size-3 text-[var(--text-tertiary)]" />
+              <span className="text-[10.5px] text-[var(--text-tertiary)] uppercase tracking-wide">
+                引用原文 · 第{a.pageNumber}页
+              </span>
+            </div>
+            <p className="text-sm text-[var(--text-secondary)] leading-relaxed line-clamp-4">
+              {a.text}
+            </p>
+          </div>
+          {/* 批注内容 */}
+          <div className="px-4 py-3">
+            <MarkdownContent
+              content={a.content}
+              images={a.images}
+              className="text-sm text-[var(--text-primary)] leading-relaxed"
+            />
+          </div>
+          {/* 时间 */}
+          <div className="px-4 pb-2.5">
+            <span className="text-[10.5px] text-[var(--text-tertiary)]">
+              {formatDate(a.createdAt)}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function NoteList() {
+  const notes = useReaderStore((s) => s.notes)
+
+  if (notes.length === 0) {
+    return <EmptyState message="暂无笔记" />
+  }
+
+  const sorted = [...notes].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  )
+
+  return (
+    <div className="space-y-3 pb-6">
+      {sorted.map((n) => (
+        <div key={n.id} className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] overflow-hidden">
+          {/* 引用原文 */}
+          <div className="px-4 py-2.5 bg-[var(--bg-hover)] border-b border-[var(--border-subtle)]">
+            <div className="flex items-center gap-1.5 mb-1">
+              <StickyNote className="size-3 text-[var(--text-tertiary)]" />
+              <span className="text-[10.5px] text-[var(--text-tertiary)] uppercase tracking-wide">
+                引用原文 · 第{n.pageNumber}页
+              </span>
+            </div>
+            <p className="text-sm text-[var(--text-secondary)] leading-relaxed line-clamp-4">
+              {n.text}
+            </p>
+          </div>
+          {/* 笔记内容 */}
+          <div className="px-4 py-3">
+            {n.title && (
+              <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-2">{n.title}</h4>
+            )}
+            <MarkdownContent
+              content={n.content}
+              images={n.images}
+              className="text-sm text-[var(--text-primary)] leading-relaxed"
+            />
+          </div>
+          {/* 时间 */}
+          <div className="px-4 pb-2.5">
+            <span className="text-[10.5px] text-[var(--text-tertiary)]">
+              {formatDate(n.createdAt)}
+            </span>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

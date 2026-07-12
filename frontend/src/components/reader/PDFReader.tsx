@@ -10,6 +10,11 @@ import { cn } from "@/lib/utils"
 import type { PaperDetailDto } from "@/lib/api/types"
 import { getDownloadUrl } from "@/lib/api/papers"
 import { getAccessToken } from "@/lib/api/client"
+import { useToastStore } from "@/stores/toast-store"
+import { useReaderStore } from "@/stores/reader-store"
+import { AnnotationLayer } from "@/components/reader/AnnotationLayer"
+import { AnnotationDialog } from "@/components/reader/AnnotationDialog"
+import type { TextAnchor } from "@/components/reader/AnnotationLayer"
 
 // 设置 pdf.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
@@ -23,6 +28,88 @@ export function PDFReader({ paper }: PDFReaderProps) {
   const [pageNumber, setPageNumber] = useState(1)
   const [scale, setScale] = useState(1.2)
   const [loadingProgress, setLoadingProgress] = useState(0)
+  const addToast = useToastStore((s) => s.addToast)
+  const { annotations, notes, addAnnotation, addNote } = useReaderStore()
+
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [dialogMode, setDialogMode] = useState<"annotation" | "note">("annotation")
+  const [dialogText, setDialogText] = useState("")
+  const [dialogPosition, setDialogPosition] = useState({ x: 0, y: 0, width: 0, height: 0 })
+  const [dialogPage, setDialogPage] = useState(1)
+
+  const handleCreateAnnotation = useCallback(
+    (text: string, position: { x: number; y: number; width: number; height: number }, pageNum: number) => {
+      setDialogMode("annotation")
+      setDialogText(text)
+      setDialogPosition(position)
+      setDialogPage(pageNum)
+      setDialogOpen(true)
+    }, [])
+
+  const handleCreateNote = useCallback(
+    (text: string, position: { x: number; y: number; width: number; height: number }, pageNum: number) => {
+      setDialogMode("note")
+      setDialogText(text)
+      setDialogPosition(position)
+      setDialogPage(pageNum)
+      setDialogOpen(true)
+    }, [])
+
+  const handleDialogSubmit = useCallback(
+    (data: { markdown: string; images: string[] }) => {
+      const id = Date.now()
+      if (dialogMode === "annotation") {
+        addAnnotation({
+          id,
+          paperId: paper.id,
+          pageNumber: dialogPage,
+          text: dialogText,
+          content: data.markdown,
+          images: data.images,
+          position: dialogPosition,
+          createdAt: new Date().toISOString(),
+        })
+      } else {
+        addNote({
+          id,
+          paperId: paper.id,
+          pageNumber: dialogPage,
+          text: dialogText,
+          content: data.markdown,
+          images: data.images,
+          position: dialogPosition,
+          createdAt: new Date().toISOString(),
+        })
+      }
+    },
+    [dialogMode, dialogText, dialogPosition, dialogPage, paper.id, addAnnotation, addNote],
+  )
+
+  // Build anchors from store annotations & notes for underline rendering
+  const anchors: TextAnchor[] = useMemo(() => {
+    const aAnchors: TextAnchor[] = annotations.map((a) => ({
+      id: a.id,
+      type: "annotation" as const,
+      text: a.text,
+      pageNumber: a.pageNumber,
+      position: a.position,
+    }))
+    const nAnchors: TextAnchor[] = notes.map((n) => ({
+      id: n.id,
+      type: "note" as const,
+      text: n.text,
+      pageNumber: n.pageNumber,
+      position: n.position,
+    }))
+    return [...aAnchors, ...nAnchors]
+  }, [annotations, notes])
+
+  const handleCopyTitle = () => {
+    const title = paper.title || ""
+    navigator.clipboard.writeText(title).then(() => {
+      addToast({ message: "复制论文标题成功", type: "success" })
+    })
+  }
 
   const onDocumentLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
     setNumPages(numPages)
@@ -44,7 +131,11 @@ export function PDFReader({ paper }: PDFReaderProps) {
     <div className="h-full flex flex-col bg-[var(--surface-1)]">
       {/* Toolbar */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-[var(--border-subtle)] bg-[var(--surface-0)]">
-        <h1 className="text-sm font-medium text-[var(--text-primary)] truncate flex-1">
+        <h1
+          className="text-sm font-medium text-[var(--text-primary)] truncate flex-1 cursor-pointer"
+          onClick={handleCopyTitle}
+          title="点击复制论文标题"
+        >
           {paper.title || "Untitled"}
           {paper.authors && (
             <>
@@ -135,7 +226,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
               <div
                 key={n}
                 className={cn(
-                  "shadow-lg mb-4 transition-opacity duration-200",
+                  "shadow-lg mb-4 transition-opacity duration-200 relative",
                   n !== pageNumber && "opacity-50",
                 )}
               >
@@ -146,10 +237,24 @@ export function PDFReader({ paper }: PDFReaderProps) {
                   renderAnnotationLayer={true}
                   className="bg-white"
                 />
+                <AnnotationLayer
+                  pageNumber={n}
+                  anchors={anchors}
+                  onCreateAnnotation={(text, pos) => handleCreateAnnotation(text, pos, n)}
+                  onCreateNote={(text, pos) => handleCreateNote(text, pos, n)}
+                />
               </div>
             ))}
         </Document>
       </div>
+
+      <AnnotationDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onSubmit={handleDialogSubmit}
+        mode={dialogMode}
+        selectedText={dialogText}
+      />
     </div>
   )
 }

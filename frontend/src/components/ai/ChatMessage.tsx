@@ -1,11 +1,11 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import type { AiMessageDto } from "@/lib/api/types"
+import type { ChatMessageItem } from "@/stores/chat-store"
 import { Bot, User } from "lucide-react"
 
 interface ChatMessageProps {
-  message: AiMessageDto
+  message: ChatMessageItem
 }
 
 export function ChatMessage({ message }: ChatMessageProps) {

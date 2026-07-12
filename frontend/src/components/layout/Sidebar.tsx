@@ -12,8 +12,8 @@ const sections = [
     label: "Library",
     items: [
       { key: "library", icon: Library, dynamicBadge: true },
-      { key: "history", icon: Clock, badge: "12" },
-      { key: "notes", icon: FileText, badge: "8" },
+      { key: "history", icon: Clock, badge: "0" },
+      { key: "notes", icon: FileText, badge: "0" },
     ],
   },
   {

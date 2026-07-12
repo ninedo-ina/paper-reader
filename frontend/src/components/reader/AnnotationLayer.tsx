@@ -1,50 +1,69 @@
 "use client"
 
 import { useState, useCallback, useRef, useEffect } from "react"
-import { useTranslations } from "next-intl"
-import { Highlighter, Underline, Strikethrough, MessageSquare, X } from "lucide-react"
+import { MessageSquare, StickyNote, Bot, Copy, X } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { AnnotationType, AnnotationDto } from "@/lib/api/types"
+import { useToastStore } from "@/stores/toast-store"
+
+export type AnchorType = "annotation" | "note"
+
+export interface TextAnchor {
+  id: number
+  type: AnchorType
+  text: string
+  pageNumber: number
+  position: { x: number; y: number; width: number; height: number }
+}
 
 interface AnnotationLayerProps {
   pageNumber: number
-  annotations: AnnotationDto[]
-  onAdd: (type: AnnotationType, text: string, position: Record<string, unknown>) => Promise<void>
-  onDelete: (id: number) => void
+  anchors: TextAnchor[]
+  onCreateAnnotation?: (text: string, position: { x: number; y: number; width: number; height: number }) => void
+  onCreateNote?: (text: string, position: { x: number; y: number; width: number; height: number }) => void
+  onAskAI?: (text: string) => void
 }
 
-const COLORS = ["#FFD700", "#FF6B6B", "#4ECDC4", "#A78BFA", "#60A5FA", "#FBBF24", "transparent"]
+interface PopupMenuState {
+  x: number
+  y: number
+  text: string
+  position: { x: number; y: number; width: number; height: number }
+}
 
-export function AnnotationLayer({ pageNumber, annotations, onAdd, onDelete }: AnnotationLayerProps) {
-  const t = useTranslations("annotation")
-  const [selectedText, setSelectedText] = useState("")
-  const [toolbarPos, setToolbarPos] = useState<{ x: number; y: number } | null>(null)
-  const [selectedColor, setSelectedColor] = useState(COLORS[0])
-  const [isAdding, setIsAdding] = useState(false)
+export function AnnotationLayer({ pageNumber, anchors, onCreateAnnotation, onCreateNote, onAskAI }: AnnotationLayerProps) {
+  const [popup, setPopup] = useState<PopupMenuState | null>(null)
   const layerRef = useRef<HTMLDivElement>(null)
+  const addToast = useToastStore((s) => s.addToast)
 
-  const pageAnnotations = annotations.filter((a) => a.pageNumber === pageNumber)
+  const pageAnchors = anchors.filter((a) => a.pageNumber === pageNumber)
 
   useEffect(() => {
     const handleSelection = () => {
       const sel = window.getSelection()
       if (!sel || sel.isCollapsed || !sel.toString().trim()) {
-        setSelectedText("")
-        setToolbarPos(null)
+        setPopup(null)
         return
       }
 
       const text = sel.toString().trim()
-      if (!text) return
+      if (!text) {
+        setPopup(null)
+        return
+      }
 
+      // Check if selection is within our layer
       const range = sel.getRangeAt(0)
-      const rect = range.getBoundingClientRect()
-      if (!layerRef.current?.contains(range.commonAncestorContainer)) return
+      if (!layerRef.current?.contains(range.commonAncestorContainer)) {
+        setPopup(null)
+        return
+      }
 
-      setSelectedText(text)
-      setToolbarPos({
+      const rect = range.getBoundingClientRect()
+      setPopup({
         x: rect.left + rect.width / 2,
-        y: rect.top - 40,
+        y: rect.top - 8,
+        text,
+        position: { x: rect.left, y: rect.top, width: rect.width, height: rect.height },
       })
     }
 
@@ -52,138 +71,126 @@ export function AnnotationLayer({ pageNumber, annotations, onAdd, onDelete }: An
     return () => document.removeEventListener("selectionchange", handleSelection)
   }, [])
 
-  const handleAnnotate = useCallback(
-    async (type: AnnotationType) => {
-      if (!selectedText || isAdding) return
-      setIsAdding(true)
-      try {
-        const color = type === "HIGHLIGHT" && selectedColor !== "transparent" ? selectedColor : undefined
-        const position = {
-          text: selectedText,
-          boundingRect: toolbarPos ? { x: toolbarPos.x, y: toolbarPos.y + 40 } : undefined,
-          color,
-        }
-        await onAdd(type, selectedText, position)
-        setSelectedText("")
-        setToolbarPos(null)
-      } finally {
-        setIsAdding(false)
-      }
-    },
-    [selectedText, selectedColor, toolbarPos, isAdding, onAdd],
-  )
+  const handleCopy = useCallback(() => {
+    if (!popup) return
+    navigator.clipboard.writeText(popup.text).then(() => {
+      addToast({ message: "复制成功", type: "success" })
+    })
+    setPopup(null)
+    window.getSelection()?.removeAllRanges()
+  }, [popup, addToast])
+
+  const handleCreateAnnotation = useCallback(() => {
+    if (!popup || !onCreateAnnotation) return
+    onCreateAnnotation(popup.text, popup.position)
+    setPopup(null)
+    window.getSelection()?.removeAllRanges()
+  }, [popup, onCreateAnnotation])
+
+  const handleCreateNote = useCallback(() => {
+    if (!popup || !onCreateNote) return
+    onCreateNote(popup.text, popup.position)
+    setPopup(null)
+    window.getSelection()?.removeAllRanges()
+  }, [popup, onCreateNote])
+
+  const handleAskAI = useCallback(() => {
+    if (!popup || !onAskAI) return
+    onAskAI(popup.text)
+    setPopup(null)
+    window.getSelection()?.removeAllRanges()
+  }, [popup, onAskAI])
 
   return (
     <div ref={layerRef} className="relative">
-      {/* Selection toolbar */}
-      {toolbarPos && selectedText && (
+      {/* Selection popup menu */}
+      {popup && (
         <div
-          className="fixed z-50 glass-surface-strong rounded-xl border border-[var(--border-color)] shadow-2xl px-2 py-1.5 flex items-center gap-1 animate-in fade-in zoom-in-95"
-          style={{ left: toolbarPos.x, top: toolbarPos.y, transform: "translate(-50%, -100%)" }}
+          className="fixed z-50 glass-surface-strong rounded-xl border border-[var(--border-color)] shadow-2xl py-1.5 min-w-[160px]"
+          style={{
+            left: popup.x,
+            bottom: `calc(100vh - ${popup.y}px + 8px)`,
+            transform: "translateX(-50%)",
+          }}
         >
-          <button
-            type="button"
-            onClick={() => handleAnnotate("HIGHLIGHT")}
-            disabled={isAdding}
-            className={cn("p-1.5 rounded-lg hover:bg-[var(--surface-2)] transition-colors", isAdding && "opacity-50")}
-            title={t("highlight")}
-          >
-            <Highlighter className="size-4 text-[var(--text-primary)]" />
-          </button>
-          <button
-            type="button"
-            onClick={() => handleAnnotate("UNDERLINE")}
-            disabled={isAdding}
-            className={cn("p-1.5 rounded-lg hover:bg-[var(--surface-2)] transition-colors", isAdding && "opacity-50")}
-            title={t("underline")}
-          >
-            <Underline className="size-4 text-[var(--text-primary)]" />
-          </button>
-          <button
-            type="button"
-            onClick={() => handleAnnotate("STRIKETHROUGH")}
-            disabled={isAdding}
-            className={cn("p-1.5 rounded-lg hover:bg-[var(--surface-2)] transition-colors", isAdding && "opacity-50")}
-            title={t("strikethrough")}
-          >
-            <Strikethrough className="size-4 text-[var(--text-primary)]" />
-          </button>
-          <button
-            type="button"
-            onClick={() => handleAnnotate("NOTE")}
-            disabled={isAdding}
-            className={cn("p-1.5 rounded-lg hover:bg-[var(--surface-2)] transition-colors", isAdding && "opacity-50")}
-            title={t("note")}
-          >
-            <MessageSquare className="size-4 text-[var(--text-primary)]" />
-          </button>
-          <div className="w-px h-5 bg-[var(--border-color)] mx-0.5" />
-          {COLORS.map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => setSelectedColor(c)}
-              title={c === "transparent" ? t("color") : c}
-              className={cn(
-                "size-5 rounded-full border-2 transition-all",
-                c === "transparent" && "border-dashed",
-                selectedColor === c
-                  ? "border-[var(--accent)] scale-110"
-                  : "border-[var(--border-color)] hover:scale-105",
-              )}
-              style={c !== "transparent" ? { backgroundColor: c } : undefined}
-            />
-          ))}
-          <div className="w-px h-5 bg-[var(--border-color)] mx-0.5" />
-          <button
-            type="button"
-            onClick={() => { setSelectedText(""); setToolbarPos(null) }}
-            className="p-1.5 rounded-lg hover:bg-[var(--surface-2)] transition-colors"
-            title={t("delete")}
-          >
-            <X className="size-4 text-[var(--text-tertiary)]" />
-          </button>
+          <MenuItem icon={<MessageSquare className="size-4" />} label="创建批注" onClick={handleCreateAnnotation} />
+          <MenuItem icon={<StickyNote className="size-4" />} label="创建笔记" onClick={handleCreateNote} />
+          <MenuItem icon={<Bot className="size-4" />} label="询问AI" onClick={handleAskAI} />
+          <div className="h-px bg-[var(--border-subtle)] my-1 mx-2" />
+          <MenuItem icon={<Copy className="size-4" />} label="复制文本" onClick={handleCopy} />
         </div>
       )}
 
-      {/* Existing annotation chips */}
-      {pageAnnotations.map((ann) => (
-        <AnnotationChip key={ann.id} annotation={ann} onDelete={() => onDelete(ann.id)} />
+      {/* Underline markers for existing anchors */}
+      {pageAnchors.map((anchor) => (
+        <UnderlineMarker key={`${anchor.type}-${anchor.id}`} anchor={anchor} layerRef={layerRef} />
       ))}
     </div>
   )
 }
 
-function AnnotationChip({ annotation, onDelete }: { annotation: AnnotationDto; onDelete: () => void }) {
-  const [showActions, setShowActions] = useState(false)
+function MenuItem({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors text-left"
+    >
+      <span className="text-[var(--text-tertiary)] shrink-0">{icon}</span>
+      <span>{label}</span>
+    </button>
+  )
+}
+
+function UnderlineMarker({ anchor, layerRef }: { anchor: TextAnchor; layerRef: React.RefObject<HTMLDivElement | null> }) {
+  if (!layerRef.current) return null
+
+  // Determine color based on type
+  // annotation (批注) = yellow, note (笔记) = purple, both = blue
+  // Since each anchor is a single type at DB level, we derive the color
+  const color = anchor.type === "note" ? "#A78BFA" : "#FBBF24"
+
+  // Convert page-relative coordinates from the stored position
+  // The position is stored relative to the viewport, so we compute offset relative to the layer
+  const layerRect = layerRef.current.getBoundingClientRect()
 
   return (
     <div
-      className="relative inline-flex items-center gap-1 group"
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
-    >
-      <span
-        className={cn("px-1 py-0.5 rounded text-sm", annotation.type === "HIGHLIGHT" && "bg-yellow-200 dark:bg-yellow-800")}
-        style={
-          annotation.type === "HIGHLIGHT" && annotation.color
-            ? { backgroundColor: annotation.color + "40" }
-            : undefined
-        }
-      >
-        {annotation.text || annotation.comment || annotation.type}
-        {annotation.type === "UNDERLINE" && <span className="border-b-2 border-[var(--text-primary)]">{annotation.text}</span>}
-        {annotation.type === "STRIKETHROUGH" && <span className="line-through text-[var(--text-tertiary)]">{annotation.text}</span>}
-      </span>
-      {showActions && (
-        <button
-          type="button"
-          onClick={onDelete}
-          className="absolute -top-1 -right-1 size-4 rounded-full bg-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          <X className="size-2.5 text-white" />
-        </button>
-      )}
-    </div>
+      className="absolute pointer-events-none"
+      style={{
+        left: anchor.position.x - layerRect.left,
+        top: anchor.position.y - layerRect.top + anchor.position.height,
+        width: anchor.position.width,
+        height: 3,
+        background: color,
+        borderRadius: 2,
+        opacity: 0.7,
+      }}
+    />
   )
+}
+
+/**
+ * Build a map of text → underline color for the customTextRenderer.
+ * Returns both a Map<string, string> for easy lookup and a set of text patterns.
+ */
+export function buildAnchorColorMap(anchors: TextAnchor[], pageNumber: number): Map<string, { annotation: boolean; note: boolean }> {
+  const map = new Map<string, { annotation: boolean; note: boolean }>()
+  for (const a of anchors) {
+    if (a.pageNumber !== pageNumber || !a.text) continue
+    const existing = map.get(a.text) || { annotation: false, note: false }
+    if (a.type === "annotation") existing.annotation = true
+    if (a.type === "note") existing.note = true
+    map.set(a.text, existing)
+  }
+  return map
+}
+
+/**
+ * Get the underline color for a given text based on what annotations/notes exist.
+ * Note (笔记) = purple #A78BFA, Annotation (批注) = yellow #FBBF24, Both = blue #60A5FA
+ */
+export function getAnchorColor(info: { annotation: boolean; note: boolean }): string {
+  if (info.annotation && info.note) return "#60A5FA" // blue for both
+  if (info.note) return "#A78BFA" // purple for note
+  return "#FBBF24" // yellow for annotation/批注
 }

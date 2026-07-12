@@ -10,6 +10,7 @@ import { TagDialog } from "./TagDialog"
 import { ShareDialog } from "./ShareDialog"
 import { Button } from "@/components/ui/Button"
 import { ChevronLeft, ChevronRight, Plus, Upload, RefreshCw, X } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface PaperListProps {
   activeId?: number | null
@@ -60,9 +61,9 @@ export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose }: P
               className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all">
               <Upload className="w-3.5 h-3.5" />
             </button>
-            <button onClick={handleRefresh} title="刷新"
-              className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all">
-              <RefreshCw className="w-3.5 h-3.5" />
+            <button onClick={handleRefresh} title="刷新" disabled={isListLoading}
+              className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all disabled:opacity-50">
+              <RefreshCw className={cn("w-3.5 h-3.5", isListLoading && "animate-spin")} />
             </button>
             {onClose && (
               <button onClick={onClose} title="关闭"

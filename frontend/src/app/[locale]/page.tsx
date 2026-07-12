@@ -12,6 +12,7 @@ import { VersionPopup } from "@/components/layout/VersionPopup"
 import { ToastContainer } from "@/components/ui/Toast"
 import { HistoryPanel } from "@/components/history/HistoryPanel"
 import { NotesPanel } from "@/components/notes/NotesPanel"
+import { PreferencesDialog } from "@/components/settings/PreferencesDialog"
 import { usePaperStore } from "@/stores/paper-store"
 import { useNotificationStore } from "@/stores/notification-store"
 import type { NoteDto } from "@/lib/api/types"
@@ -22,6 +23,7 @@ export default function Home() {
   const [sidebarPanel, setSidebarPanel] = useState<SidebarPanel>("library")
   const [showUpload, setShowUpload] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
+  const [showPreferences, setShowPreferences] = useState(false)
   const { currentPaper, loadPaper } = usePaperStore()
   const initSystemNotifications = useNotificationStore((s) => s.initSystemNotifications)
 
@@ -32,6 +34,10 @@ export default function Home() {
   const handleSidebarClick = useCallback((key: string) => {
     if (key === "upload") {
       setShowUpload(true)
+      return
+    }
+    if (key === "settings") {
+      setShowPreferences(true)
       return
     }
     if (key === "library" || key === "history" || key === "notes") {
@@ -105,6 +111,7 @@ export default function Home() {
         onUploaded={() => setSidebarPanel("library")}
       />
       <CreatePaperDialog open={showCreate} onClose={() => setShowCreate(false)} />
+      <PreferencesDialog open={showPreferences} onClose={() => setShowPreferences(false)} />
       <VersionPopup />
       <ToastContainer />
     </div>

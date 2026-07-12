@@ -1,4 +1,5 @@
 import { create } from "zustand"
+import { persist } from "zustand/middleware"
 
 export interface NotificationItem {
   id: string
@@ -23,51 +24,59 @@ interface NotificationState {
   initSystemNotifications: () => void
 }
 
-export const useNotificationStore = create<NotificationState>((set, get) => ({
-  notifications: [],
-  showVersionPopup: false,
+export const useNotificationStore = create<NotificationState>()(
+  persist(
+    (set, get) => ({
+      notifications: [],
+      showVersionPopup: false,
 
-  unreadCount: () => get().notifications.filter((n) => !n.read).length,
+      unreadCount: () => get().notifications.filter((n) => !n.read).length,
 
-  addNotification: (n) =>
-    set((s) => ({
-      notifications: [
-        { ...n, timestamp: Date.now(), read: false },
-        ...s.notifications,
-      ],
-    })),
+      addNotification: (n) =>
+        set((s) => ({
+          notifications: [
+            { ...n, timestamp: Date.now(), read: false },
+            ...s.notifications,
+          ],
+        })),
 
-  markRead: (id) =>
-    set((s) => ({
-      notifications: s.notifications.map((n) =>
-        n.id === id ? { ...n, read: true } : n,
-      ),
-    })),
+      markRead: (id) =>
+        set((s) => ({
+          notifications: s.notifications.map((n) =>
+            n.id === id ? { ...n, read: true } : n,
+          ),
+        })),
 
-  markAllRead: (type) =>
-    set((s) => ({
-      notifications: s.notifications.map((n) =>
-        type ? (n.type === type ? { ...n, read: true } : n) : { ...n, read: true },
-      ),
-    })),
+      markAllRead: (type) =>
+        set((s) => ({
+          notifications: s.notifications.map((n) =>
+            type ? (n.type === type ? { ...n, read: true } : n) : { ...n, read: true },
+          ),
+        })),
 
-  removeNotification: (id) =>
-    set((s) => ({
-      notifications: s.notifications.filter((n) => n.id !== id),
-    })),
+      removeNotification: (id) =>
+        set((s) => ({
+          notifications: s.notifications.filter((n) => n.id !== id),
+        })),
 
-  setShowVersionPopup: (show) => set({ showVersionPopup: show }),
+      setShowVersionPopup: (show) => set({ showVersionPopup: show }),
 
-  initSystemNotifications: () => {
-    const { notifications } = get()
-    if (!notifications.some((n) => n.id === "version-info")) {
-      get().addNotification({
-        id: "version-info",
-        type: "system",
-        title: "系统功能介绍",
-        message: "欢迎使用 Paper Reader！点击查看当前版本功能特性",
-        actionKey: "version",
-      })
-    }
-  },
-}))
+      initSystemNotifications: () => {
+        const { notifications } = get()
+        if (!notifications.some((n) => n.id === "version-info")) {
+          get().addNotification({
+            id: "version-info",
+            type: "system",
+            title: "系统功能介绍",
+            message: "欢迎使用 Paper Reader！点击查看当前版本功能特性",
+            actionKey: "version",
+          })
+        }
+      },
+    }),
+    {
+      name: "pr-notifications",
+      partialize: (state) => ({ notifications: state.notifications }),
+    },
+  ),
+)
