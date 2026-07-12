@@ -44,7 +44,7 @@ export const usePreferencesStore = create<PreferencesState>()(
         set((s) => ({
           providers: [
             ...s.providers,
-            { ...p, id: crypto.randomUUID(), active: false },
+            { ...p, id: `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`, active: false },
           ],
         })),
 
