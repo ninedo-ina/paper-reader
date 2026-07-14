@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useCallback, useMemo } from "react"
+import { useState, useCallback, useMemo, useRef, useEffect } from "react"
 import { Document, Page, pdfjs } from "react-pdf"
 import "react-pdf/dist/Page/AnnotationLayer.css"
 import "react-pdf/dist/Page/TextLayer.css"
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/Button"
-import { cn } from "@/lib/utils"
+import { cn, copyToClipboard } from "@/lib/utils"
 import type { PaperDetailDto } from "@/lib/api/types"
 import { getDownloadUrl } from "@/lib/api/papers"
 import { getAccessToken } from "@/lib/api/client"
@@ -28,6 +28,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
   const [pageNumber, setPageNumber] = useState(1)
   const [scale, setScale] = useState(1.2)
   const [loadingProgress, setLoadingProgress] = useState(0)
+  const scrollRef = useRef<HTMLDivElement>(null)
   const addToast = useToastStore((s) => s.addToast)
   const { annotations, notes, addAnnotation, addNote } = useReaderStore()
 
@@ -104,9 +105,17 @@ export function PDFReader({ paper }: PDFReaderProps) {
     return [...aAnchors, ...nAnchors]
   }, [annotations, notes])
 
+  useEffect(() => {
+    if (!scrollRef.current) return
+    const pageEl = scrollRef.current.querySelector(`[data-page="${pageNumber}"]`)
+    if (pageEl) {
+      pageEl.scrollIntoView({ behavior: "smooth", block: "start" })
+    }
+  }, [pageNumber])
+
   const handleCopyTitle = () => {
     const title = paper.title || ""
-    navigator.clipboard.writeText(title).then(() => {
+    copyToClipboard(title).then(() => {
       addToast({ message: "复制论文标题成功", type: "success" })
     })
   }
@@ -198,7 +207,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
       </div>
 
       {/* PDF Canvas */}
-      <div className="flex-1 overflow-auto flex justify-center" style={{ background: "var(--bg-root)" }}>
+      <div ref={scrollRef} className="flex-1 overflow-auto flex justify-center" style={{ background: "var(--bg-root)" }}>
         <Document
           file={file}
           onLoadSuccess={onDocumentLoadSuccess}
@@ -225,6 +234,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
             .map((n) => (
               <div
                 key={n}
+                data-page={n}
                 className={cn(
                   "shadow-lg mb-4 transition-opacity duration-200 relative",
                   n !== pageNumber && "opacity-50",

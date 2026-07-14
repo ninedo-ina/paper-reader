@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional
 
 interface PaperTagRepository : JpaRepository<PaperTag, Long> {
     fun findByPaperId(paperId: Long): List<PaperTag>
+    fun findByPaperIdIn(paperIds: List<Long>): List<PaperTag>
     fun findByPaperIdAndTag(paperId: Long, tag: String): PaperTag?
 
     @Modifying

@@ -73,6 +73,7 @@ export interface PaperListDto {
   sourceType: SourceType
   pageCount?: number
   favorite: boolean
+  tags?: string[]
   createdAt: string
 }
 
@@ -94,6 +95,7 @@ export interface PaperDetailDto {
   pageCount?: number
   fileSize?: number
   grobidResult?: Record<string, unknown>
+  tags?: string[]
   createdAt: string
   updatedAt: string
 }

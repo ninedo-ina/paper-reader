@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react"
 import { MessageSquare, StickyNote, Bot, Copy, X } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, copyToClipboard } from "@/lib/utils"
 import { useToastStore } from "@/stores/toast-store"
 
 export type AnchorType = "annotation" | "note"
@@ -73,7 +73,7 @@ export function AnnotationLayer({ pageNumber, anchors, onCreateAnnotation, onCre
 
   const handleCopy = useCallback(() => {
     if (!popup) return
-    navigator.clipboard.writeText(popup.text).then(() => {
+    copyToClipboard(popup.text).then(() => {
       addToast({ message: "复制成功", type: "success" })
     })
     setPopup(null)

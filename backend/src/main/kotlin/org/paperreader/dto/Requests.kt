@@ -47,6 +47,7 @@ data class PaperListDto(
     val sourceType: String,
     val pageCount: Int,
     val favorite: Boolean = false,
+    val tags: List<String> = emptyList(),
     val createdAt: Instant,
 )
 
@@ -69,6 +70,7 @@ data class PaperDetailDto(
     val pageCount: Int,
     val fileSize: Long,
     val grobidResult: Map<String, Any?>?,
+    val tags: List<String> = emptyList(),
     val createdAt: Instant,
     val updatedAt: Instant,
 )

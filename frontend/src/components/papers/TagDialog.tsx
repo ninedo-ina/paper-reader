@@ -121,8 +121,9 @@ export function TagDialog({ open, paperId, onClose }: TagDialogProps) {
 
         {error && <p className="text-sm text-red-500 mt-3">{error}</p>}
 
-        <div className="flex justify-end mt-4">
+        <div className="flex justify-end gap-2 mt-4">
           <Button variant="secondary" size="sm" onClick={onClose}>{tc("cancel")}</Button>
+          <Button size="sm" onClick={onClose}>{tc("confirm")}</Button>
         </div>
       </div>
     </div>,

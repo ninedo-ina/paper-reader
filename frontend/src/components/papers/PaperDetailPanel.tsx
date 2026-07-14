@@ -243,6 +243,23 @@ export function PaperDetailPanel({ paper, onSaved }: PaperDetailPanelProps) {
           ))}
         </fieldset>
 
+        {paper.tags && paper.tags.length > 0 && (
+          <fieldset className="space-y-2">
+            <legend className="text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wide mb-2">
+              {tp("tags")}
+            </legend>
+            <div className="flex flex-wrap gap-1.5">
+              {paper.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="text-xs px-2 py-1 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </fieldset>
+        )}
         {error && <p className="text-sm text-red-500">{error}</p>}
       </div>
     </div>

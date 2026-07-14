@@ -89,6 +89,18 @@ export function PaperCard({ paper, isActive, onClick, onDelete, onTag, onShare }
               {formatDate(paper.createdAt)}
             </span>
           </div>
+          {paper.tags && paper.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              {paper.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="text-[9px] px-1.5 py-0.5 rounded-full bg-[var(--surface-1)] text-[var(--text-secondary)] border border-[var(--border-subtle)]"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Three-dot menu button */}

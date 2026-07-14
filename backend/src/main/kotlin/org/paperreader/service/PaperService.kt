@@ -96,7 +96,8 @@ class PaperService(
     fun getPaper(id: Long, userId: Long): PaperDetailDto {
         val paper = paperRepository.findByIdAndUserId(id, userId)
             ?: throw ResourceNotFoundException("Paper", id)
-        return paper.toDetailDto()
+        val tags = paperTagRepository.findByPaperId(paper.id).map { it.tag }
+        return paper.toDetailDto(tags)
     }
 
     fun listPapers(userId: Long, page: Int, pageSize: Int, sourceTypes: List<String>? = null): PageResponse<PaperListDto> {
@@ -106,8 +107,10 @@ class PaperService(
         } else {
             paperRepository.findByUserIdAndSourceTypeInOrderByCreatedAtDesc(userId, sourceTypes, pageRequest)
         }
+        val paperIds = result.content.map { it.id }
+        val tagsMap = paperTagRepository.findByPaperIdIn(paperIds).groupBy({ it.paperId }, { it.tag })
         return PageResponse(
-            items = result.content.map { it.toListDto() },
+            items = result.content.map { it.toListDto(tagsMap[it.id] ?: emptyList()) },
             total = result.totalElements,
             page = page,
             pageSize = pageSize,
@@ -148,7 +151,9 @@ class PaperService(
             journal = request.journal ?: paper.journal,
             updatedAt = Instant.now(),
         )
-        return paperRepository.save(updated).toDetailDto()
+        val saved = paperRepository.save(updated)
+        val tags = paperTagRepository.findByPaperId(saved.id).map { it.tag }
+        return saved.toDetailDto(tags)
     }
 
     @Transactional
@@ -156,7 +161,9 @@ class PaperService(
         val paper = paperRepository.findByIdAndUserId(id, userId)
             ?: throw ResourceNotFoundException("Paper", id)
         val updated = paper.copy(favorite = favorite, updatedAt = Instant.now())
-        return paperRepository.save(updated).toDetailDto()
+        val saved = paperRepository.save(updated)
+        val tags = paperTagRepository.findByPaperId(saved.id).map { it.tag }
+        return saved.toDetailDto(tags)
     }
 
     fun listTags(paperId: Long, userId: Long): List<PaperTagDto> {
@@ -307,7 +314,7 @@ class PaperService(
         val pageCount: Int?,
     )
 
-    private fun Paper.toDetailDto() = PaperDetailDto(
+    private fun Paper.toDetailDto(tags: List<String> = emptyList()) = PaperDetailDto(
         id = id,
         title = title,
         authors = authors,
@@ -325,11 +332,12 @@ class PaperService(
         pageCount = pageCount,
         fileSize = fileSize,
         grobidResult = null,
+        tags = tags,
         createdAt = createdAt,
         updatedAt = updatedAt,
     )
 
-    private fun Paper.toListDto() = PaperListDto(
+    private fun Paper.toListDto(tags: List<String> = emptyList()) = PaperListDto(
         id = id,
         title = title,
         authors = authors,
@@ -340,6 +348,7 @@ class PaperService(
         sourceType = sourceType,
         pageCount = pageCount,
         favorite = favorite,
+        tags = tags,
         createdAt = createdAt,
     )
 

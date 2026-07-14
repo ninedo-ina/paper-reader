@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button"
 import { X, Loader2, Copy } from "lucide-react"
 import * as papersApi from "@/lib/api/papers"
 import { useToastStore } from "@/stores/toast-store"
+import { copyToClipboard } from "@/lib/utils"
 
 interface ShareDialogProps {
   open: boolean
@@ -27,7 +28,7 @@ export function ShareDialog({ open, paperId, onClose }: ShareDialogProps) {
     setError(null)
     try {
       const result = await papersApi.sharePaper(paperId, description.trim() || undefined)
-      await navigator.clipboard.writeText(result.shareText)
+      await copyToClipboard(result.shareText)
       useToastStore.getState().addToast({ message: t("shareSuccess") })
       setDescription("")
       onClose()
