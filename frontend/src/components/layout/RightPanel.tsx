@@ -149,6 +149,7 @@ function DisplayValue({ value, mono }: { value: string | number | undefined | nu
 function MetadataContent({ paper }: { paper?: PaperDetailDto | null }) {
   const t = useTranslations("metadata")
   const tp = useTranslations("paper")
+  const tPapers = useTranslations("papers")
 
   const updatePaper = usePaperStore((s) => s.updatePaper)
 
@@ -287,6 +288,20 @@ function MetadataContent({ paper }: { paper?: PaperDetailDto | null }) {
             <DisplayValue value={paper.participants} />
           )}
         </FieldRow>
+        {paper.tags && paper.tags.length > 0 && (
+          <FieldRow label={tPapers("tags")}>
+            <div className="flex flex-wrap gap-1">
+              {paper.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="text-xs px-2 py-0.5 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </FieldRow>
+        )}
       </SectionCard>
 
       {/* Abstract — always show as its own card */}
