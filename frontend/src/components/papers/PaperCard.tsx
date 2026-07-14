@@ -10,6 +10,15 @@ import { downloadPdf } from "@/lib/api/papers"
 import { DropdownMenu, type DropdownItem } from "@/components/ui/DropdownMenu"
 import { FileText, Globe, MoreHorizontal, Star, Tag, Share2, Download } from "lucide-react"
 
+const categoryAccent: Record<string, string> = {
+  THESIS: "#a78bfa",
+  JOURNAL: "#60a5fa",
+  PREPRINT: "#34d399",
+  COURSE: "#fbbf24",
+  TECH_REPORT: "#f472b6",
+  PATENT: "#fb923c",
+}
+
 interface PaperCardProps {
   paper: PaperListDto
   isActive?: boolean
@@ -36,6 +45,7 @@ export function PaperCard({ paper, isActive, onClick, onDelete, onTag, onShare }
   }, [paper.id, paper.title])
 
   const firstAuthor = paper.authors?.split(",")[0]?.trim() || "Unknown"
+  const accentColor = categoryAccent[paper.category] || "var(--accent)"
 
   const menuItems: DropdownItem[] = [
     { label: paper.favorite ? t("unfavorite") : t("favorite"), icon: <Star className="size-3.5" />, onClick: handleToggleFavorite },
@@ -47,54 +57,68 @@ export function PaperCard({ paper, isActive, onClick, onDelete, onTag, onShare }
   return (
     <div
       className={cn(
-        "relative rounded-lg border transition-all duration-150 cursor-pointer",
-        "hover:shadow-[var(--shadow-sm)]",
+        "group relative rounded-xl border transition-all duration-200 cursor-pointer overflow-hidden",
+        "hover:shadow-[var(--shadow-md)] hover:bg-[var(--surface-1)]/70 hover:backdrop-blur-sm",
         isActive
-          ? "border-[var(--accent)] bg-[var(--bg-active)]"
-          : "border-[var(--border-subtle)] bg-[var(--surface-2)] hover:bg-[var(--bg-hover)]",
+          ? "border-[var(--accent)] bg-[var(--bg-active)] shadow-[var(--shadow-sm)]"
+          : "border-[var(--border-subtle)] bg-[var(--surface-2)]",
       )}
       onClick={onClick}
     >
-      <div className="flex items-start gap-2 p-2.5">
-        {/* Icon + Content */}
+      {/* Accent color strip */}
+      <div
+        className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl"
+        style={{ background: isActive ? "var(--accent)" : accentColor }}
+      />
+
+      <div className="flex items-start gap-3 pl-[11px] pr-3 py-3.5">
+        {/* Content */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
+          {/* Title row */}
+          <div className="flex items-center gap-2">
             <span className="shrink-0">
               {paper.sourceType === "URL" ? (
-                <Globe className="size-3 text-[var(--text-tertiary)]" />
+                <Globe className="size-3.5 text-[var(--text-tertiary)]" />
               ) : (
-                <FileText className="size-3 text-[var(--text-tertiary)]" />
+                <FileText className="size-3.5 text-[var(--text-tertiary)]" />
               )}
             </span>
-            <h4 className="text-[13px] font-medium text-[var(--text-primary)] truncate leading-tight">
+            <h4 className="text-[14px] font-semibold text-[var(--text-primary)] truncate leading-snug">
               {paper.title || "Untitled"}
             </h4>
             {paper.favorite && (
               <Star className="size-3 shrink-0 text-amber-400 fill-amber-400" />
             )}
           </div>
-          <p className="text-[11px] text-[var(--text-secondary)] mt-0.5 truncate">
+
+          {/* Author */}
+          <p className="text-[12px] text-[var(--text-secondary)] mt-1 truncate">
             {firstAuthor}
           </p>
-          <div className="flex items-center gap-1.5 mt-1 text-[10px] text-[var(--text-tertiary)]">
-            {paper.year && <span>{paper.year}</span>}
-            {paper.journal && <span className="truncate max-w-[120px]">{paper.journal}</span>}
-            {paper.pageCount && <span>{paper.pageCount}p</span>}
-          </div>
-          <div className="flex items-center gap-1.5 mt-1">
-            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20">
+
+          {/* Metadata row */}
+          <div className="flex items-center justify-between mt-1.5">
+            <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-tertiary)]">
+              {paper.year && <span>{paper.year}</span>}
+              {paper.year && paper.journal && <span>&middot;</span>}
+              {paper.journal && <span className="truncate max-w-[100px]">{paper.journal}</span>}
+              {paper.journal && paper.pageCount && <span>&middot;</span>}
+              {paper.pageCount && <span>{paper.pageCount}p</span>}
+            </div>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0"
+              style={{ background: `${accentColor}15`, color: accentColor }}
+            >
               {catDef?.label ?? paper.category}
             </span>
-            <span className="text-[10px] text-[var(--text-tertiary)]">
-              {formatDate(paper.createdAt)}
-            </span>
           </div>
+
+          {/* Tags */}
           {paper.tags && paper.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-1">
+            <div className="flex flex-wrap gap-1 mt-2">
               {paper.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="text-[9px] px-1.5 py-0.5 rounded-full bg-[var(--surface-1)] text-[var(--text-secondary)] border border-[var(--border-subtle)]"
+                  className="text-[10px] px-1.5 py-0.5 rounded-md bg-[var(--surface-1)] text-[var(--text-secondary)] border border-[var(--border-subtle)]"
                 >
                   {tag}
                 </span>
@@ -111,7 +135,7 @@ export function PaperCard({ paper, isActive, onClick, onDelete, onTag, onShare }
             e.stopPropagation()
             setMenuOpen((prev) => !prev)
           }}
-          className="shrink-0 p-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+          className="shrink-0 p-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors opacity-0 group-hover:opacity-100"
           aria-label="More"
         >
           <MoreHorizontal className="size-4" />

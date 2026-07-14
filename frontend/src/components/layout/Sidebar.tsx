@@ -19,7 +19,7 @@ const sections = [
   {
     label: "Discover",
     items: [
-      { key: "starred", icon: Star, badge: "0" },
+      { key: "starred", icon: Star, dynamicBadge: true },
       { key: "tags", icon: Tag, badge: "0" },
     ],
   },
@@ -44,16 +44,18 @@ interface SidebarItem {
 export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
   const t = useTranslations("nav")
   const [collapsed, setCollapsed] = useState(false)
-  const { total, loadPapers } = usePaperStore()
+  const { total, favoriteCount, loadPapers, loadCounts } = usePaperStore()
   const accessToken = useAuthStore((s) => s.accessToken)
 
   useEffect(() => {
     if (accessToken) {
       loadPapers(0)
+      loadCounts()
     }
-  }, [accessToken, loadPapers])
+  }, [accessToken, loadPapers, loadCounts])
 
   const papersBadge = total > 99 ? "99+" : String(total)
+  const favoritesBadge = favoriteCount > 99 ? "99+" : String(favoriteCount)
 
   const renderCollapsedItem = (item: SidebarItem) => (
     <button
@@ -72,7 +74,9 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
   )
 
   const renderExpandedItem = (item: SidebarItem) => {
-    const badge = item.dynamicBadge ? papersBadge : item.badge
+    const badge = item.dynamicBadge
+      ? (item.key === "starred" ? favoritesBadge : papersBadge)
+      : item.badge
 
     return (
       <button

@@ -55,3 +55,13 @@ data class UserProfile(
     val avatarUrl: String?,
     val authProvider: String,
 )
+
+data class UpdateProfileRequest(
+    val displayName: String? = null,
+    val avatarUrl: String? = null,
+)
+
+data class ChangePasswordRequest(
+    val currentPassword: String,
+    val newPassword: String,
+)

@@ -53,6 +53,22 @@ class AuthController(
         ))
     }
 
+    @PatchMapping("/profile")
+    fun updateProfile(
+        @Valid @RequestBody request: UpdateProfileRequest,
+        @AuthenticationPrincipal principal: UserPrincipal,
+    ): ApiResponse<UserProfile> =
+        ApiResponse(data = authService.updateProfile(principal.userId, request))
+
+    @PutMapping("/password")
+    fun changePassword(
+        @Valid @RequestBody request: ChangePasswordRequest,
+        @AuthenticationPrincipal principal: UserPrincipal,
+    ): ApiResponse<Nothing> {
+        authService.changePassword(principal.userId, request)
+        return ApiResponse(message = "Password changed")
+    }
+
     @PostMapping("/refresh")
     fun refresh(@Valid @RequestBody request: RefreshTokenRequest): ApiResponse<TokenResponse> =
         ApiResponse(data = jwtUtil.refreshAccessToken(request.refreshToken))

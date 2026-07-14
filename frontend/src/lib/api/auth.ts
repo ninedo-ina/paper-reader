@@ -2,7 +2,7 @@
 // 认证 API — 注册、登录、邮箱验证码、GitHub OAuth
 // =============================================================================
 
-import { get, post } from "./client"
+import { get, post, patch, put } from "./client"
 import type {
   TokenResponse,
   LoginRequest,
@@ -11,6 +11,8 @@ import type {
   GitHubAuthRequest,
   RefreshTokenRequest,
   UserProfile,
+  UpdateProfileRequest,
+  ChangePasswordRequest,
 } from "./types"
 
 /** 邮箱密码登录 */
@@ -41,4 +43,14 @@ export function refreshToken(data: RefreshTokenRequest): Promise<TokenResponse> 
 /** 获取当前用户信息 */
 export function getUserProfile(): Promise<UserProfile> {
   return get<UserProfile>("/auth/me")
+}
+
+/** 更新用户资料 */
+export function updateProfile(data: UpdateProfileRequest): Promise<UserProfile> {
+  return patch<UserProfile>("/auth/profile", data)
+}
+
+/** 修改密码 */
+export function changePassword(data: ChangePasswordRequest): Promise<null> {
+  return put<null>("/auth/password", data)
 }

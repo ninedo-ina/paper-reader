@@ -176,6 +176,39 @@ class AuthService(
         )
     }
 
+    fun updateProfile(userId: Long, request: UpdateProfileRequest): UserProfile {
+        val user = userRepository.findById(userId).orElseThrow {
+            IllegalArgumentException("User not found")
+        }
+        val updated = user.copy(
+            displayName = request.displayName ?: user.displayName,
+            avatarUrl = request.avatarUrl ?: user.avatarUrl,
+        ).let { userRepository.save(it) }
+        return UserProfile(
+            id = updated.id,
+            email = updated.email,
+            displayName = updated.displayName,
+            avatarUrl = updated.avatarUrl,
+            authProvider = updated.authProvider,
+        )
+    }
+
+    fun changePassword(userId: Long, request: ChangePasswordRequest) {
+        val user = userRepository.findById(userId).orElseThrow {
+            IllegalArgumentException("User not found")
+        }
+        require(user.passwordHash != null) {
+            "This account uses ${user.authProvider} login, password change not available"
+        }
+        require(passwordEncoder.matches(request.currentPassword, user.passwordHash)) {
+            "Current password is incorrect"
+        }
+        require(request.newPassword.length >= 6) {
+            "New password must be at least 6 characters"
+        }
+        userRepository.save(user.copy(passwordHash = passwordEncoder.encode(request.newPassword)))
+    }
+
     private fun generateTokens(user: User, isNewUser: Boolean = false): TokenResponse {
         val accessToken = jwtUtil.generateAccessToken(user.id, user.email)
         val refreshToken = jwtUtil.generateRefreshToken(user.id, user.email)

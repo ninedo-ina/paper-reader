@@ -7,7 +7,11 @@ import { useAuthStore } from "@/stores/auth-store"
 import { useUserStore } from "@/stores/user-store"
 import { LogOut, User } from "lucide-react"
 
-export function UserMenu() {
+interface UserMenuProps {
+  onProfile?: () => void
+}
+
+export function UserMenu({ onProfile }: UserMenuProps) {
   const t = useTranslations("auth")
   const router = useRouter()
   const { logout } = useAuthStore()
@@ -62,7 +66,7 @@ export function UserMenu() {
             </p>
           </div>
           <button
-            onClick={() => { setOpen(false); router.push("/profile") }}
+            onClick={() => { setOpen(false); onProfile?.() }}
             className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors"
           >
             <User className="size-4" />

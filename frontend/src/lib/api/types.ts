@@ -56,6 +56,16 @@ export interface UserProfile {
   authProvider: string
 }
 
+export interface UpdateProfileRequest {
+  displayName?: string
+  avatarUrl?: string
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string
+  newPassword: string
+}
+
 // --- 论文 ---
 
 export type SourceType = "UPLOAD" | "URL" | "MANUAL"

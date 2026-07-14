@@ -7,6 +7,7 @@ import * as papersApi from "@/lib/api/papers"
 import type { PaperListDto, PaperDetailDto, CreatePaperRequest, UpdatePaperRequest } from "@/lib/api/types"
 
 export type TabKey = "create" | "import"
+export type FavoriteTabKey = "all" | "create" | "import"
 
 interface PaperState {
   // 论文列表
@@ -18,6 +19,11 @@ interface PaperState {
   // TabBar 状态
   activeTab: TabKey
   sourceTypeFilter: string | undefined
+
+  // 收藏面板
+  activeFavoriteTab: FavoriteTabKey
+  favoriteCount: number
+  favoriteSourceType: string | undefined
 
   // 当前论文
   currentPaper: PaperDetailDto | null
@@ -34,10 +40,11 @@ interface PaperState {
   importCount: number
 
   // 操作
-  loadPapers: (page?: number, sourceType?: string) => Promise<void>
+  loadPapers: (page?: number, sourceType?: string, favorite?: boolean) => Promise<void>
   loadPaper: (id: number) => Promise<void>
   loadCounts: () => Promise<void>
   setActiveTab: (tab: TabKey) => void
+  setFavoriteTab: (tab: FavoriteTabKey) => void
   uploadPdf: (file: File) => Promise<PaperDetailDto>
   uploadFromUrl: (url: string, title?: string) => Promise<PaperDetailDto>
   createPaper: (data: CreatePaperRequest) => Promise<PaperDetailDto>
@@ -56,6 +63,9 @@ export const usePaperStore = create<PaperState>((set, get) => ({
   isListLoading: false,
   activeTab: "import",
   sourceTypeFilter: undefined,
+  activeFavoriteTab: "all",
+  favoriteCount: 0,
+  favoriteSourceType: undefined,
   currentPaper: null,
   isDetailLoading: false,
   error: null,
@@ -66,20 +76,21 @@ export const usePaperStore = create<PaperState>((set, get) => ({
 
   loadCounts: async () => {
     try {
-      const [createRes, importRes] = await Promise.all([
+      const [createRes, importRes, favRes] = await Promise.all([
         papersApi.listPapers(0, 1, "create"),
         papersApi.listPapers(0, 1, "import"),
+        papersApi.countFavorites(),
       ])
-      set({ createCount: createRes.total, importCount: importRes.total })
+      set({ createCount: createRes.total, importCount: importRes.total, favoriteCount: favRes.total })
     } catch {
       // 静默失败，保留旧值
     }
   },
 
-  loadPapers: async (page = 0, sourceType) => {
+  loadPapers: async (page = 0, sourceType, favorite = false) => {
     set({ isListLoading: true, error: null })
     try {
-      const res = await papersApi.listPapers(page, 20, sourceType)
+      const res = await papersApi.listPapers(page, 20, sourceType, favorite || undefined)
       set({ papers: res.items, total: res.total, page: res.page, isListLoading: false })
     } catch (e) {
       set({ isListLoading: false, error: (e as Error).message })
@@ -100,6 +111,12 @@ export const usePaperStore = create<PaperState>((set, get) => ({
     const sourceType = tab === "create" ? "create" : "import"
     set({ activeTab: tab, sourceTypeFilter: sourceType, page: 0 })
     get().loadPapers(0, sourceType)
+  },
+
+  setFavoriteTab: (tab) => {
+    const sourceType = tab === "all" ? undefined : tab === "create" ? "create" : "import"
+    set({ activeFavoriteTab: tab, favoriteSourceType: sourceType, page: 0 })
+    get().loadPapers(0, sourceType, true)
   },
 
   uploadPdf: async (file) => {
@@ -170,6 +187,7 @@ export const usePaperStore = create<PaperState>((set, get) => ({
       papers: s.papers.map((p) => (p.id === id ? { ...p, ...updated } as unknown as PaperListDto : p)),
       currentPaper: s.currentPaper?.id === id ? updated : s.currentPaper,
     }))
+    get().loadCounts().catch(() => {})
   },
 
   deletePaper: async (id) => {

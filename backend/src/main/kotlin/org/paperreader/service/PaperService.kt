@@ -100,12 +100,17 @@ class PaperService(
         return paper.toDetailDto(tags)
     }
 
-    fun listPapers(userId: Long, page: Int, pageSize: Int, sourceTypes: List<String>? = null): PageResponse<PaperListDto> {
+    fun listPapers(userId: Long, page: Int, pageSize: Int, sourceTypes: List<String>? = null, favorite: Boolean? = null): PageResponse<PaperListDto> {
         val pageRequest = PageRequest.of(page, pageSize)
-        val result = if (sourceTypes.isNullOrEmpty()) {
-            paperRepository.findByUserIdOrderByCreatedAtDesc(userId, pageRequest)
-        } else {
-            paperRepository.findByUserIdAndSourceTypeInOrderByCreatedAtDesc(userId, sourceTypes, pageRequest)
+        val result = when {
+            favorite != null && !sourceTypes.isNullOrEmpty() ->
+                paperRepository.findByUserIdAndFavoriteAndSourceTypeInOrderByCreatedAtDesc(userId, favorite, sourceTypes, pageRequest)
+            favorite != null ->
+                paperRepository.findByUserIdAndFavoriteOrderByCreatedAtDesc(userId, favorite, pageRequest)
+            !sourceTypes.isNullOrEmpty() ->
+                paperRepository.findByUserIdAndSourceTypeInOrderByCreatedAtDesc(userId, sourceTypes, pageRequest)
+            else ->
+                paperRepository.findByUserIdOrderByCreatedAtDesc(userId, pageRequest)
         }
         val paperIds = result.content.map { it.id }
         val tagsMap = paperTagRepository.findByPaperIdIn(paperIds).groupBy({ it.paperId }, { it.tag })

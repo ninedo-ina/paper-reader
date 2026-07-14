@@ -6,7 +6,11 @@ import { NotificationDropdown } from "@/components/layout/NotificationDropdown";
 import { SearchDialog } from "@/components/layout/SearchDialog";
 import { UserMenu } from "@/components/layout/UserMenu";
 
-export function Topbar() {
+interface TopbarProps {
+  onProfile?: () => void
+}
+
+export function Topbar({ onProfile }: TopbarProps) {
 
   return (
     <header className="h-[52px] glass-surface border-b border-[var(--border-subtle)] flex items-center px-4 select-none justify-between relative z-10">
@@ -17,7 +21,7 @@ export function Topbar() {
         <NotificationDropdown />
         <ThemeToggle />
         <div className="ml-1">
-          <UserMenu />
+          <UserMenu onProfile={onProfile} />
         </div>
       </div>
     </header>

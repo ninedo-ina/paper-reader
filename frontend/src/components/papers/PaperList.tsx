@@ -18,15 +18,17 @@ interface PaperListProps {
   onUpload?: () => void
   onCreate?: () => void
   onClose?: () => void
+  favoriteMode?: boolean
 }
 
-export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose }: PaperListProps) {
+export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose, favoriteMode }: PaperListProps) {
   const t = useTranslations("common")
   const tp = useTranslations("papers")
   const {
     papers, total, page, isListLoading, error, activeTab,
-    createCount, importCount, loadPapers, loadCounts,
-    setActiveTab, deletePaper,
+    createCount, importCount, favoriteCount,
+    activeFavoriteTab, loadPapers, loadCounts,
+    setActiveTab, setFavoriteTab, deletePaper,
   } = usePaperStore()
   const pageSize = 20
   const totalPages = Math.ceil(total / pageSize)
@@ -76,14 +78,26 @@ export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose }: P
       </div>
 
       {/* TabBar */}
-      <TabBar
-        tabs={[
-          { key: "create", label: tp("createTab"), count: createCount },
-          { key: "import", label: tp("importTab"), count: importCount },
-        ]}
-        activeKey={activeTab}
-        onChange={(key) => setActiveTab(key as "create" | "import")}
-      />
+      {favoriteMode ? (
+        <TabBar
+          tabs={[
+            { key: "all", label: tp("allTab") || "全部", count: favoriteCount },
+            { key: "create", label: tp("createTab"), count: 0 },
+            { key: "import", label: tp("importTab"), count: 0 },
+          ]}
+          activeKey={activeFavoriteTab}
+          onChange={(key) => setFavoriteTab(key as "all" | "create" | "import")}
+        />
+      ) : (
+        <TabBar
+          tabs={[
+            { key: "create", label: tp("createTab"), count: createCount },
+            { key: "import", label: tp("importTab"), count: importCount },
+          ]}
+          activeKey={activeTab}
+          onChange={(key) => setActiveTab(key as "create" | "import")}
+        />
+      )}
 
       {isListLoading ? (
         <div className="flex-1 flex items-center justify-center">

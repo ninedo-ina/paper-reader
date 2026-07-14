@@ -43,6 +43,7 @@ class PaperController(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") pageSize: Int,
         @RequestParam(required = false) sourceType: String?,
+        @RequestParam(required = false) favorite: Boolean?,
         @AuthenticationPrincipal principal: UserPrincipal,
     ): ApiResponse<PageResponse<PaperListDto>> {
         val sourceTypes = when (sourceType) {
@@ -50,7 +51,7 @@ class PaperController(
             "import" -> listOf("UPLOAD", "URL")
             else -> null
         }
-        return ApiResponse(data = paperService.listPapers(principal.userId, page, pageSize, sourceTypes))
+        return ApiResponse(data = paperService.listPapers(principal.userId, page, pageSize, sourceTypes, favorite))
     }
 
     @GetMapping("/{id}")

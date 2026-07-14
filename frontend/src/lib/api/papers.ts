@@ -14,15 +14,22 @@ import type {
   SharePaperResponse,
 } from "./types"
 
-/** 获取用户论文列表（分页，可选 sourceType 过滤: "create" | "import"） */
+/** 获取用户论文列表（分页，可选 sourceType/favorite 过滤） */
 export function listPapers(
   page = 0,
   pageSize = 20,
   sourceType?: string,
+  favorite?: boolean,
 ): Promise<PageResponse<PaperListDto>> {
   let url = `/papers?page=${page}&pageSize=${pageSize}`
   if (sourceType) url += `&sourceType=${sourceType}`
+  if (favorite !== undefined) url += `&favorite=${favorite}`
   return get<PageResponse<PaperListDto>>(url)
+}
+
+/** 获取收藏论文总数 */
+export function countFavorites(): Promise<PageResponse<PaperListDto>> {
+  return listPapers(0, 1, undefined, true)
 }
 
 /** 获取论文详情 */

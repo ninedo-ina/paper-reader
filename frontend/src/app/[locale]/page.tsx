@@ -13,17 +13,19 @@ import { ToastContainer } from "@/components/ui/Toast"
 import { HistoryPanel } from "@/components/history/HistoryPanel"
 import { NotesPanel } from "@/components/notes/NotesPanel"
 import { PreferencesDialog } from "@/components/settings/PreferencesDialog"
+import { ProfileDialog } from "@/components/settings/ProfileDialog"
 import { usePaperStore } from "@/stores/paper-store"
 import { useNotificationStore } from "@/stores/notification-store"
 import type { NoteDto } from "@/lib/api/types"
 
-type SidebarPanel = "library" | "history" | "notes" | null
+type SidebarPanel = "library" | "history" | "notes" | "starred" | null
 
 export default function Home() {
   const [sidebarPanel, setSidebarPanel] = useState<SidebarPanel>("library")
   const [showUpload, setShowUpload] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
   const [showPreferences, setShowPreferences] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
   const { currentPaper, loadPaper } = usePaperStore()
   const initSystemNotifications = useNotificationStore((s) => s.initSystemNotifications)
 
@@ -38,6 +40,10 @@ export default function Home() {
     }
     if (key === "settings") {
       setShowPreferences(true)
+      return
+    }
+    if (key === "starred") {
+      setSidebarPanel((p) => (p === "starred" ? null : "starred"))
       return
     }
     if (key === "library" || key === "history" || key === "notes") {
@@ -60,7 +66,7 @@ export default function Home() {
       <Sidebar activePanel={sidebarPanel} onNavigate={handleSidebarClick} />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <Topbar />
+        <Topbar onProfile={() => setShowProfile(true)} />
 
         <div className="flex-1 flex overflow-hidden">
           {/* Paper list panel (slides in from sidebar) */}
@@ -97,6 +103,18 @@ export default function Home() {
             </aside>
           )}
 
+          {/* Starred panel */}
+          {sidebarPanel === "starred" && (
+            <aside className="w-72 border-r border-[var(--border-subtle)] glass-surface flex flex-col shrink-0">
+              <PaperList
+                activeId={currentPaper?.id ?? null}
+                onSelect={handlePaperSelect}
+                onClose={() => setSidebarPanel(null)}
+                favoriteMode
+              />
+            </aside>
+          )}
+
           <main className="flex-1 overflow-hidden flex flex-col">
             <PaperContentArea paper={currentPaper} onUploadClick={() => setShowUpload(true)} />
           </main>
@@ -112,6 +130,7 @@ export default function Home() {
       />
       <CreatePaperDialog open={showCreate} onClose={() => setShowCreate(false)} />
       <PreferencesDialog open={showPreferences} onClose={() => setShowPreferences(false)} />
+      <ProfileDialog open={showProfile} onClose={() => setShowProfile(false)} />
       <VersionPopup />
       <ToastContainer />
     </div>
