@@ -419,27 +419,31 @@ interface MergedAnchor {
 /**
  * Merge annotation + note anchors on the same text into a single underline.
  * Yellow = annotation only, Purple = note only, Blue = both.
- * Uses real-time matched positions, NOT stored pixel coordinates.
+ * Tries real-time text matching first, falls back to stored coordinates.
  */
 function mergeAnchors(anchors: TextAnchor[], matchedPositions: Map<string, PositionRect[]>): MergedAnchor[] {
-  const groups = new Map<string, { hasAnnotation: boolean; hasNote: boolean }>()
+  const groups = new Map<string, { hasAnnotation: boolean; hasNote: boolean; fallbackRects: PositionRect[] }>()
   for (const a of anchors) {
     const key = `${a.pageNumber}:${a.text}`
+    const storedRects = a.positions?.length ? a.positions : [a.position]
     const existing = groups.get(key)
     if (existing) {
       if (a.type === "annotation") existing.hasAnnotation = true
       if (a.type === "note") existing.hasNote = true
+      if (!existing.fallbackRects.length) existing.fallbackRects = storedRects
     } else {
       groups.set(key, {
         hasAnnotation: a.type === "annotation",
         hasNote: a.type === "note",
+        fallbackRects: storedRects,
       })
     }
   }
   return Array.from(groups.entries()).map(([key, g]) => ({
     key,
     color: g.hasAnnotation && g.hasNote ? "#60A5FA" : g.hasNote ? "#A78BFA" : "#FBBF24",
-    rects: matchedPositions.get(key) || [],
+    // Use real-time matched positions, fall back to stored coordinates if text matching fails
+    rects: matchedPositions.get(key) || g.fallbackRects,
   }))
 }
 
