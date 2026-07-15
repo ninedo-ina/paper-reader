@@ -67,7 +67,7 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
       loadCounts()
       getForumStats().then((s) => {
         const count = s.totalPosts
-        setForumBadge(count > 99 ? "99+" : count > 0 ? String(count) : null)
+        setForumBadge(count > 99 ? "99+" : String(count))
       }).catch(() => {})
     }
   }, [accessToken, loadPapers, loadCounts])
