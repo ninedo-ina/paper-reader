@@ -76,7 +76,7 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
       onClick={() => onNavigate?.(item.key)}
       title={t(item.key)}
       className={cn(
-        "flex items-center justify-center w-9 h-9 mx-auto mb-0.5 rounded-[10px] transition-all duration-150",
+        "flex items-center justify-center w-9 h-9 mx-auto rounded-[10px] transition-all duration-150",
         "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]",
         activePanel === item.key &&
           "bg-[var(--bg-active)] text-[var(--text-primary)]",
@@ -96,7 +96,7 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
         key={item.key}
         onClick={() => onNavigate?.(item.key)}
         className={cn(
-          "flex items-center gap-2.5 px-3 py-2 mx-1 mb-0.5 rounded-[10px] text-[13.5px] font-[470] transition-all duration-150",
+          "flex items-center gap-2.5 px-3 py-2 mx-1 rounded-[10px] text-[13.5px] font-[470] transition-all duration-150",
           "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]",
           activePanel === item.key &&
             "bg-[var(--bg-active)] text-[var(--text-primary)] font-[550]",
@@ -171,7 +171,9 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
               <div className="text-[11px] font-semibold uppercase tracking-[0.6px] text-[var(--text-tertiary)] px-3 pt-4 pb-1.5">
                 {t(section.labelKey)}
               </div>
-              {section.items.map(renderExpandedItem)}
+              <div className="flex flex-col gap-y-1">
+                {section.items.map(renderExpandedItem)}
+              </div>
             </div>
           ))}
 
@@ -181,7 +183,9 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
             <div className="text-[11px] font-semibold uppercase tracking-[0.6px] text-[var(--text-tertiary)] px-3 pt-4 pb-1.5">
               Settings
             </div>
-            {bottomItems.map(renderExpandedItem)}
+            <div className="flex flex-col gap-y-1">
+              {bottomItems.map(renderExpandedItem)}
+            </div>
           </div>
         </>
       )}

@@ -84,23 +84,25 @@ export const usePaperStore = create<PaperState>((set, get) => ({
 
   loadCounts: async () => {
     try {
-      const [allRes, createRes, importRes, favRes, forumRes] = await Promise.all([
-        papersApi.listPapers(0, 1),
-        papersApi.listPapers(0, 1, "create"),
-        papersApi.listPapers(0, 1, "import"),
-        papersApi.countFavorites(),
-        getForumStats(),
-      ])
-      set({
-        totalCount: allRes.total,
-        createCount: createRes.total,
-        importCount: importRes.total,
-        favoriteCount: favRes.total,
-        forumBadge: forumRes.totalPosts,
-      })
-    } catch {
-      // 静默失败，保留旧值
-    }
+      const allRes = await papersApi.listPapers(0, 1)
+      set({ totalCount: allRes.total })
+    } catch { /* 静默失败 */ }
+    try {
+      const createRes = await papersApi.listPapers(0, 1, "create")
+      set({ createCount: createRes.total })
+    } catch { /* 静默失败 */ }
+    try {
+      const importRes = await papersApi.listPapers(0, 1, "import")
+      set({ importCount: importRes.total })
+    } catch { /* 静默失败 */ }
+    try {
+      const favRes = await papersApi.countFavorites()
+      set({ favoriteCount: favRes.total })
+    } catch { /* 静默失败 */ }
+    try {
+      const forumRes = await getForumStats()
+      set({ forumBadge: forumRes.totalPosts })
+    } catch { /* 静默失败 */ }
   },
 
   loadPapers: async (page = 0, sourceType, favorite = false) => {
