@@ -4,6 +4,7 @@
 
 import { create } from "zustand"
 import * as papersApi from "@/lib/api/papers"
+import { getForumStats } from "@/lib/api/forum"
 import type { PaperListDto, PaperDetailDto, CreatePaperRequest, UpdatePaperRequest } from "@/lib/api/types"
 
 export type TabKey = "all" | "create" | "import"
@@ -34,6 +35,9 @@ interface PaperState {
 
   // 上传后自动展示信息面板
   showInfoPanel: boolean
+
+  // 论坛徽标
+  forumBadge: number
 
   // 计算属性（通过 getter 风格访问）
   totalCount: number
@@ -72,19 +76,28 @@ export const usePaperStore = create<PaperState>((set, get) => ({
   error: null,
   showInfoPanel: false,
 
+  forumBadge: 0,
+
   totalCount: 0,
   createCount: 0,
   importCount: 0,
 
   loadCounts: async () => {
     try {
-      const [allRes, createRes, importRes, favRes] = await Promise.all([
+      const [allRes, createRes, importRes, favRes, forumRes] = await Promise.all([
         papersApi.listPapers(0, 1),
         papersApi.listPapers(0, 1, "create"),
         papersApi.listPapers(0, 1, "import"),
         papersApi.countFavorites(),
+        getForumStats(),
       ])
-      set({ totalCount: allRes.total, createCount: createRes.total, importCount: importRes.total, favoriteCount: favRes.total })
+      set({
+        totalCount: allRes.total,
+        createCount: createRes.total,
+        importCount: importRes.total,
+        favoriteCount: favRes.total,
+        forumBadge: forumRes.totalPosts,
+      })
     } catch {
       // 静默失败，保留旧值
     }

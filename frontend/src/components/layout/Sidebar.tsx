@@ -6,7 +6,6 @@ import { Library, Clock, FileText, Settings, Star, Tag, MessageCircle, MessageSq
 import { cn } from "@/lib/utils"
 import { usePaperStore } from "@/stores/paper-store"
 import { useAuthStore } from "@/stores/auth-store"
-import { getForumStats } from "@/lib/api/forum"
 
 const sections = [
   {
@@ -57,23 +56,19 @@ interface SidebarItem {
 export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
   const t = useTranslations("nav")
   const [collapsed, setCollapsed] = useState(false)
-  const { total, favoriteCount, loadPapers, loadCounts } = usePaperStore()
+  const { total, favoriteCount, forumBadge, loadPapers, loadCounts } = usePaperStore()
   const accessToken = useAuthStore((s) => s.accessToken)
-  const [forumBadge, setForumBadge] = useState<string | null>(null)
 
   useEffect(() => {
     if (accessToken) {
       loadPapers(0)
       loadCounts()
-      getForumStats().then((s) => {
-        const count = s.totalPosts
-        setForumBadge(count > 99 ? "99+" : String(count))
-      }).catch(() => {})
     }
   }, [accessToken, loadPapers, loadCounts])
 
   const papersBadge = total > 99 ? "99+" : String(total)
   const favoritesBadge = favoriteCount > 99 ? "99+" : String(favoriteCount)
+  const forumBadgeStr = forumBadge > 99 ? "99+" : String(forumBadge)
 
   const renderCollapsedItem = (item: SidebarItem) => (
     <button
@@ -93,7 +88,7 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
 
   const renderExpandedItem = (item: SidebarItem) => {
     const badge = item.dynamicBadge
-      ? (item.key === "starred" ? favoritesBadge : item.key === "circle" ? forumBadge : papersBadge)
+      ? (item.key === "starred" ? favoritesBadge : item.key === "circle" ? forumBadgeStr : papersBadge)
       : item.badge
 
     return (
