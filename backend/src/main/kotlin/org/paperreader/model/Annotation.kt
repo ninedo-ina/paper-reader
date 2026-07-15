@@ -1,6 +1,8 @@
 package org.paperreader.model
 
 import jakarta.persistence.*
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.time.Instant
 
 @Entity
@@ -25,6 +27,7 @@ data class Annotation(
     @Column(length = 20)
     val color: String? = null,
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", nullable = false)
     val position: String, // {x, y, width, height}
 

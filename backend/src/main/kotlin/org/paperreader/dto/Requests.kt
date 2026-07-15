@@ -187,7 +187,7 @@ data class CreateAnnotationRequest(
     val pageNumber: Int,
     val type: String,
     val color: String? = null,
-    val position: Map<String, Float>,
+    val position: Map<String, Any?>,
     val text: String? = null,
     val comment: String? = null,
     val quotedText: String? = null,
@@ -199,7 +199,7 @@ data class CreateAnnotationRequest(
 data class UpdateAnnotationRequest(
     val type: String? = null,
     val color: String? = null,
-    val position: Map<String, Float>? = null,
+    val position: Map<String, Any?>? = null,
     val text: String? = null,
     val comment: String? = null,
     val quotedText: String? = null,
@@ -236,6 +236,7 @@ data class NoteDto(
     val startOffset: Int? = null,
     val endOffset: Int? = null,
     val images: List<String>? = null,
+    val position: Map<String, Any?>? = null,
     val createdAt: Instant,
     val updatedAt: Instant,
 )
@@ -251,6 +252,7 @@ data class CreateNoteRequest(
     val startOffset: Int? = null,
     val endOffset: Int? = null,
     val images: List<String>? = null,
+    val position: Map<String, Any?>? = null,
 )
 
 data class UpdateNoteRequest(
@@ -263,6 +265,7 @@ data class UpdateNoteRequest(
     val startOffset: Int? = null,
     val endOffset: Int? = null,
     val images: List<String>? = null,
+    val position: Map<String, Any?>? = null,
 )
 
 // ==== ReadingLog ====

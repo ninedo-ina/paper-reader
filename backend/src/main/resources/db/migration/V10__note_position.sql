@@ -1,0 +1,1 @@
+ALTER TABLE pr_notes ADD COLUMN IF NOT EXISTS position JSONB;

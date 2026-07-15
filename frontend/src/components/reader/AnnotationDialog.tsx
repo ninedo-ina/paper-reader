@@ -54,6 +54,7 @@ export function AnnotationDialog({ open, onClose, onSubmit, mode, selectedText }
   }
 
   const handlePaste = (e: React.ClipboardEvent) => {
+    if (mode === "annotation") return
     const items = e.clipboardData.items
     for (const item of items) {
       if (item.type.startsWith("image/") && images.length < imageLimit) {
@@ -106,8 +107,8 @@ export function AnnotationDialog({ open, onClose, onSubmit, mode, selectedText }
           )}
         </div>
 
-        {/* Image area */}
-        {images.length > 0 && (
+        {/* Image area — only for notes */}
+        {mode === "note" && images.length > 0 && (
           <div className="px-4 pb-2 flex flex-wrap gap-2">
             {images.map((src, idx) => (
               <div key={idx} className="relative group">
@@ -126,23 +127,27 @@ export function AnnotationDialog({ open, onClose, onSubmit, mode, selectedText }
         {/* Footer */}
         <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border-subtle)]">
           <div className="flex items-center gap-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={handleImageUpload}
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={images.length >= imageLimit}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-40"
-            >
-              <ImageIcon className="size-3.5" />
-              插入图片
-              {imageLimit < Infinity && ` (${images.length}/${imageLimit})`}
-            </button>
+            {mode === "note" && (
+              <>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleImageUpload}
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={images.length >= imageLimit}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-40"
+                >
+                  <ImageIcon className="size-3.5" />
+                  插入图片
+                  {imageLimit < Infinity && ` (${images.length}/${imageLimit})`}
+                </button>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button

@@ -31,6 +31,7 @@ class NoteService(
                 startOffset = request.startOffset,
                 endOffset = request.endOffset,
                 images = request.images?.let { objectMapper.writeValueAsString(it) },
+                position = request.position?.let { objectMapper.writeValueAsString(it) },
             )
         ).toDto()
         val event = if (request.pageNumber > 0) "批注" else "笔记"
@@ -54,6 +55,7 @@ class NoteService(
             startOffset = request.startOffset ?: note.startOffset,
             endOffset = request.endOffset ?: note.endOffset,
             images = request.images?.let { objectMapper.writeValueAsString(it) } ?: note.images,
+            position = request.position?.let { objectMapper.writeValueAsString(it) } ?: note.position,
             updatedAt = Instant.now(),
         )
         val result = noteRepository.save(updated).toDto()
@@ -83,12 +85,14 @@ class NoteService(
         noteRepository.delete(note)
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun Note.toDto() = NoteDto(
         id = id, paperId = paperId, title = title,
         content = content, pageNumber = pageNumber,
         chapter = chapter, tags = tags?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() },
         quotedText = quotedText, startOffset = startOffset, endOffset = endOffset,
         images = images?.let { objectMapper.readValue(it, List::class.java) as? List<String> },
+        position = position?.let { objectMapper.readValue(it, Map::class.java) as? Map<String, Any?> },
         createdAt = createdAt, updatedAt = updatedAt,
     )
 }

@@ -1,25 +1,35 @@
 "use client"
 
 import { useState, useCallback, useRef, useEffect } from "react"
-import { MessageSquare, StickyNote, Bot, Copy, X } from "lucide-react"
-import { cn, copyToClipboard } from "@/lib/utils"
+import { MessageSquare, StickyNote, Bot, Copy } from "lucide-react"
+import { copyToClipboard } from "@/lib/utils"
 import { useToastStore } from "@/stores/toast-store"
 
 export type AnchorType = "annotation" | "note"
+
+export interface PositionRect {
+  x: number
+  y: number
+  width: number
+  height: number
+}
 
 export interface TextAnchor {
   id: number
   type: AnchorType
   text: string
   pageNumber: number
-  position: { x: number; y: number; width: number; height: number }
+  position: PositionRect
+  positions?: PositionRect[]
 }
 
 interface AnnotationLayerProps {
   pageNumber: number
   anchors: TextAnchor[]
-  onCreateAnnotation?: (text: string, position: { x: number; y: number; width: number; height: number }) => void
-  onCreateNote?: (text: string, position: { x: number; y: number; width: number; height: number }) => void
+  scale: number
+  children?: React.ReactNode
+  onCreateAnnotation?: (text: string, position: PositionRect, positions: PositionRect[], pageNumber: number) => void
+  onCreateNote?: (text: string, position: PositionRect, positions: PositionRect[], pageNumber: number) => void
   onAskAI?: (text: string) => void
 }
 
@@ -27,41 +37,237 @@ interface PopupMenuState {
   x: number
   y: number
   text: string
-  position: { x: number; y: number; width: number; height: number }
+  positions: PositionRect[]
 }
 
-export function AnnotationLayer({ pageNumber, anchors, onCreateAnnotation, onCreateNote, onAskAI }: AnnotationLayerProps) {
+/** Convert viewport-absolute rects to layer-relative coordinates */
+function toLayerRelative(rects: PositionRect[], layerRect: DOMRect): PositionRect[] {
+  return rects.map((r) => ({
+    x: r.x - layerRect.left,
+    y: r.y - layerRect.top,
+    width: r.width,
+    height: r.height,
+  }))
+}
+
+/** Extract visible rects from the current selection range */
+function getSelectionRects(): PositionRect[] {
+  const sel = window.getSelection()
+  if (!sel || sel.isCollapsed || !sel.toString().trim()) return []
+  const range = sel.getRangeAt(0)
+  const rects = range.getClientRects()
+  const result: PositionRect[] = []
+  for (let i = 0; i < rects.length; i++) {
+    const r = rects[i]
+    if (r.width > 0 && r.height > 0) {
+      result.push({ x: r.left, y: r.top, width: r.width, height: r.height })
+    }
+  }
+  return result
+}
+
+/** Compute a single bounding rect from multiple rects */
+function boundingRect(rects: PositionRect[]): PositionRect {
+  if (rects.length === 0) return { x: 0, y: 0, width: 0, height: 0 }
+  let x = rects[0].x, y = rects[0].y
+  let x2 = rects[0].x + rects[0].width
+  let y2 = rects[0].y + rects[0].height
+  for (const r of rects) {
+    if (r.x < x) x = r.x
+    if (r.y < y) y = r.y
+    if (r.x + r.width > x2) x2 = r.x + r.width
+    if (r.y + r.height > y2) y2 = r.y + r.height
+  }
+  return { x, y, width: x2 - x, height: y2 - y }
+}
+
+/**
+ * Find text positions in the PDF text layer by matching quotedText.
+ * Traverses text nodes with TreeWalker, finds the search text via indexOf,
+ * then creates a Range to get viewport-accurate coordinates via getClientRects().
+ */
+function findTextPositions(textLayer: HTMLElement, searchText: string): PositionRect[] {
+  if (!searchText) return []
+
+  const walker = document.createTreeWalker(textLayer, NodeFilter.SHOW_TEXT)
+  const entries: Array<{ node: Text; start: number; end: number }> = []
+  let fullText = ""
+  let offset = 0
+
+  let node: Text | null
+  while ((node = walker.nextNode() as Text | null)) {
+    const text = node.textContent || ""
+    if (text.length > 0) {
+      entries.push({ node, start: offset, end: offset + text.length })
+      fullText += text
+      offset += text.length
+    }
+  }
+
+  if (fullText.length === 0) return []
+
+  let matchStart = fullText.indexOf(searchText)
+
+  // Fallback: whitespace-collapsed match (PDF text layer may collapse spaces differently)
+  if (matchStart === -1) {
+    const collapse = (s: string) => s.replace(/\s+/g, " ")
+    const collapsedFull = collapse(fullText)
+    const collapsedSearch = collapse(searchText)
+    const collapsedIdx = collapsedFull.indexOf(collapsedSearch)
+    if (collapsedIdx === -1) return []
+
+    // Map collapsed index back to original offset
+    let ci = 0
+    let oi = 0
+    while (ci < collapsedIdx && oi < fullText.length) {
+      if (/\s/.test(fullText[oi])) {
+        while (oi < fullText.length && /\s/.test(fullText[oi])) oi++
+        ci++
+      } else {
+        oi++
+        ci++
+      }
+    }
+    matchStart = oi
+  }
+
+  const matchEnd = matchStart + searchText.length
+
+  // Locate start and end nodes with offsets
+  let startNode: Text | null = null
+  let startNodeOffset = 0
+  let endNode: Text | null = null
+  let endNodeOffset = 0
+
+  for (const entry of entries) {
+    if (!startNode && matchStart < entry.end) {
+      startNode = entry.node
+      startNodeOffset = matchStart - entry.start
+    }
+    if (matchEnd <= entry.end) {
+      endNode = entry.node
+      endNodeOffset = matchEnd - entry.start
+      break
+    }
+  }
+
+  if (!startNode || !endNode) return []
+
+  const range = document.createRange()
+  try {
+    range.setStart(startNode, startNodeOffset)
+    range.setEnd(endNode, endNodeOffset)
+  } catch {
+    return []
+  }
+
+  const clientRects = range.getClientRects()
+  const result: PositionRect[] = []
+  for (let i = 0; i < clientRects.length; i++) {
+    const r = clientRects[i]
+    if (r.width > 0 && r.height > 0) {
+      result.push({ x: r.left, y: r.top, width: r.width, height: r.height })
+    }
+  }
+  return result
+}
+
+/**
+ * Hook: match anchors to real-time text positions in the PDF text layer.
+ * Re-matches when anchors or scale change (text layer re-renders on zoom).
+ */
+function useTextMatchPositions(
+  layerRef: React.RefObject<HTMLDivElement | null>,
+  anchors: TextAnchor[],
+  pageNumber: number,
+  scale: number,
+): Map<string, PositionRect[]> {
+  const [positions, setPositions] = useState<Map<string, PositionRect[]>>(new Map())
+
+  useEffect(() => {
+    let cancelled = false
+    let attempts = 0
+    const maxAttempts = 15
+
+    function tryMatch() {
+      if (cancelled) return
+
+      const layer = layerRef.current
+      if (!layer) return
+
+      const textLayer = layer.querySelector(".react-pdf__Page__textContent") as HTMLElement | null
+      if (!textLayer) {
+        if (attempts < maxAttempts) {
+          attempts++
+          requestAnimationFrame(tryMatch)
+        }
+        return
+      }
+
+      const layerRect = layer.getBoundingClientRect()
+      const next = new Map<string, PositionRect[]>()
+
+      for (const a of anchors) {
+        if (a.pageNumber !== pageNumber) continue
+        if (!a.text) continue
+
+        const key = `${a.pageNumber}:${a.text}`
+        if (next.has(key)) continue
+
+        const rects = findTextPositions(textLayer, a.text)
+        if (rects.length > 0) {
+          next.set(key, toLayerRelative(rects, layerRect))
+        }
+      }
+
+      if (!cancelled) {
+        setPositions(next)
+      }
+    }
+
+    // Delay to let react-pdf finish rendering the text layer at the new scale
+    const timer = setTimeout(() => requestAnimationFrame(tryMatch), 50)
+
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+    // scale triggers re-render of the text layer DOM — re-match when it changes
+  }, [anchors, pageNumber, layerRef, scale])
+
+  return positions
+}
+
+export function AnnotationLayer({ pageNumber, anchors, scale, children, onCreateAnnotation, onCreateNote, onAskAI }: AnnotationLayerProps) {
   const [popup, setPopup] = useState<PopupMenuState | null>(null)
   const layerRef = useRef<HTMLDivElement>(null)
   const addToast = useToastStore((s) => s.addToast)
 
   const pageAnchors = anchors.filter((a) => a.pageNumber === pageNumber)
+  const matchedPositions = useTextMatchPositions(layerRef, anchors, pageNumber, scale)
 
-  const showPopupForSelection = useCallback(() => {
-    const sel = window.getSelection()
-    if (!sel || sel.isCollapsed || !sel.toString().trim()) {
-      setPopup(null)
-      return
-    }
+  const handleMouseUp = useCallback(() => {
+    requestAnimationFrame(() => {
+      const sel = window.getSelection()
+      if (!sel || sel.isCollapsed || !sel.toString().trim()) {
+        setPopup(null)
+        return
+      }
 
-    const text = sel.toString().trim()
-    if (!text) {
-      setPopup(null)
-      return
-    }
+      const range = sel.getRangeAt(0)
+      if (!layerRef.current?.contains(range.commonAncestorContainer)) {
+        return
+      }
 
-    const range = sel.getRangeAt(0)
-    if (!layerRef.current?.contains(range.commonAncestorContainer)) {
-      setPopup(null)
-      return
-    }
+      const rects = getSelectionRects()
+      if (rects.length === 0) return
 
-    const rect = range.getBoundingClientRect()
-    setPopup({
-      x: rect.left + rect.width / 2,
-      y: rect.top - 8,
-      text,
-      position: { x: rect.left, y: rect.top, width: rect.width, height: rect.height },
+      setPopup({
+        x: rects[0].x + rects[0].width / 2,
+        y: rects[0].y - 8,
+        text: sel.toString().trim(),
+        positions: rects,
+      })
     })
   }, [])
 
@@ -69,18 +275,17 @@ export function AnnotationLayer({ pageNumber, anchors, onCreateAnnotation, onCre
     const sel = window.getSelection()
     if (!sel || sel.isCollapsed || !sel.toString().trim()) return
 
-    const text = sel.toString().trim()
-    if (!text) return
-
     const range = sel.getRangeAt(0)
     if (!layerRef.current?.contains(range.commonAncestorContainer)) return
 
-    const rect = range.getBoundingClientRect()
+    const rects = getSelectionRects()
+    if (rects.length === 0) return
+
     setPopup({
       x: clientX,
       y: clientY,
-      text,
-      position: { x: rect.left, y: rect.top, width: rect.width, height: rect.height },
+      text: sel.toString().trim(),
+      positions: rects,
     })
   }, [])
 
@@ -90,19 +295,19 @@ export function AnnotationLayer({ pageNumber, anchors, onCreateAnnotation, onCre
       if (!layerRef.current?.contains(target)) return
 
       const sel = window.getSelection()
-      if (sel && !sel.isCollapsed && sel.toString().trim()) {
+      if (sel && !sel.isCollapsed && sel.toString().trim() && layerRef.current?.contains(sel.getRangeAt(0).commonAncestorContainer)) {
         e.preventDefault()
         showPopupAt(e.clientX, e.clientY)
       }
     }
 
-    document.addEventListener("selectionchange", showPopupForSelection)
+    document.addEventListener("mouseup", handleMouseUp)
     document.addEventListener("contextmenu", handleContextMenu)
     return () => {
-      document.removeEventListener("selectionchange", showPopupForSelection)
+      document.removeEventListener("mouseup", handleMouseUp)
       document.removeEventListener("contextmenu", handleContextMenu)
     }
-  }, [showPopupForSelection, showPopupAt])
+  }, [handleMouseUp, showPopupAt])
 
   const handleCopy = useCallback(() => {
     if (!popup) return
@@ -114,18 +319,22 @@ export function AnnotationLayer({ pageNumber, anchors, onCreateAnnotation, onCre
   }, [popup, addToast])
 
   const handleCreateAnnotation = useCallback(() => {
-    if (!popup || !onCreateAnnotation) return
-    onCreateAnnotation(popup.text, popup.position)
+    if (!popup || !onCreateAnnotation || !layerRef.current) return
+    const layerRect = layerRef.current.getBoundingClientRect()
+    const layerRects = toLayerRelative(popup.positions, layerRect)
+    onCreateAnnotation(popup.text, boundingRect(layerRects), layerRects, pageNumber)
     setPopup(null)
     window.getSelection()?.removeAllRanges()
-  }, [popup, onCreateAnnotation])
+  }, [popup, onCreateAnnotation, pageNumber])
 
   const handleCreateNote = useCallback(() => {
-    if (!popup || !onCreateNote) return
-    onCreateNote(popup.text, popup.position)
+    if (!popup || !onCreateNote || !layerRef.current) return
+    const layerRect = layerRef.current.getBoundingClientRect()
+    const layerRects = toLayerRelative(popup.positions, layerRect)
+    onCreateNote(popup.text, boundingRect(layerRects), layerRects, pageNumber)
     setPopup(null)
     window.getSelection()?.removeAllRanges()
-  }, [popup, onCreateNote])
+  }, [popup, onCreateNote, pageNumber])
 
   const handleAskAI = useCallback(() => {
     if (!popup || !onAskAI) return
@@ -134,8 +343,13 @@ export function AnnotationLayer({ pageNumber, anchors, onCreateAnnotation, onCre
     window.getSelection()?.removeAllRanges()
   }, [popup, onAskAI])
 
+  // Merge anchors using real-time matched positions from the text layer
+  const mergedAnchors = mergeAnchors(pageAnchors, matchedPositions)
+
   return (
     <div ref={layerRef} className="relative">
+      {children}
+
       {/* Selection popup menu */}
       {popup && (
         <div
@@ -154,9 +368,9 @@ export function AnnotationLayer({ pageNumber, anchors, onCreateAnnotation, onCre
         </div>
       )}
 
-      {/* Underline markers for existing anchors */}
-      {pageAnchors.map((anchor) => (
-        <UnderlineMarker key={`${anchor.type}-${anchor.id}`} anchor={anchor} layerRef={layerRef} />
+      {/* Underline markers — positioned by real-time text matching against the PDF text layer */}
+      {mergedAnchors.map((m) => (
+        <UnderlineMarker key={m.key} color={m.color} rects={m.rects} />
       ))}
     </div>
   )
@@ -174,37 +388,63 @@ function MenuItem({ icon, label, onClick }: { icon: React.ReactNode; label: stri
   )
 }
 
-function UnderlineMarker({ anchor, layerRef }: { anchor: TextAnchor; layerRef: React.RefObject<HTMLDivElement | null> }) {
-  if (!layerRef.current) return null
-
-  // Determine color based on type
-  // annotation (批注) = yellow, note (笔记) = purple, both = blue
-  // Since each anchor is a single type at DB level, we derive the color
-  const color = anchor.type === "note" ? "#A78BFA" : "#FBBF24"
-
-  // Convert page-relative coordinates from the stored position
-  // The position is stored relative to the viewport, so we compute offset relative to the layer
-  const layerRect = layerRef.current.getBoundingClientRect()
-
+function UnderlineMarker({ color, rects }: { color: string; rects: PositionRect[] }) {
   return (
-    <div
-      className="absolute pointer-events-none"
-      style={{
-        left: anchor.position.x - layerRect.left,
-        top: anchor.position.y - layerRect.top + anchor.position.height,
-        width: anchor.position.width,
-        height: 3,
-        background: color,
-        borderRadius: 2,
-        opacity: 0.7,
-      }}
-    />
+    <>
+      {rects.map((r, i) => (
+        <div
+          key={i}
+          className="absolute pointer-events-none"
+          style={{
+            left: r.x,
+            top: r.y + r.height + 1,
+            width: r.width,
+            height: 1.5,
+            background: color,
+            borderRadius: 1,
+            opacity: 0.6,
+          }}
+        />
+      ))}
+    </>
   )
+}
+
+interface MergedAnchor {
+  key: string
+  color: string
+  rects: PositionRect[]
+}
+
+/**
+ * Merge annotation + note anchors on the same text into a single underline.
+ * Yellow = annotation only, Purple = note only, Blue = both.
+ * Uses real-time matched positions, NOT stored pixel coordinates.
+ */
+function mergeAnchors(anchors: TextAnchor[], matchedPositions: Map<string, PositionRect[]>): MergedAnchor[] {
+  const groups = new Map<string, { hasAnnotation: boolean; hasNote: boolean }>()
+  for (const a of anchors) {
+    const key = `${a.pageNumber}:${a.text}`
+    const existing = groups.get(key)
+    if (existing) {
+      if (a.type === "annotation") existing.hasAnnotation = true
+      if (a.type === "note") existing.hasNote = true
+    } else {
+      groups.set(key, {
+        hasAnnotation: a.type === "annotation",
+        hasNote: a.type === "note",
+      })
+    }
+  }
+  return Array.from(groups.entries()).map(([key, g]) => ({
+    key,
+    color: g.hasAnnotation && g.hasNote ? "#60A5FA" : g.hasNote ? "#A78BFA" : "#FBBF24",
+    rects: matchedPositions.get(key) || [],
+  }))
 }
 
 /**
  * Build a map of text → underline color for the customTextRenderer.
- * Returns both a Map<string, string> for easy lookup and a set of text patterns.
  */
 export function buildAnchorColorMap(anchors: TextAnchor[], pageNumber: number): Map<string, { annotation: boolean; note: boolean }> {
   const map = new Map<string, { annotation: boolean; note: boolean }>()
@@ -220,10 +460,10 @@ export function buildAnchorColorMap(anchors: TextAnchor[], pageNumber: number): 
 
 /**
  * Get the underline color for a given text based on what annotations/notes exist.
- * Note (笔记) = purple #A78BFA, Annotation (批注) = yellow #FBBF24, Both = blue #60A5FA
+ * Note = purple #A78BFA, Annotation = yellow #FBBF24, Both = blue #60A5FA
  */
 export function getAnchorColor(info: { annotation: boolean; note: boolean }): string {
-  if (info.annotation && info.note) return "#60A5FA" // blue for both
-  if (info.note) return "#A78BFA" // purple for note
-  return "#FBBF24" // yellow for annotation/批注
+  if (info.annotation && info.note) return "#60A5FA"
+  if (info.note) return "#A78BFA"
+  return "#FBBF24"
 }

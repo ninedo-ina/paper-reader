@@ -243,6 +243,7 @@ export interface NoteDto {
   startOffset?: number
   endOffset?: number
   images?: string[]
+  position?: Record<string, unknown>
   createdAt: string
   updatedAt: string
 }
@@ -258,6 +259,7 @@ export interface CreateNoteRequest {
   startOffset?: number
   endOffset?: number
   images?: string[]
+  position?: Record<string, unknown>
 }
 
 export interface UpdateNoteRequest {
@@ -270,6 +272,7 @@ export interface UpdateNoteRequest {
   startOffset?: number
   endOffset?: number
   images?: string[]
+  position?: Record<string, unknown>
 }
 
 // --- 阅读记录 ---

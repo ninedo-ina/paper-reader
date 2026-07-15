@@ -16,7 +16,7 @@ import { createAnnotation } from "@/lib/api/annotations"
 import { createNote } from "@/lib/api/notes"
 import { AnnotationLayer } from "@/components/reader/AnnotationLayer"
 import { AnnotationDialog } from "@/components/reader/AnnotationDialog"
-import type { TextAnchor } from "@/components/reader/AnnotationLayer"
+import type { TextAnchor, PositionRect } from "@/components/reader/AnnotationLayer"
 
 // 设置 pdf.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
@@ -51,22 +51,25 @@ export function PDFReader({ paper }: PDFReaderProps) {
   const [dialogMode, setDialogMode] = useState<"annotation" | "note">("annotation")
   const [dialogText, setDialogText] = useState("")
   const [dialogPosition, setDialogPosition] = useState({ x: 0, y: 0, width: 0, height: 0 })
+  const [dialogPositions, setDialogPositions] = useState<PositionRect[]>([])
   const [dialogPage, setDialogPage] = useState(1)
 
   const handleCreateAnnotation = useCallback(
-    (text: string, position: { x: number; y: number; width: number; height: number }, pageNum: number) => {
+    (text: string, position: PositionRect, positions: PositionRect[], pageNum: number) => {
       setDialogMode("annotation")
       setDialogText(text)
       setDialogPosition(position)
+      setDialogPositions(positions)
       setDialogPage(pageNum)
       setDialogOpen(true)
     }, [])
 
   const handleCreateNote = useCallback(
-    (text: string, position: { x: number; y: number; width: number; height: number }, pageNum: number) => {
+    (text: string, position: PositionRect, positions: PositionRect[], pageNum: number) => {
       setDialogMode("note")
       setDialogText(text)
       setDialogPosition(position)
+      setDialogPositions(positions)
       setDialogPage(pageNum)
       setDialogOpen(true)
     }, [])
@@ -84,6 +87,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
           content: data.markdown,
           images: data.images,
           position: dialogPosition,
+          positions: dialogPositions,
           commentCount: 0,
           createdAt: new Date().toISOString(),
         })
@@ -92,13 +96,14 @@ export function PDFReader({ paper }: PDFReaderProps) {
             paperId: paper.id,
             pageNumber: dialogPage,
             type: "HIGHLIGHT",
-            position: dialogPosition,
+            position: { ...dialogPosition, positions: dialogPositions } as unknown as Record<string, unknown>,
             text: dialogText,
             comment: data.markdown,
             images: data.images,
             quotedText: dialogText,
           })
           removeAnnotation(tempId)
+          const createdPos = created.position as unknown as Record<string, unknown>
           addAnnotation({
             id: created.id,
             paperId: created.paperId,
@@ -106,7 +111,8 @@ export function PDFReader({ paper }: PDFReaderProps) {
             quotedText: created.quotedText || dialogText,
             content: created.comment || "",
             images: created.images || [],
-            position: created.position as { x: number; y: number; width: number; height: number },
+            position: { x: Number(createdPos.x ?? dialogPosition.x), y: Number(createdPos.y ?? dialogPosition.y), width: Number(createdPos.width ?? dialogPosition.width), height: Number(createdPos.height ?? dialogPosition.height) },
+            positions: (createdPos.positions as PositionRect[]) || dialogPositions,
             commentCount: created.commentCount || 0,
             createdAt: created.createdAt,
           })
@@ -123,6 +129,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
           content: data.markdown,
           images: data.images,
           position: dialogPosition,
+          positions: dialogPositions,
           createdAt: new Date().toISOString(),
         })
         try {
@@ -132,8 +139,10 @@ export function PDFReader({ paper }: PDFReaderProps) {
             content: data.markdown,
             images: data.images,
             quotedText: dialogText,
+            position: { ...dialogPosition, positions: dialogPositions } as unknown as Record<string, unknown>,
           })
           removeNote(tempId)
+          const createdPos = (created as unknown as Record<string, unknown>).position as Record<string, unknown> | undefined
           addNote({
             id: created.id,
             paperId: created.paperId,
@@ -142,7 +151,8 @@ export function PDFReader({ paper }: PDFReaderProps) {
             title: created.title,
             content: created.content,
             images: created.images || [],
-            position: dialogPosition,
+            position: createdPos ? { x: Number(createdPos.x ?? dialogPosition.x), y: Number(createdPos.y ?? dialogPosition.y), width: Number(createdPos.width ?? dialogPosition.width), height: Number(createdPos.height ?? dialogPosition.height) } : dialogPosition,
+            positions: (createdPos?.positions as PositionRect[]) || dialogPositions,
             createdAt: created.createdAt,
           })
         } catch {
@@ -151,7 +161,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
         }
       }
     },
-    [dialogMode, dialogText, dialogPosition, dialogPage, paper.id, addAnnotation, removeAnnotation, addNote, removeNote, addToast],
+    [dialogMode, dialogText, dialogPosition, dialogPositions, dialogPage, paper.id, addAnnotation, removeAnnotation, addNote, removeNote, addToast],
   )
 
   // Build anchors from store annotations & notes for underline rendering
@@ -162,6 +172,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
       text: a.quotedText,
       pageNumber: a.pageNumber,
       position: a.position,
+      positions: a.positions,
     }))
     const nAnchors: TextAnchor[] = notes.map((n) => ({
       id: n.id,
@@ -169,6 +180,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
       text: n.quotedText,
       pageNumber: n.pageNumber,
       position: n.position,
+      positions: n.positions,
     }))
     return [...aAnchors, ...nAnchors]
   }, [annotations, notes])
@@ -304,23 +316,25 @@ export function PDFReader({ paper }: PDFReaderProps) {
                 key={n}
                 data-page={n}
                 className={cn(
-                  "shadow-lg mb-4 transition-opacity duration-200 relative",
+                  "shadow-lg mb-4 transition-opacity duration-200",
                   n !== pageNumber && "opacity-50",
                 )}
               >
-                <Page
-                  pageNumber={n}
-                  scale={scale}
-                  renderTextLayer={true}
-                  renderAnnotationLayer={true}
-                  className="bg-white"
-                />
                 <AnnotationLayer
                   pageNumber={n}
                   anchors={anchors}
-                  onCreateAnnotation={(text, pos) => handleCreateAnnotation(text, pos, n)}
-                  onCreateNote={(text, pos) => handleCreateNote(text, pos, n)}
-                />
+                  scale={scale}
+                  onCreateAnnotation={(text, pos, positions) => handleCreateAnnotation(text, pos, positions, n)}
+                  onCreateNote={(text, pos, positions) => handleCreateNote(text, pos, positions, n)}
+                >
+                  <Page
+                    pageNumber={n}
+                    scale={scale}
+                    renderTextLayer={true}
+                    renderAnnotationLayer={true}
+                    className="bg-white"
+                  />
+                </AnnotationLayer>
               </div>
             ))}
         </Document>

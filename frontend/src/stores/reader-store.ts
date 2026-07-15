@@ -3,6 +3,13 @@ import { listAnnotations as fetchAnnotations } from "@/lib/api/annotations"
 import { listNotesByPaper } from "@/lib/api/notes"
 import type { AnnotationDto, NoteDto } from "@/lib/api/types"
 
+export interface PositionRect {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
 export interface ReaderAnnotation {
   id: number
   paperId: number
@@ -10,7 +17,8 @@ export interface ReaderAnnotation {
   quotedText: string
   content: string
   images: string[]
-  position: { x: number; y: number; width: number; height: number }
+  position: PositionRect
+  positions?: PositionRect[]
   startOffset?: number
   endOffset?: number
   commentCount: number
@@ -25,7 +33,8 @@ export interface ReaderNote {
   title?: string
   content: string
   images: string[]
-  position: { x: number; y: number; width: number; height: number }
+  position: PositionRect
+  positions?: PositionRect[]
   startOffset?: number
   endOffset?: number
   createdAt: string
@@ -77,19 +86,23 @@ export const useReaderStore = create<ReaderState>((set) => ({
       const items = "items" in result ? (result.items as AnnotationDto[]) : (result as unknown as AnnotationDto[])
       const list = Array.isArray(items) ? items : []
       set({
-        annotations: list.map((a) => ({
-          id: a.id,
-          paperId: a.paperId,
-          pageNumber: a.pageNumber,
-          quotedText: a.quotedText || a.text || "",
-          content: a.comment || "",
-          images: a.images || [],
-          position: (a.position as unknown as ReaderAnnotation["position"]) || { x: 0, y: 0, width: 0, height: 0 },
-          startOffset: a.startOffset,
-          endOffset: a.endOffset,
-          commentCount: a.commentCount || 0,
-          createdAt: a.createdAt,
-        })),
+        annotations: list.map((a) => {
+          const pos = (a.position as unknown as Record<string, unknown>) || {}
+          return {
+            id: a.id,
+            paperId: a.paperId,
+            pageNumber: a.pageNumber,
+            quotedText: a.quotedText || a.text || "",
+            content: a.comment || "",
+            images: a.images || [],
+            position: { x: Number(pos.x ?? 0), y: Number(pos.y ?? 0), width: Number(pos.width ?? 0), height: Number(pos.height ?? 0) },
+            positions: pos.positions as PositionRect[] | undefined,
+            startOffset: a.startOffset,
+            endOffset: a.endOffset,
+            commentCount: a.commentCount || 0,
+            createdAt: a.createdAt,
+          }
+        }),
       })
     } catch {
       // keep existing annotations on error
@@ -104,19 +117,23 @@ export const useReaderStore = create<ReaderState>((set) => ({
       const result = await listNotesByPaper(paperId)
       const items = Array.isArray(result) ? (result as NoteDto[]) : []
       set({
-        notes: items.map((n) => ({
-          id: n.id,
-          paperId: n.paperId,
-          pageNumber: n.pageNumber || 0,
-          quotedText: n.quotedText || "",
-          title: n.title,
-          content: n.content,
-          images: n.images || [],
-          position: (n as unknown as { position?: ReaderNote["position"] }).position || { x: 0, y: 0, width: 0, height: 0 },
-          startOffset: n.startOffset,
-          endOffset: n.endOffset,
-          createdAt: n.createdAt,
-        })),
+        notes: items.map((n) => {
+          const pos = (n as unknown as Record<string, unknown>).position as Record<string, unknown> | undefined
+          return {
+            id: n.id,
+            paperId: n.paperId,
+            pageNumber: n.pageNumber || 0,
+            quotedText: n.quotedText || "",
+            title: n.title,
+            content: n.content,
+            images: n.images || [],
+            position: pos ? { x: Number(pos.x ?? 0), y: Number(pos.y ?? 0), width: Number(pos.width ?? 0), height: Number(pos.height ?? 0) } : { x: 0, y: 0, width: 0, height: 0 },
+            positions: pos?.positions as PositionRect[] | undefined,
+            startOffset: n.startOffset,
+            endOffset: n.endOffset,
+            createdAt: n.createdAt,
+          }
+        }),
       })
     } catch {
       // keep existing notes on error
