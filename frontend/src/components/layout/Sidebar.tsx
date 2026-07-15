@@ -24,14 +24,9 @@ const sections = [
     ],
   },
   {
-    labelKey: "sectionAcademic",
-    items: [
-      { key: "circle", icon: MessageCircle, badge: null },
-    ],
-  },
-  {
     labelKey: "sectionCommunication",
     items: [
+      { key: "circle", icon: MessageCircle, badge: null },
       { key: "chats", icon: MessageSquare, dynamicBadge: true },
     ],
   },
