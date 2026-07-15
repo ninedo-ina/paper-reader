@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.*
 class ForumController(
     private val forumService: ForumService,
 ) {
+    @GetMapping("/stats")
+    fun stats(): ApiResponse<*> = ApiResponse(data = forumService.getStats())
+
     @GetMapping("/disciplines")
     fun disciplines(): ApiResponse<*> = ApiResponse(data = forumService.listDisciplines())
 

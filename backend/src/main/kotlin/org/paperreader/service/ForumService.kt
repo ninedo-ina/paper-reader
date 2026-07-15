@@ -57,6 +57,8 @@ class ForumService(
         return post.toDto()
     }
 
+    fun getStats(): ForumStats = ForumStats(totalPosts = postRepository.count())
+
     fun getPost(postId: Long): PostDetailDto {
         val post = postRepository.findById(postId).orElseThrow { ResourceNotFoundException("Post", postId) }
         val comments = commentRepository.findByPostIdOrderByCreatedAtAsc(postId)
@@ -149,6 +151,7 @@ class ForumService(
         createdAt = createdAt.toString(),
     )
 
+    data class ForumStats(val totalPosts: Long)
     data class DisciplineDto(val id: Long, val name: String, val enName: String)
     data class TopicDto(val id: Long, val name: String, val enName: String, val disciplineId: Long)
     data class PostDto(

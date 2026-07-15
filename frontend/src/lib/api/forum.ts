@@ -46,6 +46,14 @@ export interface PostDetail extends Post {
   comments: Comment[]
 }
 
+export interface ForumStats {
+  totalPosts: number
+}
+
+export function getForumStats(): Promise<ForumStats> {
+  return get<ForumStats>("/forum/stats")
+}
+
 export function getDisciplines(): Promise<Discipline[]> {
   return get<Discipline[]>("/forum/disciplines")
 }

@@ -6,6 +6,7 @@ import { Library, Clock, FileText, Settings, Star, Tag, MessageCircle, MessageSq
 import { cn } from "@/lib/utils"
 import { usePaperStore } from "@/stores/paper-store"
 import { useAuthStore } from "@/stores/auth-store"
+import { getForumStats } from "@/lib/api/forum"
 
 const sections = [
   {
@@ -26,7 +27,7 @@ const sections = [
   {
     labelKey: "sectionCommunication",
     items: [
-      { key: "circle", icon: MessageCircle, badge: null },
+      { key: "circle", icon: MessageCircle, dynamicBadge: true },
       { key: "chats", icon: MessageSquare, dynamicBadge: true },
     ],
   },
@@ -58,11 +59,16 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const { total, favoriteCount, loadPapers, loadCounts } = usePaperStore()
   const accessToken = useAuthStore((s) => s.accessToken)
+  const [forumBadge, setForumBadge] = useState<string | null>(null)
 
   useEffect(() => {
     if (accessToken) {
       loadPapers(0)
       loadCounts()
+      getForumStats().then((s) => {
+        const count = s.totalPosts
+        setForumBadge(count > 99 ? "99+" : count > 0 ? String(count) : null)
+      }).catch(() => {})
     }
   }, [accessToken, loadPapers, loadCounts])
 
@@ -87,7 +93,7 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
 
   const renderExpandedItem = (item: SidebarItem) => {
     const badge = item.dynamicBadge
-      ? (item.key === "starred" ? favoritesBadge : papersBadge)
+      ? (item.key === "starred" ? favoritesBadge : item.key === "circle" ? forumBadge : papersBadge)
       : item.badge
 
     return (
