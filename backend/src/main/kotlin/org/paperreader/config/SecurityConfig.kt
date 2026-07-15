@@ -37,6 +37,7 @@ class SecurityConfig(
                         "/api/auth/refresh",
                     ).permitAll()
                     .requestMatchers("/api/health").permitAll()
+                    .requestMatchers("/ws/**").permitAll()
                     .anyRequest().authenticated()
             }
             .exceptionHandling { exc ->

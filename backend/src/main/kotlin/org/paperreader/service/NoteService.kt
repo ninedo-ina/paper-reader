@@ -12,10 +12,11 @@ import java.time.Instant
 @Service
 class NoteService(
     private val noteRepository: NoteRepository,
+    private val auditLogService: AuditLogService,
 ) {
     @Transactional
     fun create(request: CreateNoteRequest, userId: Long): NoteDto {
-        return noteRepository.save(
+        val result = noteRepository.save(
             Note(
                 userId = userId,
                 paperId = request.paperId,
@@ -26,6 +27,9 @@ class NoteService(
                 tags = request.tags?.joinToString(","),
             )
         ).toDto()
+        val event = if (request.pageNumber > 0) "批注" else "笔记"
+        auditLogService.log(userId, event, result.title ?: "Untitled")
+        return result
     }
 
     @Transactional
@@ -42,7 +46,9 @@ class NoteService(
             tags = request.tags?.joinToString(",") ?: note.tags,
             updatedAt = Instant.now(),
         )
-        return noteRepository.save(updated).toDto()
+        val result = noteRepository.save(updated).toDto()
+        auditLogService.log(userId, "笔记", result.title ?: "Untitled")
+        return result
     }
 
     fun listByPaper(paperId: Long, userId: Long): List<NoteDto> =

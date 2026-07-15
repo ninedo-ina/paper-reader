@@ -297,7 +297,7 @@ export function AiConfigTab() {
             <button
               onClick={handleSave}
               disabled={!form.name.trim() || !form.baseUrl.trim()}
-              className="flex items-center gap-1 px-4 py-1.5 text-xs bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-40"
+              className="flex items-center gap-1 px-4 py-1.5 text-xs bg-[var(--accent)] text-[var(--surface-1)] rounded-md hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-40"
             >
               <Check className="size-3" />
               保存

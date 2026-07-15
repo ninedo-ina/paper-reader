@@ -24,6 +24,7 @@ class AuthService(
     private val redisTemplate: RedisTemplate<String, String>,
     private val restTemplate: RestTemplate,
     private val objectMapper: ObjectMapper,
+    private val auditLogService: AuditLogService,
     @Value("\${app.github.client-id}") private val githubClientId: String,
     @Value("\${app.github.client-secret}") private val githubClientSecret: String,
     @Value("\${app.mail.from}") private val mailFrom: String,
@@ -42,7 +43,9 @@ class AuthService(
                 authProvider = "local",
             )
         )
-        return generateTokens(user, isNewUser = true)
+        val tokens = generateTokens(user, isNewUser = true)
+        auditLogService.log(user.id, "登录", user.email)
+        return tokens
     }
 
     fun login(request: LoginRequest): TokenResponse {
@@ -66,7 +69,9 @@ class AuthService(
                 )
             ) to true
         }
-        return generateTokens(user, isNewUser = isNew)
+        val tokens = generateTokens(user, isNewUser = isNew)
+        auditLogService.log(user.id, "登录", user.email)
+        return tokens
     }
 
     fun sendEmailCode(request: SendCodeRequest) {
@@ -103,7 +108,9 @@ class AuthService(
                 )
             ) to true
         }
-        return generateTokens(user, isNewUser = isNew)
+        val tokens = generateTokens(user, isNewUser = isNew)
+        auditLogService.log(user.id, "登录", user.email)
+        return tokens
     }
 
     fun githubLogin(request: GitHubAuthRequest): TokenResponse {
@@ -112,7 +119,10 @@ class AuthService(
 
         val byGithubId = userRepository.findByGithubId(githubUser.id)
         if (byGithubId.isPresent) {
-            return generateTokens(byGithubId.get(), isNewUser = false)
+            val u = byGithubId.get()
+            val tokens = generateTokens(u, isNewUser = false)
+            auditLogService.log(u.id, "登录", u.email)
+            return tokens
         }
 
         val email = githubUser.email ?: "${githubUser.login}@github.user"
@@ -120,7 +130,9 @@ class AuthService(
         if (byEmail.isPresent) {
             val linked = byEmail.get().copy(githubId = githubUser.id, avatarUrl = githubUser.avatarUrl)
                 .let { userRepository.save(it) }
-            return generateTokens(linked, isNewUser = false)
+            val tokens = generateTokens(linked, isNewUser = false)
+            auditLogService.log(linked.id, "登录", linked.email)
+            return tokens
         }
 
         val newUser = userRepository.save(
@@ -132,7 +144,9 @@ class AuthService(
                 authProvider = "github",
             )
         )
-        return generateTokens(newUser, isNewUser = true)
+        val tokens = generateTokens(newUser, isNewUser = true)
+        auditLogService.log(newUser.id, "登录", newUser.email)
+        return tokens
     }
 
     private fun exchangeGithubToken(code: String): String {
@@ -207,6 +221,7 @@ class AuthService(
             "New password must be at least 6 characters"
         }
         userRepository.save(user.copy(passwordHash = passwordEncoder.encode(request.newPassword)))
+        auditLogService.log(userId, "修改密码", user.email)
     }
 
     private fun generateTokens(user: User, isNewUser: Boolean = false): TokenResponse {

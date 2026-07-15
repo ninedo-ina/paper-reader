@@ -43,6 +43,9 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
 
+    // WebSocket
+    implementation("org.springframework.boot:spring-boot-starter-websocket")
+
     // HTTP Client (for AI API + Dufs storage)
     implementation("org.springframework.boot:spring-boot-starter-webflux")
 

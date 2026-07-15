@@ -167,7 +167,7 @@ export function CreatePaperDialog({ open, onClose }: CreatePaperDialogProps) {
               <div
                 className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-medium border transition-colors ${
                   i <= step
-                    ? "bg-[var(--accent)] border-[var(--accent)] text-white"
+                    ? "bg-[var(--accent)] border-[var(--accent)] text-[var(--surface-1)]"
                     : "border-[var(--border-color)] text-[var(--text-tertiary)]"
                 }`}
               >

@@ -26,7 +26,7 @@ export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose, fav
   const tp = useTranslations("papers")
   const {
     papers, total, page, isListLoading, error, activeTab,
-    createCount, importCount, favoriteCount,
+    totalCount, createCount, importCount, favoriteCount,
     activeFavoriteTab, loadPapers, loadCounts,
     setActiveTab, setFavoriteTab, deletePaper,
   } = usePaperStore()
@@ -52,17 +52,21 @@ export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose, fav
       <div className="px-4 py-3 border-b border-[var(--border-subtle)]">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-[var(--text-primary)]">
-            {t("myPapers") || "我的论文"}
+            {favoriteMode ? (tp("starredPapers") || "收藏论文") : (t("myPapers") || "我的论文")}
           </h2>
           <div className="flex items-center gap-0.5">
-            <button onClick={onCreate} title="创建论文"
-              className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all">
-              <Plus className="w-3.5 h-3.5" />
-            </button>
-            <button onClick={onUpload} title="导入论文"
-              className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all">
-              <Upload className="w-3.5 h-3.5" />
-            </button>
+            {!favoriteMode && (
+              <>
+                <button onClick={onCreate} title="创建论文"
+                  className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all">
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+                <button onClick={onUpload} title="导入论文"
+                  className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all">
+                  <Upload className="w-3.5 h-3.5" />
+                </button>
+              </>
+            )}
             <button onClick={handleRefresh} title="刷新" disabled={isListLoading}
               className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all disabled:opacity-50">
               <RefreshCw className={cn("w-3.5 h-3.5", isListLoading && "animate-spin")} />
@@ -91,11 +95,12 @@ export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose, fav
       ) : (
         <TabBar
           tabs={[
+            { key: "all", label: tp("allTab") || "所有", count: totalCount },
             { key: "create", label: tp("createTab"), count: createCount },
             { key: "import", label: tp("importTab"), count: importCount },
           ]}
           activeKey={activeTab}
-          onChange={(key) => setActiveTab(key as "create" | "import")}
+          onChange={(key) => setActiveTab(key as "all" | "create" | "import")}
         />
       )}
 

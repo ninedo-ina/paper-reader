@@ -1,18 +1,19 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
-import { X, User, Lock, Shield, Camera, Upload, Link } from "lucide-react"
+import { useState, useRef, useCallback, useEffect } from "react"
+import { X, User, Lock, Shield, Clock, Loader2, Camera, Upload, Link } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUserStore } from "@/stores/user-store"
 import { useToastStore } from "@/stores/toast-store"
 import * as authApi from "@/lib/api/auth"
 
-type ProfileTab = "info" | "password" | "2fa"
+type ProfileTab = "info" | "password" | "2fa" | "audit"
 
 const TABS: { key: ProfileTab; label: string; icon: React.ReactNode }[] = [
   { key: "info", label: "基本信息", icon: <User className="size-4" /> },
   { key: "password", label: "密码安全", icon: <Lock className="size-4" /> },
   { key: "2fa", label: "两步验证", icon: <Shield className="size-4" /> },
+  { key: "audit", label: "审计日志", icon: <Clock className="size-4" /> },
 ]
 
 interface ProfileDialogProps {
@@ -36,7 +37,7 @@ export function ProfileDialog({ open, onClose }: ProfileDialogProps) {
           <AvatarSection profile={profile} onUpdate={loadProfile} />
 
           {/* Menu items */}
-          <nav className="flex-1 overflow-auto px-2 pb-2 pt-3">
+          <nav className="flex-1 overflow-auto px-2 pb-2 pt-3 flex flex-col gap-y-1">
             {TABS.map((tab) => (
               <button
                 key={tab.key}
@@ -72,6 +73,7 @@ export function ProfileDialog({ open, onClose }: ProfileDialogProps) {
             {activeTab === "info" && <BasicInfoTab profile={profile} onUpdate={loadProfile} />}
             {activeTab === "password" && <PasswordTab />}
             {activeTab === "2fa" && <TwoFactorTab />}
+            {activeTab === "audit" && <AuditLogTab />}
           </div>
         </div>
       </div>
@@ -132,7 +134,7 @@ function AvatarSection({ profile, onUpdate }: { profile: ReturnType<typeof useUs
           onMouseLeave={() => setShowOverlay(false)}
         >
           <div className="w-20 h-20 rounded-full overflow-hidden flex items-center justify-center"
-            style={{ background: "var(--accent)", color: "#fff" }}
+            style={{ background: "var(--accent)", color: "var(--surface-1)" }}
           >
             {avatarUrl ? (
               <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
@@ -244,21 +246,13 @@ function BasicInfoTab({
         />
       </div>
 
-      <div className="space-y-1.5">
-        <label className="text-xs font-medium text-[var(--text-secondary)]">登录方式</label>
-        <input
-          readOnly
-          value={profile?.authProvider || ""}
-          className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-1)] px-3 py-2 text-sm text-[var(--text-tertiary)] cursor-not-allowed"
-        />
-      </div>
-
       <button
         onClick={handleSave}
         disabled={saving}
-        className="rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-[var(--surface-1)] transition-all disabled:opacity-60 hover:brightness-110"
         style={{ background: "var(--accent)" }}
       >
+        {saving && <Loader2 className="size-3.5 animate-spin" />}
         {saving ? "保存中..." : "保存"}
       </button>
     </div>
@@ -333,7 +327,7 @@ function PasswordTab() {
       <button
         onClick={handleChange}
         disabled={saving}
-        className="rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
+        className="rounded-lg px-4 py-2 text-sm font-medium text-[var(--surface-1)] transition-colors disabled:opacity-50"
         style={{ background: "var(--accent)" }}
       >
         {saving ? "修改中..." : "修改密码"}
@@ -344,12 +338,96 @@ function PasswordTab() {
 
 function TwoFactorTab() {
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center pt-16">
+    <div className="flex flex-col items-center justify-center pt-16 text-center">
       <Shield className="size-12 text-[var(--text-tertiary)] mb-4" />
       <h3 className="text-sm font-medium text-[var(--text-primary)] mb-2">两步验证</h3>
       <p className="text-xs text-[var(--text-tertiary)] max-w-[260px]">
-        两步验证功能正在开发中，上线后将支持通过身份验证器应用或短信进行二次验证。
+        两步验证功能即将推出。
       </p>
+    </div>
+  )
+}
+
+function AuditLogTab() {
+  const [logs, setLogs] = useState<Array<{ id: number; event: string; operator: string; createdAt: string }>>([])
+  const [page, setPage] = useState(0)
+  const [hasMore, setHasMore] = useState(true)
+  const [loading, setLoading] = useState(false)
+
+  const loadLogs = useCallback(async (p: number) => {
+    setLoading(true)
+    try {
+      const { getAuditLogs } = await import("@/lib/api/audit-log")
+      const res = await getAuditLogs(p, 20)
+      if (p === 0) {
+        setLogs(res.items)
+      } else {
+        setLogs((prev) => [...prev, ...res.items])
+      }
+      setHasMore(res.items.length === 20)
+    } catch {
+      // API may not be deployed yet — silent
+      if (p === 0) setLogs([])
+      setHasMore(false)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadLogs(0)
+  }, [loadLogs])
+
+  return (
+    <div className="space-y-4">
+      {logs.length === 0 && !loading ? (
+        <div className="flex flex-col items-center justify-center pt-16 text-center">
+          <Clock className="size-12 text-[var(--text-tertiary)] mb-4" />
+          <h3 className="text-sm font-medium text-[var(--text-primary)] mb-2">审计日志</h3>
+          <p className="text-xs text-[var(--text-tertiary)] max-w-[260px]">
+            暂无审计日志。当您进行登录、修改密码等操作后，日志将在此显示。
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="overflow-hidden rounded-xl border border-[var(--border-subtle)]">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-2)]">
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-[var(--text-secondary)]">序号</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-[var(--text-secondary)]">事件</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-[var(--text-secondary)]">操作人</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-[var(--text-secondary)]">时间</th>
+                </tr>
+              </thead>
+              <tbody>
+                {logs.map((log, idx) => (
+                  <tr key={log.id} className="border-b border-[var(--border-subtle)] last:border-0 hover:bg-[var(--bg-hover)] transition-colors">
+                    <td className="px-4 py-2.5 text-[var(--text-tertiary)]">{page * 20 + idx + 1}</td>
+                    <td className="px-4 py-2.5 text-[var(--text-primary)] font-medium">{log.event}</td>
+                    <td className="px-4 py-2.5 text-[var(--text-secondary)]">{log.operator}</td>
+                    <td className="px-4 py-2.5 text-[var(--text-tertiary)] text-xs">
+                      {new Date(log.createdAt).toLocaleString("zh-CN", {
+                        year: "numeric", month: "2-digit", day: "2-digit",
+                        hour: "2-digit", minute: "2-digit",
+                      })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {hasMore && (
+            <button
+              onClick={() => { const next = page + 1; setPage(next); loadLogs(next) }}
+              disabled={loading}
+              className="w-full py-2 text-sm text-[var(--accent)] hover:bg-[var(--bg-hover)] rounded-lg transition-colors disabled:opacity-50"
+            >
+              {loading ? "加载中..." : "加载更多"}
+            </button>
+          )}
+        </>
+      )}
     </div>
   )
 }

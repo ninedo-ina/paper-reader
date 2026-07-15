@@ -23,6 +23,7 @@ class PaperService(
     private val fileStorageService: FileStorageService,
     private val grobidClient: GrobidClient,
     private val objectMapper: ObjectMapper,
+    private val auditLogService: AuditLogService,
 ) {
     private val logger = LoggerFactory.getLogger(PaperService::class.java)
 
@@ -46,7 +47,9 @@ class PaperService(
         paperRepository.save(stored)
 
         val grobidResult = parsePdf(file.bytes, filePath, stored)
-        return paperRepository.save(grobidResult).toDetailDto()
+        val result = paperRepository.save(grobidResult).toDetailDto()
+        auditLogService.log(userId, "上传论文", result.title)
+        return result
     }
 
     @Transactional
@@ -67,7 +70,9 @@ class PaperService(
         paperRepository.save(stored)
 
         val grobidResult = parsePdf(pdfBytes, filePath, stored)
-        return paperRepository.save(grobidResult).toDetailDto()
+        val result = paperRepository.save(grobidResult).toDetailDto()
+        auditLogService.log(userId, "上传论文", result.title)
+        return result
     }
 
     @Transactional
@@ -90,7 +95,9 @@ class PaperService(
                 fileSize = 0,
             )
         )
-        return paper.toDetailDto()
+        val result = paper.toDetailDto()
+        auditLogService.log(userId, "创建论文", result.title)
+        return result
     }
 
     fun getPaper(id: Long, userId: Long): PaperDetailDto {
@@ -128,6 +135,7 @@ class PaperService(
         val filePath = paper.filePath
             ?: throw IllegalArgumentException("This paper has no downloadable file")
         val bytes = fileStorageService.read(filePath)
+        auditLogService.log(userId, "下载", paper.title)
         return "${paper.title}.pdf" to bytes
     }
 
@@ -158,6 +166,7 @@ class PaperService(
         )
         val saved = paperRepository.save(updated)
         val tags = paperTagRepository.findByPaperId(saved.id).map { it.tag }
+        auditLogService.log(userId, "保存论文", saved.title)
         return saved.toDetailDto(tags)
     }
 
@@ -168,6 +177,7 @@ class PaperService(
         val updated = paper.copy(favorite = favorite, updatedAt = Instant.now())
         val saved = paperRepository.save(updated)
         val tags = paperTagRepository.findByPaperId(saved.id).map { it.tag }
+        auditLogService.log(userId, if (favorite) "收藏" else "取消收藏", saved.title)
         return saved.toDetailDto(tags)
     }
 
@@ -185,7 +195,9 @@ class PaperService(
             ?: throw ResourceNotFoundException("Paper", paperId)
         val existing = paperTagRepository.findByPaperIdAndTag(paper.id, tag)
         if (existing != null) return existing.toDto()
-        return paperTagRepository.save(PaperTag(paperId = paper.id, tag = tag)).toDto()
+        val result = paperTagRepository.save(PaperTag(paperId = paper.id, tag = tag)).toDto()
+        auditLogService.log(userId, "标签", paper.title)
+        return result
     }
 
     @Transactional
@@ -205,6 +217,7 @@ class PaperService(
         parts.add(paper.title)
         if (url.isNotBlank()) parts.add(url)
 
+        auditLogService.log(userId, "分享", paper.title)
         return SharePaperResponse(shareText = parts.joinToString(" — "))
     }
 

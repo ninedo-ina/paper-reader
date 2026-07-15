@@ -6,7 +6,7 @@ import { create } from "zustand"
 import * as papersApi from "@/lib/api/papers"
 import type { PaperListDto, PaperDetailDto, CreatePaperRequest, UpdatePaperRequest } from "@/lib/api/types"
 
-export type TabKey = "create" | "import"
+export type TabKey = "all" | "create" | "import"
 export type FavoriteTabKey = "all" | "create" | "import"
 
 interface PaperState {
@@ -36,6 +36,7 @@ interface PaperState {
   showInfoPanel: boolean
 
   // 计算属性（通过 getter 风格访问）
+  totalCount: number
   createCount: number
   importCount: number
 
@@ -61,7 +62,7 @@ export const usePaperStore = create<PaperState>((set, get) => ({
   total: 0,
   page: 0,
   isListLoading: false,
-  activeTab: "import",
+  activeTab: "all",
   sourceTypeFilter: undefined,
   activeFavoriteTab: "all",
   favoriteCount: 0,
@@ -71,17 +72,19 @@ export const usePaperStore = create<PaperState>((set, get) => ({
   error: null,
   showInfoPanel: false,
 
+  totalCount: 0,
   createCount: 0,
   importCount: 0,
 
   loadCounts: async () => {
     try {
-      const [createRes, importRes, favRes] = await Promise.all([
+      const [allRes, createRes, importRes, favRes] = await Promise.all([
+        papersApi.listPapers(0, 1),
         papersApi.listPapers(0, 1, "create"),
         papersApi.listPapers(0, 1, "import"),
         papersApi.countFavorites(),
       ])
-      set({ createCount: createRes.total, importCount: importRes.total, favoriteCount: favRes.total })
+      set({ totalCount: allRes.total, createCount: createRes.total, importCount: importRes.total, favoriteCount: favRes.total })
     } catch {
       // 静默失败，保留旧值
     }
@@ -108,7 +111,7 @@ export const usePaperStore = create<PaperState>((set, get) => ({
   },
 
   setActiveTab: (tab) => {
-    const sourceType = tab === "create" ? "create" : "import"
+    const sourceType = tab === "all" ? undefined : tab === "create" ? "create" : "import"
     set({ activeTab: tab, sourceTypeFilter: sourceType, page: 0 })
     get().loadPapers(0, sourceType)
   },

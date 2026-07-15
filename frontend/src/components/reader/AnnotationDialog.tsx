@@ -154,7 +154,7 @@ export function AnnotationDialog({ open, onClose, onSubmit, mode, selectedText }
             <button
               onClick={handleSubmit}
               disabled={!markdown.trim() || isOverLimit}
-              className="px-4 py-1.5 text-sm bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-40"
+              className="px-4 py-1.5 text-sm bg-[var(--accent)] text-[var(--surface-1)] rounded-md hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-40"
             >
               保存
             </button>

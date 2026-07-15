@@ -9,6 +9,7 @@ import { useReaderStore } from "@/stores/reader-store"
 import type { ReaderAnnotation, ReaderNote } from "@/stores/reader-store"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
+import { TabBar } from "@/components/ui/TabBar"
 import { getCategory, CATEGORIES } from "@/lib/paper-categories"
 import { MarkdownContent } from "@/components/reader/MarkdownContent"
 import { ChatPanel } from "@/components/chat/ChatPanel"
@@ -54,27 +55,14 @@ export function RightPanel({ paper }: RightPanelProps) {
       className="w-[380px] border-l border-[var(--border-subtle)] flex flex-col select-none shrink-0 transition-all duration-200"
       style={{ background: "var(--surface-1)", backdropFilter: "blur(20px) saturate(180%)" }}
     >
-      <nav className="flex border-b border-[var(--border-subtle)] px-2 pt-1.5 gap-0.5 items-center">
-        <div className="flex gap-0.5">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={cn(
-                "px-4 py-2.5 text-[12.5px] font-[540] rounded-t-lg border-b-2 border-transparent transition-all duration-150 -mb-px",
-                "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]",
-                activeTab === tab.key &&
-                  "text-[var(--text-primary)] border-[var(--text-primary)]",
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
+      <nav className="flex border-b border-[var(--border-subtle)] items-center pr-2">
+        <div className="flex-1">
+          <TabBar tabs={tabs} activeKey={activeTab} onChange={(k) => setActiveTab(k as PanelTab)} />
         </div>
         <button
           onClick={() => setCollapsed(true)}
           title="Collapse panel"
-          className="ml-auto mr-1 p-1 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all shrink-0"
+          className="ml-1 p-1 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all shrink-0"
         >
           <PanelRightClose className="w-[15px] h-[15px]" />
         </button>

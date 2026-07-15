@@ -2,25 +2,37 @@
 
 import { useState, useEffect, type ElementType } from "react"
 import { useTranslations } from "next-intl"
-import { Library, Clock, FileText, Settings, Star, Tag, PanelLeftClose, PanelLeftOpen } from "lucide-react"
+import { Library, Clock, FileText, Settings, Star, Tag, MessageCircle, MessageSquare, PanelLeftClose, PanelLeftOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { usePaperStore } from "@/stores/paper-store"
 import { useAuthStore } from "@/stores/auth-store"
 
 const sections = [
   {
-    label: "Library",
+    labelKey: "sectionLibrary",
     items: [
       { key: "library", icon: Library, dynamicBadge: true },
       { key: "history", icon: Clock, badge: "0" },
-      { key: "notes", icon: FileText, badge: "0" },
+      { key: "starred", icon: Star, dynamicBadge: true },
     ],
   },
   {
-    label: "Discover",
+    labelKey: "sectionDiscover",
     items: [
-      { key: "starred", icon: Star, dynamicBadge: true },
+      { key: "notes", icon: FileText, badge: "0" },
       { key: "tags", icon: Tag, badge: "0" },
+    ],
+  },
+  {
+    labelKey: "sectionAcademic",
+    items: [
+      { key: "circle", icon: MessageCircle, badge: null },
+    ],
+  },
+  {
+    labelKey: "sectionCommunication",
+    items: [
+      { key: "chats", icon: MessageSquare, dynamicBadge: true },
     ],
   },
 ]
@@ -32,6 +44,11 @@ const bottomItems = [
 interface SidebarProps {
   activePanel?: string | null
   onNavigate?: (key: string) => void
+}
+
+interface SidebarSection {
+  labelKey: string
+  items: SidebarItem[]
 }
 
 interface SidebarItem {
@@ -142,7 +159,7 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
       {collapsed ? (
         <>
           {sections.map((section) => (
-            <div key={section.label} className="flex flex-col items-center gap-1 mt-3">
+            <div key={section.labelKey} className="flex flex-col items-center gap-1 mt-3">
               {section.items.map(renderCollapsedItem)}
             </div>
           ))}
@@ -154,9 +171,9 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
       ) : (
         <>
           {sections.map((section) => (
-            <div key={section.label}>
+            <div key={section.labelKey}>
               <div className="text-[11px] font-semibold uppercase tracking-[0.6px] text-[var(--text-tertiary)] px-3 pt-4 pb-1.5">
-                {section.label}
+                {t(section.labelKey)}
               </div>
               {section.items.map(renderExpandedItem)}
             </div>

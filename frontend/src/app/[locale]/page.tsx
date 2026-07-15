@@ -14,13 +14,17 @@ import { HistoryPanel } from "@/components/history/HistoryPanel"
 import { NotesPanel } from "@/components/notes/NotesPanel"
 import { PreferencesDialog } from "@/components/settings/PreferencesDialog"
 import { ProfileDialog } from "@/components/settings/ProfileDialog"
+import { ForumPage } from "@/components/forum/ForumPage"
+import { ChatsPage } from "@/components/chat/ChatsPage"
 import { usePaperStore } from "@/stores/paper-store"
 import { useNotificationStore } from "@/stores/notification-store"
 import type { NoteDto } from "@/lib/api/types"
 
 type SidebarPanel = "library" | "history" | "notes" | "starred" | null
+type MainView = "reader" | "forum" | "chats"
 
 export default function Home() {
+  const [mainView, setMainView] = useState<MainView>("reader")
   const [sidebarPanel, setSidebarPanel] = useState<SidebarPanel>("library")
   const [showUpload, setShowUpload] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
@@ -34,6 +38,16 @@ export default function Home() {
   }, [initSystemNotifications])
 
   const handleSidebarClick = useCallback((key: string) => {
+    if (key === "circle") {
+      setMainView("forum")
+      setSidebarPanel(null)
+      return
+    }
+    if (key === "chats") {
+      setMainView("chats")
+      setSidebarPanel(null)
+      return
+    }
     if (key === "upload") {
       setShowUpload(true)
       return
@@ -42,6 +56,8 @@ export default function Home() {
       setShowPreferences(true)
       return
     }
+    // Reader sidebar panels
+    setMainView("reader")
     if (key === "starred") {
       setSidebarPanel((p) => (p === "starred" ? null : "starred"))
       return
@@ -61,6 +77,8 @@ export default function Home() {
     [loadPaper],
   )
 
+  const showReaderPanel = mainView === "reader"
+
   return (
     <div className="h-screen flex overflow-hidden relative" style={{ background: "var(--bg-root)" }}>
       <Sidebar activePanel={sidebarPanel} onNavigate={handleSidebarClick} />
@@ -70,7 +88,7 @@ export default function Home() {
 
         <div className="flex-1 flex overflow-hidden">
           {/* Paper list panel (slides in from sidebar) */}
-          {sidebarPanel === "library" && (
+          {showReaderPanel && sidebarPanel === "library" && (
             <aside className="w-72 border-r border-[var(--border-subtle)] glass-surface flex flex-col shrink-0">
               <PaperList
                 activeId={currentPaper?.id ?? null}
@@ -83,7 +101,7 @@ export default function Home() {
           )}
 
           {/* History panel */}
-          {sidebarPanel === "history" && (
+          {showReaderPanel && sidebarPanel === "history" && (
             <aside className="w-72 border-r border-[var(--border-subtle)] glass-surface flex flex-col shrink-0">
               <HistoryPanel
                 onSelect={handlePaperSelect}
@@ -93,7 +111,7 @@ export default function Home() {
           )}
 
           {/* Notes panel */}
-          {sidebarPanel === "notes" && (
+          {showReaderPanel && sidebarPanel === "notes" && (
             <aside className="w-72 border-r border-[var(--border-subtle)] glass-surface flex flex-col shrink-0">
               <NotesPanel
                 activeNoteId={null}
@@ -104,7 +122,7 @@ export default function Home() {
           )}
 
           {/* Starred panel */}
-          {sidebarPanel === "starred" && (
+          {showReaderPanel && sidebarPanel === "starred" && (
             <aside className="w-72 border-r border-[var(--border-subtle)] glass-surface flex flex-col shrink-0">
               <PaperList
                 activeId={currentPaper?.id ?? null}
@@ -115,11 +133,25 @@ export default function Home() {
             </aside>
           )}
 
-          <main className="flex-1 overflow-hidden flex flex-col">
-            <PaperContentArea paper={currentPaper} onUploadClick={() => setShowUpload(true)} />
-          </main>
+          {mainView === "forum" && (
+            <main className="flex-1 overflow-hidden">
+              <ForumPage />
+            </main>
+          )}
 
-          <RightPanel paper={currentPaper} />
+          {mainView === "chats" && (
+            <main className="flex-1 overflow-hidden">
+              <ChatsPage />
+            </main>
+          )}
+
+          {showReaderPanel && (
+            <main className="flex-1 overflow-hidden flex flex-col">
+              <PaperContentArea paper={currentPaper} onUploadClick={() => setShowUpload(true)} />
+            </main>
+          )}
+
+          {showReaderPanel && <RightPanel paper={currentPaper} />}
         </div>
       </div>
 

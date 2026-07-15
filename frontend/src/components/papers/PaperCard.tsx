@@ -1,13 +1,14 @@
 "use client"
 
-import { useRef, useState, useCallback } from "react"
+import { useRef, useState, useCallback, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { useTranslations } from "next-intl"
 import type { PaperListDto } from "@/lib/api/types"
 import { getCategory } from "@/lib/paper-categories"
-import { formatDate, cn } from "@/lib/utils"
+import { cn } from "@/lib/utils"
 import { usePaperStore } from "@/stores/paper-store"
 import { downloadPdf } from "@/lib/api/papers"
-import { DropdownMenu, type DropdownItem } from "@/components/ui/DropdownMenu"
+import type { DropdownItem } from "@/components/ui/DropdownMenu"
 import { FileText, Globe, MoreHorizontal, Star, Tag, Share2, Download } from "lucide-react"
 
 const categoryAccent: Record<string, string> = {
@@ -57,7 +58,7 @@ export function PaperCard({ paper, isActive, onClick, onDelete, onTag, onShare }
   return (
     <div
       className={cn(
-        "group relative rounded-xl border transition-all duration-200 cursor-pointer overflow-hidden",
+        "group relative rounded-xl border transition-all duration-200 cursor-pointer",
         "hover:shadow-[var(--shadow-md)] hover:bg-[var(--surface-1)]/70 hover:backdrop-blur-sm",
         isActive
           ? "border-[var(--accent)] bg-[var(--bg-active)] shadow-[var(--shadow-sm)]"
@@ -126,23 +127,101 @@ export function PaperCard({ paper, isActive, onClick, onDelete, onTag, onShare }
             </div>
           )}
         </div>
+      </div>
 
-        {/* Three-dot menu button */}
+      {/* Three-dot menu button — bottom-right corner */}
+      <button
+        ref={menuRef}
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation()
+          setMenuOpen((prev) => !prev)
+        }}
+        className="absolute bottom-1.5 right-1.5 p-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors opacity-0 group-hover:opacity-100"
+        aria-label="More"
+      >
+        <MoreHorizontal className="size-4" />
+      </button>
+
+      {/* Portal dropdown menu */}
+      {menuOpen &&
+        createPortal(
+          <DropdownPortal
+            items={menuItems}
+            triggerRef={menuRef}
+            onClose={() => setMenuOpen(false)}
+          />,
+          document.body,
+        )}
+    </div>
+  )
+}
+
+function DropdownPortal({
+  items,
+  triggerRef,
+  onClose,
+}: {
+  items: DropdownItem[]
+  triggerRef: React.RefObject<HTMLButtonElement | null>
+  onClose: () => void
+}) {
+  const menuRef = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
+
+  useEffect(() => {
+    const btn = triggerRef.current
+    if (!btn) return
+    const rect = btn.getBoundingClientRect()
+    setPos({ top: rect.bottom + 4, left: Math.max(8, rect.right - 160) })
+  }, [triggerRef])
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      const target = e.target as Node
+      if (menuRef.current?.contains(target)) return
+      if (triggerRef.current?.contains(target)) return
+      onClose()
+    }
+    const keyHandler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose()
+    }
+    document.addEventListener("mousedown", handler)
+    document.addEventListener("keydown", keyHandler)
+    return () => {
+      document.removeEventListener("mousedown", handler)
+      document.removeEventListener("keydown", keyHandler)
+    }
+  }, [onClose, triggerRef])
+
+  if (!pos) return null
+
+  return (
+    <div
+      ref={menuRef}
+      style={{ top: pos.top, left: pos.left }}
+      className="fixed z-50 min-w-[140px] py-1 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-0)] shadow-lg"
+    >
+      {items.map((item, i) => (
         <button
-          ref={menuRef}
+          key={i}
           type="button"
           onClick={(e) => {
             e.stopPropagation()
-            setMenuOpen((prev) => !prev)
+            item.onClick()
+            onClose()
           }}
-          className="shrink-0 p-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors opacity-0 group-hover:opacity-100"
-          aria-label="More"
+          className={cn(
+            "flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors",
+            item.danger
+              ? "text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+              : "text-[var(--text-primary)] hover:bg-[var(--bg-hover)]",
+          )}
         >
-          <MoreHorizontal className="size-4" />
+          {item.icon}
+          {item.label}
         </button>
-      </div>
-
-      <DropdownMenu items={menuItems} open={menuOpen} onClose={() => setMenuOpen(false)} triggerRef={menuRef} />
+      ))}
     </div>
   )
 }

@@ -127,7 +127,7 @@ export function ChatPanel() {
               className={cn(
                 "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed",
                 msg.role === "user"
-                  ? "bg-[var(--accent)] text-white rounded-br-md"
+                  ? "bg-[var(--accent)] text-[var(--surface-1)] rounded-br-md"
                   : "bg-[var(--bg-hover)] text-[var(--text-primary)] rounded-bl-md",
               )}
             >
