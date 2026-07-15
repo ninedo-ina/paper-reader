@@ -173,6 +173,11 @@ data class AnnotationDto(
     val position: Map<String, Any?>,
     val text: String?,
     val comment: String?,
+    val quotedText: String? = null,
+    val startOffset: Int? = null,
+    val endOffset: Int? = null,
+    val images: List<String>? = null,
+    val commentCount: Int = 0,
     val createdAt: Instant,
     val updatedAt: Instant,
 )
@@ -185,6 +190,10 @@ data class CreateAnnotationRequest(
     val position: Map<String, Float>,
     val text: String? = null,
     val comment: String? = null,
+    val quotedText: String? = null,
+    val startOffset: Int? = null,
+    val endOffset: Int? = null,
+    val images: List<String>? = null,
 )
 
 data class UpdateAnnotationRequest(
@@ -193,6 +202,25 @@ data class UpdateAnnotationRequest(
     val position: Map<String, Float>? = null,
     val text: String? = null,
     val comment: String? = null,
+    val quotedText: String? = null,
+    val startOffset: Int? = null,
+    val endOffset: Int? = null,
+    val images: List<String>? = null,
+)
+
+// ==== Annotation Comment ====
+data class AnnotationCommentDto(
+    val id: Long,
+    val annotationId: Long,
+    val userId: Long,
+    val content: String,
+    val parentId: Long? = null,
+    val createdAt: Instant,
+)
+
+data class CreateAnnotationCommentRequest(
+    val content: String,
+    val parentId: Long? = null,
 )
 
 // ==== Note ====
@@ -204,6 +232,10 @@ data class NoteDto(
     val pageNumber: Int,
     val chapter: String?,
     val tags: List<String>?,
+    val quotedText: String? = null,
+    val startOffset: Int? = null,
+    val endOffset: Int? = null,
+    val images: List<String>? = null,
     val createdAt: Instant,
     val updatedAt: Instant,
 )
@@ -215,6 +247,10 @@ data class CreateNoteRequest(
     val pageNumber: Int = 0,
     val chapter: String? = null,
     val tags: List<String>? = null,
+    val quotedText: String? = null,
+    val startOffset: Int? = null,
+    val endOffset: Int? = null,
+    val images: List<String>? = null,
 )
 
 data class UpdateNoteRequest(
@@ -223,6 +259,10 @@ data class UpdateNoteRequest(
     val pageNumber: Int? = null,
     val chapter: String? = null,
     val tags: List<String>? = null,
+    val quotedText: String? = null,
+    val startOffset: Int? = null,
+    val endOffset: Int? = null,
+    val images: List<String>? = null,
 )
 
 // ==== ReadingLog ====

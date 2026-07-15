@@ -5,7 +5,9 @@
 import { get, post, put, del } from "./client"
 import type {
   AnnotationDto,
+  AnnotationCommentDto,
   CreateAnnotationRequest,
+  CreateAnnotationCommentRequest,
   UpdateAnnotationRequest,
   PageResponse,
 } from "./types"
@@ -17,7 +19,7 @@ export function listAnnotations(
   pageSize = 100,
 ): Promise<PageResponse<AnnotationDto>> {
   return get<PageResponse<AnnotationDto>>(
-    `/annotations/${paperId}?page=${page}&pageSize=${pageSize}`,
+    `/annotations/paper/${paperId}?page=${page}&pageSize=${pageSize}`,
   )
 }
 
@@ -37,4 +39,24 @@ export function updateAnnotation(
 /** 删除批注 */
 export function deleteAnnotation(id: number): Promise<null> {
   return del<null>(`/annotations/${id}`)
+}
+
+// ==== 批注评论 ====
+
+/** 添加评论 */
+export function addComment(
+  annotationId: number,
+  data: CreateAnnotationCommentRequest,
+): Promise<AnnotationCommentDto> {
+  return post<AnnotationCommentDto>(`/annotations/${annotationId}/comments`, data)
+}
+
+/** 获取批注的评论列表 */
+export function listComments(annotationId: number): Promise<AnnotationCommentDto[]> {
+  return get<AnnotationCommentDto[]>(`/annotations/${annotationId}/comments`)
+}
+
+/** 删除评论 */
+export function deleteComment(commentId: number): Promise<null> {
+  return del<null>(`/annotations/comments/${commentId}`)
 }

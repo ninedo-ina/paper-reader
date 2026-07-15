@@ -37,39 +37,72 @@ export function AnnotationLayer({ pageNumber, anchors, onCreateAnnotation, onCre
 
   const pageAnchors = anchors.filter((a) => a.pageNumber === pageNumber)
 
-  useEffect(() => {
-    const handleSelection = () => {
-      const sel = window.getSelection()
-      if (!sel || sel.isCollapsed || !sel.toString().trim()) {
-        setPopup(null)
-        return
-      }
-
-      const text = sel.toString().trim()
-      if (!text) {
-        setPopup(null)
-        return
-      }
-
-      // Check if selection is within our layer
-      const range = sel.getRangeAt(0)
-      if (!layerRef.current?.contains(range.commonAncestorContainer)) {
-        setPopup(null)
-        return
-      }
-
-      const rect = range.getBoundingClientRect()
-      setPopup({
-        x: rect.left + rect.width / 2,
-        y: rect.top - 8,
-        text,
-        position: { x: rect.left, y: rect.top, width: rect.width, height: rect.height },
-      })
+  const showPopupForSelection = useCallback(() => {
+    const sel = window.getSelection()
+    if (!sel || sel.isCollapsed || !sel.toString().trim()) {
+      setPopup(null)
+      return
     }
 
-    document.addEventListener("selectionchange", handleSelection)
-    return () => document.removeEventListener("selectionchange", handleSelection)
+    const text = sel.toString().trim()
+    if (!text) {
+      setPopup(null)
+      return
+    }
+
+    const range = sel.getRangeAt(0)
+    if (!layerRef.current?.contains(range.commonAncestorContainer)) {
+      setPopup(null)
+      return
+    }
+
+    const rect = range.getBoundingClientRect()
+    setPopup({
+      x: rect.left + rect.width / 2,
+      y: rect.top - 8,
+      text,
+      position: { x: rect.left, y: rect.top, width: rect.width, height: rect.height },
+    })
   }, [])
+
+  const showPopupAt = useCallback((clientX: number, clientY: number) => {
+    const sel = window.getSelection()
+    if (!sel || sel.isCollapsed || !sel.toString().trim()) return
+
+    const text = sel.toString().trim()
+    if (!text) return
+
+    const range = sel.getRangeAt(0)
+    if (!layerRef.current?.contains(range.commonAncestorContainer)) return
+
+    const rect = range.getBoundingClientRect()
+    setPopup({
+      x: clientX,
+      y: clientY,
+      text,
+      position: { x: rect.left, y: rect.top, width: rect.width, height: rect.height },
+    })
+  }, [])
+
+  useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (!layerRef.current?.contains(target)) return
+
+      const sel = window.getSelection()
+      if (sel && !sel.isCollapsed && sel.toString().trim()) {
+        e.preventDefault()
+        showPopupAt(e.clientX, e.clientY)
+      }
+    }
+
+    document.addEventListener("selectionchange", showPopupForSelection)
+    document.addEventListener("contextmenu", handleContextMenu)
+    return () => {
+      document.removeEventListener("selectionchange", showPopupForSelection)
+      document.removeEventListener("contextmenu", handleContextMenu)
+    }
+  }, [showPopupForSelection, showPopupAt])
 
   const handleCopy = useCallback(() => {
     if (!popup) return

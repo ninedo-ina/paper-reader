@@ -41,4 +41,27 @@ class AnnotationController(
         annotationService.delete(id, principal.userId)
         return ApiResponse(message = "Deleted")
     }
+
+    @PostMapping("/{id}/comments")
+    fun addComment(
+        @PathVariable id: Long,
+        @RequestBody request: CreateAnnotationCommentRequest,
+        @AuthenticationPrincipal principal: UserPrincipal,
+    ): ApiResponse<AnnotationCommentDto> =
+        ApiResponse(data = annotationService.addComment(id, request, principal.userId))
+
+    @GetMapping("/{id}/comments")
+    fun listComments(
+        @PathVariable id: Long,
+    ): ApiResponse<List<AnnotationCommentDto>> =
+        ApiResponse(data = annotationService.listComments(id))
+
+    @DeleteMapping("/comments/{commentId}")
+    fun deleteComment(
+        @PathVariable commentId: Long,
+        @AuthenticationPrincipal principal: UserPrincipal,
+    ): ApiResponse<Nothing> {
+        annotationService.deleteComment(commentId, principal.userId)
+        return ApiResponse(message = "Deleted")
+    }
 }

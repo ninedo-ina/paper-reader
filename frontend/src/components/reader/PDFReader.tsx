@@ -12,6 +12,8 @@ import { getDownloadUrl } from "@/lib/api/papers"
 import { getAccessToken } from "@/lib/api/client"
 import { useToastStore } from "@/stores/toast-store"
 import { useReaderStore } from "@/stores/reader-store"
+import { createAnnotation } from "@/lib/api/annotations"
+import { createNote } from "@/lib/api/notes"
 import { AnnotationLayer } from "@/components/reader/AnnotationLayer"
 import { AnnotationDialog } from "@/components/reader/AnnotationDialog"
 import type { TextAnchor } from "@/components/reader/AnnotationLayer"
@@ -30,7 +32,20 @@ export function PDFReader({ paper }: PDFReaderProps) {
   const [loadingProgress, setLoadingProgress] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
   const addToast = useToastStore((s) => s.addToast)
-  const { annotations, notes, addAnnotation, addNote } = useReaderStore()
+  const {
+    annotations, notes,
+    addAnnotation, removeAnnotation,
+    addNote, removeNote,
+    loadAnnotations, loadNotes,
+  } = useReaderStore()
+
+  // Load annotations & notes from API when paper changes
+  useEffect(() => {
+    if (paper.id) {
+      loadAnnotations(paper.id)
+      loadNotes(paper.id)
+    }
+  }, [paper.id, loadAnnotations, loadNotes])
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogMode, setDialogMode] = useState<"annotation" | "note">("annotation")
@@ -57,33 +72,86 @@ export function PDFReader({ paper }: PDFReaderProps) {
     }, [])
 
   const handleDialogSubmit = useCallback(
-    (data: { markdown: string; images: string[] }) => {
-      const id = Date.now()
+    async (data: { markdown: string; images: string[] }) => {
+      const tempId = Date.now()
       if (dialogMode === "annotation") {
+        // Optimistic update with temp ID
         addAnnotation({
-          id,
+          id: tempId,
           paperId: paper.id,
           pageNumber: dialogPage,
-          text: dialogText,
+          quotedText: dialogText,
           content: data.markdown,
           images: data.images,
           position: dialogPosition,
+          commentCount: 0,
           createdAt: new Date().toISOString(),
         })
+        try {
+          const created = await createAnnotation({
+            paperId: paper.id,
+            pageNumber: dialogPage,
+            type: "HIGHLIGHT",
+            position: dialogPosition,
+            text: dialogText,
+            comment: data.markdown,
+            images: data.images,
+            quotedText: dialogText,
+          })
+          removeAnnotation(tempId)
+          addAnnotation({
+            id: created.id,
+            paperId: created.paperId,
+            pageNumber: created.pageNumber,
+            quotedText: created.quotedText || dialogText,
+            content: created.comment || "",
+            images: created.images || [],
+            position: created.position as { x: number; y: number; width: number; height: number },
+            commentCount: created.commentCount || 0,
+            createdAt: created.createdAt,
+          })
+        } catch {
+          removeAnnotation(tempId)
+          addToast({ message: "创建批注失败", type: "error" })
+        }
       } else {
         addNote({
-          id,
+          id: tempId,
           paperId: paper.id,
           pageNumber: dialogPage,
-          text: dialogText,
+          quotedText: dialogText,
           content: data.markdown,
           images: data.images,
           position: dialogPosition,
           createdAt: new Date().toISOString(),
         })
+        try {
+          const created = await createNote({
+            paperId: paper.id,
+            pageNumber: dialogPage,
+            content: data.markdown,
+            images: data.images,
+            quotedText: dialogText,
+          })
+          removeNote(tempId)
+          addNote({
+            id: created.id,
+            paperId: created.paperId,
+            pageNumber: created.pageNumber || dialogPage,
+            quotedText: created.quotedText || dialogText,
+            title: created.title,
+            content: created.content,
+            images: created.images || [],
+            position: dialogPosition,
+            createdAt: created.createdAt,
+          })
+        } catch {
+          removeNote(tempId)
+          addToast({ message: "创建笔记失败", type: "error" })
+        }
       }
     },
-    [dialogMode, dialogText, dialogPosition, dialogPage, paper.id, addAnnotation, addNote],
+    [dialogMode, dialogText, dialogPosition, dialogPage, paper.id, addAnnotation, removeAnnotation, addNote, removeNote, addToast],
   )
 
   // Build anchors from store annotations & notes for underline rendering
@@ -91,14 +159,14 @@ export function PDFReader({ paper }: PDFReaderProps) {
     const aAnchors: TextAnchor[] = annotations.map((a) => ({
       id: a.id,
       type: "annotation" as const,
-      text: a.text,
+      text: a.quotedText,
       pageNumber: a.pageNumber,
       position: a.position,
     }))
     const nAnchors: TextAnchor[] = notes.map((n) => ({
       id: n.id,
       type: "note" as const,
-      text: n.text,
+      text: n.quotedText,
       pageNumber: n.pageNumber,
       position: n.position,
     }))

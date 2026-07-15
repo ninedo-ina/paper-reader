@@ -13,6 +13,7 @@ import { TabBar } from "@/components/ui/TabBar"
 import { getCategory, CATEGORIES } from "@/lib/paper-categories"
 import { MarkdownContent } from "@/components/reader/MarkdownContent"
 import { ChatPanel } from "@/components/chat/ChatPanel"
+import { CommentThread } from "@/components/annotations/CommentThread"
 import type { PaperDetailDto, Category } from "@/lib/api/types"
 
 type PanelTab = "metadata" | "annotations" | "notes" | "aiChat"
@@ -437,15 +438,26 @@ function MetadataContent({ paper }: { paper?: PaperDetailDto | null }) {
 }
 
 function AnnotationList() {
-  const annotations = useReaderStore((s) => s.annotations)
+  const { annotations, loadAnnotations, loadingAnnotations } = useReaderStore()
+  const paper = usePaperStore((s) => s.currentPaper)
+
+  useEffect(() => {
+    if (paper?.id) loadAnnotations(paper.id)
+  }, [paper?.id, loadAnnotations])
+
+  if (loadingAnnotations && annotations.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <Loader2 className="size-5 animate-spin text-[var(--text-tertiary)]" />
+      </div>
+    )
+  }
 
   if (annotations.length === 0) {
     return <EmptyState message="暂无批注" />
   }
 
-  const sorted = [...annotations].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  )
+  const sorted = [...annotations].sort((a, b) => a.pageNumber - b.pageNumber)
 
   return (
     <div className="space-y-3 pb-6">
@@ -460,7 +472,7 @@ function AnnotationList() {
               </span>
             </div>
             <p className="text-sm text-[var(--text-secondary)] leading-relaxed line-clamp-4">
-              {a.text}
+              {a.quotedText}
             </p>
           </div>
           {/* 批注内容 */}
@@ -471,8 +483,9 @@ function AnnotationList() {
               className="text-sm text-[var(--text-primary)] leading-relaxed"
             />
           </div>
-          {/* 时间 */}
-          <div className="px-4 pb-2.5">
+          {/* 评论区域 + 时间 */}
+          <div className="px-4 pb-2.5 flex items-center justify-between">
+            <CommentThreadButton annotationId={a.id} commentCount={a.commentCount} />
             <span className="text-[10.5px] text-[var(--text-tertiary)]">
               {formatDate(a.createdAt)}
             </span>
@@ -483,16 +496,48 @@ function AnnotationList() {
   )
 }
 
+function CommentThreadButton({ annotationId, commentCount }: { annotationId: number; commentCount: number }) {
+  const [expanded, setExpanded] = useState(false)
+
+  return (
+    <div>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="inline-flex items-center gap-1 text-[11px] text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors"
+      >
+        <MessageSquare className="size-3" />
+        <span>{commentCount > 0 ? `${commentCount} 条评论` : "评论"}</span>
+      </button>
+      {expanded && (
+        <div className="mt-3 border-t border-[var(--border-subtle)] pt-3">
+          <CommentThread annotationId={annotationId} />
+        </div>
+      )}
+    </div>
+  )
+}
+
 function NoteList() {
-  const notes = useReaderStore((s) => s.notes)
+  const { notes, loadNotes, loadingNotes } = useReaderStore()
+  const paper = usePaperStore((s) => s.currentPaper)
+
+  useEffect(() => {
+    if (paper?.id) loadNotes(paper.id)
+  }, [paper?.id, loadNotes])
+
+  if (loadingNotes && notes.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <Loader2 className="size-5 animate-spin text-[var(--text-tertiary)]" />
+      </div>
+    )
+  }
 
   if (notes.length === 0) {
     return <EmptyState message="暂无笔记" />
   }
 
-  const sorted = [...notes].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  )
+  const sorted = [...notes].sort((a, b) => a.pageNumber - b.pageNumber)
 
   return (
     <div className="space-y-3 pb-6">
@@ -507,7 +552,7 @@ function NoteList() {
               </span>
             </div>
             <p className="text-sm text-[var(--text-secondary)] leading-relaxed line-clamp-4">
-              {n.text}
+              {n.quotedText}
             </p>
           </div>
           {/* 笔记内容 */}

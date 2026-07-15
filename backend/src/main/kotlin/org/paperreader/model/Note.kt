@@ -30,6 +30,18 @@ data class Note(
     @Column(length = 500)
     val tags: String? = null,
 
+    @Column(name = "quoted_text", columnDefinition = "TEXT")
+    val quotedText: String? = null,
+
+    @Column(name = "start_offset")
+    val startOffset: Int? = null,
+
+    @Column(name = "end_offset")
+    val endOffset: Int? = null,
+
+    @Column(columnDefinition = "TEXT")
+    val images: String? = null,
+
     @Column(nullable = false)
     val createdAt: Instant = Instant.now(),
 

@@ -3,6 +3,7 @@ package org.paperreader.service
 import org.paperreader.dto.*
 import org.paperreader.exception.ResourceNotFoundException
 import org.paperreader.model.Note
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.paperreader.repository.NoteRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
@@ -13,6 +14,7 @@ import java.time.Instant
 class NoteService(
     private val noteRepository: NoteRepository,
     private val auditLogService: AuditLogService,
+    private val objectMapper: ObjectMapper,
 ) {
     @Transactional
     fun create(request: CreateNoteRequest, userId: Long): NoteDto {
@@ -25,6 +27,10 @@ class NoteService(
                 pageNumber = request.pageNumber,
                 chapter = request.chapter,
                 tags = request.tags?.joinToString(","),
+                quotedText = request.quotedText,
+                startOffset = request.startOffset,
+                endOffset = request.endOffset,
+                images = request.images?.let { objectMapper.writeValueAsString(it) },
             )
         ).toDto()
         val event = if (request.pageNumber > 0) "批注" else "笔记"
@@ -44,6 +50,10 @@ class NoteService(
             pageNumber = request.pageNumber ?: note.pageNumber,
             chapter = request.chapter ?: note.chapter,
             tags = request.tags?.joinToString(",") ?: note.tags,
+            quotedText = request.quotedText ?: note.quotedText,
+            startOffset = request.startOffset ?: note.startOffset,
+            endOffset = request.endOffset ?: note.endOffset,
+            images = request.images?.let { objectMapper.writeValueAsString(it) } ?: note.images,
             updatedAt = Instant.now(),
         )
         val result = noteRepository.save(updated).toDto()
@@ -77,6 +87,8 @@ class NoteService(
         id = id, paperId = paperId, title = title,
         content = content, pageNumber = pageNumber,
         chapter = chapter, tags = tags?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() },
+        quotedText = quotedText, startOffset = startOffset, endOffset = endOffset,
+        images = images?.let { objectMapper.readValue(it, List::class.java) as? List<String> },
         createdAt = createdAt, updatedAt = updatedAt,
     )
 }
