@@ -51,10 +51,12 @@ interface ReaderState {
   setAnnotations: (annotations: ReaderAnnotation[]) => void
   addAnnotation: (a: ReaderAnnotation) => void
   removeAnnotation: (id: number) => void
+  updateAnnotation: (id: number, data: Partial<ReaderAnnotation>) => void
 
   setNotes: (notes: ReaderNote[]) => void
   addNote: (n: ReaderNote) => void
   removeNote: (id: number) => void
+  updateNote: (id: number, data: Partial<ReaderNote>) => void
 
   loadAnnotations: (paperId: number) => Promise<void>
   loadNotes: (paperId: number) => Promise<void>
@@ -74,10 +76,16 @@ export const useReaderStore = create<ReaderState>((set) => ({
   setAnnotations: (annotations) => set({ annotations }),
   addAnnotation: (a) => set((s) => ({ annotations: [...s.annotations, a] })),
   removeAnnotation: (id) => set((s) => ({ annotations: s.annotations.filter((a) => a.id !== id) })),
+  updateAnnotation: (id, data) => set((s) => ({
+    annotations: s.annotations.map((a) => (a.id === id ? { ...a, ...data } : a)),
+  })),
 
   setNotes: (notes) => set({ notes }),
   addNote: (n) => set((s) => ({ notes: [...s.notes, n] })),
   removeNote: (id) => set((s) => ({ notes: s.notes.filter((n) => n.id !== id) })),
+  updateNote: (id, data) => set((s) => ({
+    notes: s.notes.map((n) => (n.id === id ? { ...n, ...data } : n)),
+  })),
 
   loadAnnotations: async (paperId) => {
     set({ loadingAnnotations: true })

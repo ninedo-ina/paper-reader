@@ -83,22 +83,25 @@ function boundingRect(rects: PositionRect[]): PositionRect {
 
 /**
  * Find text positions in the PDF text layer by matching quotedText.
- * Traverses text nodes with TreeWalker, finds the search text via indexOf,
- * then creates a Range to get viewport-accurate coordinates via getClientRects().
+ * Uses direct span matching: queries all [role="presentation"] spans, concatenates
+ * their textContent for search, then uses Range on matching span text nodes for
+ * precise viewport coordinates via getClientRects().
  */
 function findTextPositions(textLayer: HTMLElement, searchText: string): PositionRect[] {
   if (!searchText) return []
 
-  const walker = document.createTreeWalker(textLayer, NodeFilter.SHOW_TEXT)
-  const entries: Array<{ node: Text; start: number; end: number }> = []
+  const spans = textLayer.querySelectorAll<HTMLElement>('[role="presentation"]')
+  if (spans.length === 0) return []
+
+  // Build span entries with text and offset info
+  const entries: Array<{ el: HTMLElement; text: string; start: number; end: number }> = []
   let fullText = ""
   let offset = 0
 
-  let node: Text | null
-  while ((node = walker.nextNode() as Text | null)) {
-    const text = node.textContent || ""
+  for (const span of spans) {
+    const text = span.textContent || ""
     if (text.length > 0) {
-      entries.push({ node, start: offset, end: offset + text.length })
+      entries.push({ el: span, text, start: offset, end: offset + text.length })
       fullText += text
       offset += text.length
     }
@@ -106,58 +109,122 @@ function findTextPositions(textLayer: HTMLElement, searchText: string): Position
 
   if (fullText.length === 0) return []
 
+  const norm = (s: string) => s.normalize("NFKD").replace(/\s+/g, " ").replace(/[̀-ͯ]/g, "")
+  const stripInvisible = (s: string) => s.replace(/[​‌‍‎‏﻿­]/g, "")
+
   let matchStart = fullText.indexOf(searchText)
 
-  // Fallback: whitespace-collapsed match (PDF text layer may collapse spaces differently)
+  // Fallback 1: strip invisible chars
+  if (matchStart === -1) {
+    const cleanFull = stripInvisible(fullText)
+    const cleanSearch = stripInvisible(searchText)
+    matchStart = cleanFull.indexOf(cleanSearch)
+  }
+
+  // Fallback 2: whitespace-collapsed match
   if (matchStart === -1) {
     const collapse = (s: string) => s.replace(/\s+/g, " ")
     const collapsedFull = collapse(fullText)
     const collapsedSearch = collapse(searchText)
     const collapsedIdx = collapsedFull.indexOf(collapsedSearch)
-    if (collapsedIdx === -1) return []
-
-    // Map collapsed index back to original offset
-    let ci = 0
-    let oi = 0
-    while (ci < collapsedIdx && oi < fullText.length) {
-      if (/\s/.test(fullText[oi])) {
-        while (oi < fullText.length && /\s/.test(fullText[oi])) oi++
-        ci++
-      } else {
-        oi++
-        ci++
+    if (collapsedIdx !== -1) {
+      let ci = 0, oi = 0
+      while (ci < collapsedIdx && oi < fullText.length) {
+        if (/\s/.test(fullText[oi])) {
+          while (oi < fullText.length && /\s/.test(fullText[oi])) oi++
+          ci++
+        } else { oi++; ci++ }
       }
+      matchStart = oi
     }
-    matchStart = oi
+  }
+
+  // Fallback 3: Unicode normalization (handle ligatures like ﬁ → fi)
+  if (matchStart === -1) {
+    const normFull = norm(fullText)
+    const normSearch = norm(searchText)
+    const normIdx = normFull.indexOf(normSearch)
+    if (normIdx !== -1) {
+      // Map normalized index back, character by character
+      let ni = 0, oi = 0
+      while (ni < normIdx && oi < fullText.length) {
+        const fc = norm(fullText[oi])
+        if (fc.length === 0) { oi++; continue }
+        ni += fc.length
+        oi++
+      }
+      matchStart = oi
+    }
+  }
+
+  if (matchStart === -1) {
+    console.log("[findTextPositions] match failed",
+      "search:", JSON.stringify(searchText.slice(0, 80)),
+      "fullText head:", JSON.stringify(fullText.slice(0, 200)))
+    return []
   }
 
   const matchEnd = matchStart + searchText.length
 
-  // Locate start and end nodes with offsets
-  let startNode: Text | null = null
-  let startNodeOffset = 0
-  let endNode: Text | null = null
-  let endNodeOffset = 0
+  // Build a Range across the matching spans' text nodes for precise coords
+  const range = document.createRange()
+  const remainingStart = matchStart
+  const remainingEnd = matchEnd
+
+  // Find start text node
+  let startTextNode: Text | null = null
+  let startOffset = 0
 
   for (const entry of entries) {
-    if (!startNode && matchStart < entry.end) {
-      startNode = entry.node
-      startNodeOffset = matchStart - entry.start
+    if (remainingStart >= entry.end) continue
+
+    const localOffset = remainingStart - entry.start
+    const walker = document.createTreeWalker(entry.el, NodeFilter.SHOW_TEXT)
+    let textNode: Text | null
+    let pos = 0
+    while ((textNode = walker.nextNode() as Text | null)) {
+      const len = textNode.textContent?.length || 0
+      if (pos + len > localOffset) {
+        startTextNode = textNode
+        startOffset = localOffset - pos
+        break
+      }
+      pos += len
     }
-    if (matchEnd <= entry.end) {
-      endNode = entry.node
-      endNodeOffset = matchEnd - entry.start
-      break
-    }
+    if (startTextNode) break
   }
 
-  if (!startNode || !endNode) return []
+  // Find end text node
+  let endTextNode: Text | null = null
+  let endOffset = 0
 
-  const range = document.createRange()
+  for (const entry of entries) {
+    if (remainingEnd > entry.end) continue
+    if (remainingEnd <= entry.start) break
+
+    const localOffset = remainingEnd - entry.start
+    const walker = document.createTreeWalker(entry.el, NodeFilter.SHOW_TEXT)
+    let textNode: Text | null
+    let pos = 0
+    while ((textNode = walker.nextNode() as Text | null)) {
+      const len = textNode.textContent?.length || 0
+      if (pos + len >= localOffset) {
+        endTextNode = textNode
+        endOffset = localOffset - pos
+        break
+      }
+      pos += len
+    }
+    if (endTextNode) break
+  }
+
+  if (!startTextNode || !endTextNode) return []
+
   try {
-    range.setStart(startNode, startNodeOffset)
-    range.setEnd(endNode, endNodeOffset)
-  } catch {
+    range.setStart(startTextNode, startOffset)
+    range.setEnd(endTextNode, endOffset)
+  } catch (e) {
+    console.log("[findTextPositions] Range.setStart/End failed", e)
     return []
   }
 
@@ -183,11 +250,13 @@ function useTextMatchPositions(
   scale: number,
 ): Map<string, PositionRect[]> {
   const [positions, setPositions] = useState<Map<string, PositionRect[]>>(new Map())
+  const matchIdRef = useRef(0)
 
   useEffect(() => {
+    const matchId = ++matchIdRef.current
     let cancelled = false
     let attempts = 0
-    const maxAttempts = 15
+    const maxAttempts = 30
 
     function tryMatch() {
       if (cancelled) return
@@ -196,16 +265,24 @@ function useTextMatchPositions(
       if (!layer) return
 
       const textLayer = layer.querySelector(".react-pdf__Page__textContent") as HTMLElement | null
-      if (!textLayer) {
+      if (!textLayer || !textLayer.querySelector('[role="presentation"]')) {
         if (attempts < maxAttempts) {
           attempts++
           requestAnimationFrame(tryMatch)
+        } else {
+          console.log("[useTextMatchPositions] page", pageNumber, "timed out waiting for text layer after", maxAttempts, "attempts")
         }
         return
       }
 
+      if (attempts > 0) {
+        console.log("[useTextMatchPositions] page", pageNumber, "text layer ready after", attempts, "attempts")
+      }
+
       const layerRect = layer.getBoundingClientRect()
       const next = new Map<string, PositionRect[]>()
+      let matched = 0
+      let failed = 0
 
       for (const a of anchors) {
         if (a.pageNumber !== pageNumber) continue
@@ -217,7 +294,15 @@ function useTextMatchPositions(
         const rects = findTextPositions(textLayer, a.text)
         if (rects.length > 0) {
           next.set(key, toLayerRelative(rects, layerRect))
+          matched++
+        } else {
+          failed++
         }
+      }
+
+      if (matched > 0 || failed > 0) {
+        console.log("[useTextMatchPositions] page", pageNumber, "matchId", matchId,
+          "matched:", matched, "failed:", failed)
       }
 
       if (!cancelled) {
@@ -225,15 +310,13 @@ function useTextMatchPositions(
       }
     }
 
-    // Delay to let react-pdf finish rendering the text layer at the new scale
-    const timer = setTimeout(() => requestAnimationFrame(tryMatch), 50)
+    const timer = setTimeout(() => requestAnimationFrame(tryMatch), 100)
 
     return () => {
       cancelled = true
       clearTimeout(timer)
     }
-    // scale triggers re-render of the text layer DOM — re-match when it changes
-  }, [anchors, pageNumber, layerRef, scale])
+  }, [anchors, pageNumber, scale, layerRef])
 
   return positions
 }

@@ -7,18 +7,24 @@ import { cn } from "@/lib/utils"
 interface AnnotationDialogProps {
   open: boolean
   onClose: () => void
-  onSubmit: (data: { markdown: string; images: string[] }) => void
+  onSubmit: (data: { markdown: string; images: string[]; title?: string }) => void
   mode: "annotation" | "note"
   selectedText?: string
+  initialMarkdown?: string
+  initialImages?: string[]
+  initialTitle?: string
 }
 
 const MAX_ANNOTATION_CHARS = 400
 const MAX_ANNOTATION_IMAGES = 3
 
-export function AnnotationDialog({ open, onClose, onSubmit, mode, selectedText }: AnnotationDialogProps) {
-  const [markdown, setMarkdown] = useState("")
-  const [images, setImages] = useState<string[]>([])
+export function AnnotationDialog({ open, onClose, onSubmit, mode, selectedText, initialMarkdown, initialImages, initialTitle }: AnnotationDialogProps) {
+  const [markdown, setMarkdown] = useState(initialMarkdown || "")
+  const [images, setImages] = useState<string[]>(initialImages || [])
+  const [title, setTitle] = useState(initialTitle || "")
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const isEditing = !!(initialMarkdown || initialImages?.length || initialTitle)
 
   if (!open) return null
 
@@ -47,9 +53,10 @@ export function AnnotationDialog({ open, onClose, onSubmit, mode, selectedText }
   }
 
   const handleSubmit = () => {
-    onSubmit({ markdown: markdown.trim(), images })
+    onSubmit({ markdown: markdown.trim(), images, title: title.trim() || undefined })
     setMarkdown("")
     setImages([])
+    setTitle("")
     onClose()
   }
 
@@ -75,7 +82,7 @@ export function AnnotationDialog({ open, onClose, onSubmit, mode, selectedText }
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border-subtle)]">
           <h3 className="text-sm font-semibold text-[var(--text-primary)]">
-            {mode === "annotation" ? "创建批注" : "创建笔记"}
+            {mode === "annotation" ? (isEditing ? "编辑批注" : "创建批注") : (isEditing ? "编辑笔记" : "创建笔记")}
           </h3>
           <button onClick={onClose} className="p-1 rounded-md hover:bg-[var(--bg-hover)] transition-colors">
             <X className="size-4 text-[var(--text-tertiary)]" />
@@ -87,6 +94,19 @@ export function AnnotationDialog({ open, onClose, onSubmit, mode, selectedText }
           <div className="px-4 py-2 bg-[var(--bg-hover)] border-b border-[var(--border-subtle)]">
             <p className="text-xs text-[var(--text-tertiary)] mb-1">引用原文</p>
             <p className="text-sm text-[var(--text-secondary)] line-clamp-3">{selectedText}</p>
+          </div>
+        )}
+
+        {/* Title input (notes only) */}
+        {mode === "note" && (
+          <div className="px-4 pt-4">
+            <input
+              type="text"
+              className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--surface-0)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+              placeholder="笔记标题（可选）"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
           </div>
         )}
 
