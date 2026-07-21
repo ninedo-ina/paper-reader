@@ -53,24 +53,30 @@ export function PDFReader({ paper }: PDFReaderProps) {
   const [dialogPosition, setDialogPosition] = useState({ x: 0, y: 0, width: 0, height: 0 })
   const [dialogPositions, setDialogPositions] = useState<PositionRect[]>([])
   const [dialogPage, setDialogPage] = useState(1)
+  const [dialogStartOffset, setDialogStartOffset] = useState(-1)
+  const [dialogEndOffset, setDialogEndOffset] = useState(-1)
 
   const handleCreateAnnotation = useCallback(
-    (text: string, position: PositionRect, positions: PositionRect[], pageNum: number) => {
+    (text: string, position: PositionRect, positions: PositionRect[], pageNum: number, startOffset: number, endOffset: number) => {
       setDialogMode("annotation")
       setDialogText(text)
       setDialogPosition(position)
       setDialogPositions(positions)
       setDialogPage(pageNum)
+      setDialogStartOffset(startOffset)
+      setDialogEndOffset(endOffset)
       setDialogOpen(true)
     }, [])
 
   const handleCreateNote = useCallback(
-    (text: string, position: PositionRect, positions: PositionRect[], pageNum: number) => {
+    (text: string, position: PositionRect, positions: PositionRect[], pageNum: number, startOffset: number, endOffset: number) => {
       setDialogMode("note")
       setDialogText(text)
       setDialogPosition(position)
       setDialogPositions(positions)
       setDialogPage(pageNum)
+      setDialogStartOffset(startOffset)
+      setDialogEndOffset(endOffset)
       setDialogOpen(true)
     }, [])
 
@@ -101,6 +107,8 @@ export function PDFReader({ paper }: PDFReaderProps) {
             comment: data.markdown,
             images: data.images,
             quotedText: dialogText,
+            startOffset: dialogStartOffset >= 0 ? dialogStartOffset : undefined,
+            endOffset: dialogEndOffset >= 0 ? dialogEndOffset : undefined,
           })
           removeAnnotation(tempId)
           const createdPos = created.position as unknown as Record<string, unknown>
@@ -140,6 +148,8 @@ export function PDFReader({ paper }: PDFReaderProps) {
             images: data.images,
             quotedText: dialogText,
             position: { ...dialogPosition, positions: dialogPositions } as unknown as Record<string, unknown>,
+            startOffset: dialogStartOffset >= 0 ? dialogStartOffset : undefined,
+            endOffset: dialogEndOffset >= 0 ? dialogEndOffset : undefined,
           })
           removeNote(tempId)
           const createdPos = (created as unknown as Record<string, unknown>).position as Record<string, unknown> | undefined
@@ -161,7 +171,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
         }
       }
     },
-    [dialogMode, dialogText, dialogPosition, dialogPositions, dialogPage, paper.id, addAnnotation, removeAnnotation, addNote, removeNote, addToast],
+    [dialogMode, dialogText, dialogPosition, dialogPositions, dialogPage, dialogStartOffset, dialogEndOffset, paper.id, addAnnotation, removeAnnotation, addNote, removeNote, addToast],
   )
 
   // Build anchors from store annotations & notes for underline rendering
@@ -324,8 +334,8 @@ export function PDFReader({ paper }: PDFReaderProps) {
                   pageNumber={n}
                   anchors={anchors}
                   scale={scale}
-                  onCreateAnnotation={(text, pos, positions) => handleCreateAnnotation(text, pos, positions, n)}
-                  onCreateNote={(text, pos, positions) => handleCreateNote(text, pos, positions, n)}
+                  onCreateAnnotation={(text, pos, positions, startOffset, endOffset) => handleCreateAnnotation(text, pos, positions, n, startOffset, endOffset)}
+                  onCreateNote={(text, pos, positions, startOffset, endOffset) => handleCreateNote(text, pos, positions, n, startOffset, endOffset)}
                 >
                   <Page
                     pageNumber={n}

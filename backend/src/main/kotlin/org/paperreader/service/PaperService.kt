@@ -139,6 +139,16 @@ class PaperService(
         return "${paper.title}.pdf" to bytes
     }
 
+    fun downloadPaperAsResource(id: Long, userId: Long): Pair<String, org.springframework.core.io.Resource> {
+        val paper = paperRepository.findByIdAndUserId(id, userId)
+            ?: throw ResourceNotFoundException("Paper", id)
+        val filePath = paper.filePath
+            ?: throw IllegalArgumentException("This paper has no downloadable file")
+        val resource = fileStorageService.readAsResource(filePath)
+        auditLogService.log(userId, "下载", paper.title)
+        return "${paper.title}.pdf" to resource
+    }
+
     @Transactional
     fun deletePaper(id: Long, userId: Long) {
         val paper = paperRepository.findByIdAndUserId(id, userId)

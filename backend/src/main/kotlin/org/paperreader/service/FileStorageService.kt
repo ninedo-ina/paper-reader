@@ -5,6 +5,9 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
+import org.springframework.core.io.ByteArrayResource
+import org.springframework.core.io.FileSystemResource
+import org.springframework.core.io.Resource
 import org.springframework.web.multipart.MultipartFile
 import java.net.URI
 import java.nio.file.Files
@@ -71,6 +74,21 @@ class FileStorageService(
                 val req = RequestEntity.get(URI("$dufsUrl/$filePath")).build()
                 restTemplate.exchange(req, ByteArray::class.java).body!!
             }
+        }
+    }
+
+    /** Return a Spring Resource for Range-request-friendly download. Local uses FileSystemResource (efficient random access), dufs falls back to ByteArrayResource (in-memory). */
+    fun readAsResource(filePath: String): Resource {
+        return when (storageType) {
+            "local" -> FileSystemResource(Path.of(filePath))
+            else -> ByteArrayResource(read(filePath))
+        }
+    }
+
+    fun fileSize(filePath: String): Long {
+        return when (storageType) {
+            "local" -> Files.size(Path.of(filePath))
+            else -> read(filePath).size.toLong()
         }
     }
 

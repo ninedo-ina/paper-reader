@@ -28,8 +28,8 @@ interface AnnotationLayerProps {
   anchors: TextAnchor[]
   scale: number
   children?: React.ReactNode
-  onCreateAnnotation?: (text: string, position: PositionRect, positions: PositionRect[], pageNumber: number) => void
-  onCreateNote?: (text: string, position: PositionRect, positions: PositionRect[], pageNumber: number) => void
+  onCreateAnnotation?: (text: string, position: PositionRect, positions: PositionRect[], pageNumber: number, startOffset: number, endOffset: number) => void
+  onCreateNote?: (text: string, position: PositionRect, positions: PositionRect[], pageNumber: number, startOffset: number, endOffset: number) => void
   onAskAI?: (text: string) => void
 }
 
@@ -38,6 +38,8 @@ interface PopupMenuState {
   y: number
   text: string
   positions: PositionRect[]
+  startOffset: number
+  endOffset: number
 }
 
 /** Convert viewport-absolute rects to layer-relative coordinates */
@@ -81,17 +83,26 @@ function boundingRect(rects: PositionRect[]): PositionRect {
   return { x, y, width: x2 - x, height: y2 - y }
 }
 
+interface TextMatchResult {
+  rects: PositionRect[]
+  startOffset: number
+  endOffset: number
+}
+
 /**
  * Find text positions in the PDF text layer by matching quotedText.
  * Uses direct span matching: queries all [role="presentation"] spans, concatenates
  * their textContent for search, then uses Range on matching span text nodes for
  * precise viewport coordinates via getClientRects().
+ * Also returns startOffset/endOffset — the character offsets of the match within
+ * the concatenated full text of the page.
  */
-function findTextPositions(textLayer: HTMLElement, searchText: string): PositionRect[] {
-  if (!searchText) return []
+function findTextPositions(textLayer: HTMLElement, searchText: string): TextMatchResult {
+  const empty = { rects: [], startOffset: -1, endOffset: -1 }
+  if (!searchText) return empty
 
   const spans = textLayer.querySelectorAll<HTMLElement>('[role="presentation"]')
-  if (spans.length === 0) return []
+  if (spans.length === 0) return empty
 
   // Build span entries with text and offset info
   const entries: Array<{ el: HTMLElement; text: string; start: number; end: number }> = []
@@ -107,7 +118,7 @@ function findTextPositions(textLayer: HTMLElement, searchText: string): Position
     }
   }
 
-  if (fullText.length === 0) return []
+  if (fullText.length === 0) return empty
 
   const norm = (s: string) => s.normalize("NFKD").replace(/\s+/g, " ").replace(/[̀-ͯ]/g, "")
   const stripInvisible = (s: string) => s.replace(/[​‌‍‎‏﻿­]/g, "")
@@ -161,7 +172,7 @@ function findTextPositions(textLayer: HTMLElement, searchText: string): Position
     console.log("[findTextPositions] match failed",
       "search:", JSON.stringify(searchText.slice(0, 80)),
       "fullText head:", JSON.stringify(fullText.slice(0, 200)))
-    return []
+    return empty
   }
 
   const matchEnd = matchStart + searchText.length
@@ -218,14 +229,14 @@ function findTextPositions(textLayer: HTMLElement, searchText: string): Position
     if (endTextNode) break
   }
 
-  if (!startTextNode || !endTextNode) return []
+  if (!startTextNode || !endTextNode) return { rects: [], startOffset: matchStart, endOffset: matchEnd }
 
   try {
     range.setStart(startTextNode, startOffset)
     range.setEnd(endTextNode, endOffset)
   } catch (e) {
     console.log("[findTextPositions] Range.setStart/End failed", e)
-    return []
+    return { rects: [], startOffset: matchStart, endOffset: matchEnd }
   }
 
   const clientRects = range.getClientRects()
@@ -236,7 +247,7 @@ function findTextPositions(textLayer: HTMLElement, searchText: string): Position
       result.push({ x: r.left, y: r.top, width: r.width, height: r.height })
     }
   }
-  return result
+  return { rects: result, startOffset: matchStart, endOffset: matchEnd }
 }
 
 /**
@@ -291,9 +302,9 @@ function useTextMatchPositions(
         const key = `${a.pageNumber}:${a.text}`
         if (next.has(key)) continue
 
-        const rects = findTextPositions(textLayer, a.text)
-        if (rects.length > 0) {
-          next.set(key, toLayerRelative(rects, layerRect))
+        const result = findTextPositions(textLayer, a.text)
+        if (result.rects.length > 0) {
+          next.set(key, toLayerRelative(result.rects, layerRect))
           matched++
         } else {
           failed++
@@ -329,6 +340,15 @@ export function AnnotationLayer({ pageNumber, anchors, scale, children, onCreate
   const pageAnchors = anchors.filter((a) => a.pageNumber === pageNumber)
   const matchedPositions = useTextMatchPositions(layerRef, anchors, pageNumber, scale)
 
+  const computeOffsets = useCallback((searchText: string): { startOffset: number; endOffset: number } => {
+    const layer = layerRef.current
+    if (!layer) return { startOffset: -1, endOffset: -1 }
+    const textLayer = layer.querySelector(".react-pdf__Page__textContent") as HTMLElement | null
+    if (!textLayer) return { startOffset: -1, endOffset: -1 }
+    const result = findTextPositions(textLayer, searchText)
+    return { startOffset: result.startOffset, endOffset: result.endOffset }
+  }, [])
+
   const handleMouseUp = useCallback(() => {
     requestAnimationFrame(() => {
       const sel = window.getSelection()
@@ -345,14 +365,19 @@ export function AnnotationLayer({ pageNumber, anchors, scale, children, onCreate
       const rects = getSelectionRects()
       if (rects.length === 0) return
 
+      const searchText = sel.toString().trim()
+      const offsets = computeOffsets(searchText)
+
       setPopup({
         x: rects[0].x + rects[0].width / 2,
         y: rects[0].y - 8,
-        text: sel.toString().trim(),
+        text: searchText,
         positions: rects,
+        startOffset: offsets.startOffset,
+        endOffset: offsets.endOffset,
       })
     })
-  }, [])
+  }, [computeOffsets])
 
   const showPopupAt = useCallback((clientX: number, clientY: number) => {
     const sel = window.getSelection()
@@ -364,13 +389,18 @@ export function AnnotationLayer({ pageNumber, anchors, scale, children, onCreate
     const rects = getSelectionRects()
     if (rects.length === 0) return
 
+    const searchText = sel.toString().trim()
+    const offsets = computeOffsets(searchText)
+
     setPopup({
       x: clientX,
       y: clientY,
-      text: sel.toString().trim(),
+      text: searchText,
       positions: rects,
+      startOffset: offsets.startOffset,
+      endOffset: offsets.endOffset,
     })
-  }, [])
+  }, [computeOffsets])
 
   useEffect(() => {
     const handleContextMenu = (e: MouseEvent) => {
@@ -405,7 +435,7 @@ export function AnnotationLayer({ pageNumber, anchors, scale, children, onCreate
     if (!popup || !onCreateAnnotation || !layerRef.current) return
     const layerRect = layerRef.current.getBoundingClientRect()
     const layerRects = toLayerRelative(popup.positions, layerRect)
-    onCreateAnnotation(popup.text, boundingRect(layerRects), layerRects, pageNumber)
+    onCreateAnnotation(popup.text, boundingRect(layerRects), layerRects, pageNumber, popup.startOffset, popup.endOffset)
     setPopup(null)
     window.getSelection()?.removeAllRanges()
   }, [popup, onCreateAnnotation, pageNumber])
@@ -414,7 +444,7 @@ export function AnnotationLayer({ pageNumber, anchors, scale, children, onCreate
     if (!popup || !onCreateNote || !layerRef.current) return
     const layerRect = layerRef.current.getBoundingClientRect()
     const layerRects = toLayerRelative(popup.positions, layerRect)
-    onCreateNote(popup.text, boundingRect(layerRects), layerRects, pageNumber)
+    onCreateNote(popup.text, boundingRect(layerRects), layerRects, pageNumber, popup.startOffset, popup.endOffset)
     setPopup(null)
     window.getSelection()?.removeAllRanges()
   }, [popup, onCreateNote, pageNumber])
@@ -475,19 +505,26 @@ function UnderlineMarker({ color, rects }: { color: string; rects: PositionRect[
   return (
     <>
       {rects.map((r, i) => (
-        <div
-          key={i}
-          className="absolute pointer-events-none"
-          style={{
-            left: r.x,
-            top: r.y + r.height + 1,
-            width: r.width,
-            height: 1.5,
-            background: color,
-            borderRadius: 1,
-            opacity: 0.6,
-          }}
-        />
+        <div key={i} className="absolute pointer-events-none" style={{ left: r.x, top: r.y, width: r.width, height: r.height }}>
+          {/* 半透明背景高亮 */}
+          <div
+            className="absolute inset-0"
+            style={{ background: color, opacity: 0.15, borderRadius: 2 }}
+          />
+          {/* 下划线 */}
+          <div
+            className="absolute"
+            style={{
+              left: 0,
+              bottom: -1,
+              width: "100%",
+              height: 2,
+              background: color,
+              borderRadius: 1,
+              opacity: 0.55,
+            }}
+          />
+        </div>
       ))}
     </>
   )
