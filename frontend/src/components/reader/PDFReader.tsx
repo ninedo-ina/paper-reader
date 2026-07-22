@@ -37,6 +37,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
     addAnnotation, removeAnnotation,
     addNote, removeNote,
     loadAnnotations, loadNotes,
+    navigationTarget,
   } = useReaderStore()
 
   // Load annotations & notes from API when paper changes
@@ -202,6 +203,25 @@ export function PDFReader({ paper }: PDFReaderProps) {
       pageEl.scrollIntoView({ behavior: "smooth", block: "start" })
     }
   }, [pageNumber])
+
+  // Navigate to target position when clicking annotation/note card in RightPanel
+  useEffect(() => {
+    if (!navigationTarget || !scrollRef.current) return
+    setPageNumber(navigationTarget.pageNumber)
+    // After page renders, scroll to position if available
+    if (navigationTarget.position) {
+      const pos = navigationTarget.position
+      setTimeout(() => {
+        const pageEl = scrollRef.current?.querySelector(`[data-page="${navigationTarget.pageNumber}"]`)
+        if (pageEl && pos.height > 0) {
+          const container = scrollRef.current!
+          const pageTop = pageEl.getBoundingClientRect().top - container.getBoundingClientRect().top
+          const targetY = pageTop + (pos.y * pageEl.getBoundingClientRect().height) / pageEl.scrollHeight - 100
+          container.scrollTo({ top: targetY, behavior: "smooth" })
+        }
+      }, 300)
+    }
+  }, [navigationTarget?.timestamp])
 
   const handleCopyTitle = () => {
     const title = paper.title || ""

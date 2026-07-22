@@ -81,7 +81,7 @@ export function HistoryPanel({ onSelect, onClose }: HistoryPanelProps) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-[470] text-[var(--text-primary)] truncate">
-                    Paper #{log.paperId}
+                    {log.paperTitle || `Paper #${log.paperId}`}
                   </p>
                   <div className="flex items-center gap-2 mt-1 text-[11px] text-[var(--text-tertiary)]">
                     <span className="inline-flex items-center gap-1">

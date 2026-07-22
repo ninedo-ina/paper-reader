@@ -12,15 +12,16 @@ import { VersionPopup } from "@/components/layout/VersionPopup"
 import { ToastContainer } from "@/components/ui/Toast"
 import { HistoryPanel } from "@/components/history/HistoryPanel"
 import { NotesPanel } from "@/components/notes/NotesPanel"
+import { AnnotationsPanel } from "@/components/annotations/AnnotationsPanel"
 import { PreferencesDialog } from "@/components/settings/PreferencesDialog"
 import { ProfileDialog } from "@/components/settings/ProfileDialog"
 import { ForumPage } from "@/components/forum/ForumPage"
 import { ChatsPage } from "@/components/chat/ChatsPage"
 import { usePaperStore } from "@/stores/paper-store"
 import { useNotificationStore } from "@/stores/notification-store"
-import type { NoteDto } from "@/lib/api/types"
+import type { NoteDto, AnnotationDto } from "@/lib/api/types"
 
-type SidebarPanel = "library" | "history" | "notes" | "starred" | null
+type SidebarPanel = "library" | "history" | "notes" | "annotations" | "starred" | null
 type MainView = "reader" | "forum" | "chats"
 
 export default function Home() {
@@ -62,7 +63,7 @@ export default function Home() {
       setSidebarPanel((p) => (p === "starred" ? null : "starred"))
       return
     }
-    if (key === "library" || key === "history" || key === "notes") {
+    if (key === "library" || key === "history" || key === "notes" || key === "annotations") {
       setSidebarPanel((p) => (p === key ? null : key as SidebarPanel))
       return
     }
@@ -116,6 +117,19 @@ export default function Home() {
               <NotesPanel
                 activeNoteId={null}
                 onSelect={(note: NoteDto) => handlePaperSelect(note.paperId)}
+                onNavigateToPaper={handlePaperSelect}
+                onClose={() => setSidebarPanel(null)}
+              />
+            </aside>
+          )}
+
+          {/* Annotations panel */}
+          {showReaderPanel && sidebarPanel === "annotations" && (
+            <aside className="w-72 border-r border-[var(--border-subtle)] glass-surface flex flex-col shrink-0">
+              <AnnotationsPanel
+                activeAnnotationId={null}
+                onSelect={(ann: AnnotationDto) => handlePaperSelect(ann.paperId)}
+                onNavigateToPaper={handlePaperSelect}
                 onClose={() => setSidebarPanel(null)}
               />
             </aside>

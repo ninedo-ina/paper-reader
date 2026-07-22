@@ -280,6 +280,7 @@ export interface UpdateNoteRequest {
 export interface ReadingLogDto {
   id: number
   paperId: number
+  paperTitle?: string
   currentPage: number
   totalPages: number
   durationSeconds?: number

@@ -26,6 +26,14 @@ class AnnotationController(
     ): ApiResponse<AnnotationDto> =
         ApiResponse(data = annotationService.update(id, request, principal.userId))
 
+    @GetMapping
+    fun listAll(
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") pageSize: Int,
+        @AuthenticationPrincipal principal: UserPrincipal,
+    ): ApiResponse<PageResponse<AnnotationDto>> =
+        ApiResponse(data = annotationService.listAll(principal.userId, page, pageSize))
+
     @GetMapping("/paper/{paperId}")
     fun listByPaper(
         @PathVariable paperId: Long,

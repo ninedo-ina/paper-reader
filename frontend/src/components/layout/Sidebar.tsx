@@ -2,7 +2,7 @@
 
 import { useState, useEffect, type ElementType } from "react"
 import { useTranslations } from "next-intl"
-import { Library, Clock, FileText, Settings, Star, Tag, MessageCircle, MessageSquare, PanelLeftClose, PanelLeftOpen } from "lucide-react"
+import { Library, Clock, FileText, Settings, Star, Tag, MessageCircle, MessageSquare, PanelLeftClose, PanelLeftOpen, Highlighter } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { usePaperStore } from "@/stores/paper-store"
 import { useAuthStore } from "@/stores/auth-store"
@@ -20,6 +20,7 @@ const sections = [
     labelKey: "sectionDiscover",
     items: [
       { key: "notes", icon: FileText, badge: "0" },
+      { key: "annotations", icon: Highlighter, badge: "0" },
       { key: "tags", icon: Tag, badge: "0" },
     ],
   },

@@ -11,6 +11,6 @@ class HealthController {
 
     @GetMapping("/health")
     fun health(): ApiResponse<Map<String, String>> = ApiResponse(
-        data = mapOf("status" to "ok", "version" to "0.1.8"),
+        data = mapOf("status" to "ok", "version" to "0.1.9"),
     )
 }

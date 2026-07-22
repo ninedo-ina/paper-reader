@@ -5,6 +5,7 @@ import org.paperreader.dto.AnnotationCommentDto
 import org.paperreader.dto.AnnotationDto
 import org.paperreader.dto.CreateAnnotationCommentRequest
 import org.paperreader.dto.CreateAnnotationRequest
+import org.paperreader.dto.PageResponse
 import org.paperreader.dto.UpdateAnnotationRequest
 import org.paperreader.exception.InvalidParameterException
 import org.paperreader.exception.ResourceNotFoundException
@@ -12,6 +13,7 @@ import org.paperreader.model.Annotation
 import org.paperreader.model.AnnotationComment
 import org.paperreader.repository.AnnotationCommentRepository
 import org.paperreader.repository.AnnotationRepository
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
@@ -72,6 +74,17 @@ class AnnotationService(
 
     fun listByPaper(paperId: Long, userId: Long): List<AnnotationDto> =
         annotationRepository.findByPaperIdAndUserId(paperId, userId).map { it.toDto() }
+
+    fun listAll(userId: Long, page: Int, pageSize: Int): PageResponse<AnnotationDto> {
+        val pageRequest = PageRequest.of(page, pageSize)
+        val result = annotationRepository.findByUserIdOrderByCreatedAtDesc(userId, pageRequest)
+        return PageResponse(
+            items = result.content.map { it.toDto() },
+            total = result.totalElements,
+            page = page,
+            pageSize = pageSize,
+        )
+    }
 
     @Transactional
     fun delete(id: Long, userId: Long) {

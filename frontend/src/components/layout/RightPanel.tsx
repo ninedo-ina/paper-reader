@@ -549,8 +549,13 @@ function MetadataContent({ paper }: { paper?: PaperDetailDto | null }) {
   )
 }
 
-function AnnotationList({ onEdit, onDelete }: { onEdit: (a: ReaderAnnotation) => void; onDelete: (id: number) => void }) {
-  const { annotations, loadAnnotations, loadingAnnotations } = useReaderStore()
+function AnnotationList({
+  onEdit, onDelete,
+}: {
+  onEdit: (a: ReaderAnnotation) => void
+  onDelete: (id: number) => void
+}) {
+  const { annotations, loadAnnotations, loadingAnnotations, setNavigationTarget } = useReaderStore()
   const paper = usePaperStore((s) => s.currentPaper)
 
   useEffect(() => {
@@ -574,9 +579,15 @@ function AnnotationList({ onEdit, onDelete }: { onEdit: (a: ReaderAnnotation) =>
   return (
     <div className="space-y-3 pb-6">
       {sorted.map((a) => (
-        <div key={a.id} className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] overflow-hidden relative group">
+        <div
+          key={a.id}
+          onClick={() => setNavigationTarget({ pageNumber: a.pageNumber, position: a.position, timestamp: Date.now() })}
+          className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] overflow-hidden relative group cursor-pointer hover:border-[var(--accent)]/30 transition-colors"
+        >
           {/* Action buttons — top-right */}
-          <div className="absolute top-2.5 right-2.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+          <div className="absolute top-2.5 right-2.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               onClick={() => onEdit(a)}
               className="p-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors"
@@ -646,8 +657,13 @@ function CommentThreadButton({ annotationId, commentCount }: { annotationId: num
   )
 }
 
-function NoteList({ onEdit, onDelete }: { onEdit: (n: ReaderNote) => void; onDelete: (id: number) => void }) {
-  const { notes, loadNotes, loadingNotes } = useReaderStore()
+function NoteList({
+  onEdit, onDelete,
+}: {
+  onEdit: (n: ReaderNote) => void
+  onDelete: (id: number) => void
+}) {
+  const { notes, loadNotes, loadingNotes, setNavigationTarget } = useReaderStore()
   const paper = usePaperStore((s) => s.currentPaper)
 
   useEffect(() => {
@@ -671,9 +687,15 @@ function NoteList({ onEdit, onDelete }: { onEdit: (n: ReaderNote) => void; onDel
   return (
     <div className="space-y-3 pb-6">
       {sorted.map((n) => (
-        <div key={n.id} className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] overflow-hidden relative group">
+        <div
+          key={n.id}
+          onClick={() => setNavigationTarget({ pageNumber: n.pageNumber, position: n.position, timestamp: Date.now() })}
+          className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] overflow-hidden relative group cursor-pointer hover:border-[var(--accent)]/30 transition-colors"
+        >
           {/* Action buttons — top-right */}
-          <div className="absolute top-2.5 right-2.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+          <div className="absolute top-2.5 right-2.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               onClick={() => onEdit(n)}
               className="p-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors"

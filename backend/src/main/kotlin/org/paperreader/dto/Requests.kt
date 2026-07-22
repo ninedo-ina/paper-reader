@@ -272,6 +272,7 @@ data class UpdateNoteRequest(
 data class ReadingLogDto(
     val id: Long,
     val paperId: Long,
+    val paperTitle: String?,
     val currentPage: Int,
     val totalPages: Int,
     val durationSeconds: Long,

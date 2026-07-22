@@ -262,8 +262,19 @@ function useTextMatchPositions(
 ): Map<string, PositionRect[]> {
   const [positions, setPositions] = useState<Map<string, PositionRect[]>>(new Map())
   const matchIdRef = useRef(0)
+  const prevScaleRef = useRef(scale)
+  const stableDimsRef = useRef("")
 
   useEffect(() => {
+    const scaleChanged = prevScaleRef.current !== scale
+    prevScaleRef.current = scale
+
+    // On scale change, reset stability tracking so we wait for the text layer
+    // to be re-rendered by react-pdf before matching
+    if (scaleChanged) {
+      stableDimsRef.current = ""
+    }
+
     const matchId = ++matchIdRef.current
     let cancelled = false
     let attempts = 0
@@ -284,6 +295,29 @@ function useTextMatchPositions(
           console.log("[useTextMatchPositions] page", pageNumber, "timed out waiting for text layer after", maxAttempts, "attempts")
         }
         return
+      }
+
+      // When scale changes, react-pdf may not have re-rendered the text layer yet.
+      // Wait until the text layer dimensions stop changing (2 consecutive frames with same size),
+      // signalling that the re-render at the new scale is complete.
+      if (scaleChanged) {
+        const rect = textLayer.getBoundingClientRect()
+        const dims = `${rect.width.toFixed(1)}x${rect.height.toFixed(1)}`
+        if (!stableDimsRef.current) {
+          stableDimsRef.current = dims
+          if (attempts < maxAttempts) {
+            attempts++
+            requestAnimationFrame(tryMatch)
+            return
+          }
+        } else if (stableDimsRef.current !== dims) {
+          stableDimsRef.current = dims
+          if (attempts < maxAttempts) {
+            attempts++
+            requestAnimationFrame(tryMatch)
+            return
+          }
+        }
       }
 
       if (attempts > 0) {
@@ -483,7 +517,7 @@ export function AnnotationLayer({ pageNumber, anchors, scale, children, onCreate
 
       {/* Underline markers — positioned by real-time text matching against the PDF text layer */}
       {mergedAnchors.map((m) => (
-        <UnderlineMarker key={m.key} color={m.color} rects={m.rects} />
+        <UnderlineMarker key={m.key} color={m.color} rects={m.rects} thin={m.noteOnly} />
       ))}
     </div>
   )
@@ -501,7 +535,7 @@ function MenuItem({ icon, label, onClick }: { icon: React.ReactNode; label: stri
   )
 }
 
-function UnderlineMarker({ color, rects }: { color: string; rects: PositionRect[] }) {
+function UnderlineMarker({ color, rects, thin }: { color: string; rects: PositionRect[]; thin?: boolean }) {
   return (
     <>
       {rects.map((r, i) => (
@@ -511,17 +545,17 @@ function UnderlineMarker({ color, rects }: { color: string; rects: PositionRect[
             className="absolute inset-0"
             style={{ background: color, opacity: 0.15, borderRadius: 2 }}
           />
-          {/* 下划线 */}
+          {/* 下划线 — 笔记更细 */}
           <div
             className="absolute"
             style={{
               left: 0,
               bottom: -1,
               width: "100%",
-              height: 2,
+              height: thin ? 1 : 2,
               background: color,
               borderRadius: 1,
-              opacity: 0.55,
+              opacity: thin ? 0.45 : 0.55,
             }}
           />
         </div>
@@ -534,6 +568,7 @@ interface MergedAnchor {
   key: string
   color: string
   rects: PositionRect[]
+  noteOnly: boolean
 }
 
 /**
@@ -564,6 +599,7 @@ function mergeAnchors(anchors: TextAnchor[], matchedPositions: Map<string, Posit
     color: g.hasAnnotation && g.hasNote ? "#60A5FA" : g.hasNote ? "#A78BFA" : "#FBBF24",
     // Use real-time matched positions, fall back to stored coordinates if text matching fails
     rects: matchedPositions.get(key) || g.fallbackRects,
+    noteOnly: g.hasNote && !g.hasAnnotation,
   }))
 }
 
