@@ -178,6 +178,11 @@ export interface AnnotationDto {
   position: Record<string, unknown>
   text?: string
   comment?: string
+  quotedText?: string
+  startOffset?: number
+  endOffset?: number
+  images?: string[]
+  commentCount?: number
   createdAt: string
   updatedAt: string
 }
@@ -190,6 +195,10 @@ export interface CreateAnnotationRequest {
   position: Record<string, unknown>
   text?: string
   comment?: string
+  quotedText?: string
+  startOffset?: number
+  endOffset?: number
+  images?: string[]
 }
 
 export interface UpdateAnnotationRequest {
@@ -198,6 +207,26 @@ export interface UpdateAnnotationRequest {
   position?: Record<string, unknown>
   text?: string
   comment?: string
+  quotedText?: string
+  startOffset?: number
+  endOffset?: number
+  images?: string[]
+}
+
+// --- 批注评论 ---
+
+export interface AnnotationCommentDto {
+  id: number
+  annotationId: number
+  userId: number
+  content: string
+  parentId?: number
+  createdAt: string
+}
+
+export interface CreateAnnotationCommentRequest {
+  content: string
+  parentId?: number
 }
 
 // --- 笔记 ---
@@ -210,6 +239,11 @@ export interface NoteDto {
   pageNumber?: number
   chapter?: string
   tags?: string[]
+  quotedText?: string
+  startOffset?: number
+  endOffset?: number
+  images?: string[]
+  position?: Record<string, unknown>
   createdAt: string
   updatedAt: string
 }
@@ -221,6 +255,11 @@ export interface CreateNoteRequest {
   pageNumber?: number
   chapter?: string
   tags?: string[]
+  quotedText?: string
+  startOffset?: number
+  endOffset?: number
+  images?: string[]
+  position?: Record<string, unknown>
 }
 
 export interface UpdateNoteRequest {
@@ -229,6 +268,11 @@ export interface UpdateNoteRequest {
   pageNumber?: number
   chapter?: string
   tags?: string[]
+  quotedText?: string
+  startOffset?: number
+  endOffset?: number
+  images?: string[]
+  position?: Record<string, unknown>
 }
 
 // --- 阅读记录 ---
@@ -236,6 +280,7 @@ export interface UpdateNoteRequest {
 export interface ReadingLogDto {
   id: number
   paperId: number
+  paperTitle?: string
   currentPage: number
   totalPages: number
   durationSeconds?: number

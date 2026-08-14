@@ -26,6 +26,14 @@ class AnnotationController(
     ): ApiResponse<AnnotationDto> =
         ApiResponse(data = annotationService.update(id, request, principal.userId))
 
+    @GetMapping
+    fun listAll(
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") pageSize: Int,
+        @AuthenticationPrincipal principal: UserPrincipal,
+    ): ApiResponse<PageResponse<AnnotationDto>> =
+        ApiResponse(data = annotationService.listAll(principal.userId, page, pageSize))
+
     @GetMapping("/paper/{paperId}")
     fun listByPaper(
         @PathVariable paperId: Long,
@@ -39,6 +47,29 @@ class AnnotationController(
         @AuthenticationPrincipal principal: UserPrincipal,
     ): ApiResponse<Nothing> {
         annotationService.delete(id, principal.userId)
+        return ApiResponse(message = "Deleted")
+    }
+
+    @PostMapping("/{id}/comments")
+    fun addComment(
+        @PathVariable id: Long,
+        @RequestBody request: CreateAnnotationCommentRequest,
+        @AuthenticationPrincipal principal: UserPrincipal,
+    ): ApiResponse<AnnotationCommentDto> =
+        ApiResponse(data = annotationService.addComment(id, request, principal.userId))
+
+    @GetMapping("/{id}/comments")
+    fun listComments(
+        @PathVariable id: Long,
+    ): ApiResponse<List<AnnotationCommentDto>> =
+        ApiResponse(data = annotationService.listComments(id))
+
+    @DeleteMapping("/comments/{commentId}")
+    fun deleteComment(
+        @PathVariable commentId: Long,
+        @AuthenticationPrincipal principal: UserPrincipal,
+    ): ApiResponse<Nothing> {
+        annotationService.deleteComment(commentId, principal.userId)
         return ApiResponse(message = "Deleted")
     }
 }

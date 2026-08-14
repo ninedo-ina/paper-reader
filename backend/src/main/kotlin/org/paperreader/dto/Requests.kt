@@ -173,6 +173,11 @@ data class AnnotationDto(
     val position: Map<String, Any?>,
     val text: String?,
     val comment: String?,
+    val quotedText: String? = null,
+    val startOffset: Int? = null,
+    val endOffset: Int? = null,
+    val images: List<String>? = null,
+    val commentCount: Int = 0,
     val createdAt: Instant,
     val updatedAt: Instant,
 )
@@ -182,17 +187,40 @@ data class CreateAnnotationRequest(
     val pageNumber: Int,
     val type: String,
     val color: String? = null,
-    val position: Map<String, Float>,
+    val position: Map<String, Any?>,
     val text: String? = null,
     val comment: String? = null,
+    val quotedText: String? = null,
+    val startOffset: Int? = null,
+    val endOffset: Int? = null,
+    val images: List<String>? = null,
 )
 
 data class UpdateAnnotationRequest(
     val type: String? = null,
     val color: String? = null,
-    val position: Map<String, Float>? = null,
+    val position: Map<String, Any?>? = null,
     val text: String? = null,
     val comment: String? = null,
+    val quotedText: String? = null,
+    val startOffset: Int? = null,
+    val endOffset: Int? = null,
+    val images: List<String>? = null,
+)
+
+// ==== Annotation Comment ====
+data class AnnotationCommentDto(
+    val id: Long,
+    val annotationId: Long,
+    val userId: Long,
+    val content: String,
+    val parentId: Long? = null,
+    val createdAt: Instant,
+)
+
+data class CreateAnnotationCommentRequest(
+    val content: String,
+    val parentId: Long? = null,
 )
 
 // ==== Note ====
@@ -204,6 +232,11 @@ data class NoteDto(
     val pageNumber: Int,
     val chapter: String?,
     val tags: List<String>?,
+    val quotedText: String? = null,
+    val startOffset: Int? = null,
+    val endOffset: Int? = null,
+    val images: List<String>? = null,
+    val position: Map<String, Any?>? = null,
     val createdAt: Instant,
     val updatedAt: Instant,
 )
@@ -215,6 +248,11 @@ data class CreateNoteRequest(
     val pageNumber: Int = 0,
     val chapter: String? = null,
     val tags: List<String>? = null,
+    val quotedText: String? = null,
+    val startOffset: Int? = null,
+    val endOffset: Int? = null,
+    val images: List<String>? = null,
+    val position: Map<String, Any?>? = null,
 )
 
 data class UpdateNoteRequest(
@@ -223,12 +261,18 @@ data class UpdateNoteRequest(
     val pageNumber: Int? = null,
     val chapter: String? = null,
     val tags: List<String>? = null,
+    val quotedText: String? = null,
+    val startOffset: Int? = null,
+    val endOffset: Int? = null,
+    val images: List<String>? = null,
+    val position: Map<String, Any?>? = null,
 )
 
 // ==== ReadingLog ====
 data class ReadingLogDto(
     val id: Long,
     val paperId: Long,
+    val paperTitle: String?,
     val currentPage: Int,
     val totalPages: Int,
     val durationSeconds: Long,

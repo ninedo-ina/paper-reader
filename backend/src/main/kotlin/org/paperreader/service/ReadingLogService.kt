@@ -30,16 +30,20 @@ class ReadingLogService(
     fun getByPaper(paperId: Long, userId: Long): List<ReadingLogDto> =
         readingLogRepository.findByPaperIdAndUserIdOrderByCreatedAtDesc(paperId, userId).map { it.toDto() }
 
-    fun getRecent(userId: Long, limit: Int = 20): List<ReadingLogDto> =
-        readingLogRepository.findByUserIdOrderByCreatedAtDesc(userId).take(limit).map { it.toDto() }
+    fun getRecent(userId: Long, limit: Int = 20): List<ReadingLogDto> {
+        val logs = readingLogRepository.findByUserIdOrderByCreatedAtDesc(userId).take(limit)
+        val paperIds = logs.map { it.paperId }.distinct()
+        val paperTitles = paperRepository.findAllById(paperIds).associate { it.id to it.title }
+        return logs.map { it.toDto(paperTitles[it.paperId]) }
+    }
 
     fun getCurrentProgress(paperId: Long, userId: Long): ReadingLogDto? =
         readingLogRepository.findTopByUserIdAndPaperIdOrderByCreatedAtDesc(userId, paperId)
             .map { it.toDto() }
             .orElse(null)
 
-    private fun ReadingLog.toDto() = ReadingLogDto(
-        id = id, paperId = paperId,
+    private fun ReadingLog.toDto(paperTitle: String? = null) = ReadingLogDto(
+        id = id, paperId = paperId, paperTitle = paperTitle,
         currentPage = currentPage, totalPages = totalPages,
         durationSeconds = durationSeconds, createdAt = createdAt,
     )

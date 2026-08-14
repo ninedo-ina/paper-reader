@@ -3,7 +3,7 @@ package org.paperreader.controller
 import org.paperreader.dto.*
 import org.paperreader.security.UserPrincipal
 import org.paperreader.service.PaperService
-import org.springframework.core.io.ByteArrayResource
+import org.springframework.core.io.Resource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -114,12 +114,14 @@ class PaperController(
     fun download(
         @PathVariable id: Long,
         @AuthenticationPrincipal principal: UserPrincipal,
-    ): ResponseEntity<ByteArrayResource> {
-        val (filename, bytes) = paperService.downloadPaper(id, principal.userId)
+    ): ResponseEntity<Resource> {
+        val (filename, resource) = paperService.downloadPaperAsResource(id, principal.userId)
         return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"$filename\"")
+            .header(HttpHeaders.ACCEPT_RANGES, "bytes")
+            .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"$filename\"")
             .contentType(MediaType.APPLICATION_PDF)
-            .body(ByteArrayResource(bytes))
+            .contentLength(resource.contentLength())
+            .body(resource)
     }
 
     @DeleteMapping("/{id}")

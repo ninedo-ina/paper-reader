@@ -1,8 +1,45 @@
 diff --git a/build/pdf.mjs b/build/pdf.mjs
-index a33949b08e35e2edf09321c382b9ee34b3a56a8d..4988ea785d41e4e335de4a51add1e3c6194f3c5c 100644
+index a33949b08e35e2edf09321c382b9ee34b3a56a8d..b6c68cf2b8c70b1c55729394084a174cf39136b1 100644
 --- a/build/pdf.mjs
 +++ b/build/pdf.mjs
-@@ -403,12 +403,14 @@ function updateUrlHash(url, hash, allowRel = false) {
+@@ -25,16 +25,18 @@
+  * pdfjsBuild = f56dc8601
+  */
+ /******/ // The require scope
+-/******/ var __webpack_require__ = {};
++/******/ var _pdfjs_require_ = {};
+ /******/
+ /************************************************************************/
+ /******/ /* webpack/runtime/define property getters */
+ /******/ (() => {
+ /******/ 	// define getter functions for harmony exports
+-/******/ 	__webpack_require__.d = (exports, definition) => {
++/******/ 	_pdfjs_require_.d = (exports, definition) => {
+ /******/ 		for(var key in definition) {
+-/******/ 			if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+-/******/ 				Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
++/******/ 			if(_pdfjs_require_.o(definition, key) && !_pdfjs_require_.o(exports, key)) {
++/******/ 				if (exports && (typeof exports === "object" || typeof exports === "function")) {
++/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
++/******/ 				}
+ /******/ 			}
+ /******/ 		}
+ /******/ 	};
+@@ -42,11 +44,11 @@
+ /******/
+ /******/ /* webpack/runtime/hasOwnProperty shorthand */
+ /******/ (() => {
+-/******/ 	__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
++/******/ 	_pdfjs_require_.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+ /******/ })();
+ /******/
+ /************************************************************************/
+-var __webpack_exports__ = {};
++var _pdfjs_exports_ = {};
+
+ ;// ./src/shared/util.js
+ const isNodeJS = typeof process === "object" && process + "" === "[object process]" && !process.versions.nw && !(process.versions.electron && process.type && process.type !== "browser");
+@@ -403,12 +405,14 @@ function updateUrlHash(url, hash, allowRel = false) {
    return "";
  }
  function shadow(obj, prop, value, nonSerializable = false) {

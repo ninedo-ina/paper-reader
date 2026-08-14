@@ -1,6 +1,8 @@
 package org.paperreader.model
 
 import jakarta.persistence.*
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.time.Instant
 
 @Entity
@@ -29,6 +31,22 @@ data class Note(
 
     @Column(length = 500)
     val tags: String? = null,
+
+    @Column(name = "quoted_text", columnDefinition = "TEXT")
+    val quotedText: String? = null,
+
+    @Column(name = "start_offset")
+    val startOffset: Int? = null,
+
+    @Column(name = "end_offset")
+    val endOffset: Int? = null,
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    val position: String? = null,
+
+    @Column(columnDefinition = "TEXT")
+    val images: String? = null,
 
     @Column(nullable = false)
     val createdAt: Instant = Instant.now(),

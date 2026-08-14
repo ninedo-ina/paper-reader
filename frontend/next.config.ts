@@ -5,7 +5,6 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: __dirname,
-  transpilePackages: ['pdfjs-dist'],
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**' },

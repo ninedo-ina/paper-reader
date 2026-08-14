@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react"
 import { useTranslations } from "next-intl"
-import { PanelRightClose, PanelRightOpen, Pencil, Save, Loader2, MessageSquare, StickyNote } from "lucide-react"
+import { PanelRightClose, PanelRightOpen, Pencil, Save, Loader2, MessageSquare, StickyNote, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { usePaperStore } from "@/stores/paper-store"
 import { useReaderStore } from "@/stores/reader-store"
@@ -13,6 +13,11 @@ import { TabBar } from "@/components/ui/TabBar"
 import { getCategory, CATEGORIES } from "@/lib/paper-categories"
 import { MarkdownContent } from "@/components/reader/MarkdownContent"
 import { ChatPanel } from "@/components/chat/ChatPanel"
+import { CommentThread } from "@/components/annotations/CommentThread"
+import { AnnotationDialog } from "@/components/reader/AnnotationDialog"
+import { deleteAnnotation, updateAnnotation } from "@/lib/api/annotations"
+import { deleteNote, updateNote } from "@/lib/api/notes"
+import { useToastStore } from "@/stores/toast-store"
 import type { PaperDetailDto, Category } from "@/lib/api/types"
 
 type PanelTab = "metadata" | "annotations" | "notes" | "aiChat"
@@ -25,6 +30,90 @@ export function RightPanel({ paper }: RightPanelProps) {
   const t = useTranslations("panel")
   const [activeTab, setActiveTab] = useState<PanelTab>("metadata")
   const [collapsed, setCollapsed] = useState(false)
+
+  const { updateAnnotation: storeUpdateAnnotation, removeAnnotation, updateNote: storeUpdateNote, removeNote } = useReaderStore()
+  const addToast = useToastStore((s) => s.addToast)
+
+  // Edit dialog state
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [editDialogMode, setEditDialogMode] = useState<"annotation" | "note">("annotation")
+  const [editItem, setEditItem] = useState<ReaderAnnotation | ReaderNote | null>(null)
+
+  const handleDeleteAnnotation = useCallback(async (id: number) => {
+    try {
+      await deleteAnnotation(id)
+      removeAnnotation(id)
+      addToast({ message: "批注已删除", type: "success" })
+    } catch {
+      addToast({ message: "删除批注失败", type: "error" })
+    }
+  }, [removeAnnotation, addToast])
+
+  const handleDeleteNote = useCallback(async (id: number) => {
+    try {
+      await deleteNote(id)
+      removeNote(id)
+      addToast({ message: "笔记已删除", type: "success" })
+    } catch {
+      addToast({ message: "删除笔记失败", type: "error" })
+    }
+  }, [removeNote, addToast])
+
+  const handleEditAnnotation = useCallback((a: ReaderAnnotation) => {
+    setEditDialogMode("annotation")
+    setEditItem(a)
+    setEditDialogOpen(true)
+  }, [])
+
+  const handleEditNote = useCallback((n: ReaderNote) => {
+    setEditDialogMode("note")
+    setEditItem(n)
+    setEditDialogOpen(true)
+  }, [])
+
+  const handleEditSubmit = useCallback(async (data: { markdown: string; images: string[]; title?: string }) => {
+    if (!editItem) return
+    if (editDialogMode === "annotation") {
+      const a = editItem as ReaderAnnotation
+      try {
+        const updated = await updateAnnotation(a.id, {
+          comment: data.markdown,
+          images: data.images,
+        })
+        const upos = (updated as unknown as Record<string, unknown>).position as Record<string, unknown> | undefined
+        storeUpdateAnnotation(a.id, {
+          content: updated.comment || data.markdown,
+          images: updated.images || data.images,
+          position: upos ? { x: Number(upos.x ?? 0), y: Number(upos.y ?? 0), width: Number(upos.width ?? 0), height: Number(upos.height ?? 0) } : a.position,
+          quotedText: updated.quotedText || a.quotedText,
+        })
+        addToast({ message: "批注已更新", type: "success" })
+      } catch {
+        addToast({ message: "更新批注失败", type: "error" })
+      }
+    } else {
+      const n = editItem as ReaderNote
+      try {
+        const updated = await updateNote(n.id, {
+          content: data.markdown,
+          images: data.images,
+          title: data.title,
+        })
+        const upos = (updated as unknown as Record<string, unknown>).position as Record<string, unknown> | undefined
+        storeUpdateNote(n.id, {
+          content: updated.content,
+          images: updated.images || [],
+          title: updated.title,
+          position: upos ? { x: Number(upos.x ?? 0), y: Number(upos.y ?? 0), width: Number(upos.width ?? 0), height: Number(upos.height ?? 0) } : n.position,
+        })
+        addToast({ message: "笔记已更新", type: "success" })
+      } catch {
+        addToast({ message: "更新笔记失败", type: "error" })
+      }
+    }
+    setEditDialogOpen(false)
+    setEditItem(null)
+  }, [editItem, editDialogMode, storeUpdateAnnotation, storeUpdateNote, addToast])
 
   const tabs: { key: PanelTab; label: string }[] = [
     { key: "metadata", label: t("metadata") },
@@ -70,10 +159,34 @@ export function RightPanel({ paper }: RightPanelProps) {
 
       <div className="flex-1 overflow-auto p-4">
         {activeTab === "metadata" && <MetadataContent paper={paper} />}
-        {activeTab === "annotations" && <AnnotationList />}
-        {activeTab === "notes" && <NoteList />}
+        {activeTab === "annotations" && (
+          <AnnotationList
+            onEdit={handleEditAnnotation}
+            onDelete={handleDeleteAnnotation}
+          />
+        )}
+        {activeTab === "notes" && (
+          <NoteList
+            onEdit={handleEditNote}
+            onDelete={handleDeleteNote}
+          />
+        )}
         {activeTab === "aiChat" && <ChatPanel />}
       </div>
+
+      {/* Edit dialog */}
+      {editItem && (
+        <AnnotationDialog
+          open={editDialogOpen}
+          onClose={() => { setEditDialogOpen(false); setEditItem(null) }}
+          onSubmit={handleEditSubmit}
+          mode={editDialogMode}
+          selectedText={"quotedText" in editItem ? (editItem as ReaderAnnotation).quotedText : (editItem as ReaderNote).quotedText}
+          initialMarkdown={"content" in editItem ? editItem.content : ""}
+          initialImages={"images" in editItem ? editItem.images : []}
+          initialTitle={editDialogMode === "note" ? (editItem as ReaderNote).title : undefined}
+        />
+      )}
     </aside>
   )
 }
@@ -436,21 +549,60 @@ function MetadataContent({ paper }: { paper?: PaperDetailDto | null }) {
   )
 }
 
-function AnnotationList() {
-  const annotations = useReaderStore((s) => s.annotations)
+function AnnotationList({
+  onEdit, onDelete,
+}: {
+  onEdit: (a: ReaderAnnotation) => void
+  onDelete: (id: number) => void
+}) {
+  const { annotations, loadAnnotations, loadingAnnotations, setNavigationTarget } = useReaderStore()
+  const paper = usePaperStore((s) => s.currentPaper)
+
+  useEffect(() => {
+    if (paper?.id) loadAnnotations(paper.id)
+  }, [paper?.id, loadAnnotations])
+
+  if (loadingAnnotations && annotations.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <Loader2 className="size-5 animate-spin text-[var(--text-tertiary)]" />
+      </div>
+    )
+  }
 
   if (annotations.length === 0) {
     return <EmptyState message="暂无批注" />
   }
 
-  const sorted = [...annotations].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  )
+  const sorted = [...annotations].sort((a, b) => a.pageNumber - b.pageNumber)
 
   return (
     <div className="space-y-3 pb-6">
       {sorted.map((a) => (
-        <div key={a.id} className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] overflow-hidden">
+        <div
+          key={a.id}
+          onClick={() => setNavigationTarget({ pageNumber: a.pageNumber, position: a.position, timestamp: Date.now() })}
+          className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] overflow-hidden relative group cursor-pointer hover:border-[var(--accent)]/30 transition-colors"
+        >
+          {/* Action buttons — top-right */}
+          <div className="absolute top-2.5 right-2.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => onEdit(a)}
+              className="p-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors"
+              title="编辑批注"
+            >
+              <Pencil className="size-3.5" />
+            </button>
+            <button
+              onClick={() => onDelete(a.id)}
+              className="p-1 rounded-md hover:bg-red-50 text-[var(--text-tertiary)] hover:text-red-500 transition-colors"
+              title="删除批注"
+            >
+              <Trash2 className="size-3.5" />
+            </button>
+          </div>
           {/* 引用原文 */}
           <div className="px-4 py-2.5 bg-[var(--bg-hover)] border-b border-[var(--border-subtle)]">
             <div className="flex items-center gap-1.5 mb-1">
@@ -460,7 +612,7 @@ function AnnotationList() {
               </span>
             </div>
             <p className="text-sm text-[var(--text-secondary)] leading-relaxed line-clamp-4">
-              {a.text}
+              {a.quotedText}
             </p>
           </div>
           {/* 批注内容 */}
@@ -471,8 +623,9 @@ function AnnotationList() {
               className="text-sm text-[var(--text-primary)] leading-relaxed"
             />
           </div>
-          {/* 时间 */}
-          <div className="px-4 pb-2.5">
+          {/* 评论区域 + 时间 */}
+          <div className="px-4 pb-2.5 flex items-center justify-between">
+            <CommentThreadButton annotationId={a.id} commentCount={a.commentCount} />
             <span className="text-[10.5px] text-[var(--text-tertiary)]">
               {formatDate(a.createdAt)}
             </span>
@@ -483,21 +636,81 @@ function AnnotationList() {
   )
 }
 
-function NoteList() {
-  const notes = useReaderStore((s) => s.notes)
+function CommentThreadButton({ annotationId, commentCount }: { annotationId: number; commentCount: number }) {
+  const [expanded, setExpanded] = useState(false)
+
+  return (
+    <div>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="inline-flex items-center gap-1 text-[11px] text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors"
+      >
+        <MessageSquare className="size-3" />
+        <span>{commentCount > 0 ? `${commentCount} 条评论` : "评论"}</span>
+      </button>
+      {expanded && (
+        <div className="mt-3 border-t border-[var(--border-subtle)] pt-3">
+          <CommentThread annotationId={annotationId} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+function NoteList({
+  onEdit, onDelete,
+}: {
+  onEdit: (n: ReaderNote) => void
+  onDelete: (id: number) => void
+}) {
+  const { notes, loadNotes, loadingNotes, setNavigationTarget } = useReaderStore()
+  const paper = usePaperStore((s) => s.currentPaper)
+
+  useEffect(() => {
+    if (paper?.id) loadNotes(paper.id)
+  }, [paper?.id, loadNotes])
+
+  if (loadingNotes && notes.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <Loader2 className="size-5 animate-spin text-[var(--text-tertiary)]" />
+      </div>
+    )
+  }
 
   if (notes.length === 0) {
     return <EmptyState message="暂无笔记" />
   }
 
-  const sorted = [...notes].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  )
+  const sorted = [...notes].sort((a, b) => a.pageNumber - b.pageNumber)
 
   return (
     <div className="space-y-3 pb-6">
       {sorted.map((n) => (
-        <div key={n.id} className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] overflow-hidden">
+        <div
+          key={n.id}
+          onClick={() => setNavigationTarget({ pageNumber: n.pageNumber, position: n.position, timestamp: Date.now() })}
+          className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] overflow-hidden relative group cursor-pointer hover:border-[var(--accent)]/30 transition-colors"
+        >
+          {/* Action buttons — top-right */}
+          <div className="absolute top-2.5 right-2.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => onEdit(n)}
+              className="p-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors"
+              title="编辑笔记"
+            >
+              <Pencil className="size-3.5" />
+            </button>
+            <button
+              onClick={() => onDelete(n.id)}
+              className="p-1 rounded-md hover:bg-red-50 text-[var(--text-tertiary)] hover:text-red-500 transition-colors"
+              title="删除笔记"
+            >
+              <Trash2 className="size-3.5" />
+            </button>
+          </div>
           {/* 引用原文 */}
           <div className="px-4 py-2.5 bg-[var(--bg-hover)] border-b border-[var(--border-subtle)]">
             <div className="flex items-center gap-1.5 mb-1">
@@ -507,7 +720,7 @@ function NoteList() {
               </span>
             </div>
             <p className="text-sm text-[var(--text-secondary)] leading-relaxed line-clamp-4">
-              {n.text}
+              {n.quotedText}
             </p>
           </div>
           {/* 笔记内容 */}

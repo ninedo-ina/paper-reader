@@ -50,7 +50,7 @@ export function PreferencesDialog({ open, onClose }: PreferencesDialogProps) {
               />
             </div>
           </div>
-          <nav className="flex-1 overflow-auto px-2 pb-2">
+          <nav className="flex-1 overflow-auto px-2 pb-2 flex flex-col gap-0.5">
             {filteredTabs.map((tab) => (
               <button
                 key={tab.key}

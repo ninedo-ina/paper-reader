@@ -12,9 +12,11 @@ import { getDownloadUrl } from "@/lib/api/papers"
 import { getAccessToken } from "@/lib/api/client"
 import { useToastStore } from "@/stores/toast-store"
 import { useReaderStore } from "@/stores/reader-store"
+import { createAnnotation } from "@/lib/api/annotations"
+import { createNote } from "@/lib/api/notes"
 import { AnnotationLayer } from "@/components/reader/AnnotationLayer"
 import { AnnotationDialog } from "@/components/reader/AnnotationDialog"
-import type { TextAnchor } from "@/components/reader/AnnotationLayer"
+import type { TextAnchor, PositionRect } from "@/components/reader/AnnotationLayer"
 
 // 设置 pdf.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
@@ -30,60 +32,147 @@ export function PDFReader({ paper }: PDFReaderProps) {
   const [loadingProgress, setLoadingProgress] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
   const addToast = useToastStore((s) => s.addToast)
-  const { annotations, notes, addAnnotation, addNote } = useReaderStore()
+  const {
+    annotations, notes,
+    addAnnotation, removeAnnotation,
+    addNote, removeNote,
+    loadAnnotations, loadNotes,
+    navigationTarget,
+  } = useReaderStore()
+
+  // Load annotations & notes from API when paper changes
+  useEffect(() => {
+    if (paper.id) {
+      loadAnnotations(paper.id)
+      loadNotes(paper.id)
+    }
+  }, [paper.id, loadAnnotations, loadNotes])
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogMode, setDialogMode] = useState<"annotation" | "note">("annotation")
   const [dialogText, setDialogText] = useState("")
   const [dialogPosition, setDialogPosition] = useState({ x: 0, y: 0, width: 0, height: 0 })
+  const [dialogPositions, setDialogPositions] = useState<PositionRect[]>([])
   const [dialogPage, setDialogPage] = useState(1)
+  const [dialogStartOffset, setDialogStartOffset] = useState(-1)
+  const [dialogEndOffset, setDialogEndOffset] = useState(-1)
 
   const handleCreateAnnotation = useCallback(
-    (text: string, position: { x: number; y: number; width: number; height: number }, pageNum: number) => {
+    (text: string, position: PositionRect, positions: PositionRect[], pageNum: number, startOffset: number, endOffset: number) => {
       setDialogMode("annotation")
       setDialogText(text)
       setDialogPosition(position)
+      setDialogPositions(positions)
       setDialogPage(pageNum)
+      setDialogStartOffset(startOffset)
+      setDialogEndOffset(endOffset)
       setDialogOpen(true)
     }, [])
 
   const handleCreateNote = useCallback(
-    (text: string, position: { x: number; y: number; width: number; height: number }, pageNum: number) => {
+    (text: string, position: PositionRect, positions: PositionRect[], pageNum: number, startOffset: number, endOffset: number) => {
       setDialogMode("note")
       setDialogText(text)
       setDialogPosition(position)
+      setDialogPositions(positions)
       setDialogPage(pageNum)
+      setDialogStartOffset(startOffset)
+      setDialogEndOffset(endOffset)
       setDialogOpen(true)
     }, [])
 
   const handleDialogSubmit = useCallback(
-    (data: { markdown: string; images: string[] }) => {
-      const id = Date.now()
+    async (data: { markdown: string; images: string[] }) => {
+      const tempId = Date.now()
       if (dialogMode === "annotation") {
+        // Optimistic update with temp ID
         addAnnotation({
-          id,
+          id: tempId,
           paperId: paper.id,
           pageNumber: dialogPage,
-          text: dialogText,
+          quotedText: dialogText,
           content: data.markdown,
           images: data.images,
           position: dialogPosition,
+          positions: dialogPositions,
+          commentCount: 0,
           createdAt: new Date().toISOString(),
         })
+        try {
+          const created = await createAnnotation({
+            paperId: paper.id,
+            pageNumber: dialogPage,
+            type: "HIGHLIGHT",
+            position: { ...dialogPosition, positions: dialogPositions } as unknown as Record<string, unknown>,
+            text: dialogText,
+            comment: data.markdown,
+            images: data.images,
+            quotedText: dialogText,
+            startOffset: dialogStartOffset >= 0 ? dialogStartOffset : undefined,
+            endOffset: dialogEndOffset >= 0 ? dialogEndOffset : undefined,
+          })
+          removeAnnotation(tempId)
+          const createdPos = created.position as unknown as Record<string, unknown>
+          addAnnotation({
+            id: created.id,
+            paperId: created.paperId,
+            pageNumber: created.pageNumber,
+            quotedText: created.quotedText || dialogText,
+            content: created.comment || "",
+            images: created.images || [],
+            position: { x: Number(createdPos.x ?? dialogPosition.x), y: Number(createdPos.y ?? dialogPosition.y), width: Number(createdPos.width ?? dialogPosition.width), height: Number(createdPos.height ?? dialogPosition.height) },
+            positions: (createdPos.positions as PositionRect[]) || dialogPositions,
+            commentCount: created.commentCount || 0,
+            createdAt: created.createdAt,
+          })
+        } catch {
+          removeAnnotation(tempId)
+          addToast({ message: "创建批注失败", type: "error" })
+        }
       } else {
         addNote({
-          id,
+          id: tempId,
           paperId: paper.id,
           pageNumber: dialogPage,
-          text: dialogText,
+          quotedText: dialogText,
           content: data.markdown,
           images: data.images,
           position: dialogPosition,
+          positions: dialogPositions,
           createdAt: new Date().toISOString(),
         })
+        try {
+          const created = await createNote({
+            paperId: paper.id,
+            pageNumber: dialogPage,
+            content: data.markdown,
+            images: data.images,
+            quotedText: dialogText,
+            position: { ...dialogPosition, positions: dialogPositions } as unknown as Record<string, unknown>,
+            startOffset: dialogStartOffset >= 0 ? dialogStartOffset : undefined,
+            endOffset: dialogEndOffset >= 0 ? dialogEndOffset : undefined,
+          })
+          removeNote(tempId)
+          const createdPos = (created as unknown as Record<string, unknown>).position as Record<string, unknown> | undefined
+          addNote({
+            id: created.id,
+            paperId: created.paperId,
+            pageNumber: created.pageNumber || dialogPage,
+            quotedText: created.quotedText || dialogText,
+            title: created.title,
+            content: created.content,
+            images: created.images || [],
+            position: createdPos ? { x: Number(createdPos.x ?? dialogPosition.x), y: Number(createdPos.y ?? dialogPosition.y), width: Number(createdPos.width ?? dialogPosition.width), height: Number(createdPos.height ?? dialogPosition.height) } : dialogPosition,
+            positions: (createdPos?.positions as PositionRect[]) || dialogPositions,
+            createdAt: created.createdAt,
+          })
+        } catch {
+          removeNote(tempId)
+          addToast({ message: "创建笔记失败", type: "error" })
+        }
       }
     },
-    [dialogMode, dialogText, dialogPosition, dialogPage, paper.id, addAnnotation, addNote],
+    [dialogMode, dialogText, dialogPosition, dialogPositions, dialogPage, dialogStartOffset, dialogEndOffset, paper.id, addAnnotation, removeAnnotation, addNote, removeNote, addToast],
   )
 
   // Build anchors from store annotations & notes for underline rendering
@@ -91,16 +180,18 @@ export function PDFReader({ paper }: PDFReaderProps) {
     const aAnchors: TextAnchor[] = annotations.map((a) => ({
       id: a.id,
       type: "annotation" as const,
-      text: a.text,
+      text: a.quotedText,
       pageNumber: a.pageNumber,
       position: a.position,
+      positions: a.positions,
     }))
     const nAnchors: TextAnchor[] = notes.map((n) => ({
       id: n.id,
       type: "note" as const,
-      text: n.text,
+      text: n.quotedText,
       pageNumber: n.pageNumber,
       position: n.position,
+      positions: n.positions,
     }))
     return [...aAnchors, ...nAnchors]
   }, [annotations, notes])
@@ -112,6 +203,25 @@ export function PDFReader({ paper }: PDFReaderProps) {
       pageEl.scrollIntoView({ behavior: "smooth", block: "start" })
     }
   }, [pageNumber])
+
+  // Navigate to target position when clicking annotation/note card in RightPanel
+  useEffect(() => {
+    if (!navigationTarget || !scrollRef.current) return
+    setPageNumber(navigationTarget.pageNumber)
+    // After page renders, scroll to position if available
+    if (navigationTarget.position) {
+      const pos = navigationTarget.position
+      setTimeout(() => {
+        const pageEl = scrollRef.current?.querySelector(`[data-page="${navigationTarget.pageNumber}"]`)
+        if (pageEl && pos.height > 0) {
+          const container = scrollRef.current!
+          const pageTop = pageEl.getBoundingClientRect().top - container.getBoundingClientRect().top
+          const targetY = pageTop + (pos.y * pageEl.getBoundingClientRect().height) / pageEl.scrollHeight - 100
+          container.scrollTo({ top: targetY, behavior: "smooth" })
+        }
+      }, 300)
+    }
+  }, [navigationTarget?.timestamp])
 
   const handleCopyTitle = () => {
     const title = paper.title || ""
@@ -236,23 +346,25 @@ export function PDFReader({ paper }: PDFReaderProps) {
                 key={n}
                 data-page={n}
                 className={cn(
-                  "shadow-lg mb-4 transition-opacity duration-200 relative",
+                  "shadow-lg mb-4 transition-opacity duration-200",
                   n !== pageNumber && "opacity-50",
                 )}
               >
-                <Page
-                  pageNumber={n}
-                  scale={scale}
-                  renderTextLayer={true}
-                  renderAnnotationLayer={true}
-                  className="bg-white"
-                />
                 <AnnotationLayer
                   pageNumber={n}
                   anchors={anchors}
-                  onCreateAnnotation={(text, pos) => handleCreateAnnotation(text, pos, n)}
-                  onCreateNote={(text, pos) => handleCreateNote(text, pos, n)}
-                />
+                  scale={scale}
+                  onCreateAnnotation={(text, pos, positions, startOffset, endOffset) => handleCreateAnnotation(text, pos, positions, n, startOffset, endOffset)}
+                  onCreateNote={(text, pos, positions, startOffset, endOffset) => handleCreateNote(text, pos, positions, n, startOffset, endOffset)}
+                >
+                  <Page
+                    pageNumber={n}
+                    scale={scale}
+                    renderTextLayer={true}
+                    renderAnnotationLayer={true}
+                    className="bg-white"
+                  />
+                </AnnotationLayer>
               </div>
             ))}
         </Document>
