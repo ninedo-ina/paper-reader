@@ -33,7 +33,7 @@ export default function middleware(req: NextRequest) {
   // 检查 session cookie，无 cookie 则重定向到登录 / Check session cookie, redirect if missing
   const hasToken = req.cookies.has("pr_session")
   if (!hasToken) {
-    const locale = pathname.split("/")[1] ?? "zh"
+    const locale = pathname.split("/")[1] || routing.defaultLocale
     const loginUrl = new URL(`/${locale}/login`, req.url)
     loginUrl.searchParams.set("redirect", pathname)
     return Response.redirect(loginUrl)
