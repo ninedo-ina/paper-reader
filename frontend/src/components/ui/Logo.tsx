@@ -13,12 +13,12 @@ export function PaperReadMark({ className }: LogoProps) {
       aria-label="PaperReader"
       className={cn(
         "inline-flex size-8 shrink-0 items-center justify-center rounded-[9px] border border-[var(--border-color)]",
-        "bg-[var(--text-primary)] text-[var(--bg-root)] text-[13px] font-[800] leading-none tracking-[-0.02em]",
+        "bg-[var(--text-primary)] text-[var(--bg-root)] text-[17px] font-[800] leading-none tracking-[-0.02em]",
         "select-none",
         className,
       )}
     >
-      PR
+      R
     </span>
   )
 }

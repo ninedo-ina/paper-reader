@@ -14,7 +14,7 @@ The repository contains the C-side product and its API. The administration conso
 
 ## Product Preview
 
-The current client layout keeps the brand centered in the left navigation header, places the collapse control on the sidebar boundary, and centers the original English footer copy. The `PR` mark and browser favicon use high-contrast light/dark variants.
+The current client layout keeps the brand centered in the left navigation header, places the collapse control on the sidebar boundary, and centers the original English footer copy. The single-letter `R` mark and browser favicon use high-contrast light/dark variants.
 
 ![Expanded PaperReader sidebar in light mode](docs/screenshots/paperreader-expanded-light.png)
 
@@ -301,7 +301,7 @@ The frontend API wrapper is in [frontend/src/lib/api](frontend/src/lib/api), and
 
 ## UI Conventions
 
-- The product brand is `PaperReader`; the compact mark is `PR`.
+- The product brand is `PaperReader`; the compact mark is a single uppercase `R`.
 - The left sidebar uses a centered brand header and centered footer copy: `PaperReader` and `More Interest Less Interests`.
 - The collapse button is positioned on the sidebar boundary so it does not push the brand when the sidebar is expanded.
 - Favicon and logo colors remain grayscale and follow the selected light/dark theme.

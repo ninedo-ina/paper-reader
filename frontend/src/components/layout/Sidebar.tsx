@@ -135,7 +135,7 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
 
       {collapsed ? (
         <div className="flex justify-center mb-1">
-          <PaperReadMark className="size-7 rounded-[8px] text-[11px]" />
+          <PaperReadMark className="size-7 rounded-[8px] text-[13px]" />
         </div>
       ) : (
         <div className="flex items-center justify-center px-3 mb-4">
