@@ -24,9 +24,10 @@ type PanelTab = "metadata" | "annotations" | "notes" | "aiChat"
 
 interface RightPanelProps {
   paper?: PaperDetailDto | null
+  onConfigureProvider?: () => void
 }
 
-export function RightPanel({ paper }: RightPanelProps) {
+export function RightPanel({ paper, onConfigureProvider }: RightPanelProps) {
   const t = useTranslations("panel")
   const [activeTab, setActiveTab] = useState<PanelTab>("metadata")
   const [collapsed, setCollapsed] = useState(false)
@@ -157,7 +158,10 @@ export function RightPanel({ paper }: RightPanelProps) {
         </button>
       </nav>
 
-      <div className="flex-1 overflow-auto p-4">
+      <div className={cn(
+        "flex-1 min-h-0",
+        activeTab === "aiChat" ? "overflow-hidden" : "overflow-auto p-4",
+      )}>
         {activeTab === "metadata" && <MetadataContent paper={paper} />}
         {activeTab === "annotations" && (
           <AnnotationList
@@ -171,7 +175,7 @@ export function RightPanel({ paper }: RightPanelProps) {
             onDelete={handleDeleteNote}
           />
         )}
-        {activeTab === "aiChat" && <ChatPanel />}
+        {activeTab === "aiChat" && <ChatPanel onConfigureProvider={onConfigureProvider} />}
       </div>
 
       {/* Edit dialog */}

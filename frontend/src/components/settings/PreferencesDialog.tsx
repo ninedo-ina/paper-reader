@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { X, Search, Monitor, Bot, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { AiConfigTab } from "@/components/settings/AiConfigTab"
@@ -21,11 +21,16 @@ const TABS: TabConfig[] = [
 interface PreferencesDialogProps {
   open: boolean
   onClose: () => void
+  initialTab?: SettingsTab
 }
 
-export function PreferencesDialog({ open, onClose }: PreferencesDialogProps) {
+export function PreferencesDialog({ open, onClose, initialTab = "ui" }: PreferencesDialogProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>("ui")
   const [search, setSearch] = useState("")
+
+  useEffect(() => {
+    if (open) setActiveTab(initialTab)
+  }, [open, initialTab])
 
   const filteredTabs = TABS.filter((t) =>
     t.label.toLowerCase().includes(search.toLowerCase()),

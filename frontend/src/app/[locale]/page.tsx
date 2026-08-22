@@ -23,6 +23,7 @@ import type { NoteDto, AnnotationDto } from "@/lib/api/types"
 
 type SidebarPanel = "library" | "history" | "notes" | "annotations" | "starred" | null
 type MainView = "reader" | "forum" | "chats"
+type PreferencesTab = "ui" | "ai"
 
 export default function Home() {
   const [mainView, setMainView] = useState<MainView>("reader")
@@ -30,6 +31,7 @@ export default function Home() {
   const [showUpload, setShowUpload] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
   const [showPreferences, setShowPreferences] = useState(false)
+  const [preferencesTab, setPreferencesTab] = useState<PreferencesTab>("ui")
   const [showProfile, setShowProfile] = useState(false)
   const { currentPaper, loadPaper } = usePaperStore()
   const initSystemNotifications = useNotificationStore((s) => s.initSystemNotifications)
@@ -54,6 +56,7 @@ export default function Home() {
       return
     }
     if (key === "settings") {
+      setPreferencesTab("ui")
       setShowPreferences(true)
       return
     }
@@ -80,6 +83,16 @@ export default function Home() {
 
   const showReaderPanel = mainView === "reader"
 
+  const openAiPreferences = useCallback(() => {
+    setPreferencesTab("ai")
+    setShowPreferences(true)
+  }, [])
+
+  const openUiPreferences = useCallback(() => {
+    setPreferencesTab("ui")
+    setShowPreferences(true)
+  }, [])
+
   return (
     <div className="h-screen flex overflow-hidden relative" style={{ background: "var(--bg-root)" }}>
       <Sidebar activePanel={sidebarPanel} onNavigate={handleSidebarClick} />
@@ -87,7 +100,7 @@ export default function Home() {
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar
           onProfile={() => setShowProfile(true)}
-          onPreferences={() => setShowPreferences(true)}
+          onPreferences={openUiPreferences}
         />
 
         <div className="flex-1 flex overflow-hidden">
@@ -168,7 +181,9 @@ export default function Home() {
             </main>
           )}
 
-          {showReaderPanel && <RightPanel paper={currentPaper} />}
+          {showReaderPanel && (
+            <RightPanel paper={currentPaper} onConfigureProvider={openAiPreferences} />
+          )}
         </div>
       </div>
 
@@ -178,7 +193,11 @@ export default function Home() {
         onUploaded={() => setSidebarPanel("library")}
       />
       <CreatePaperDialog open={showCreate} onClose={() => setShowCreate(false)} />
-      <PreferencesDialog open={showPreferences} onClose={() => setShowPreferences(false)} />
+      <PreferencesDialog
+        open={showPreferences}
+        onClose={() => setShowPreferences(false)}
+        initialTab={preferencesTab}
+      />
       <ProfileDialog open={showProfile} onClose={() => setShowProfile(false)} />
       <VersionPopup />
       <ToastContainer />

@@ -8,7 +8,7 @@ export function FaviconThemeSync() {
 
   useEffect(() => {
     const variant = resolvedTheme === "dark" ? "dark" : "light"
-    const href = `/paperread-favicon-${variant}.svg?v=0.1.10-r1`
+    const href = `/paperread-favicon-${variant}.svg?v=0.1.11-r1`
     const links = Array.from(
       document.querySelectorAll<HTMLLinkElement>('link[rel~="icon"]'),
     )

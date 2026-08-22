@@ -6,8 +6,8 @@ The repository contains the C-side product and its API. The administration conso
 
 ## Current Release
 
-- Development branch: `feature/v0.1.10`
-- Client version: `0.1.10`
+- Development branch: `feature/v0.1.11`
+- Client version: `0.1.11`
 - Default locale: Chinese (`zh`)
 - Supported locales: Chinese (`zh`) and English (`en`)
 - Production client: `https://paper.pilo.eu.cc`
@@ -84,6 +84,7 @@ paper-reader/
 - Highlight, underline, strikethrough, and note annotations with page/text anchors.
 - Annotation comments and editable notes with Markdown and image support.
 - AI chat for paper questions, summaries, explanations, and translation when a model is configured.
+- The reader AI panel supports direct OpenAI-compatible Providers, a Provider warning/configuration path, browser-persisted conversation history, an icon-only new-chat action, and an in-composer model selector.
 - Research forum, topics, posts, comments, likes, favorites, follows, private messages, and groups.
 - Notification center, release feature popup, language switching, and light/dark themes.
 
@@ -306,7 +307,20 @@ The frontend API wrapper is in [frontend/src/lib/api](frontend/src/lib/api), and
 - The collapse button is positioned on the sidebar boundary so it does not push the brand when the sidebar is expanded.
 - Favicon and logo colors remain grayscale and follow the selected light/dark theme.
 - Preferences are available from the avatar menu between Profile and Log Out.
+- In the AI chat panel, an unconfigured Provider is shown as a warning. The warning and the composer’s Provider action open Preferences directly on the AI configuration tab. The model selector stays unavailable until a Provider is active.
+- Direct Provider conversations are stored in the browser under the `pr-ai-direct-chats` Zustand store. They are separate from the backend `/api/ai-chats` records because they use the user-selected Provider and do not send the user’s Provider API key to the PaperReader API.
 - Source UI copy is localized under `frontend/src/i18n/locales/{zh,en}/common.json`.
+
+## Versioned Development
+
+The project uses a release-style branch and client version for every code iteration:
+
+- Ordinary maintenance or feature work increments the patch number: `0.1.10` → `0.1.11` → `0.1.12`.
+- A minor release (`0.1.x` → `0.2.0`) or major release (`0.x.y` → `1.0.0`) is created only when the product owner explicitly requests it.
+- Keep the branch name (`feature/v0.1.11`), `frontend/package.json`, `frontend/VERSION`, `backend/VERSION`, README release line, favicon cache-busting value, and visible UI version aligned.
+- Every code iteration must be built, tested, deployed to the PM2 process, verified through the public domain, committed, and pushed to the matching remote branch.
+
+The detailed operating rules and handoff checklist are in [docs/MAINTENANCE.md](docs/MAINTENANCE.md). The current roadmap is in [docs/PLAN.md](docs/PLAN.md), project cautions are in [docs/ATTENTION.md](docs/ATTENTION.md), and the AI interaction design is in [docs/AI_CHAT_TECHNICAL_SOLUTION.md](docs/AI_CHAT_TECHNICAL_SOLUTION.md).
 
 ## Troubleshooting
 
