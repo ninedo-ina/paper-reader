@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Paper Reader",
+    "name": "PaperReader",
     "tagline": "论文在线阅读平台"
   },
   "nav": {
@@ -132,6 +132,7 @@
     "loginUnifiedTitle": "登录 / 创建账户",
     "loginUnifiedSubtitle": "登录即注册，立即开始您的论文阅读之旅",
     "logout": "退出登录",
+    "profile": "个人中心",
     "email": "邮箱",
     "password": "密码",
     "code": "验证码",
@@ -158,7 +159,7 @@
     "empty": "暂无通知"
   },
   "version": {
-    "title": "欢迎使用 Paper Reader",
+    "title": "欢迎使用 PaperReader",
     "subtitle": "一站式学术论文阅读与管理平台",
     "gotIt": "知道了",
     "features": {

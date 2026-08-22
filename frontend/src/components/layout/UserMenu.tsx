@@ -5,14 +5,16 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAuthStore } from "@/stores/auth-store"
 import { useUserStore } from "@/stores/user-store"
-import { LogOut, User } from "lucide-react"
+import { LogOut, Settings, User } from "lucide-react"
 
 interface UserMenuProps {
   onProfile?: () => void
+  onPreferences?: () => void
 }
 
-export function UserMenu({ onProfile }: UserMenuProps) {
+export function UserMenu({ onProfile, onPreferences }: UserMenuProps) {
   const t = useTranslations("auth")
+  const navT = useTranslations("nav")
   const router = useRouter()
   const { logout } = useAuthStore()
   const { profile, clearProfile } = useUserStore()
@@ -70,7 +72,14 @@ export function UserMenu({ onProfile }: UserMenuProps) {
             className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors"
           >
             <User className="size-4" />
-            个人中心
+            {t("profile")}
+          </button>
+          <button
+            onClick={() => { setOpen(false); onPreferences?.() }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors"
+          >
+            <Settings className="size-4" />
+            {navT("settings")}
           </button>
           <button
             onClick={handleLogout}

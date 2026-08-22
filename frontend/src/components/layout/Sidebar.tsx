@@ -2,10 +2,11 @@
 
 import { useState, useEffect, type ElementType } from "react"
 import { useTranslations } from "next-intl"
-import { Library, Clock, FileText, Settings, Star, Tag, MessageCircle, MessageSquare, PanelLeftClose, PanelLeftOpen, Highlighter } from "lucide-react"
+import { Library, Clock, FileText, Star, Tag, MessageCircle, MessageSquare, PanelLeftClose, PanelLeftOpen, Highlighter } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { usePaperStore } from "@/stores/paper-store"
 import { useAuthStore } from "@/stores/auth-store"
+import { PaperReadBrand, PaperReadMark } from "@/components/ui/Logo"
 
 const sections = [
   {
@@ -31,10 +32,6 @@ const sections = [
       { key: "chats", icon: MessageSquare, dynamicBadge: true },
     ],
   },
-]
-
-const bottomItems = [
-  { key: "settings", icon: Settings, badge: null },
 ]
 
 interface SidebarProps {
@@ -117,39 +114,32 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "border-r border-[var(--border-subtle)] flex flex-col py-3 select-none shrink-0 transition-all duration-200",
+        "relative border-r border-[var(--border-subtle)] flex flex-col py-3 select-none shrink-0 transition-all duration-200",
         collapsed ? "w-[52px]" : "w-[220px]",
       )}
       style={{ background: "var(--surface-1)", backdropFilter: "blur(20px) saturate(180%)" }}
     >
       {/* Header */}
+      <button
+        onClick={() => setCollapsed(!collapsed)}
+        title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        className="absolute right-[-10px] top-[18px] z-20 inline-flex size-5 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--surface-1)] text-[var(--text-tertiary)] shadow-[var(--shadow-sm)] transition-all hover:text-[var(--text-primary)] hover:shadow-[var(--shadow-md)]"
+      >
+        {collapsed ? (
+          <PanelLeftOpen className="size-3" />
+        ) : (
+          <PanelLeftClose className="size-3" />
+        )}
+      </button>
+
       {collapsed ? (
         <div className="flex justify-center mb-1">
-          <button
-            onClick={() => setCollapsed(false)}
-            title="Expand sidebar"
-            className="p-1 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all"
-          >
-            <PanelLeftOpen className="w-[15px] h-[15px]" />
-          </button>
+          <PaperReadMark className="size-7 rounded-[8px] text-[11px]" />
         </div>
       ) : (
-        <div className="flex items-center justify-between px-3 mb-4">
-          <div className="flex flex-col gap-1.5 text-center flex-1">
-            <span className="font-[680] text-[14px] tracking-[-0.3px] text-[var(--text-primary)]">
-              PaperReader
-            </span>
-            <span className="text-[11px] text-[var(--text-tertiary)]">
-              More Interest Less Interests
-            </span>
-          </div>
-          <button
-            onClick={() => setCollapsed(true)}
-            title="Collapse sidebar"
-            className="p-1 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all shrink-0"
-          >
-            <PanelLeftClose className="w-[15px] h-[15px]" />
-          </button>
+        <div className="flex items-center justify-center px-3 mb-4">
+          <PaperReadBrand />
         </div>
       )}
 
@@ -161,9 +151,6 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
             </div>
           ))}
           <div className="flex-1" />
-          <div className="flex flex-col items-center gap-1">
-            {bottomItems.map(renderCollapsedItem)}
-          </div>
         </>
       ) : (
         <>
@@ -180,13 +167,13 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
 
           <div className="flex-1" />
 
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.6px] text-[var(--text-tertiary)] px-3 pt-4 pb-1.5">
-              Settings
-            </div>
-            <div className="flex flex-col gap-y-1">
-              {bottomItems.map(renderExpandedItem)}
-            </div>
+          <div className="border-t border-[var(--border-subtle)] px-3 pt-3 pb-1 text-center">
+            <p className="text-[13px] font-[650] tracking-[-0.1px] text-[var(--text-primary)]">
+              PaperReader
+            </p>
+            <p className="mt-1 text-[11px] text-[var(--text-tertiary)]">
+              More Interest Less Interests
+            </p>
           </div>
         </>
       )}

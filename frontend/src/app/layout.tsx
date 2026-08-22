@@ -6,8 +6,12 @@ import { SessionLoader } from "@/components/auth/SessionLoader"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "Paper Reader - 论文在线阅读平台",
+  title: "PaperReader - 论文在线阅读平台",
+  applicationName: "PaperReader",
   description: "基于 GROBID 的学术论文在线阅读、批注、笔记与 AI 辅助阅读平台",
+  icons: {
+    icon: "/paperread-favicon-light.svg?v=0.1.10",
+  },
 }
 
 export default async function RootLayout({

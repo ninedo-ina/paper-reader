@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Paper Reader",
+    "name": "PaperReader",
     "tagline": "Academic Paper Reading Platform"
   },
   "nav": {
@@ -132,6 +132,7 @@
     "loginUnifiedTitle": "Log In / Create Account",
     "loginUnifiedSubtitle": "Login is registration — start your paper reading journey now",
     "logout": "Log Out",
+    "profile": "Profile",
     "email": "Email",
     "password": "Password",
     "code": "Code",
@@ -158,7 +159,7 @@
     "empty": "No notifications"
   },
   "version": {
-    "title": "Welcome to Paper Reader",
+    "title": "Welcome to PaperReader",
     "subtitle": "Your academic paper reading & management platform",
     "gotIt": "Got it",
     "features": {

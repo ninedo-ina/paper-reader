@@ -8,9 +8,10 @@ import { UserMenu } from "@/components/layout/UserMenu";
 
 interface TopbarProps {
   onProfile?: () => void
+  onPreferences?: () => void
 }
 
-export function Topbar({ onProfile }: TopbarProps) {
+export function Topbar({ onProfile, onPreferences }: TopbarProps) {
 
   return (
     <header className="h-[52px] glass-surface border-b border-[var(--border-subtle)] flex items-center px-4 select-none justify-between relative z-10">
@@ -21,7 +22,7 @@ export function Topbar({ onProfile }: TopbarProps) {
         <NotificationDropdown />
         <ThemeToggle />
         <div className="ml-1">
-          <UserMenu onProfile={onProfile} />
+          <UserMenu onProfile={onProfile} onPreferences={onPreferences} />
         </div>
       </div>
     </header>

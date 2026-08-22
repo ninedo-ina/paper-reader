@@ -85,7 +85,10 @@ export default function Home() {
       <Sidebar activePanel={sidebarPanel} onNavigate={handleSidebarClick} />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <Topbar onProfile={() => setShowProfile(true)} />
+        <Topbar
+          onProfile={() => setShowProfile(true)}
+          onPreferences={() => setShowPreferences(true)}
+        />
 
         <div className="flex-1 flex overflow-hidden">
           {/* Paper list panel (slides in from sidebar) */}
