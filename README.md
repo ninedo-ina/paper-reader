@@ -6,8 +6,8 @@ The repository contains the C-side product and its API. The administration conso
 
 ## Current Release
 
-- Development branch: `feature/v0.1.12`
-- Client version: `0.1.12`
+- Development branch: `feature/v0.1.12-fix`
+- Client version: `0.1.12-fix`
 - Default locale: Chinese (`zh`)
 - Supported locales: Chinese (`zh`) and English (`en`)
 - Production client: `https://paper.pilo.eu.cc`
@@ -316,8 +316,9 @@ The frontend API wrapper is in [frontend/src/lib/api](frontend/src/lib/api), and
 The project uses a release-style branch and client version for every code iteration:
 
 - Ordinary maintenance or feature work increments the patch number: `0.1.10` → `0.1.11` → `0.1.12`.
+- Bug-fix iterations append `-fix` to the repaired version, for example `0.1.12-fix`, with a matching branch such as `feature/v0.1.12-fix`.
 - A minor release (`0.1.x` → `0.2.0`) or major release (`0.x.y` → `1.0.0`) is created only when the product owner explicitly requests it.
-- Keep the branch name (`feature/v0.1.12`), `frontend/package.json`, `frontend/VERSION`, `backend/VERSION`, README release line, favicon cache-busting value, and visible UI version aligned.
+- Keep the branch name (`feature/v0.1.12-fix`), `frontend/package.json`, `frontend/VERSION`, `backend/VERSION`, README release line, favicon cache-busting value, and visible UI version aligned.
 - Every code iteration must be built, tested, deployed to the PM2 process, verified through the public domain, committed, and pushed to the matching remote branch.
 
 The detailed operating rules and handoff checklist are in [docs/MAINTENANCE.md](docs/MAINTENANCE.md). The current roadmap is in [docs/PLAN.md](docs/PLAN.md), project cautions are in [docs/ATTENTION.md](docs/ATTENTION.md), and the AI interaction design is in [docs/AI_CHAT_TECHNICAL_SOLUTION.md](docs/AI_CHAT_TECHNICAL_SOLUTION.md).

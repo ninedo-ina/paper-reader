@@ -114,7 +114,7 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "relative border-r border-[var(--border-subtle)] flex flex-col py-3 select-none shrink-0 transition-all duration-200",
+        "relative z-30 border-r border-[var(--border-subtle)] flex flex-col py-3 select-none shrink-0 transition-all duration-200",
         collapsed ? "w-[52px]" : "w-[220px]",
       )}
       style={{ background: "var(--surface-1)", backdropFilter: "blur(20px) saturate(180%)" }}
@@ -124,7 +124,7 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
         onClick={() => setCollapsed(!collapsed)}
         title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        className="absolute right-[-10px] top-[18px] z-20 inline-flex size-5 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--surface-1)] text-[var(--text-tertiary)] shadow-[var(--shadow-sm)] transition-all hover:text-[var(--text-primary)] hover:shadow-[var(--shadow-md)]"
+        className="absolute right-[-10px] top-[18px] z-40 inline-flex size-5 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--surface-1)] text-[var(--text-tertiary)] shadow-[var(--shadow-sm)] transition-all hover:text-[var(--text-primary)] hover:shadow-[var(--shadow-md)]"
       >
         {collapsed ? (
           <PanelLeftOpen className="size-3" />
