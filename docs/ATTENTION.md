@@ -2,7 +2,7 @@
 
 ## 版本与发布
 
-- 普通迭代只增加 patch 版本，当前规则是 `0.1.10 -> 0.1.11`。
+- 普通迭代只增加 patch 版本，当前规则是 `0.1.10 -> 0.1.11 -> 0.1.12`。
 - 未经明确要求，不要擅自改成 `0.2.0` 或 `1.0.0`。
 - 每次提交代码都要同步更新版本、文档、构建、重启和远程推送。
 
@@ -26,6 +26,7 @@
 - `paper.pilo.eu.cc` 通过 Cloudflare -> Apache -> PM2 Next.js，不是 Cloudflare Pages。
 - 修改源码后只 push 不会生效；必须执行 `pnpm run build`、PM2 重启并验证公网。
 - favicon 使用版本 query string 防止浏览器/边缘缓存旧图标；更新版本时同步修改 metadata 和主题同步组件。
+- 本次 v0.1.12 只调整浏览器标签页 favicon；不要将 favicon 的尺寸调整误应用到首页左上角品牌 Logo。
 - 不要用宽泛的 `rm -rf`、`killall` 或批量 kill 处理部署问题。
 
 ## UI 回归
