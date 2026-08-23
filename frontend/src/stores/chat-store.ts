@@ -2,10 +2,11 @@ import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import type { AiChatListDto, AiChatDetailDto } from "@/lib/api/types"
 import { listChats, getChat, createChat, sendMessage, deleteChat } from "@/lib/api/ai-chats"
-import type { AiProvider } from "@/stores/preferences-store"
+import { usePreferencesStore, type AiProvider } from "@/stores/preferences-store"
 import { EmptyAiResponseError } from "@/lib/ai-chat-response"
 import {
   describeProviderNetworkError,
+  normalizeProviderBaseUrl,
   redactProviderErrorText,
   requestAiChatCompletion,
 } from "@/lib/ai-provider"
@@ -394,6 +395,13 @@ export const useChatStore = create<ChatState>()(
                   },
                 ),
               }))
+            },
+            onBaseUrlResolved: (resolvedBaseUrl) => {
+              if (resolvedBaseUrl !== normalizeProviderBaseUrl(provider.baseUrl)) {
+                usePreferencesStore.getState().updateProvider(provider.id, {
+                  baseUrl: resolvedBaseUrl,
+                })
+              }
             },
           })
 

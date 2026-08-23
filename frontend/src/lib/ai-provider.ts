@@ -2,6 +2,8 @@ import {
   consumeAiChatResponse,
   EmptyAiResponseError,
   isEmptyAiResponseError,
+  isProviderEndpointMismatchError,
+  ProviderEndpointMismatchError,
 } from "@/lib/ai-chat-response"
 
 export interface TestableAiProvider {
@@ -14,6 +16,7 @@ export interface AiProviderTestResult {
   ok: boolean
   message: string
   models?: string[]
+  baseUrl?: string
 }
 
 type FetchLike = typeof fetch
@@ -29,6 +32,7 @@ interface AiChatCompletionOptions {
   model: string
   messages: AiChatCompletionMessage[]
   onContent: (content: string) => void
+  onBaseUrlResolved?: (baseUrl: string) => void
   fetchImpl?: FetchLike
 }
 
@@ -37,6 +41,37 @@ export function normalizeProviderBaseUrl(value: string): string {
     .trim()
     .replace(/\/+$/, "")
     .replace(/\/(?:chat\/completions|models)$/i, "")
+}
+
+export function buildProviderBaseUrlCandidates(value: string): string[] {
+  const baseUrl = normalizeProviderBaseUrl(value)
+  if (!baseUrl) return [baseUrl]
+
+  try {
+    const url = new URL(baseUrl)
+    const hasV1Path = url.pathname
+      .split("/")
+      .some((segment) => segment.toLowerCase() === "v1")
+    if (hasV1Path) return [baseUrl]
+
+    const pathname = url.pathname.replace(/\/+$/, "")
+    url.pathname = `${pathname}/v1`
+    return [baseUrl, url.toString()]
+  } catch {
+    if (/\/v1$/i.test(baseUrl)) return [baseUrl]
+    return [baseUrl, `${baseUrl}/v1`]
+  }
+}
+
+function buildProviderEndpointUrl(baseUrl: string, endpoint: string): string {
+  try {
+    const url = new URL(baseUrl)
+    const pathname = url.pathname.replace(/\/+$/, "")
+    url.pathname = `${pathname}/${endpoint.replace(/^\/+/, "")}`
+    return url.toString()
+  } catch {
+    return `${baseUrl.replace(/\/+$/, "")}/${endpoint.replace(/^\/+/, "")}`
+  }
 }
 
 export function buildProviderHeaders(apiKey: string, includeJson = false): Record<string, string> {
@@ -110,7 +145,15 @@ function extractErrorMessage(value: string): string {
   return value
 }
 
-export async function describeProviderHttpError(response: Response, apiKey: string): Promise<string> {
+function looksLikeHtmlResponse(response: Response, body: string): boolean {
+  const contentType = response.headers.get("content-type")?.toLowerCase() ?? ""
+  return /text\/html|application\/xhtml\+xml/i.test(contentType) || /^\s*</.test(body)
+}
+
+async function createProviderHttpError(
+  response: Response,
+  apiKey: string,
+): Promise<Error> {
   let body = ""
   try {
     body = await response.text()
@@ -118,8 +161,22 @@ export async function describeProviderHttpError(response: Response, apiKey: stri
     // Some providers close the body before it can be read.
   }
 
+  if (looksLikeHtmlResponse(response, body)) {
+    return new ProviderEndpointMismatchError(
+      `HTTP ${response.status}：Provider 返回了 HTML 页面而不是模型响应`,
+    )
+  }
+
   const detail = redactProviderErrorText(extractErrorMessage(body), apiKey)
-  return `HTTP ${response.status}${detail ? `：${detail}` : ""}`
+  const message = `HTTP ${response.status}${detail ? `：${detail}` : ""}`
+  if (response.status === 404 || response.status === 405) {
+    return new ProviderEndpointMismatchError(message)
+  }
+  return new Error(message)
+}
+
+export async function describeProviderHttpError(response: Response, apiKey: string): Promise<string> {
+  return (await createProviderHttpError(response, apiKey)).message
 }
 
 export function describeProviderNetworkError(error: unknown): string {
@@ -153,72 +210,112 @@ export async function requestAiChatCompletion({
   model,
   messages,
   onContent,
+  onBaseUrlResolved,
   fetchImpl = fetch,
 }: AiChatCompletionOptions): Promise<string> {
   const baseUrl = normalizeProviderBaseUrl(configuredBaseUrl)
   const baseUrlError = validateBaseUrl(baseUrl)
   if (baseUrlError) throw new Error(baseUrlError)
 
-  const request = async (stream: boolean) => {
-    const response = await fetchImpl(`${baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: buildProviderHeaders(apiKey, true),
-      body: JSON.stringify({ model, messages, stream }),
-    })
-
-    if (!response.ok) {
-      throw new Error(await describeProviderHttpError(response, apiKey))
-    }
-
-    return consumeAiChatResponse(response, onContent)
-  }
-
-  try {
-    return await request(true)
-  } catch (error) {
-    if (!isEmptyAiResponseError(error)) throw error
-    try {
-      return await request(false)
-    } catch (fallbackError) {
-      if (!isEmptyAiResponseError(fallbackError)) throw fallbackError
-      throw new EmptyAiResponseError(
-        `stream={${error.diagnostic}}; non-stream={${fallbackError.diagnostic}}`,
-        "Provider 的流式和非流式响应都没有可显示文本",
+  const requestAtBaseUrl = async (candidateBaseUrl: string): Promise<string> => {
+    const request = async (stream: boolean) => {
+      const response = await fetchImpl(
+        buildProviderEndpointUrl(candidateBaseUrl, "chat/completions"),
+        {
+          method: "POST",
+          headers: buildProviderHeaders(apiKey, true),
+          body: JSON.stringify({ model, messages, stream }),
+        },
       )
+
+      if (!response.ok) throw await createProviderHttpError(response, apiKey)
+      return consumeAiChatResponse(response, onContent)
+    }
+
+    try {
+      return await request(true)
+    } catch (error) {
+      if (!isEmptyAiResponseError(error)) throw error
+      try {
+        return await request(false)
+      } catch (fallbackError) {
+        if (!isEmptyAiResponseError(fallbackError)) throw fallbackError
+        throw new EmptyAiResponseError(
+          `stream={${error.diagnostic}}; non-stream={${fallbackError.diagnostic}}`,
+          "Provider 的流式和非流式响应都没有可显示文本",
+        )
+      }
     }
   }
+
+  const candidates = buildProviderBaseUrlCandidates(baseUrl)
+  for (let index = 0; index < candidates.length; index += 1) {
+    const candidateBaseUrl = candidates[index]
+    try {
+      const content = await requestAtBaseUrl(candidateBaseUrl)
+      onBaseUrlResolved?.(candidateBaseUrl)
+      return content
+    } catch (error) {
+      const hasFallback = index < candidates.length - 1
+      if (hasFallback && isProviderEndpointMismatchError(error)) continue
+      throw error
+    }
+  }
+
+  throw new ProviderEndpointMismatchError()
 }
 
 async function fetchProviderModels(
-  baseUrl: string,
+  configuredBaseUrl: string,
   apiKey: string,
   fetchImpl: FetchLike,
-): Promise<{ models: string[]; error?: string }> {
-  try {
-    const response = await fetchImpl(`${baseUrl}/models`, {
-      headers: buildProviderHeaders(apiKey),
-    })
+): Promise<{ models: string[]; baseUrl?: string; error?: string }> {
+  const candidates = buildProviderBaseUrlCandidates(configuredBaseUrl)
 
-    if (!response.ok) {
-      return { models: [], error: await describeProviderHttpError(response, apiKey) }
-    }
-
-    let payload: unknown
+  for (let index = 0; index < candidates.length; index += 1) {
+    const baseUrl = candidates[index]
     try {
-      payload = await response.json()
-    } catch {
-      return { models: [], error: "模型接口返回的不是有效 JSON" }
-    }
+      const response = await fetchImpl(buildProviderEndpointUrl(baseUrl, "models"), {
+        headers: buildProviderHeaders(apiKey),
+      })
 
-    const models = extractModelIds(payload)
-    if (models.length === 0) {
-      return { models: [], error: "模型接口响应中没有可识别的模型 ID" }
-    }
+      if (!response.ok) {
+        const error = await createProviderHttpError(response, apiKey)
+        if (index < candidates.length - 1 && isProviderEndpointMismatchError(error)) continue
+        return { models: [], error: error.message }
+      }
 
-    return { models }
-  } catch (error) {
-    return { models: [], error: describeProviderNetworkError(error) }
+      let body = ""
+      try {
+        body = await response.text()
+      } catch {
+        return { models: [], error: "模型接口响应无法读取" }
+      }
+
+      if (looksLikeHtmlResponse(response, body)) {
+        if (index < candidates.length - 1) continue
+        return { models: [], error: "模型接口返回了 HTML 页面而不是模型列表" }
+      }
+
+      let payload: unknown
+      try {
+        payload = JSON.parse(body)
+      } catch {
+        return { models: [], error: "模型接口返回的不是有效 JSON" }
+      }
+
+      const models = extractModelIds(payload)
+      if (models.length === 0) {
+        return { models: [], error: "模型接口响应中没有可识别的模型 ID" }
+      }
+
+      return { models, baseUrl }
+    } catch (error) {
+      return { models: [], error: describeProviderNetworkError(error) }
+    }
   }
+
+  return { models: [], error: "模型接口未命中可用的 API 路径" }
 }
 
 export async function testAiProviderConnection(
@@ -233,10 +330,12 @@ export async function testAiProviderConnection(
     new Set(provider.models.map((model) => model.trim()).filter(Boolean)),
   )
   let models = configuredModels
+  let preferredBaseUrl = baseUrl
 
   if (models.length === 0) {
     const discovery = await fetchProviderModels(baseUrl, provider.apiKey, fetchImpl)
     models = discovery.models
+    preferredBaseUrl = discovery.baseUrl ?? baseUrl
 
     if (models.length === 0) {
       return {
@@ -247,23 +346,32 @@ export async function testAiProviderConnection(
   }
 
   const model = models[0]
+  let resolvedBaseUrl = preferredBaseUrl
   try {
     await requestAiChatCompletion({
-      baseUrl,
+      baseUrl: preferredBaseUrl,
       apiKey: provider.apiKey,
       model,
       messages: [{ role: "user", content: "Reply with OK." }],
       onContent: () => undefined,
+      onBaseUrlResolved: (value) => {
+        resolvedBaseUrl = value
+      },
       fetchImpl,
     })
 
+    const correctedBaseUrl = resolvedBaseUrl !== baseUrl ? resolvedBaseUrl : undefined
+    const correctionMessage = correctedBaseUrl
+      ? "，已自动补全 Base URL 的 /v1 API 路径"
+      : ""
     return {
       ok: true,
       message:
         configuredModels.length > 0
-          ? `连接成功，模型 ${model} 可用`
-          : `连接成功，已获取 ${models.length} 个模型并验证 ${model}`,
+          ? `连接成功，模型 ${model} 可用${correctionMessage}`
+          : `连接成功，已获取 ${models.length} 个模型并验证 ${model}${correctionMessage}`,
       models: configuredModels.length > 0 ? undefined : models,
+      baseUrl: correctedBaseUrl,
     }
   } catch (error) {
     const detail = error instanceof EmptyAiResponseError
