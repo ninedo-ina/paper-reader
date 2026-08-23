@@ -200,4 +200,73 @@ describe("requestAiChatCompletion", () => {
     ).rejects.toThrow("HTTP 401")
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
+
+  it("combines value-free diagnostics when both response modes are empty", async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(
+          'data: {"id":"stream-secret","choices":[{"finish_reason":"stop"}]}\n\ndata: [DONE]\n',
+          { headers: { "content-type": "text/event-stream" } },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            request_id: "fallback-secret",
+            result: { metadata_only: true },
+          }),
+          { headers: { "content-type": "application/json" } },
+        ),
+      )
+
+    let message = ""
+    try {
+      await requestAiChatCompletion({
+        baseUrl: "https://provider.example/v1",
+        apiKey: "secret-key",
+        model: "working-model",
+        messages: [{ role: "user", content: "测试" }],
+        onContent: () => undefined,
+        fetchImpl: fetchMock,
+      })
+    } catch (error) {
+      message = error instanceof Error ? error.message : String(error)
+    }
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(message).toContain("流式和非流式响应都没有可显示文本")
+    expect(message).toContain("stream={content-type=text/event-stream")
+    expect(message).toContain("non-stream={content-type=application/json")
+    expect(message).not.toContain("stream-secret")
+    expect(message).not.toContain("fallback-secret")
+  })
+
+  it("keeps full safe diagnostics in the connection-test result", async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response("data: [DONE]\n", {
+          headers: { "content-type": "text/event-stream" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ metadata_only: true }), {
+          headers: { "content-type": "application/json" },
+        }),
+      )
+
+    const result = await testAiProviderConnection(
+      {
+        baseUrl: "https://provider.example/v1",
+        apiKey: "secret-key",
+        models: ["working-model"],
+      },
+      fetchMock,
+    )
+
+    expect(result.ok).toBe(false)
+    expect(result.message).toContain("stream={content-type=text/event-stream")
+    expect(result.message).toContain("non-stream={content-type=application/json")
+  })
 })

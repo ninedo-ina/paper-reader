@@ -122,4 +122,34 @@ describe("direct chat response lifecycle", () => {
     })
     expect(useChatStore.getState().isSending).toBe(false)
   })
+
+  it("shows both safe response diagnostics when the retry is also empty", async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(
+          'data: {"id":"private-stream-id","choices":[{"finish_reason":"stop"}]}\n\ndata: [DONE]\n',
+          { headers: { "content-type": "text/event-stream" } },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            request_id: "private-fallback-id",
+            custom_payload: { metadata_only: true },
+          }),
+          { headers: { "content-type": "application/json" } },
+        ),
+      )
+    vi.stubGlobal("fetch", fetchMock)
+
+    await useChatStore.getState().sendDirect("测试诊断", "test-model", provider)
+
+    const message = useChatStore.getState().messages.at(-1)
+    expect(message).toMatchObject({ role: "assistant", status: "error" })
+    expect(message?.statusMessage).toContain("stream={content-type=text/event-stream")
+    expect(message?.statusMessage).toContain("non-stream={content-type=application/json")
+    expect(message?.statusMessage).not.toContain("private-stream-id")
+    expect(message?.statusMessage).not.toContain("private-fallback-id")
+  })
 })
