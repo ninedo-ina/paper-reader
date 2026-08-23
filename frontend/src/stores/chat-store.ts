@@ -42,6 +42,7 @@ export interface DirectChat {
 const MODELS = ["gpt-4o", "gpt-4o-mini", "claude-sonnet-4-6", "gemini-2.5-pro"] as const
 const DEFAULT_DIRECT_TITLE = "新对话"
 const DIRECT_TITLE_LIMIT = 32
+const TITLE_CONTEXT_LIMIT = 1600
 
 interface ChatState {
   chats: AiChatListDto[]
@@ -53,6 +54,8 @@ interface ChatState {
 
   directChats: DirectChat[]
   activeDirectChatId: string | null
+  directChatSending: Record<string, boolean>
+  directChatTitleGenerating: Record<string, boolean>
 
   loadChats: () => Promise<void>
   selectChat: (id: number) => Promise<void>
@@ -65,6 +68,10 @@ interface ChatState {
   addDirectMessage: (m: Omit<ChatMessageItem, "id" | "createdAt">) => void
   startDirectChat: (model: string, providerId: string) => string
   selectDirectChat: (id: string) => void
+  updateDirectChatConfig: (
+    id: string,
+    config: Partial<Pick<DirectChat, "model" | "providerId">>,
+  ) => void
   clearMessages: () => void
   appendStreamChunk: (chunk: string) => void
 }
@@ -91,19 +98,11 @@ function createDirectChat(model: string, providerId: string): DirectChat {
   }
 }
 
-function titleFromMessage(content: string): string {
-  const title = content.replace(/\s+/g, " ").trim()
-  if (!title) return DEFAULT_DIRECT_TITLE
-  return title.length > DIRECT_TITLE_LIMIT
-    ? `${title.slice(0, DIRECT_TITLE_LIMIT)}…`
-    : title
-}
-
 function updateDirectChat(
   chats: DirectChat[],
   chatId: string | null,
   messages: ChatMessageItem[],
-  options?: { model?: string; providerId?: string; firstMessage?: string },
+  options?: { model?: string; providerId?: string },
 ): DirectChat[] {
   if (!chatId) return chats
 
@@ -114,13 +113,123 @@ function updateDirectChat(
       messages,
       model: options?.model ?? chat.model,
       providerId: options?.providerId ?? chat.providerId,
-      title:
-        chat.title === DEFAULT_DIRECT_TITLE && options?.firstMessage
-          ? titleFromMessage(options.firstMessage)
-          : chat.title,
       updatedAt: new Date().toISOString(),
     }
   })
+}
+
+function updateDirectChatConfig(
+  chats: DirectChat[],
+  chatId: string,
+  config: Partial<Pick<DirectChat, "model" | "providerId">>,
+): DirectChat[] {
+  return chats.map((chat) => chat.id === chatId ? { ...chat, ...config } : chat)
+}
+
+function updateDirectChatProviderBaseUrl(
+  providerId: string,
+  baseUrl: string,
+): void {
+  const preferences = usePreferencesStore.getState()
+  const provider = preferences.providers.find((item) => item.id === providerId)
+  if (provider && normalizeProviderBaseUrl(provider.baseUrl) !== baseUrl) {
+    preferences.updateProvider(providerId, { baseUrl })
+  }
+}
+
+function updateDirectChatTitle(
+  chats: DirectChat[],
+  chatId: string,
+  title: string,
+): DirectChat[] {
+  return chats.map((chat) =>
+    chat.id === chatId && chat.title === DEFAULT_DIRECT_TITLE
+      ? { ...chat, title }
+      : chat,
+  )
+}
+
+function withoutRecordKey(
+  record: Record<string, boolean>,
+  key: string,
+): Record<string, boolean> {
+  const next = { ...record }
+  delete next[key]
+  return next
+}
+
+function titleContext(value: string): string {
+  return value
+    .replace(/!\[[^\]]*]\([^)]*\)/g, "[图片]")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, TITLE_CONTEXT_LIMIT)
+}
+
+export function sanitizeDirectChatTitle(value: string): string {
+  const title = value
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find(Boolean)
+    ?.replace(/^#+\s*/, "")
+    .replace(/^(?:对话)?标题\s*[:：-]\s*/i, "")
+    .replace(/^title\s*[:：-]\s*/i, "")
+    .replace(/^["'“”‘’`]+|["'“”‘’`]+$/g, "")
+    .trim() ?? ""
+
+  if (!title) return ""
+  return title.length > DIRECT_TITLE_LIMIT
+    ? `${title.slice(0, DIRECT_TITLE_LIMIT - 1)}…`
+    : title
+}
+
+function normalizedTitleText(value: string): string {
+  return value.replace(/[\p{P}\p{S}\s]+/gu, "").toLocaleLowerCase()
+}
+
+function titleRepeatsUserMessage(title: string, userContent: string): boolean {
+  const normalizedTitle = normalizedTitleText(title)
+  if (!normalizedTitle) return true
+
+  return [userContent, sanitizeDirectChatTitle(userContent)]
+    .map(normalizedTitleText)
+    .some((candidate) => candidate === normalizedTitle)
+}
+
+async function generateDirectChatTitle({
+  userContent,
+  assistantContent,
+  model,
+  provider,
+  onBaseUrlResolved,
+}: {
+  userContent: string
+  assistantContent: string
+  model: string
+  provider: AiProvider
+  onBaseUrlResolved: (baseUrl: string) => void
+}): Promise<string> {
+  const result = await requestAiChatCompletion({
+    baseUrl: provider.baseUrl,
+    apiKey: provider.apiKey,
+    model,
+    messages: [
+      {
+        role: "system",
+        content:
+          "你是对话标题生成器。请根据用户与 PR助手 的对话生成一个简洁、准确的标题。只输出标题，不要解释、引号、Markdown 或“标题”前缀；中文最多 18 个汉字，英文最多 8 个单词。",
+      },
+      {
+        role: "user",
+        content: `用户：${titleContext(userContent)}\nPR助手：${titleContext(assistantContent)}`,
+      },
+    ],
+    onContent: () => undefined,
+    onBaseUrlResolved,
+    stream: false,
+  })
+
+  return sanitizeDirectChatTitle(result)
 }
 
 function updateMessage(
@@ -188,6 +297,8 @@ export const useChatStore = create<ChatState>()(
       error: null,
       directChats: [],
       activeDirectChatId: null,
+      directChatSending: {},
+      directChatTitleGenerating: {},
 
       loadChats: async () => {
         set({ isLoading: true, error: null })
@@ -309,28 +420,31 @@ export const useChatStore = create<ChatState>()(
         const chat = get().directChats.find((item) => item.id === id)
         if (!chat) return
         const messages = normalizeDirectMessages(chat.messages)
-        set((state) => ({
+        set({
           activeDirectChatId: chat.id,
           activeChat: null,
           messages,
           error: null,
-          directChats: updateDirectChat(state.directChats, chat.id, messages),
-        }))
+        })
       },
+
+      updateDirectChatConfig: (id, config) =>
+        set((state) => ({
+          directChats: updateDirectChatConfig(state.directChats, id, config),
+        })),
 
       // Direct provider API — streaming chat completions
       sendDirect: async (content: string, model: string, provider: AiProvider) => {
         let directChatId = get().activeDirectChatId
         const currentDirectChat = get().directChats.find((chat) => chat.id === directChatId)
-        if (
-          !directChatId ||
-          !currentDirectChat ||
-          (currentDirectChat.providerId && currentDirectChat.providerId !== provider.id)
-        ) {
+        if (!directChatId || !currentDirectChat) {
           directChatId = get().startDirectChat(model, provider.id)
         }
+        const targetChatId = directChatId
+        if (get().directChatSending[targetChatId]) return
 
-        const previousMessages = normalizeDirectMessages(get().messages).filter(
+        const targetChat = get().directChats.find((chat) => chat.id === targetChatId)
+        const previousMessages = normalizeDirectMessages(targetChat?.messages ?? []).filter(
           (message) => message.content.trim() && message.status !== "error",
         )
         const userMessage: ChatMessageItem = {
@@ -347,19 +461,22 @@ export const useChatStore = create<ChatState>()(
           status: "thinking",
         }
         set((state) => {
+          const currentChat = state.directChats.find((chat) => chat.id === targetChatId)
           const messages = [
-            ...normalizeDirectMessages(state.messages),
+            ...normalizeDirectMessages(currentChat?.messages ?? []),
             userMessage,
             assistantMessage,
           ]
           return {
-            messages,
-            isSending: true,
-            error: null,
-            directChats: updateDirectChat(state.directChats, directChatId, messages, {
+            messages: state.activeDirectChatId === targetChatId ? messages : state.messages,
+            directChatSending: {
+              ...state.directChatSending,
+              [targetChatId]: true,
+            },
+            error: state.activeDirectChatId === targetChatId ? null : state.error,
+            directChats: updateDirectChat(state.directChats, targetChatId, messages, {
               model,
               providerId: provider.id,
-              firstMessage: content,
             }),
           }
         })
@@ -368,6 +485,8 @@ export const useChatStore = create<ChatState>()(
           role: message.role,
           content: message.content,
         }))
+        let completedAssistantContent = ""
+        let resolvedBaseUrl = normalizeProviderBaseUrl(provider.baseUrl)
         try {
           const assistantContent = await requestAiChatCompletion({
             baseUrl: provider.baseUrl,
@@ -377,7 +496,7 @@ export const useChatStore = create<ChatState>()(
             onContent: (nextContent) => {
               set((state) => ({
                 messages:
-                  state.activeDirectChatId === directChatId
+                  state.activeDirectChatId === targetChatId
                     ? updateMessage(state.messages, assistantMessage.id, {
                         content: nextContent,
                         status: "streaming",
@@ -386,7 +505,7 @@ export const useChatStore = create<ChatState>()(
                     : state.messages,
                 directChats: updateDirectChatMessage(
                   state.directChats,
-                  directChatId,
+                  targetChatId,
                   assistantMessage.id,
                   {
                     content: nextContent,
@@ -396,18 +515,19 @@ export const useChatStore = create<ChatState>()(
                 ),
               }))
             },
-            onBaseUrlResolved: (resolvedBaseUrl) => {
-              if (resolvedBaseUrl !== normalizeProviderBaseUrl(provider.baseUrl)) {
-                usePreferencesStore.getState().updateProvider(provider.id, {
-                  baseUrl: resolvedBaseUrl,
-                })
-              }
+            onBaseUrlResolved: (nextBaseUrl) => {
+              resolvedBaseUrl = normalizeProviderBaseUrl(nextBaseUrl)
+              updateDirectChatProviderBaseUrl(
+                provider.id,
+                resolvedBaseUrl,
+              )
             },
           })
+          completedAssistantContent = assistantContent
 
           set((state) => ({
             messages:
-              state.activeDirectChatId === directChatId
+              state.activeDirectChatId === targetChatId
                 ? updateMessage(state.messages, assistantMessage.id, {
                     content: assistantContent,
                     status: "complete",
@@ -416,7 +536,7 @@ export const useChatStore = create<ChatState>()(
                 : state.messages,
             directChats: updateDirectChatMessage(
               state.directChats,
-              directChatId,
+              targetChatId,
               assistantMessage.id,
               {
                 content: assistantContent,
@@ -434,20 +554,67 @@ export const useChatStore = create<ChatState>()(
             }
             return {
               messages:
-                state.activeDirectChatId === directChatId
+                state.activeDirectChatId === targetChatId
                   ? updateMessage(state.messages, assistantMessage.id, patch)
                   : state.messages,
               directChats: updateDirectChatMessage(
                 state.directChats,
-                directChatId,
+                targetChatId,
                 assistantMessage.id,
                 patch,
               ),
-              error: errorMessage,
+              error: state.activeDirectChatId === targetChatId ? errorMessage : state.error,
             }
           })
         } finally {
-          set({ isSending: false })
+          set((state) => ({
+            directChatSending: withoutRecordKey(state.directChatSending, targetChatId),
+          }))
+        }
+
+        const chat = get().directChats.find((item) => item.id === targetChatId)
+        if (
+          !completedAssistantContent ||
+          !chat ||
+          chat.title !== DEFAULT_DIRECT_TITLE ||
+          get().directChatTitleGenerating[targetChatId]
+        ) {
+          return
+        }
+
+        set((state) => ({
+          directChatTitleGenerating: {
+            ...state.directChatTitleGenerating,
+            [targetChatId]: true,
+          },
+        }))
+        try {
+          const title = await generateDirectChatTitle({
+            userContent: content,
+            assistantContent: completedAssistantContent,
+            model,
+            provider: { ...provider, baseUrl: resolvedBaseUrl },
+            onBaseUrlResolved: (nextBaseUrl) => {
+              updateDirectChatProviderBaseUrl(
+                provider.id,
+                normalizeProviderBaseUrl(nextBaseUrl),
+              )
+            },
+          })
+          if (title && !titleRepeatsUserMessage(title, content)) {
+            set((state) => ({
+              directChats: updateDirectChatTitle(state.directChats, targetChatId, title),
+            }))
+          }
+        } catch {
+          // A failed title request must not turn a successful answer into an error.
+        } finally {
+          set((state) => ({
+            directChatTitleGenerating: withoutRecordKey(
+              state.directChatTitleGenerating,
+              targetChatId,
+            ),
+          }))
         }
       },
 
@@ -499,6 +666,8 @@ export const useChatStore = create<ChatState>()(
             ? activeDirectChat.messages
             : normalizeDirectMessages(persisted.messages ?? currentState.messages, true),
           isSending: false,
+          directChatSending: {},
+          directChatTitleGenerating: {},
           error: null,
         }
       },
