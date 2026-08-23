@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import { Plus, Trash2, Check, Loader2, Eye, EyeOff, Wifi, Pencil, X, Bot } from "lucide-react"
+import { Plus, Trash2, Check, Loader2, Eye, EyeOff, Wifi, Pencil, Bot } from "lucide-react"
 import { usePreferencesStore } from "@/stores/preferences-store"
 import type { AiProvider } from "@/stores/preferences-store"
+import { testAiProviderConnection } from "@/lib/ai-provider"
 import { cn } from "@/lib/utils"
 
 interface ProviderFormData {
@@ -92,42 +93,11 @@ export function AiConfigTab() {
       setTesting(id)
       setTestResult(null)
       try {
-        const baseUrl = provider.baseUrl.replace(/\/+$/, "")
-        const res = await fetch(`${baseUrl}/models`, {
-          headers: {
-            Authorization: `Bearer ${provider.apiKey}`,
-          },
-        })
-        if (res.ok) {
-          const data = await res.json()
-          const modelIds = (data.data || data).map((m: { id: string }) => m.id)
-          if (modelIds.length > 0) {
-            updateProvider(id, { models: modelIds })
-          }
-          setTestResult({ id, ok: true, message: `测试成功，获取到 ${modelIds.length} 个模型` })
-        } else {
-          const err = await res.text()
-          // If /models fails, try /chat/completions with a trivial request
-          const res2 = await fetch(`${baseUrl}/chat/completions`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${provider.apiKey}`,
-            },
-            body: JSON.stringify({
-              model: provider.models[0] || "gpt-4o-mini",
-              messages: [{ role: "user", content: "hi" }],
-              max_tokens: 1,
-            }),
-          })
-          if (res2.ok) {
-            setTestResult({ id, ok: true, message: "连接成功（/models 不可用，但 chat 接口正常）" })
-          } else {
-            setTestResult({ id, ok: false, message: `连接失败: ${err.slice(0, 100)}` })
-          }
-        }
+        const result = await testAiProviderConnection(provider)
+        if (result.models?.length) updateProvider(id, { models: result.models })
+        setTestResult({ id, ok: result.ok, message: result.message })
       } catch (e) {
-        setTestResult({ id, ok: false, message: `连接失败: ${(e as Error).message}` })
+        setTestResult({ id, ok: false, message: `连接失败：${(e as Error).message}` })
       } finally {
         setTesting(null)
       }
@@ -210,7 +180,7 @@ export function AiConfigTab() {
               {testResult?.id === p.id && (
                 <p
                   className={cn(
-                    "text-xs mt-2",
+                    "text-xs mt-2 break-words",
                     testResult.ok ? "text-green-600" : "text-red-500",
                   )}
                 >

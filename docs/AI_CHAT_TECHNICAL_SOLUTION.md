@@ -100,7 +100,19 @@ Provider 的 Base URL 只去掉末尾斜杠，然后追加 `/chat/completions`�
 - Provider 状态同时使用图标和文本，不依赖颜色表达错误。
 - 图片粘贴能力保留，但语音输入不在 v0.1.11 中实现。
 
-## 8. 后续扩展边界
+## 8. Provider 连接测试
+
+Provider 配置页的“测试连接”必须验证与实际对话相同的请求协议：
+
+1. Base URL 去除末尾斜杠；如果用户粘贴了 `/models` 或 `/chat/completions` 完整地址，先去除该 endpoint。
+2. 已填写模型时直接向 `/chat/completions` 发送短的流式请求，验证认证、模型和对话接口是否可用。
+3. 未填写模型时才请求 `/models` 进行模型发现；发现成功后用第一个模型继续测试 chat。
+4. `/models` 不是必需能力，不能因为它不可用就否定一个实际可对话的 Provider；但没有任何可测试模型时必须提示用户填写模型。
+5. HTTP 错误只展示状态码和解析后的安全错误摘要；API Key、Bearer 值和敏感文本必须脱敏。
+
+连接测试直接在浏览器请求用户配置的 Provider，因此仍受 Provider CORS、HTTPS Mixed Content 和浏览器网络策略影响；请求不经过 PaperReader 后端。
+
+## 9. 后续扩展边界
 
 如果未来要把本地历史改为服务端历史，需要新增明确的数据协议和安全方案，而不是直接调用现有 `/api/ai-chats`：
 
