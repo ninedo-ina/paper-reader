@@ -3,7 +3,16 @@ import { persist } from "zustand/middleware"
 import type { AiChatListDto, AiChatDetailDto } from "@/lib/api/types"
 import { listChats, getChat, createChat, sendMessage, deleteChat } from "@/lib/api/ai-chats"
 import type { AiProvider } from "@/stores/preferences-store"
-import { buildProviderHeaders, normalizeProviderBaseUrl } from "@/lib/ai-provider"
+import { consumeAiChatResponse } from "@/lib/ai-chat-response"
+import {
+  buildProviderHeaders,
+  describeProviderHttpError,
+  describeProviderNetworkError,
+  normalizeProviderBaseUrl,
+  redactProviderErrorText,
+} from "@/lib/ai-provider"
+
+export type ChatMessageStatus = "thinking" | "streaming" | "complete" | "error"
 
 export interface ChatMessageItem {
   id: string
@@ -11,6 +20,8 @@ export interface ChatMessageItem {
   content: string
   images?: string[]
   createdAt: string
+  status?: ChatMessageStatus
+  statusMessage?: string
 }
 
 /**
@@ -111,6 +122,59 @@ function updateDirectChat(
       updatedAt: new Date().toISOString(),
     }
   })
+}
+
+function updateMessage(
+  messages: ChatMessageItem[],
+  messageId: string,
+  patch: Partial<ChatMessageItem>,
+): ChatMessageItem[] {
+  return messages.map((message) =>
+    message.id === messageId ? { ...message, ...patch } : message,
+  )
+}
+
+function updateDirectChatMessage(
+  chats: DirectChat[],
+  chatId: string,
+  messageId: string,
+  patch: Partial<ChatMessageItem>,
+): DirectChat[] {
+  return chats.map((chat) => {
+    if (chat.id !== chatId) return chat
+    return {
+      ...chat,
+      messages: updateMessage(chat.messages, messageId, patch),
+      updatedAt: new Date().toISOString(),
+    }
+  })
+}
+
+function normalizeDirectMessages(
+  messages: ChatMessageItem[],
+  recoverInterrupted = false,
+): ChatMessageItem[] {
+  return messages.flatMap((message) => {
+    if (message.role !== "assistant") return [message]
+
+    if (message.status === "thinking" || message.status === "streaming") {
+      if (!recoverInterrupted) return [message]
+      return [{
+        ...message,
+        status: "error" as const,
+        statusMessage: "上一次回复在页面关闭前未完成，请重新发送",
+      }]
+    }
+
+    if (message.content.trim()) return [message]
+    if (message.status === "error" && message.statusMessage) return [message]
+    return []
+  })
+}
+
+function describeDirectChatError(error: unknown, apiKey: string): string {
+  const networkMessage = describeProviderNetworkError(error)
+  return redactProviderErrorText(networkMessage, apiKey) || "未知错误"
 }
 
 export const useChatStore = create<ChatState>()(
@@ -244,7 +308,14 @@ export const useChatStore = create<ChatState>()(
       selectDirectChat: (id) => {
         const chat = get().directChats.find((item) => item.id === id)
         if (!chat) return
-        set({ activeDirectChatId: chat.id, activeChat: null, messages: chat.messages, error: null })
+        const messages = normalizeDirectMessages(chat.messages)
+        set((state) => ({
+          activeDirectChatId: chat.id,
+          activeChat: null,
+          messages,
+          error: null,
+          directChats: updateDirectChat(state.directChats, chat.id, messages),
+        }))
       },
 
       // Direct provider API — streaming chat completions
@@ -259,15 +330,28 @@ export const useChatStore = create<ChatState>()(
           directChatId = get().startDirectChat(model, provider.id)
         }
 
-        const previousMessages = get().messages
+        const previousMessages = normalizeDirectMessages(get().messages).filter(
+          (message) => message.content.trim() && message.status !== "error",
+        )
         const userMessage: ChatMessageItem = {
           id: createId(),
           role: "user",
           content,
           createdAt: new Date().toISOString(),
         }
+        const assistantMessage: ChatMessageItem = {
+          id: createId(),
+          role: "assistant",
+          content: "",
+          createdAt: new Date().toISOString(),
+          status: "thinking",
+        }
         set((state) => {
-          const messages = [...state.messages, userMessage]
+          const messages = [
+            ...normalizeDirectMessages(state.messages),
+            userMessage,
+            assistantMessage,
+          ]
           return {
             messages,
             isSending: true,
@@ -294,73 +378,71 @@ export const useChatStore = create<ChatState>()(
           })
 
           if (!response.ok) {
-            const errorText = await response.text()
-            throw new Error(`API error ${response.status}: ${errorText}`)
+            throw new Error(await describeProviderHttpError(response, provider.apiKey))
           }
 
-          const reader = response.body?.getReader()
-          if (!reader) throw new Error("No response body")
-
-          const decoder = new TextDecoder()
-          let buffer = ""
-          let assistantContent = ""
-
-          set((state) => {
-            const messages = [
-              ...state.messages,
-              { id: createId(), role: "assistant" as const, content: "", createdAt: new Date().toISOString() },
-            ]
-            return {
-              messages,
-              directChats: updateDirectChat(state.directChats, directChatId, messages),
-            }
+          const assistantContent = await consumeAiChatResponse(response, (nextContent) => {
+            set((state) => ({
+              messages:
+                state.activeDirectChatId === directChatId
+                  ? updateMessage(state.messages, assistantMessage.id, {
+                      content: nextContent,
+                      status: "streaming",
+                      statusMessage: undefined,
+                    })
+                  : state.messages,
+              directChats: updateDirectChatMessage(
+                state.directChats,
+                directChatId,
+                assistantMessage.id,
+                {
+                  content: nextContent,
+                  status: "streaming",
+                  statusMessage: undefined,
+                },
+              ),
+            }))
           })
 
-          while (true) {
-            const { done, value } = await reader.read()
-            if (done) break
-
-            buffer += decoder.decode(value, { stream: true })
-            const lines = buffer.split("\n")
-            buffer = lines.pop() || ""
-
-            for (const line of lines) {
-              const trimmed = line.trim()
-              if (!trimmed || !trimmed.startsWith("data: ")) continue
-              const data = trimmed.slice(6)
-              if (data === "[DONE]") continue
-
-              try {
-                const json = JSON.parse(data)
-                const delta = json.choices?.[0]?.delta?.content
-                if (delta) {
-                  assistantContent += delta
-                  set((state) => {
-                    const messages = [...state.messages]
-                    const last = messages[messages.length - 1]
-                    if (last && last.role === "assistant") {
-                      messages[messages.length - 1] = { ...last, content: assistantContent }
-                    }
-                    return {
-                      messages,
-                      directChats: updateDirectChat(state.directChats, directChatId, messages),
-                    }
+          set((state) => ({
+            messages:
+              state.activeDirectChatId === directChatId
+                ? updateMessage(state.messages, assistantMessage.id, {
+                    content: assistantContent,
+                    status: "complete",
+                    statusMessage: undefined,
                   })
-                }
-              } catch {
-                // Ignore malformed SSE chunks and continue the stream.
-              }
-            }
-          }
+                : state.messages,
+            directChats: updateDirectChatMessage(
+              state.directChats,
+              directChatId,
+              assistantMessage.id,
+              {
+                content: assistantContent,
+                status: "complete",
+                statusMessage: undefined,
+              },
+            ),
+          }))
         } catch (e) {
+          const errorMessage = describeDirectChatError(e, provider.apiKey)
           set((state) => {
-            const messages = [...state.messages]
-            const last = messages[messages.length - 1]
-            if (last && last.role === "assistant" && !last.content) messages.pop()
+            const patch: Partial<ChatMessageItem> = {
+              status: "error",
+              statusMessage: `回复失败：${errorMessage}`,
+            }
             return {
-              messages,
-              directChats: updateDirectChat(state.directChats, directChatId, messages),
-              error: (e as Error).message,
+              messages:
+                state.activeDirectChatId === directChatId
+                  ? updateMessage(state.messages, assistantMessage.id, patch)
+                  : state.messages,
+              directChats: updateDirectChatMessage(
+                state.directChats,
+                directChatId,
+                assistantMessage.id,
+                patch,
+              ),
+              error: errorMessage,
             }
           })
         } finally {
@@ -398,6 +480,27 @@ export const useChatStore = create<ChatState>()(
     }),
     {
       name: "pr-ai-direct-chats",
+      merge: (persistedState, currentState) => {
+        const persisted = (persistedState ?? {}) as Partial<ChatState>
+        const directChats = (persisted.directChats ?? currentState.directChats).map((chat) => ({
+          ...chat,
+          messages: normalizeDirectMessages(chat.messages, true),
+        }))
+        const activeDirectChat = directChats.find(
+          (chat) => chat.id === persisted.activeDirectChatId,
+        )
+
+        return {
+          ...currentState,
+          ...persisted,
+          directChats,
+          messages: activeDirectChat
+            ? activeDirectChat.messages
+            : normalizeDirectMessages(persisted.messages ?? currentState.messages, true),
+          isSending: false,
+          error: null,
+        }
+      },
       partialize: (state) => ({
         directChats: state.directChats,
         activeDirectChatId: state.activeDirectChatId,

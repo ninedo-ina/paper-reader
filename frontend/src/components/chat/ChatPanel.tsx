@@ -21,11 +21,44 @@ interface ChatPanelProps {
   onConfigureProvider?: () => void
 }
 
+const THINKING_LABELS = ["思考中", "正在处理", "整理答案"] as const
+
+function ThinkingIndicator() {
+  const [labelIndex, setLabelIndex] = useState(0)
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setLabelIndex((index) => (index + 1) % THINKING_LABELS.length)
+    }, 1400)
+    return () => window.clearInterval(timer)
+  }, [])
+
+  return (
+    <div
+      className="flex min-w-[104px] items-center gap-2 text-xs text-[var(--text-secondary)]"
+      role="status"
+      aria-label="AI 正在处理"
+    >
+      <span className="inline-block min-w-[52px]" aria-hidden="true">
+        {THINKING_LABELS[labelIndex]}
+      </span>
+      <span className="flex items-center gap-1" aria-hidden="true">
+        {[0, 160, 320].map((delay) => (
+          <span
+            key={delay}
+            className="size-1.5 animate-bounce rounded-full bg-[var(--accent)]"
+            style={{ animationDelay: `${delay}ms` }}
+          />
+        ))}
+      </span>
+    </div>
+  )
+}
+
 export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
   const {
     messages,
     isSending,
-    error,
     directChats,
     activeDirectChatId,
     sendDirect,
@@ -275,15 +308,42 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
                 "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed",
                 message.role === "user"
                   ? "rounded-br-md bg-[var(--accent)] text-[var(--surface-1)]"
-                  : "rounded-bl-md bg-[var(--bg-hover)] text-[var(--text-primary)]",
+                  : message.status === "error"
+                    ? "rounded-bl-md border border-red-500/20 bg-red-500/5 text-[var(--text-primary)]"
+                    : "rounded-bl-md bg-[var(--bg-hover)] text-[var(--text-primary)]",
               )}
             >
               {message.role === "assistant" ? (
-                <MarkdownContent
-                  content={message.content}
-                  images={message.images}
-                  className="text-sm [&_pre]:rounded-md [&_pre]:bg-[var(--surface-2)]"
-                />
+                message.status === "thinking" && !message.content.trim() ? (
+                  <ThinkingIndicator />
+                ) : message.status === "error" ? (
+                  <div>
+                    {message.content.trim() && (
+                      <MarkdownContent
+                        content={message.content}
+                        images={message.images}
+                        className="text-sm [&_pre]:rounded-md [&_pre]:bg-[var(--surface-2)]"
+                      />
+                    )}
+                    <p
+                      className={cn(
+                        "whitespace-pre-wrap break-words text-xs text-red-600 dark:text-red-400",
+                        message.content.trim() && "mt-2 border-t border-red-500/15 pt-2",
+                      )}
+                      role="alert"
+                    >
+                      {message.statusMessage ?? "回复失败，请重新发送"}
+                    </p>
+                  </div>
+                ) : message.content.trim() ? (
+                  <MarkdownContent
+                    content={message.content}
+                    images={message.images}
+                    className="text-sm [&_pre]:rounded-md [&_pre]:bg-[var(--surface-2)]"
+                  />
+                ) : (
+                  <p className="text-xs text-[var(--text-tertiary)]">未收到可显示的回复</p>
+                )
               ) : (
                 <p className="whitespace-pre-wrap break-words">{message.content}</p>
               )}
@@ -295,21 +355,6 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
             )}
           </div>
         ))}
-        {isSending && (
-          <div className="flex justify-start gap-2.5">
-            <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--accent)]/10">
-              <Bot className="size-3.5 text-[var(--accent)]" />
-            </div>
-            <div className="rounded-2xl rounded-bl-md bg-[var(--bg-hover)] px-3.5 py-2.5">
-              <div className="flex gap-1">
-                {[0, 150, 300].map((delay) => (
-                  <span key={delay} className="size-2 animate-bounce rounded-full bg-[var(--text-tertiary)]" style={{ animationDelay: `${delay}ms` }} />
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-        {error && <p className="text-center text-xs text-red-500">{error}</p>}
         <div ref={messagesEndRef} />
       </div>
 
