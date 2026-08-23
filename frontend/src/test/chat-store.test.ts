@@ -87,5 +87,39 @@ describe("direct chat response lifecycle", () => {
     })
     expect(useChatStore.getState().messages.at(-1)?.statusMessage).toContain("HTTP 400")
     expect(useChatStore.getState().isSending).toBe(false)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it("keeps the thinking bubble and completes it with a non-streaming retry", async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response('data: {"choices":[{"finish_reason":"stop"}]}\n\ndata: [DONE]\n', {
+          headers: { "content-type": "text/event-stream" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ choices: [{ message: { content: "兜底回复" } }] }),
+          { headers: { "content-type": "application/json" } },
+        ),
+      )
+    vi.stubGlobal("fetch", fetchMock)
+
+    await useChatStore.getState().sendDirect("测试兜底", "test-model", provider)
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toMatchObject({
+      stream: true,
+    })
+    expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body))).toMatchObject({
+      stream: false,
+    })
+    expect(useChatStore.getState().messages.at(-1)).toMatchObject({
+      role: "assistant",
+      content: "兜底回复",
+      status: "complete",
+    })
+    expect(useChatStore.getState().isSending).toBe(false)
   })
 })

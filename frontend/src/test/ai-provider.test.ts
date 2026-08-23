@@ -3,6 +3,7 @@ import {
   buildProviderHeaders,
   extractModelIds,
   normalizeProviderBaseUrl,
+  requestAiChatCompletion,
   testAiProviderConnection,
 } from "@/lib/ai-provider"
 
@@ -36,7 +37,10 @@ describe("extractModelIds", () => {
 describe("testAiProviderConnection", () => {
   it("tests chat directly when a model is already configured", async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response(JSON.stringify({ choices: [] }), { status: 200 }),
+      new Response(
+        'data: {"choices":[{"delta":{"content":"OK"}}]}\n\ndata: [DONE]\n',
+        { status: 200, headers: { "content-type": "text/event-stream" } },
+      ),
     )
 
     const result = await testAiProviderConnection(
@@ -63,7 +67,12 @@ describe("testAiProviderConnection", () => {
       .mockResolvedValueOnce(
         new Response(JSON.stringify({ data: [{ id: "discovered-model" }] }), { status: 200 }),
       )
-      .mockResolvedValueOnce(new Response(JSON.stringify({ choices: [] }), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ choices: [{ message: { content: "OK" } }] }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
 
     const result = await testAiProviderConnection(
       {
@@ -104,6 +113,7 @@ describe("testAiProviderConnection", () => {
     expect(result.message).toContain("对话接口测试失败")
     expect(result.message).toContain("HTTP 400")
     expect(result.message).not.toContain(apiKey)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
   it("does not guess gpt-4o-mini when model discovery fails", async () => {
@@ -122,6 +132,72 @@ describe("testAiProviderConnection", () => {
 
     expect(result.ok).toBe(false)
     expect(result.message).toContain("请先手动填写一个该 Provider 支持的模型")
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("requestAiChatCompletion", () => {
+  it("retries once without streaming when a successful stream has no text", async () => {
+    const updates: string[] = []
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response('data: {"choices":[{"finish_reason":"stop"}]}\n\ndata: [DONE]\n', {
+          status: 200,
+          headers: { "content-type": "text/event-stream" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: { choices: [{ message: { content: "非流式兜底成功" } }] },
+          }),
+          {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          },
+        ),
+      )
+
+    await expect(
+      requestAiChatCompletion({
+        baseUrl: "https://provider.example/v1",
+        apiKey: "secret-key",
+        model: "working-model",
+        messages: [{ role: "user", content: "测试" }],
+        onContent: (content) => updates.push(content),
+        fetchImpl: fetchMock,
+      }),
+    ).resolves.toBe("非流式兜底成功")
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toMatchObject({
+      stream: true,
+    })
+    expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body))).toMatchObject({
+      stream: false,
+    })
+    expect(updates).toEqual(["非流式兜底成功"])
+  })
+
+  it("does not retry an HTTP failure", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ error: { message: "unauthorized" } }), {
+        status: 401,
+        headers: { "content-type": "application/json" },
+      }),
+    )
+
+    await expect(
+      requestAiChatCompletion({
+        baseUrl: "https://provider.example/v1",
+        apiKey: "secret-key",
+        model: "working-model",
+        messages: [{ role: "user", content: "测试" }],
+        onContent: () => undefined,
+        fetchImpl: fetchMock,
+      }),
+    ).rejects.toThrow("HTTP 401")
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 })

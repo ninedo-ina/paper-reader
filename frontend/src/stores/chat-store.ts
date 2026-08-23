@@ -3,13 +3,10 @@ import { persist } from "zustand/middleware"
 import type { AiChatListDto, AiChatDetailDto } from "@/lib/api/types"
 import { listChats, getChat, createChat, sendMessage, deleteChat } from "@/lib/api/ai-chats"
 import type { AiProvider } from "@/stores/preferences-store"
-import { consumeAiChatResponse } from "@/lib/ai-chat-response"
 import {
-  buildProviderHeaders,
-  describeProviderHttpError,
   describeProviderNetworkError,
-  normalizeProviderBaseUrl,
   redactProviderErrorText,
+  requestAiChatCompletion,
 } from "@/lib/ai-provider"
 
 export type ChatMessageStatus = "thinking" | "streaming" | "complete" | "error"
@@ -368,40 +365,34 @@ export const useChatStore = create<ChatState>()(
           role: message.role,
           content: message.content,
         }))
-        const baseUrl = normalizeProviderBaseUrl(provider.baseUrl)
-
         try {
-          const response = await fetch(`${baseUrl}/chat/completions`, {
-            method: "POST",
-            headers: buildProviderHeaders(provider.apiKey, true),
-            body: JSON.stringify({ model, messages: apiMessages, stream: true }),
-          })
-
-          if (!response.ok) {
-            throw new Error(await describeProviderHttpError(response, provider.apiKey))
-          }
-
-          const assistantContent = await consumeAiChatResponse(response, (nextContent) => {
-            set((state) => ({
-              messages:
-                state.activeDirectChatId === directChatId
-                  ? updateMessage(state.messages, assistantMessage.id, {
-                      content: nextContent,
-                      status: "streaming",
-                      statusMessage: undefined,
-                    })
-                  : state.messages,
-              directChats: updateDirectChatMessage(
-                state.directChats,
-                directChatId,
-                assistantMessage.id,
-                {
-                  content: nextContent,
-                  status: "streaming",
-                  statusMessage: undefined,
-                },
-              ),
-            }))
+          const assistantContent = await requestAiChatCompletion({
+            baseUrl: provider.baseUrl,
+            apiKey: provider.apiKey,
+            model,
+            messages: apiMessages,
+            onContent: (nextContent) => {
+              set((state) => ({
+                messages:
+                  state.activeDirectChatId === directChatId
+                    ? updateMessage(state.messages, assistantMessage.id, {
+                        content: nextContent,
+                        status: "streaming",
+                        statusMessage: undefined,
+                      })
+                    : state.messages,
+                directChats: updateDirectChatMessage(
+                  state.directChats,
+                  directChatId,
+                  assistantMessage.id,
+                  {
+                    content: nextContent,
+                    status: "streaming",
+                    statusMessage: undefined,
+                  },
+                ),
+              }))
+            },
           })
 
           set((state) => ({
