@@ -39,11 +39,15 @@ class AuthServiceTest {
     @MockK
     private lateinit var restTemplate: RestTemplate
 
+    @MockK(relaxed = true)
+    private lateinit var auditLogService: AuditLogService
+
     private val objectMapper = ObjectMapper()
 
     private fun createService() = AuthService(
         userRepository, passwordEncoder, jwtUtil,
         redisTemplate, restTemplate, objectMapper,
+        auditLogService,
         "test-client-id", "test-client-secret", "test@test.local",
     )
 
@@ -91,12 +95,20 @@ class AuthServiceTest {
     }
 
     @Test
-    fun `login should throw for invalid email`() {
-        every { userRepository.findByEmail("bad@example.com") } returns Optional.empty()
+    fun `login should create a local account for an unknown email`() {
+        val request = LoginRequest("new@example.com", "password123")
+        val newUser = User(id = 3, email = request.email, passwordHash = "hashed", authProvider = "local")
 
-        assertThrows<IllegalArgumentException> {
-            createService().login(LoginRequest("bad@example.com", "pass"))
-        }
+        every { userRepository.findByEmail(request.email) } returns Optional.empty()
+        every { passwordEncoder.encode(request.password) } returns "hashed"
+        every { userRepository.save(any()) } returns newUser
+        every { jwtUtil.generateAccessToken(3, request.email) } returns "access-token"
+        every { jwtUtil.generateRefreshToken(3, request.email) } returns "refresh-token"
+
+        val result = createService().login(request)
+
+        assertEquals("access-token", result.accessToken)
+        assertEquals(true, result.isNewUser)
     }
 
     @Test

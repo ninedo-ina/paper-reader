@@ -1,5 +1,17 @@
 # AI 对话技术方案
 
+## v0.1.18 会话增强摘要
+
+`v0.1.18` 在现有右侧 AI 对话流程上增加以下约束：
+
+- 用户消息使用 `useUserStore.profile.avatarUrl`，无头像时显示用户首字母；助手保留 Bot 图标并显示 `PR助手`。
+- `DirectChat.providerId` 和 `DirectChat.model` 是会话字段，不受其他历史会话选择影响。新会话继承当前配置，历史切换恢复原配置。
+- 首次正文成功后，以同一会话 Provider/模型发送一次 `stream: false` 标题请求；标题清理前缀、引号和长度，并拒绝原样复述用户问题。
+- 历史项展示 `createdAt` 与 `updatedAt`，其中 `updatedAt` 表示最近一次消息变化，不因单纯切换或改配置而更新。
+- `directChatSending` 与 `directChatTitleGenerating` 均按会话 ID 管理；会话 A 等待时，会话 B 仍可发送，所有异步更新使用目标会话 ID。
+
+完整的版本记录、风险与验证要求见 [docs/MAINTENANCE.md](MAINTENANCE.md) 的 `v0.1.18` 条目。
+
 ## 1. 范围
 
 本方案对应 v0.1.11 的 C 端右侧 AI 对话 Tab。目标是把配置、模型、历史和输入组织成接近现代 AI 产品的 composer 流程；语音输入不在本次范围内。

@@ -134,12 +134,14 @@ NEXT_PUBLIC_ENABLE_AI_CHAT=true
 ```bash
 # 后端 (Gradle)
 cd /root/paper-reader/backend
-./gradlew bootJar -x test
-# 产物: build/libs/paper-reader-backend-0.1.8.jar
+./gradlew clean test bootJar
+BACKEND_VERSION="$(tr -d '\r\n' < VERSION)"
+# 产物: build/libs/paper-reader-backend-${BACKEND_VERSION}.jar
+test -f "build/libs/paper-reader-backend-${BACKEND_VERSION}.jar"
 
 # 前端 (Next.js)
 cd /root/paper-reader/frontend
-npm run build
+pnpm run build
 # 产物: .next/ (生产构建)
 ```
 
@@ -152,9 +154,13 @@ npm run build
 ```bash
 # 后端
 cd /root/paper-reader/backend
+BACKEND_VERSION="$(tr -d '\r\n' < VERSION)"
+set -a
+. ./.env
+set +a
 pm2 start --name paper-reader-backend \
   --cwd /root/paper-reader/backend \
-  java -- -jar build/libs/paper-reader-backend-0.1.8.jar
+  java -- -jar "/root/paper-reader/backend/build/libs/paper-reader-backend-${BACKEND_VERSION}.jar"
 
 # 前端
 cd /root/paper-reader/frontend
@@ -169,21 +175,24 @@ pm2 save
 
 ```bash
 # 1. 构建
-cd /root/paper-reader/backend && ./gradlew bootJar -x test
-cd /root/paper-reader/frontend && npm run build
+cd /root/paper-reader/backend && ./gradlew clean test bootJar
+BACKEND_VERSION="$(tr -d '\r\n' < VERSION)"
+test -f "build/libs/paper-reader-backend-${BACKEND_VERSION}.jar"
+cd /root/paper-reader/frontend && pnpm run build
 
-# 2. 杀掉旧进程（关键！）
-pm2 stop paper-reader-frontend paper-reader-backend
-fuser -k 3001/tcp || true
-fuser -k 8080/tcp || true
+# 2. 后端 JAR 带版本号；仅 restart 会继续加载旧路径，所以定向重建后端 PM2 项
+cd /root/paper-reader/backend
+set -a
+. ./.env
+set +a
+pm2 delete paper-reader-backend
+pm2 start --name paper-reader-backend \
+  --cwd /root/paper-reader/backend \
+  java -- -jar "/root/paper-reader/backend/build/libs/paper-reader-backend-${BACKEND_VERSION}.jar"
 
-# 3. 确认端口已释放
-ss -tlnp | grep -E '3001|8080'
-# 预期：空输出
-
-# 4. 重启
-pm2 restart paper-reader-backend --update-env
+# 3. 前端加载刚生成的 .next 产物
 pm2 restart paper-reader-frontend --update-env
+pm2 save
 ```
 
 ---
@@ -220,13 +229,18 @@ vim /root/paper-reader/backend/.env
 vim /root/paper-reader/frontend/.env.local
 
 # 3. 构建
-cd /root/paper-reader/backend && ./gradlew bootJar -x test
-cd /root/paper-reader/frontend && npm run build
+cd /root/paper-reader/backend && ./gradlew clean test bootJar
+BACKEND_VERSION="$(tr -d '\r\n' < VERSION)"
+test -f "build/libs/paper-reader-backend-${BACKEND_VERSION}.jar"
+cd /root/paper-reader/frontend && pnpm run build
 
 # 4. 启动
 cd /root/paper-reader/backend
+set -a
+. ./.env
+set +a
 pm2 start --name paper-reader-backend java -- \
-  -jar build/libs/paper-reader-backend-0.1.8.jar
+  -jar "/root/paper-reader/backend/build/libs/paper-reader-backend-${BACKEND_VERSION}.jar"
 
 cd /root/paper-reader/frontend
 pm2 start --name paper-reader-frontend npx -- next start -p 3001
@@ -245,18 +259,17 @@ ss -tlnp | grep -E '3001|8080'
 ### 端口被占用
 
 ```bash
-# 查占用
+# 先查精确占用者，再通过对应的 PM2 项或容器处理
 ss -tlnp | grep -E '3001|8080|5432|6379|8400|8070'
-# 强杀
-fuser -k <PORT>/tcp
+pm2 status
 ```
 
 ### PM2 进程僵死
 
 ```bash
-pm2 delete paper-reader-frontend paper-reader-backend
-pm2 save --force
-# 重新 pm2 start（见第四步首次配置）
+pm2 show <准确的进程名>
+pm2 logs <准确的进程名> --lines 100 --nostream
+# 只重建确认有问题的 PM2 项，然后执行 pm2 save
 ```
 
 ### GROBID 不可用

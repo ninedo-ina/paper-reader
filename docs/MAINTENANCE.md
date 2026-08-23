@@ -80,6 +80,9 @@ feature/v主版本.次版本.修订版本
    pnpm exec tsc --noEmit
    pnpm test
    pnpm run build
+
+   cd ../backend
+   ./gradlew clean test bootJar
    ```
 
 8. 对前端生产进程执行构建、重启和保存：
@@ -90,6 +93,8 @@ feature/v主版本.次版本.修订版本
    pm2 restart paper-reader-frontend --update-env
    pm2 save
    ```
+
+   后端版本变化时，JAR 文件名也会变化。不能只执行 `pm2 restart paper-reader-backend`，因为 PM2 会保留旧的 JAR 参数；应按 `docs/DEPLOY.md` 定向重建该 PM2 项，并确认 `pm2 show paper-reader-backend` 指向当前版本 JAR。
 
 9. 检查本机进程、页面状态码、静态资源状态码和公网域名；需要时检查 Apache、Cloudflare 缓存头和 PM2 日志。
 10. 查看 `git diff --check`、`git status` 和最终 diff，提交清晰的 commit，然后推送当前版本分支。
@@ -221,3 +226,35 @@ v0.1.15-fix 上线后，用户使用浏览器中已配置的 Provider 发送消�
 ### 后续风险
 
 并非所有 Provider 都使用 `/v1`，且某些服务会将 404 用于“模型不存在”等业务错误。客户端只在首个候选地址上做一次有限回退；如果 `/v1` 仍不可用，仍需在偏好设置中填写服务商文档给出的准确 API 根路径。浏览器跨域、TLS、网关鉴权和服务商限流问题不会由该回退机制解决。
+
+## 12. v0.1.18 AI 会话身份、配置、标题与并发增强
+
+### 迭代性质
+
+本次是产品功能需求，不是线上 bug 修复，因此版本从 `0.1.17-fix` 递增为 `0.1.18`，版本分支使用 `feature/v0.1.18`，不追加 `-fix`。
+
+### 需求
+
+- 用户消息显示当前登录用户头像，助手保留 Bot 图标并显示昵称 `PR助手`。
+- 每个本地历史会话独立保存 Provider 和模型，新会话继承前一个会话的选择。
+- 切回历史会话时恢复该会话原有配置，不影响其他会话。
+- 标题由 AI 根据用户问题和助手回复总结，不能直接复制用户问题。
+- 历史列表显示创建时间和最后对话时间。
+- 一个会话等待回复时，其他没有请求的会话仍可发送。
+
+### 实现
+
+- `DirectChat.providerId` 和 `DirectChat.model` 继续作为会话持久化字段，新增 `updateDirectChatConfig` 只修改指定会话。
+- `ChatPanel` 的 Provider/模型选择器以当前会话为数据源；新建与历史切换分别执行继承和恢复。
+- 用户头像读取 `useUserStore.profile`，无头像时使用名称首字母；助手所有状态统一显示 `PR助手`。
+- 移除首条问题直接生成标题的逻辑。首次成功回复后，以同一 Provider/模型发起一次 `stream: false` 请求生成标题，清理前缀、引号和超长文本，并拒绝与用户问题相同的结果。
+- 新增 `directChatSending` 和 `directChatTitleGenerating` 两组按会话 ID 管理的运行时状态。所有异步回调捕获目标会话 ID，因此跨会话请求不会串线。
+- 历史按 `updatedAt` 排序，显示 `createdAt`、`updatedAt`、Provider、模型和各自的回复中状态。
+- 持久化恢复时清空运行时状态，遗留中的助手占位消息沿既有规则恢复为中断错误。
+
+### 验证与回归要求
+
+- 自动化测试必须覆盖标题请求、拒绝问题原文标题、配置隔离、并发会话、头像、助手昵称、时间字段和新会话继承。
+- 标题生成会增加一次 Provider 请求，可能增加费用和限流占用；失败不能影响正文回复。
+- 删除 Provider 后历史仍可能保留旧 ID；历史可读，但再次发送前必须重新绑定现存 Provider。
+- 后续维护不得重新使用全局 `isSending` 禁用所有直连会话，也不得在异步回调中直接把结果写入当时的当前会话。

@@ -8,8 +8,8 @@ The repository contains the C-side product and its API. The administration conso
 
 - Default branch: `main`
 - Integration branch: `dev`
-- Active version branch: `feature/v0.1.17-fix`
-- Client version: `0.1.17-fix`
+- Active version branch: `feature/v0.1.18`
+- Client version: `0.1.18`
 - Default locale: Chinese (`zh`)
 - Supported locales: Chinese (`zh`) and English (`en`)
 - Production client: `https://paper.pilo.eu.cc`
@@ -86,7 +86,10 @@ paper-reader/
 - Highlight, underline, strikethrough, and note annotations with page/text anchors.
 - Annotation comments and editable notes with Markdown and image support.
 - AI chat for paper questions, summaries, explanations, and translation when a model is configured.
-- The reader AI panel supports direct OpenAI-compatible Providers, a Provider warning/configuration path, browser-persisted conversation history, an icon-only new-chat action, and an in-composer model selector.
+- The reader AI panel supports direct OpenAI-compatible Providers, a Provider warning/configuration path, browser-persisted conversation history, an icon-only new-chat action, and in-composer Provider/model selectors.
+- Each local conversation stores its own Provider and model. A new conversation inherits the previous conversation's selection, while returning to an existing conversation restores its original selection.
+- User messages use the signed-in user's avatar, assistant messages are labeled `PR助手`, and the first conversation title is generated from the user/assistant exchange rather than copied from the question.
+- History entries show both creation time and the time of the latest conversation. A response waiting in one conversation does not block sending in another conversation.
 - Direct Provider chat validates displayable response text. It supports common OpenAI, Responses API, Gemini, DashScope, Spark, AI SDK data-stream, NDJSON, wrapped and semantically named response fields. If a successful streaming response contains no readable text, the client makes one `stream: false` compatibility retry before showing a value-free response-structure diagnostic.
 - Research forum, topics, posts, comments, likes, favorites, follows, private messages, and groups.
 - Notification center, release feature popup, language switching, and light/dark themes.
@@ -242,10 +245,20 @@ pm2 save
 
 ```bash
 cd /root/paper-reader/backend
-./gradlew bootJar -x test
-pm2 restart paper-reader-backend --update-env
+./gradlew clean test bootJar
+BACKEND_VERSION="$(tr -d '\r\n' < VERSION)"
+test -f "build/libs/paper-reader-backend-${BACKEND_VERSION}.jar"
+set -a
+. ./.env
+set +a
+pm2 delete paper-reader-backend
+pm2 start --name paper-reader-backend \
+  --cwd /root/paper-reader/backend \
+  java -- -jar "/root/paper-reader/backend/build/libs/paper-reader-backend-${BACKEND_VERSION}.jar"
 pm2 save
 ```
+
+The backend artifact filename is versioned. A plain `pm2 restart paper-reader-backend` preserves the old JAR argument, so recreate that one PM2 entry whenever the backend version changes and verify the new `script args` afterward.
 
 ### Verify the running deployment
 
@@ -324,7 +337,7 @@ The project uses a release-style branch and client version for every code iterat
 - Bug-fix iterations append `-fix` to the repaired version, for example `0.1.12-fix`, with a matching branch such as `feature/v0.1.12-fix`.
 - A minor release (`0.1.x` → `0.2.0`) or major release (`0.x.y` → `1.0.0`) is created only when the product owner explicitly requests it.
 - Keep every version branch after merging; it is part of the release and rollback history.
-- Keep the active version branch (`feature/v0.1.17-fix`), `frontend/package.json`, `frontend/VERSION`, `backend/VERSION`, README release line, favicon cache-busting value, and visible UI version aligned.
+- Keep the active version branch (`feature/v0.1.18`), `frontend/package.json`, `frontend/VERSION`, `backend/VERSION`, README release line, favicon cache-busting value, and visible UI version aligned.
 - Every code iteration must be built, tested, deployed to the PM2 process, verified through the public domain, committed, and pushed to the matching remote branch.
 
 The detailed operating rules and handoff checklist are in [docs/MAINTENANCE.md](docs/MAINTENANCE.md). The current roadmap is in [docs/PLAN.md](docs/PLAN.md), project cautions are in [docs/ATTENTION.md](docs/ATTENTION.md), and the AI interaction design is in [docs/AI_CHAT_TECHNICAL_SOLUTION.md](docs/AI_CHAT_TECHNICAL_SOLUTION.md).
