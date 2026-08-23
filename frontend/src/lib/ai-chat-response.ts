@@ -1,6 +1,23 @@
 export const EMPTY_AI_RESPONSE_MESSAGE =
   "Provider 返回成功，但响应中没有可显示的文本"
 
+export const PROVIDER_ENDPOINT_MISMATCH_MESSAGE =
+  "Provider 返回了 HTML 页面而不是模型响应，请检查 Base URL 是否指向 API 根路径"
+
+export class ProviderEndpointMismatchError extends Error {
+  constructor(message = PROVIDER_ENDPOINT_MISMATCH_MESSAGE) {
+    super(message)
+    this.name = "ProviderEndpointMismatchError"
+  }
+}
+
+export function isProviderEndpointMismatchError(
+  error: unknown,
+): error is ProviderEndpointMismatchError {
+  return error instanceof ProviderEndpointMismatchError ||
+    (error instanceof Error && error.name === "ProviderEndpointMismatchError")
+}
+
 export class EmptyAiResponseError extends Error {
   readonly diagnostic: string
 
@@ -755,7 +772,7 @@ export async function consumeAiChatResponse(
   }
 
   if (/text\/html|application\/xhtml\+xml/i.test(contentType) || /^\s*</.test(rawResponse)) {
-    throw new Error("Provider 返回了 HTML 页面而不是模型响应，请检查 Base URL 是否指向 API 根路径")
+    throw new ProviderEndpointMismatchError()
   }
 
   throw new EmptyAiResponseError(

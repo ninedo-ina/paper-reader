@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { useChatStore } from "@/stores/chat-store"
-import type { AiProvider } from "@/stores/preferences-store"
+import { usePreferencesStore, type AiProvider } from "@/stores/preferences-store"
 
 const provider: AiProvider = {
   id: "provider-test",
@@ -24,16 +24,27 @@ function resetChatStore() {
   })
 }
 
+function resetPreferencesStore() {
+  usePreferencesStore.setState({
+    providers: [],
+    activeProviderId: null,
+  })
+}
+
 describe("direct chat response lifecycle", () => {
   beforeEach(() => {
     localStorage.removeItem("pr-ai-direct-chats")
+    localStorage.removeItem("pr-preferences")
     resetChatStore()
+    resetPreferencesStore()
   })
 
   afterEach(() => {
     vi.unstubAllGlobals()
     localStorage.removeItem("pr-ai-direct-chats")
+    localStorage.removeItem("pr-preferences")
     resetChatStore()
+    resetPreferencesStore()
   })
 
   it("shows a thinking assistant message before the provider responds", async () => {
@@ -151,5 +162,41 @@ describe("direct chat response lifecycle", () => {
     expect(message?.statusMessage).toContain("non-stream={content-type=application/json")
     expect(message?.statusMessage).not.toContain("private-stream-id")
     expect(message?.statusMessage).not.toContain("private-fallback-id")
+  })
+
+  it("persists a corrected /v1 Base URL after direct chat fallback", async () => {
+    const providerWithoutV1 = { ...provider, baseUrl: "https://provider.example" }
+    usePreferencesStore.setState({
+      providers: [providerWithoutV1],
+      activeProviderId: providerWithoutV1.id,
+    })
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response("<html><body>Provider portal</body></html>", {
+          headers: { "content-type": "text/html" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ choices: [{ message: { content: "回退回复" } }] }), {
+          headers: { "content-type": "application/json" },
+        }),
+      )
+    vi.stubGlobal("fetch", fetchMock)
+
+    await useChatStore.getState().sendDirect("测试端点回退", "test-model", providerWithoutV1)
+
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      "https://provider.example/chat/completions",
+      "https://provider.example/v1/chat/completions",
+    ])
+    expect(usePreferencesStore.getState().providers[0]?.baseUrl).toBe(
+      "https://provider.example/v1",
+    )
+    expect(useChatStore.getState().messages.at(-1)).toMatchObject({
+      role: "assistant",
+      content: "回退回复",
+      status: "complete",
+    })
   })
 })
