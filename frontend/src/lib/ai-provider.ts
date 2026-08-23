@@ -33,6 +33,7 @@ interface AiChatCompletionOptions {
   messages: AiChatCompletionMessage[]
   onContent: (content: string) => void
   onBaseUrlResolved?: (baseUrl: string) => void
+  stream?: boolean
   fetchImpl?: FetchLike
 }
 
@@ -211,6 +212,7 @@ export async function requestAiChatCompletion({
   messages,
   onContent,
   onBaseUrlResolved,
+  stream: useStreaming = true,
   fetchImpl = fetch,
 }: AiChatCompletionOptions): Promise<string> {
   const baseUrl = normalizeProviderBaseUrl(configuredBaseUrl)
@@ -231,6 +233,8 @@ export async function requestAiChatCompletion({
       if (!response.ok) throw await createProviderHttpError(response, apiKey)
       return consumeAiChatResponse(response, onContent)
     }
+
+    if (!useStreaming) return request(false)
 
     try {
       return await request(true)

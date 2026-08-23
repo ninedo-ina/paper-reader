@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.paperreader.dto.CreateAnnotationRequest
 import org.paperreader.dto.UpdateAnnotationRequest
 import org.paperreader.model.Annotation
+import org.paperreader.repository.AnnotationCommentRepository
 import org.paperreader.repository.AnnotationRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import java.util.*
@@ -20,11 +21,14 @@ class AnnotationServiceTest {
     @MockK
     private lateinit var annotationRepository: AnnotationRepository
 
+    @MockK(relaxed = true)
+    private lateinit var commentRepository: AnnotationCommentRepository
+
     private val objectMapper = ObjectMapper()
 
     @Test
     fun `create should save annotation`() {
-        val service = AnnotationService(annotationRepository, objectMapper)
+        val service = AnnotationService(annotationRepository, commentRepository, objectMapper)
         val request = CreateAnnotationRequest(
             paperId = 1, pageNumber = 1, type = "HIGHLIGHT",
             position = mapOf("x" to 10f, "y" to 20f, "width" to 100f, "height" to 30f),
@@ -45,7 +49,7 @@ class AnnotationServiceTest {
 
     @Test
     fun `create should reject invalid type`() {
-        val service = AnnotationService(annotationRepository, objectMapper)
+        val service = AnnotationService(annotationRepository, commentRepository, objectMapper)
         val request = CreateAnnotationRequest(
             paperId = 1, pageNumber = 1, type = "INVALID",
             position = mapOf("x" to 0f),
@@ -58,7 +62,7 @@ class AnnotationServiceTest {
 
     @Test
     fun `delete should throw for non-owner`() {
-        val service = AnnotationService(annotationRepository, objectMapper)
+        val service = AnnotationService(annotationRepository, commentRepository, objectMapper)
         val annotation = Annotation(
             id = 1, userId = 99, paperId = 1, pageNumber = 1,
             type = "HIGHLIGHT", position = "{}",

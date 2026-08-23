@@ -8,12 +8,12 @@ import {
   MessageSquarePlus,
   Send,
   Settings2,
-  User,
   X,
 } from "lucide-react"
 import { useChatStore, MODELS } from "@/stores/chat-store"
 import { usePreferencesStore } from "@/stores/preferences-store"
 import { useToastStore } from "@/stores/toast-store"
+import { useUserStore } from "@/stores/user-store"
 import { MarkdownContent } from "@/components/reader/MarkdownContent"
 import { cn } from "@/lib/utils"
 
@@ -22,6 +22,19 @@ interface ChatPanelProps {
 }
 
 const THINKING_LABELS = ["思考中", "正在处理", "整理答案"] as const
+
+function formatChatTime(value: string): string {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return "--"
+  return new Intl.DateTimeFormat("zh-CN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date)
+}
 
 function ThinkingIndicator() {
   const [labelIndex, setLabelIndex] = useState(0)
@@ -58,54 +71,83 @@ function ThinkingIndicator() {
 export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
   const {
     messages,
-    isSending,
     directChats,
     activeDirectChatId,
+    directChatSending,
     sendDirect,
     startDirectChat,
     selectDirectChat,
+    updateDirectChatConfig,
   } = useChatStore()
   const addToast = useToastStore((state) => state.addToast)
+  const profile = useUserStore((state) => state.profile)
   const providers = usePreferencesStore((state) => state.providers)
   const activeProviderId = usePreferencesStore((state) => state.activeProviderId)
-  const activeProvider = providers.find((provider) => provider.id === activeProviderId) ?? null
-
-  const availableModels = useMemo(
-    () => (activeProvider?.models.length ? activeProvider.models : [...MODELS]),
-    [activeProvider],
-  )
   const activeDirectChat = directChats.find((chat) => chat.id === activeDirectChatId) ?? null
+  const activeDirectChatProviderId = activeDirectChat?.providerId
+  const activeDirectChatModel = activeDirectChat?.model
+  const defaultProviderId = activeDirectChat?.providerId || activeProviderId || providers[0]?.id || ""
 
   const [input, setInput] = useState("")
-  const [selectedModel, setSelectedModel] = useState(availableModels[0] ?? "gpt-4o-mini")
+  const [selectedProviderId, setSelectedProviderId] = useState(defaultProviderId)
+  const selectedProvider = providers.find((provider) => provider.id === selectedProviderId) ?? null
+  const availableModels = useMemo(
+    () => (selectedProvider?.models.length ? selectedProvider.models : [...MODELS]),
+    [selectedProvider],
+  )
+  const [selectedModel, setSelectedModel] = useState(
+    activeDirectChat?.model || availableModels[0] || "gpt-4o-mini",
+  )
   const [pastedImages, setPastedImages] = useState<string[]>([])
   const [historyOpen, setHistoryOpen] = useState(false)
+  const [providerOpen, setProviderOpen] = useState(false)
   const [modelOpen, setModelOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const historyRef = useRef<HTMLDivElement>(null)
+  const providerRef = useRef<HTMLDivElement>(null)
   const modelRef = useRef<HTMLDivElement>(null)
+  const currentChatSending = activeDirectChatId
+    ? Boolean(directChatSending[activeDirectChatId])
+    : false
+  const historyChats = useMemo(
+    () => [...directChats].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt)),
+    [directChats],
+  )
+  const displayName = profile?.displayName?.trim() || profile?.email?.split("@")[0] || "我"
+  const userInitial = displayName.charAt(0).toUpperCase()
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
   useEffect(() => {
-    if (availableModels.length > 0 && !availableModels.includes(selectedModel)) {
-      setSelectedModel(availableModels[0])
+    if (
+      activeDirectChatId &&
+      activeDirectChatProviderId !== undefined &&
+      activeDirectChatModel !== undefined
+    ) {
+      setSelectedProviderId(activeDirectChatProviderId)
+      setSelectedModel(activeDirectChatModel)
+      return
     }
-  }, [activeProviderId, availableModels, selectedModel])
-
-  useEffect(() => {
-    if (activeDirectChat?.model && availableModels.includes(activeDirectChat.model)) {
-      setSelectedModel(activeDirectChat.model)
-    }
-  }, [activeDirectChat?.id, activeDirectChat?.model, availableModels])
+    const fallbackProviderId = activeProviderId || providers[0]?.id || ""
+    setSelectedProviderId(fallbackProviderId)
+    const fallbackProvider = providers.find((provider) => provider.id === fallbackProviderId)
+    setSelectedModel(fallbackProvider?.models[0] || MODELS[0])
+  }, [
+    activeDirectChatId,
+    activeDirectChatProviderId,
+    activeDirectChatModel,
+    activeProviderId,
+    providers,
+  ])
 
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
       const target = event.target as Node
       if (historyRef.current && !historyRef.current.contains(target)) setHistoryOpen(false)
+      if (providerRef.current && !providerRef.current.contains(target)) setProviderOpen(false)
       if (modelRef.current && !modelRef.current.contains(target)) setModelOpen(false)
     }
     document.addEventListener("mousedown", handleOutsideClick)
@@ -124,31 +166,67 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
   }, [onConfigureProvider])
 
   const handleModelTrigger = useCallback(() => {
-    if (!activeProvider) {
+    if (!selectedProvider) {
       showProviderRequired()
       return
     }
     setModelOpen((open) => !open)
     setHistoryOpen(false)
-  }, [activeProvider, showProviderRequired])
+    setProviderOpen(false)
+  }, [selectedProvider, showProviderRequired])
 
   const handleModelSelect = useCallback((model: string) => {
     setSelectedModel(model)
+    if (activeDirectChatId) updateDirectChatConfig(activeDirectChatId, { model })
     setModelOpen(false)
-  }, [])
+  }, [activeDirectChatId, updateDirectChatConfig])
+
+  const handleProviderTrigger = useCallback(() => {
+    if (providers.length === 0) {
+      showProviderRequired()
+      return
+    }
+    setProviderOpen((open) => !open)
+    setHistoryOpen(false)
+    setModelOpen(false)
+  }, [providers.length, showProviderRequired])
+
+  const handleProviderSelect = useCallback((providerId: string) => {
+    const provider = providers.find((item) => item.id === providerId)
+    if (!provider) return
+    const nextModel = provider.models.includes(selectedModel)
+      ? selectedModel
+      : provider.models[0] || MODELS[0]
+    setSelectedProviderId(provider.id)
+    setSelectedModel(nextModel)
+    if (activeDirectChatId) {
+      updateDirectChatConfig(activeDirectChatId, {
+        providerId: provider.id,
+        model: nextModel,
+      })
+    }
+    setProviderOpen(false)
+  }, [activeDirectChatId, providers, selectedModel, updateDirectChatConfig])
 
   const handleNewChat = useCallback(() => {
-    startDirectChat(activeProvider ? selectedModel : MODELS[0], activeProvider?.id ?? "")
+    const inheritedProviderId = activeDirectChat?.providerId || selectedProviderId || activeProviderId || providers[0]?.id || ""
+    const inheritedModel = activeDirectChat?.model || selectedModel || MODELS[0]
+    startDirectChat(inheritedModel, inheritedProviderId)
+    setSelectedProviderId(inheritedProviderId)
+    setSelectedModel(inheritedModel)
     setInput("")
     setPastedImages([])
     setHistoryOpen(false)
+    setProviderOpen(false)
+    setModelOpen(false)
     requestAnimationFrame(() => inputRef.current?.focus())
-  }, [activeProvider, selectedModel, startDirectChat])
+  }, [activeDirectChat, activeProviderId, providers, selectedModel, selectedProviderId, startDirectChat])
 
   const handleHistorySelect = useCallback((id: string) => {
     const chat = directChats.find((item) => item.id === id)
     if (!chat) return
     selectDirectChat(id)
+    setSelectedProviderId(chat.providerId)
     setSelectedModel(chat.model)
     setHistoryOpen(false)
     setInput("")
@@ -157,9 +235,9 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
 
   const handleSend = useCallback(async () => {
     const text = input.trim()
-    if (!text || isSending) return
+    if (!text || currentChatSending) return
 
-    if (!activeProvider) {
+    if (!selectedProvider) {
       showProviderRequired()
       return
     }
@@ -170,8 +248,8 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
       : text
     setPastedImages([])
 
-    await sendDirect(content, selectedModel, activeProvider)
-  }, [input, isSending, activeProvider, selectedModel, pastedImages, sendDirect, showProviderRequired])
+    await sendDirect(content, selectedModel, selectedProvider)
+  }, [input, currentChatSending, selectedProvider, selectedModel, pastedImages, sendDirect, showProviderRequired])
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
@@ -207,6 +285,7 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
             type="button"
             onClick={() => {
               setHistoryOpen((open) => !open)
+              setProviderOpen(false)
               setModelOpen(false)
             }}
             className="flex min-w-0 max-w-full items-center gap-1.5 rounded-lg px-1.5 py-1 text-left text-xs text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
@@ -216,15 +295,15 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
             <ChevronDown className={cn("size-3 shrink-0 text-[var(--text-tertiary)] transition-transform", historyOpen && "rotate-180")} />
           </button>
           {historyOpen && (
-            <div className="absolute left-0 top-full z-50 mt-1 w-[250px] overflow-hidden rounded-xl border border-[var(--border-color)] bg-[var(--surface-0)] py-1 shadow-xl">
+            <div className="absolute left-0 top-full z-50 mt-1 w-[min(310px,calc(100vw-2rem))] overflow-hidden rounded-xl border border-[var(--border-color)] bg-[var(--surface-0)] py-1 shadow-xl">
               <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)]">
                 历史对话
               </div>
-              {directChats.length === 0 ? (
+              {historyChats.length === 0 ? (
                 <p className="px-3 py-3 text-xs text-[var(--text-tertiary)]">暂无历史对话</p>
               ) : (
                 <div className="max-h-64 overflow-auto">
-                  {directChats.map((chat) => (
+                  {historyChats.map((chat) => (
                     <button
                       key={chat.id}
                       type="button"
@@ -239,7 +318,16 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-xs text-[var(--text-primary)]">{chat.title}</span>
-                        <span className="mt-0.5 block truncate text-[10px] text-[var(--text-tertiary)]">{chat.model}</span>
+                        <span className="block text-[10px] leading-4 text-[var(--text-tertiary)]">
+                          {providers.find((provider) => provider.id === chat.providerId)?.name ?? "Provider 已删除"} · {chat.model}
+                          {directChatSending[chat.id] ? " · 回复中" : ""}
+                        </span>
+                        <span className="block text-[10px] leading-4 text-[var(--text-tertiary)]">
+                          创建 {formatChatTime(chat.createdAt)}
+                        </span>
+                        <span className="block text-[10px] leading-4 text-[var(--text-tertiary)]">
+                          最后对话 {formatChatTime(chat.updatedAt)}
+                        </span>
                       </span>
                     </button>
                   ))}
@@ -249,21 +337,49 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
           )}
         </div>
 
-        {!activeProvider ? (
+        <div className="relative" ref={providerRef}>
           <button
             type="button"
-            onClick={handleConfigureProvider}
-            className="inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-[11px] text-amber-600 transition-colors hover:bg-amber-500/10 dark:text-amber-400"
-            title="请先配置 Provider"
+            onClick={providers.length > 0 ? handleProviderTrigger : handleConfigureProvider}
+            className={cn(
+              "inline-flex max-w-[130px] items-center gap-1 rounded-md px-1.5 py-1 text-[10px] transition-colors",
+              selectedProvider
+                ? "text-[var(--text-tertiary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+                : "text-amber-600 hover:bg-amber-500/10 dark:text-amber-400",
+            )}
+            title={providers.length > 0 ? "选择当前对话 Provider" : "请先配置 Provider"}
           >
-            <AlertTriangle className="size-3.5" />
-            <span>未配置 Provider</span>
+            {selectedProvider ? (
+              <span className="max-w-[108px] truncate">{selectedProvider.name}</span>
+            ) : (
+              <>
+                <AlertTriangle className="size-3.5" />
+                <span>{providers.length > 0 ? "选择 Provider" : "未配置 Provider"}</span>
+              </>
+            )}
+            {providers.length > 0 && (
+              <ChevronDown className={cn("size-3 shrink-0", providerOpen && "rotate-180")} />
+            )}
           </button>
-        ) : (
-          <span className="max-w-[120px] truncate text-[10px] text-[var(--text-tertiary)]" title={activeProvider.name}>
-            {activeProvider.name}
-          </span>
-        )}
+          {providerOpen && providers.length > 0 && (
+            <div className="absolute right-0 top-full z-50 mt-1 w-[210px] overflow-hidden rounded-xl border border-[var(--border-color)] bg-[var(--surface-0)] py-1 shadow-xl">
+              <div className="px-3 py-1.5 text-[10px] text-[var(--text-tertiary)]">选择 Provider</div>
+              {providers.map((provider) => (
+                <button
+                  key={provider.id}
+                  type="button"
+                  onClick={() => handleProviderSelect(provider.id)}
+                  className={cn(
+                    "block w-full truncate px-3 py-2 text-left text-xs hover:bg-[var(--bg-hover)]",
+                    selectedProviderId === provider.id && "font-medium text-[var(--accent)]",
+                  )}
+                >
+                  {provider.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <button
           type="button"
@@ -282,7 +398,7 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
           <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
             <Bot className="size-8 text-[var(--text-tertiary)]" />
             <p className="text-sm text-[var(--text-tertiary)]">在下方输入文本开始 AI 对话</p>
-            {!activeProvider && (
+            {!selectedProvider && (
               <button
                 type="button"
                 onClick={handleConfigureProvider}
@@ -299,7 +415,7 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
             className={cn("flex gap-2.5", message.role === "user" ? "justify-end" : "justify-start")}
           >
             {message.role !== "user" && (
-              <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--accent)]/10">
+              <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--accent)]/10" title="PR助手">
                 <Bot className="size-3.5 text-[var(--accent)]" />
               </div>
             )}
@@ -315,9 +431,13 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
             >
               {message.role === "assistant" ? (
                 message.status === "thinking" && !message.content.trim() ? (
-                  <ThinkingIndicator />
+                  <div>
+                    <p className="mb-1 text-[10px] font-medium text-[var(--text-tertiary)]">PR助手</p>
+                    <ThinkingIndicator />
+                  </div>
                 ) : message.status === "error" ? (
                   <div>
+                    <p className="mb-1 text-[10px] font-medium text-[var(--text-tertiary)]">PR助手</p>
                     {message.content.trim() && (
                       <MarkdownContent
                         content={message.content}
@@ -336,11 +456,14 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
                     </p>
                   </div>
                 ) : message.content.trim() ? (
-                  <MarkdownContent
-                    content={message.content}
-                    images={message.images}
-                    className="text-sm [&_pre]:rounded-md [&_pre]:bg-[var(--surface-2)]"
-                  />
+                  <div>
+                    <p className="mb-1 text-[10px] font-medium text-[var(--text-tertiary)]">PR助手</p>
+                    <MarkdownContent
+                      content={message.content}
+                      images={message.images}
+                      className="text-sm [&_pre]:rounded-md [&_pre]:bg-[var(--surface-2)]"
+                    />
+                  </div>
                 ) : (
                   <p className="text-xs text-[var(--text-tertiary)]">未收到可显示的回复</p>
                 )
@@ -349,8 +472,15 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
               )}
             </div>
             {message.role === "user" && (
-              <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--surface-2)]">
-                <User className="size-3.5 text-[var(--text-tertiary)]" />
+              <div
+                className="mt-0.5 flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-2)] text-[10px] font-semibold text-[var(--text-secondary)]"
+                title={displayName}
+              >
+                {profile?.avatarUrl ? (
+                  <img src={profile.avatarUrl} alt={displayName} className="size-full object-cover" />
+                ) : (
+                  userInitial
+                )}
               </div>
             )}
           </div>
@@ -384,9 +514,9 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
             onChange={(event) => setInput(event.target.value)}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
-            placeholder={activeProvider ? "输入消息，Enter 发送，Shift+Enter 换行" : "请先配置 Provider 后开始对话"}
+            placeholder={selectedProvider ? "输入消息，Enter 发送，Shift+Enter 换行" : "请先配置 Provider 后开始对话"}
             rows={3}
-            disabled={isSending}
+            disabled={currentChatSending}
             className="block max-h-32 min-h-[72px] w-full resize-none border-0 bg-transparent px-3.5 py-3 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-placeholder)] disabled:opacity-50"
           />
           <div className="flex items-center justify-between gap-2 px-2.5 pb-2">
@@ -397,14 +527,14 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
                 onClick={handleConfigureProvider}
                 className={cn(
                   "inline-flex max-w-[120px] items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] transition-colors",
-                  activeProvider
+                  selectedProvider
                     ? "text-[var(--text-tertiary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
                     : "text-amber-600 hover:bg-amber-500/10 dark:text-amber-400",
                 )}
-                title={activeProvider ? "配置 Provider" : "请先配置 Provider"}
+                title={selectedProvider ? "配置 Provider" : "请先配置 Provider"}
               >
-                {activeProvider ? <Settings2 className="size-3" /> : <AlertTriangle className="size-3" />}
-                <span className="truncate">{activeProvider ? "Provider" : "配置 Provider"}</span>
+                {selectedProvider ? <Settings2 className="size-3" /> : <AlertTriangle className="size-3" />}
+                <span className="truncate">{selectedProvider ? "Provider" : "配置 Provider"}</span>
               </button>
 
               <div className="relative" ref={modelRef}>
@@ -413,17 +543,17 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
                   onClick={handleModelTrigger}
                   className={cn(
                     "inline-flex max-w-[150px] items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] transition-colors",
-                    activeProvider
+                    selectedProvider
                       ? "text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
                       : "cursor-not-allowed text-[var(--text-placeholder)]",
                   )}
-                  title={activeProvider ? "选择模型" : "请先配置 Provider"}
-                  aria-disabled={!activeProvider}
+                  title={selectedProvider ? "选择模型" : "请先配置 Provider"}
+                  aria-disabled={!selectedProvider}
                 >
-                  <span className="max-w-[120px] truncate">{activeProvider ? selectedModel : "未配置 Provider"}</span>
+                  <span className="max-w-[120px] truncate">{selectedProvider ? selectedModel : "未配置 Provider"}</span>
                   <ChevronDown className={cn("size-3 shrink-0", modelOpen && "rotate-180")} />
                 </button>
-                {modelOpen && activeProvider && (
+                {modelOpen && selectedProvider && (
                   <div className="absolute bottom-full left-0 z-50 mb-1 w-[190px] overflow-hidden rounded-xl border border-[var(--border-color)] bg-[var(--surface-0)] py-1 shadow-xl">
                     <div className="px-3 py-1.5 text-[10px] text-[var(--text-tertiary)]">选择模型</div>
                     {availableModels.map((model) => (
@@ -448,7 +578,7 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
             <button
               type="button"
               onClick={() => void handleSend()}
-              disabled={!input.trim() || isSending}
+              disabled={!input.trim() || currentChatSending}
               className="inline-flex size-8 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)] text-[var(--surface-1)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-30"
               aria-label="发送消息"
             >

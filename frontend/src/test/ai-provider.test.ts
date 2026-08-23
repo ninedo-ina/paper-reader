@@ -157,6 +157,31 @@ describe("testAiProviderConnection", () => {
 })
 
 describe("requestAiChatCompletion", () => {
+  it("can request a non-streaming completion without an automatic retry", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ choices: [{ message: { content: "简洁标题" } }] }), {
+        headers: { "content-type": "application/json" },
+      }),
+    )
+
+    await expect(
+      requestAiChatCompletion({
+        baseUrl: "https://provider.example/v1",
+        apiKey: "secret-key",
+        model: "working-model",
+        messages: [{ role: "user", content: "生成标题" }],
+        onContent: () => undefined,
+        stream: false,
+        fetchImpl: fetchMock,
+      }),
+    ).resolves.toBe("简洁标题")
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toMatchObject({
+      stream: false,
+    })
+  })
+
   it("retries once without streaming when a successful stream has no text", async () => {
     const updates: string[] = []
     const fetchMock = vi
