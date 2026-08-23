@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware"
 import type { AiChatListDto, AiChatDetailDto } from "@/lib/api/types"
 import { listChats, getChat, createChat, sendMessage, deleteChat } from "@/lib/api/ai-chats"
 import type { AiProvider } from "@/stores/preferences-store"
+import { buildProviderHeaders, normalizeProviderBaseUrl } from "@/lib/ai-provider"
 
 export interface ChatMessageItem {
   id: string
@@ -283,15 +284,12 @@ export const useChatStore = create<ChatState>()(
           role: message.role,
           content: message.content,
         }))
-        const baseUrl = provider.baseUrl.replace(/\/+$/, "")
+        const baseUrl = normalizeProviderBaseUrl(provider.baseUrl)
 
         try {
           const response = await fetch(`${baseUrl}/chat/completions`, {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${provider.apiKey}`,
-            },
+            headers: buildProviderHeaders(provider.apiKey, true),
             body: JSON.stringify({ model, messages: apiMessages, stream: true }),
           })
 
