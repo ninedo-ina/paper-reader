@@ -55,7 +55,7 @@ export function extractModelIds(payload: unknown): string[] {
   )
 }
 
-function redactSensitiveText(value: string, apiKey: string): string {
+export function redactProviderErrorText(value: string, apiKey: string): string {
   let redacted = value
   const key = apiKey.trim()
 
@@ -90,7 +90,7 @@ function extractErrorMessage(value: string): string {
   return value
 }
 
-async function describeHttpError(response: Response, apiKey: string): Promise<string> {
+export async function describeProviderHttpError(response: Response, apiKey: string): Promise<string> {
   let body = ""
   try {
     body = await response.text()
@@ -98,11 +98,11 @@ async function describeHttpError(response: Response, apiKey: string): Promise<st
     // Some providers close the body before it can be read.
   }
 
-  const detail = redactSensitiveText(extractErrorMessage(body), apiKey)
+  const detail = redactProviderErrorText(extractErrorMessage(body), apiKey)
   return `HTTP ${response.status}${detail ? `：${detail}` : ""}`
 }
 
-function describeNetworkError(error: unknown): string {
+export function describeProviderNetworkError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error)
 
   if (/failed to fetch|networkerror|load failed/i.test(message)) {
@@ -138,7 +138,7 @@ async function fetchProviderModels(
     })
 
     if (!response.ok) {
-      return { models: [], error: await describeHttpError(response, apiKey) }
+      return { models: [], error: await describeProviderHttpError(response, apiKey) }
     }
 
     let payload: unknown
@@ -155,7 +155,7 @@ async function fetchProviderModels(
 
     return { models }
   } catch (error) {
-    return { models: [], error: describeNetworkError(error) }
+    return { models: [], error: describeProviderNetworkError(error) }
   }
 }
 
@@ -199,7 +199,7 @@ export async function testAiProviderConnection(
     if (!response.ok) {
       return {
         ok: false,
-        message: `对话接口测试失败（模型 ${model}）：${await describeHttpError(response, provider.apiKey)}`,
+        message: `对话接口测试失败（模型 ${model}）：${await describeProviderHttpError(response, provider.apiKey)}`,
       }
     }
 
@@ -220,7 +220,7 @@ export async function testAiProviderConnection(
   } catch (error) {
     return {
       ok: false,
-      message: `对话接口请求失败：${describeNetworkError(error)}`,
+      message: `对话接口请求失败：${describeProviderNetworkError(error)}`,
     }
   }
 }
