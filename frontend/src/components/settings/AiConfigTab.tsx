@@ -94,7 +94,13 @@ export function AiConfigTab() {
       setTestResult(null)
       try {
         const result = await testAiProviderConnection(provider)
-        if (result.models?.length) updateProvider(id, { models: result.models })
+        const providerPatch: Partial<AiProvider> = {}
+        if (result.models?.length) providerPatch.models = result.models
+        if (result.baseUrl) providerPatch.baseUrl = result.baseUrl
+        if (Object.keys(providerPatch).length > 0) updateProvider(id, providerPatch)
+        if (result.baseUrl && editingId === id) {
+          setForm((current) => ({ ...current, baseUrl: result.baseUrl ?? current.baseUrl }))
+        }
         setTestResult({ id, ok: result.ok, message: result.message })
       } catch (e) {
         setTestResult({ id, ok: false, message: `连接失败：${(e as Error).message}` })
@@ -102,7 +108,7 @@ export function AiConfigTab() {
         setTesting(null)
       }
     },
-    [providers, updateProvider],
+    [editingId, providers, updateProvider],
   )
 
   const isEditing = isNew || editingId !== null
