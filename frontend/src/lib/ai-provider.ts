@@ -1,3 +1,8 @@
+import {
+  consumeAiChatResponse,
+  isEmptyAiResponseError,
+} from "@/lib/ai-chat-response"
+
 export interface TestableAiProvider {
   baseUrl: string
   apiKey: string
@@ -11,6 +16,20 @@ export interface AiProviderTestResult {
 }
 
 type FetchLike = typeof fetch
+
+export interface AiChatCompletionMessage {
+  role: "user" | "assistant" | "system"
+  content: string
+}
+
+interface AiChatCompletionOptions {
+  baseUrl: string
+  apiKey: string
+  model: string
+  messages: AiChatCompletionMessage[]
+  onContent: (content: string) => void
+  fetchImpl?: FetchLike
+}
 
 export function normalizeProviderBaseUrl(value: string): string {
   return value
@@ -127,6 +146,40 @@ function validateBaseUrl(baseUrl: string): string | null {
   }
 }
 
+export async function requestAiChatCompletion({
+  baseUrl: configuredBaseUrl,
+  apiKey,
+  model,
+  messages,
+  onContent,
+  fetchImpl = fetch,
+}: AiChatCompletionOptions): Promise<string> {
+  const baseUrl = normalizeProviderBaseUrl(configuredBaseUrl)
+  const baseUrlError = validateBaseUrl(baseUrl)
+  if (baseUrlError) throw new Error(baseUrlError)
+
+  const request = async (stream: boolean) => {
+    const response = await fetchImpl(`${baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: buildProviderHeaders(apiKey, true),
+      body: JSON.stringify({ model, messages, stream }),
+    })
+
+    if (!response.ok) {
+      throw new Error(await describeProviderHttpError(response, apiKey))
+    }
+
+    return consumeAiChatResponse(response, onContent)
+  }
+
+  try {
+    return await request(true)
+  } catch (error) {
+    if (!isEmptyAiResponseError(error)) throw error
+    return request(false)
+  }
+}
+
 async function fetchProviderModels(
   baseUrl: string,
   apiKey: string,
@@ -186,28 +239,14 @@ export async function testAiProviderConnection(
 
   const model = models[0]
   try {
-    const response = await fetchImpl(`${baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: buildProviderHeaders(provider.apiKey, true),
-      body: JSON.stringify({
-        model,
-        messages: [{ role: "user", content: "Reply with OK." }],
-        stream: true,
-      }),
+    await requestAiChatCompletion({
+      baseUrl,
+      apiKey: provider.apiKey,
+      model,
+      messages: [{ role: "user", content: "Reply with OK." }],
+      onContent: () => undefined,
+      fetchImpl,
     })
-
-    if (!response.ok) {
-      return {
-        ok: false,
-        message: `对话接口测试失败（模型 ${model}）：${await describeProviderHttpError(response, provider.apiKey)}`,
-      }
-    }
-
-    try {
-      await response.body?.cancel()
-    } catch {
-      // The connection is already verified once response headers are available.
-    }
 
     return {
       ok: true,
@@ -220,7 +259,10 @@ export async function testAiProviderConnection(
   } catch (error) {
     return {
       ok: false,
-      message: `对话接口请求失败：${describeProviderNetworkError(error)}`,
+      message: `对话接口测试失败（模型 ${model}）：${redactProviderErrorText(
+        describeProviderNetworkError(error),
+        provider.apiKey,
+      )}`,
     }
   }
 }
