@@ -1,5 +1,6 @@
 import {
   consumeAiChatResponse,
+  EmptyAiResponseError,
   isEmptyAiResponseError,
 } from "@/lib/ai-chat-response"
 
@@ -176,7 +177,15 @@ export async function requestAiChatCompletion({
     return await request(true)
   } catch (error) {
     if (!isEmptyAiResponseError(error)) throw error
-    return request(false)
+    try {
+      return await request(false)
+    } catch (fallbackError) {
+      if (!isEmptyAiResponseError(fallbackError)) throw fallbackError
+      throw new EmptyAiResponseError(
+        `stream={${error.diagnostic}}; non-stream={${fallbackError.diagnostic}}`,
+        "Provider 的流式和非流式响应都没有可显示文本",
+      )
+    }
   }
 }
 
@@ -257,12 +266,12 @@ export async function testAiProviderConnection(
       models: configuredModels.length > 0 ? undefined : models,
     }
   } catch (error) {
+    const detail = error instanceof EmptyAiResponseError
+      ? error.message
+      : redactProviderErrorText(describeProviderNetworkError(error), provider.apiKey)
     return {
       ok: false,
-      message: `对话接口测试失败（模型 ${model}）：${redactProviderErrorText(
-        describeProviderNetworkError(error),
-        provider.apiKey,
-      )}`,
+      message: `对话接口测试失败（模型 ${model}）：${detail}`,
     }
   }
 }

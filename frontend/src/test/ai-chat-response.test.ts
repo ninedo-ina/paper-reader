@@ -111,6 +111,109 @@ describe("consumeAiChatResponse", () => {
     )
   })
 
+  it("supports DashScope and Spark-style nested output containers", async () => {
+    const dashScope = new Response(
+      JSON.stringify({
+        output: {
+          choices: [
+            {
+              message: {
+                role: "assistant",
+                content: [{ text: "DashScope 回复" }],
+              },
+            },
+          ],
+        },
+      }),
+      { headers: { "content-type": "application/json" } },
+    )
+    const spark = new Response(
+      JSON.stringify({
+        payload: {
+          choices: {
+            status: 2,
+            text: [{ role: "assistant", content: "Spark 回复" }],
+          },
+        },
+      }),
+      { headers: { "content-type": "application/json" } },
+    )
+
+    await expect(consumeAiChatResponse(dashScope, () => undefined)).resolves.toBe(
+      "DashScope 回复",
+    )
+    await expect(consumeAiChatResponse(spark, () => undefined)).resolves.toBe("Spark 回复")
+  })
+
+  it("supports capitalized and custom semantic response fields", async () => {
+    const capitalized = new Response(
+      JSON.stringify({
+        Choices: [{ Message: { Role: "assistant", Content: "大写字段回复" } }],
+      }),
+      { headers: { "content-type": "application/json" } },
+    )
+    const custom = new Response(
+      JSON.stringify({
+        custom_envelope: {
+          generated_response_value: "自定义字段回复",
+        },
+      }),
+      { headers: { "content-type": "application/json" } },
+    )
+
+    await expect(consumeAiChatResponse(capitalized, () => undefined)).resolves.toBe(
+      "大写字段回复",
+    )
+    await expect(consumeAiChatResponse(custom, () => undefined)).resolves.toBe(
+      "自定义字段回复",
+    )
+  })
+
+  it("supports AI SDK text-delta events and data stream text parts", async () => {
+    const eventStream = new Response(
+      [
+        'data: {"type":"text-delta","delta":"AI "}',
+        'data: {"type":"text-delta","delta":"SDK"}',
+        "data: [DONE]",
+        "",
+      ].join("\n"),
+      { headers: { "content-type": "text/event-stream" } },
+    )
+    const dataStream = new Response(
+      ['0:"数据"', '0:"流"', 'd:{"finishReason":"stop"}'].join("\n"),
+      { headers: { "content-type": "text/plain; charset=utf-8" } },
+    )
+
+    await expect(consumeAiChatResponse(eventStream, () => undefined)).resolves.toBe("AI SDK")
+    await expect(consumeAiChatResponse(dataStream, () => undefined)).resolves.toBe("数据流")
+  })
+
+  it("supports a later non-empty choice and concatenated JSON objects", async () => {
+    const laterChoice = new Response(
+      JSON.stringify({
+        choices: [
+          { message: { content: "" } },
+          { message: { content: "第二个 choice" } },
+        ],
+      }),
+      { headers: { "content-type": "application/json" } },
+    )
+    const concatenated = new Response(
+      [
+        JSON.stringify({ token: "拼接" }),
+        JSON.stringify({ token: " JSON" }),
+      ].join(""),
+      { headers: { "content-type": "application/json" } },
+    )
+
+    await expect(consumeAiChatResponse(laterChoice, () => undefined)).resolves.toBe(
+      "第二个 choice",
+    )
+    await expect(consumeAiChatResponse(concatenated, () => undefined)).resolves.toBe(
+      "拼接 JSON",
+    )
+  })
+
   it("supports NDJSON and multiple data lines in one SSE event", async () => {
     const ndjson = new Response(
       [
@@ -169,6 +272,35 @@ describe("consumeAiChatResponse", () => {
     await expect(consumeAiChatResponse(response, () => undefined)).resolves.toBe("兼容错误响应头")
   })
 
+  it("accepts a plain-text answer even when the Provider labels it as JSON", async () => {
+    const response = new Response("这是被错误标记的纯文本回复", {
+      headers: { "content-type": "application/json" },
+    })
+
+    await expect(consumeAiChatResponse(response, () => undefined)).resolves.toBe(
+      "这是被错误标记的纯文本回复",
+    )
+  })
+
+  it("does not turn echoed user input into an assistant response", async () => {
+    const response = new Response(
+      JSON.stringify({
+        request: {
+          messages: [{ role: "user", content: "private user prompt" }],
+        },
+        RequestEcho: {
+          Message: { Role: "User", Content: "capitalized private prompt" },
+        },
+        metadata: { status: "accepted" },
+      }),
+      { headers: { "content-type": "application/json" } },
+    )
+
+    await expect(consumeAiChatResponse(response, () => undefined)).rejects.toThrow(
+      EMPTY_AI_RESPONSE_MESSAGE,
+    )
+  })
+
   it("rejects a successful response that contains no displayable text", async () => {
     const response = new Response('data:{"choices":[{"finish_reason":"stop"}]}\n\ndata:[DONE]\n', {
       headers: { "content-type": "text/event-stream" },
@@ -177,5 +309,67 @@ describe("consumeAiChatResponse", () => {
     await expect(consumeAiChatResponse(response, () => undefined)).rejects.toThrow(
       EMPTY_AI_RESPONSE_MESSAGE,
     )
+  })
+
+  it("reports a Provider business error returned with HTTP 200", async () => {
+    const response = new Response(
+      JSON.stringify({
+        success: false,
+        code: 40101,
+        error: { message: "model permission denied" },
+      }),
+      { headers: { "content-type": "application/json" } },
+    )
+    const wrappedStatus = new Response(
+      JSON.stringify({
+        code: "invalid_model",
+        message: "selected model is unavailable",
+      }),
+      { headers: { "content-type": "application/json" } },
+    )
+    const capitalizedError = new Response(
+      JSON.stringify({
+        Error: { Message: "capitalized provider error" },
+      }),
+      { headers: { "content-type": "application/json" } },
+    )
+
+    await expect(consumeAiChatResponse(response, () => undefined)).rejects.toThrow(
+      "Provider 业务错误：model permission denied",
+    )
+    await expect(consumeAiChatResponse(wrappedStatus, () => undefined)).rejects.toThrow(
+      "Provider 业务错误：selected model is unavailable",
+    )
+    await expect(consumeAiChatResponse(capitalizedError, () => undefined)).rejects.toThrow(
+      "Provider 业务错误：capitalized provider error",
+    )
+  })
+
+  it("reports HTML endpoints and emits value-free diagnostics for unknown JSON", async () => {
+    const html = new Response("<html><body>Provider portal</body></html>", {
+      headers: { "content-type": "text/html" },
+    })
+    const unknown = new Response(
+      JSON.stringify({
+        request_id: "secret-request-value",
+        custom_blob: { opaque_field: "must-not-appear" },
+      }),
+      { headers: { "content-type": "application/json" } },
+    )
+
+    await expect(consumeAiChatResponse(html, () => undefined)).rejects.toThrow(
+      "Provider 返回了 HTML 页面",
+    )
+
+    let diagnostic = ""
+    try {
+      await consumeAiChatResponse(unknown, () => undefined)
+    } catch (error) {
+      diagnostic = error instanceof Error ? error.message : String(error)
+    }
+    expect(diagnostic).toContain("content-type=application/json")
+    expect(diagnostic).toContain("request_id:string")
+    expect(diagnostic).not.toContain("secret-request-value")
+    expect(diagnostic).not.toContain("must-not-appear")
   })
 })

@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware"
 import type { AiChatListDto, AiChatDetailDto } from "@/lib/api/types"
 import { listChats, getChat, createChat, sendMessage, deleteChat } from "@/lib/api/ai-chats"
 import type { AiProvider } from "@/stores/preferences-store"
+import { EmptyAiResponseError } from "@/lib/ai-chat-response"
 import {
   describeProviderNetworkError,
   redactProviderErrorText,
@@ -170,6 +171,7 @@ function normalizeDirectMessages(
 }
 
 function describeDirectChatError(error: unknown, apiKey: string): string {
+  if (error instanceof EmptyAiResponseError) return error.message
   const networkMessage = describeProviderNetworkError(error)
   return redactProviderErrorText(networkMessage, apiKey) || "未知错误"
 }
