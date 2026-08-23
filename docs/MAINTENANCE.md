@@ -154,3 +154,25 @@ AI 对话目前存在两套技术路径：
 ### 后续风险
 
 只要 Provider 返回可识别的文本内容，处理中状态和回复状态就不会再分离。若 Provider 使用完全私有且未覆盖的响应协议，仍可能无法提取正文；此时界面会显示明确的“没有可显示文本”错误，而不是静默留下空气泡。新增 Provider 适配时必须补充响应解析回归测试。
+
+## 9. v0.1.15-fix Provider 成功但回复为空问题
+
+### 问题
+
+Provider 返回 HTTP 2xx 后，AI 对话仍显示“Provider 返回成功，但响应中没有可显示的文本”，用户看不到实际回复。该问题也可能让偏好设置中的“测试连接”仅依据响应头误报成功。
+
+### 原因
+
+上一版解析器主要按 OpenAI SSE 的 `choices[0].delta.content` 和非流式 `choices[0].message.content` 读取正文。部分 Provider 返回 JSON 数组、`data`/`result`/`response` 包装对象、NDJSON、Responses API `output`、Gemini `candidates`，或把正文放在顶层 `message`、嵌套文本对象、`reasoning_content` 中；这些响应虽然请求成功，却没有被完整识别。测试连接此前在收到 2xx 响应头后就结束读取，没有确认正文可显示。
+
+### 解决
+
+- 统一聊天请求与 Provider 测试请求的响应消费逻辑，测试连接现在必须成功提取正文才会报告成功。
+- 扩展解析器，支持 JSON 数组、NDJSON、多个 SSE `data:` 行组成的事件、顶层 `message`、`data`/`result`/`response`/`payload`/`body` 包装、嵌套文本对象、Responses API 输出、Gemini 内容片段和常见 reasoning 字段。
+- 正式文本优先于 reasoning 文本；只有 Provider 没有返回正式文本时，才将 reasoning 作为可见兜底，避免留下空气泡。
+- 当流式请求返回 2xx 但没有任何可提取文本时，客户端保持当前“思考中”气泡并自动重试一次 `stream: false`。HTTP 错误、网络错误和已提取到文本的响应不会重复请求。
+- 对重试路径、兼容响应结构和对话状态补充回归测试。
+
+### 后续风险
+
+非流式兜底会向 Provider 再发送一次相同的对话请求，某些服务可能因此产生额外计费或重复副作用。完全私有且不返回文本字段的协议仍无法自动适配；此时界面会显示明确错误。新增 Provider 适配必须补充样例响应和测试，并确认其 CORS、流式及非流式行为。
