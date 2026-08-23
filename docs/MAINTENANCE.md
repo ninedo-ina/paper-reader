@@ -33,7 +33,7 @@ feature/v主版本.次版本.修订版本
 
 一次迭代至少应保持以下信息一致：
 
-- 当前 Git 分支名，例如 `feature/v0.1.12-fix`。
+- 当前 Git 分支名，例如 `feature/v0.1.13-fix`。
 - `frontend/package.json` 的 `version`。
 - `frontend/VERSION` 和 `backend/VERSION`。
 - README 的当前版本说明。

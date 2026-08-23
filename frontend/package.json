@@ -1,6 +1,6 @@
 {
   "name": "paper-reader-frontend",
-  "version": "0.1.12-fix",
+  "version": "0.1.13-fix",
   "private": true,
   "scripts": {
     "dev": "next dev",
