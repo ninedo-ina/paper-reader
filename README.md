@@ -8,8 +8,8 @@ The repository contains the C-side product and its API. The administration conso
 
 - Default branch: `main`
 - Integration branch: `dev`
-- Active version branch: `feature/v0.1.18`
-- Client version: `0.1.18`
+- Active version branch: `feature/v0.1.18-fix`
+- Client version: `0.1.18-fix`
 - Default locale: Chinese (`zh`)
 - Supported locales: Chinese (`zh`) and English (`en`)
 - Production client: `https://paper.pilo.eu.cc`
@@ -25,6 +25,13 @@ The current client layout keeps the brand centered in the left navigation header
 ![Expanded PaperReader sidebar in dark mode](docs/screenshots/paperreader-expanded-dark.png)
 
 The browser icon assets are [paperread-favicon-light.svg](frontend/public/paperread-favicon-light.svg) and [paperread-favicon-dark.svg](frontend/public/paperread-favicon-dark.svg). The client updates the active favicon when the selected theme changes.
+
+AI Provider requests use the OpenAI-compatible `/models` and
+`/chat/completions` endpoints. The client first tries the configured Provider
+directly and, when browser CORS or another network policy prevents access,
+retries through the authenticated PaperReader relay. The relay only accepts
+HTTPS public targets, supports the standard `/v1` path correction, does not
+persist API keys, and is available only to authenticated users.
 
 ## Architecture
 
@@ -324,7 +331,8 @@ The frontend API wrapper is in [frontend/src/lib/api](frontend/src/lib/api), and
 - Favicon and logo colors remain grayscale and follow the selected light/dark theme.
 - Preferences are available from the avatar menu between Profile and Log Out.
 - In the AI chat panel, an unconfigured Provider is shown as a warning. The warning and the composer’s Provider action open Preferences directly on the AI configuration tab. The model selector stays unavailable until a Provider is active.
-- Direct Provider conversations are stored in the browser under the `pr-ai-direct-chats` Zustand store. They are separate from the backend `/api/ai-chats` records because they use the user-selected Provider and do not send the user’s Provider API key to the PaperReader API.
+- Direct Provider conversations are stored in the browser under the `pr-ai-direct-chats` Zustand store. They are separate from the backend `/api/ai-chats` records because they use the user-selected Provider; the Provider API key is sent to PaperReader only when the authenticated relay is needed after a browser network/CORS failure.
+- Provider relay endpoints are `/api/provider-relay/models` and `/api/provider-relay/chat/completions`; they forward only the current operation and never log the supplied Provider key.
 - Source UI copy is localized under `frontend/src/i18n/locales/{zh,en}/common.json`.
 
 ## Versioned Development
@@ -337,7 +345,7 @@ The project uses a release-style branch and client version for every code iterat
 - Bug-fix iterations append `-fix` to the repaired version, for example `0.1.12-fix`, with a matching branch such as `feature/v0.1.12-fix`.
 - A minor release (`0.1.x` → `0.2.0`) or major release (`0.x.y` → `1.0.0`) is created only when the product owner explicitly requests it.
 - Keep every version branch after merging; it is part of the release and rollback history.
-- Keep the active version branch (`feature/v0.1.18`), `frontend/package.json`, `frontend/VERSION`, `backend/VERSION`, README release line, favicon cache-busting value, and visible UI version aligned.
+- Keep the active version branch (`feature/v0.1.18-fix`), `frontend/package.json`, `frontend/VERSION`, `backend/VERSION`, README release line, favicon cache-busting value, and visible UI version aligned.
 - Every code iteration must be built, tested, deployed to the PM2 process, verified through the public domain, committed, and pushed to the matching remote branch.
 
 The detailed operating rules and handoff checklist are in [docs/MAINTENANCE.md](docs/MAINTENANCE.md). The current roadmap is in [docs/PLAN.md](docs/PLAN.md), project cautions are in [docs/ATTENTION.md](docs/ATTENTION.md), and the AI interaction design is in [docs/AI_CHAT_TECHNICAL_SOLUTION.md](docs/AI_CHAT_TECHNICAL_SOLUTION.md).

@@ -130,6 +130,34 @@ export async function request<T>(
   return json.data as T
 }
 
+/**
+ * Raw authenticated request for endpoints that return a non-ApiResponse body,
+ * such as streamed provider responses.
+ */
+export async function requestRaw(
+  path: string,
+  options: RequestInit = {},
+): Promise<Response> {
+  const url = `${API_URL}${path}`
+  const headers = new Headers(options.headers)
+
+  if (accessToken) {
+    headers.set("Authorization", `Bearer ${accessToken}`)
+  }
+
+  let res = await fetch(url, { ...options, headers })
+
+  if ((res.status === 401 || res.status === 403) && refreshToken) {
+    const refreshed = await refreshIfNeeded()
+    if (refreshed) {
+      headers.set("Authorization", `Bearer ${accessToken}`)
+      res = await fetch(url, { ...options, headers })
+    }
+  }
+
+  return res
+}
+
 /** GET 请求 */
 export function get<T>(path: string): Promise<T> {
   return request<T>(path, { method: "GET" })
