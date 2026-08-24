@@ -8,8 +8,8 @@ The repository contains the C-side product and its API. The administration conso
 
 - Default branch: `main`
 - Integration branch: `dev`
-- Active version branch: `feature/v0.1.18-fix`
-- Client version: `0.1.18-fix`
+- Active version branch: `feature/v0.1.19`
+- Client version: `0.1.19`
 - Default locale: Chinese (`zh`)
 - Supported locales: Chinese (`zh`) and English (`en`)
 - Production client: `https://paper.pilo.eu.cc`
@@ -121,7 +121,7 @@ paper-reader/
 | Database | PostgreSQL 16 with Flyway migrations |
 | Cache/session support | Redis 7 |
 | File storage | Dufs or local filesystem |
-| Metadata parsing | GROBID 0.8.1 |
+| Metadata and full-text parsing | GROBID 0.8.1 |
 | Realtime | Spring WebSocket/STOMP |
 | Runtime | PM2, Apache, Cloudflare proxy |
 
@@ -295,6 +295,7 @@ V7__forum.sql
 V8__im.sql
 V9__annotation_note_enhance.sql
 V10__note_position.sql
+V11__paper_content_context.sql
 ```
 
 Add a new numbered migration for schema changes. Do not edit an already-applied migration in a shared environment.
@@ -308,6 +309,7 @@ All business API routes are under `/api` and require the client token unless exp
 | Health | `/api/health` |
 | Authentication | `/api/auth` |
 | Papers and PDFs | `/api/papers` |
+| Paper question context | `/api/papers/{paperId}/context` |
 | GROBID | `/api/papers/{paperId}/grobid` |
 | Versions | `/api/papers/{paperId}/versions` |
 | Reading history | `/api/reading-logs` |
@@ -333,6 +335,8 @@ The frontend API wrapper is in [frontend/src/lib/api](frontend/src/lib/api), and
 - In the AI chat panel, an unconfigured Provider is shown as a warning. The warning and the composer’s Provider action open Preferences directly on the AI configuration tab. The model selector stays unavailable until a Provider is active.
 - Direct Provider conversations are stored in the browser under the `pr-ai-direct-chats` Zustand store. They are separate from the backend `/api/ai-chats` records because they use the user-selected Provider; the Provider API key is sent to PaperReader only when the authenticated relay is needed after a browser network/CORS failure.
 - Provider relay endpoints are `/api/provider-relay/models` and `/api/provider-relay/chat/completions`; they forward only the current operation and never log the supplied Provider key.
+- AI replies separate `<think>`/reasoning content into a default-collapsed disclosure. PDF selection can open the AI panel with the selected quote, paper metadata, and relevant GROBID-extracted passages as hidden context.
+- Uploaded PDFs are parsed asynchronously through GROBID `/api/processFulltextDocument`; parsing status and failures are visible without blocking PDF reading.
 - Source UI copy is localized under `frontend/src/i18n/locales/{zh,en}/common.json`.
 
 ## Versioned Development
@@ -345,7 +349,7 @@ The project uses a release-style branch and client version for every code iterat
 - Bug-fix iterations append `-fix` to the repaired version, for example `0.1.12-fix`, with a matching branch such as `feature/v0.1.12-fix`.
 - A minor release (`0.1.x` → `0.2.0`) or major release (`0.x.y` → `1.0.0`) is created only when the product owner explicitly requests it.
 - Keep every version branch after merging; it is part of the release and rollback history.
-- Keep the active version branch (`feature/v0.1.18-fix`), `frontend/package.json`, `frontend/VERSION`, `backend/VERSION`, README release line, favicon cache-busting value, and visible UI version aligned.
+- Keep the active version branch (`feature/v0.1.19`), `frontend/package.json`, `frontend/VERSION`, `backend/VERSION`, README release line, favicon cache-busting value, and visible UI version aligned.
 - Every code iteration must be built, tested, deployed to the PM2 process, verified through the public domain, committed, and pushed to the matching remote branch.
 
 The detailed operating rules and handoff checklist are in [docs/MAINTENANCE.md](docs/MAINTENANCE.md). The current roadmap is in [docs/PLAN.md](docs/PLAN.md), project cautions are in [docs/ATTENTION.md](docs/ATTENTION.md), and the AI interaction design is in [docs/AI_CHAT_TECHNICAL_SOLUTION.md](docs/AI_CHAT_TECHNICAL_SOLUTION.md).

@@ -47,6 +47,7 @@ interface PaperState {
   // 操作
   loadPapers: (page?: number, sourceType?: string, favorite?: boolean) => Promise<void>
   loadPaper: (id: number) => Promise<void>
+  refreshPaper: (id: number) => Promise<void>
   loadCounts: () => Promise<void>
   setActiveTab: (tab: TabKey) => void
   setFavoriteTab: (tab: FavoriteTabKey) => void
@@ -122,6 +123,15 @@ export const usePaperStore = create<PaperState>((set, get) => ({
       set({ currentPaper: paper, isDetailLoading: false })
     } catch (e) {
       set({ isDetailLoading: false, error: (e as Error).message })
+    }
+  },
+
+  refreshPaper: async (id) => {
+    try {
+      const paper = await papersApi.getPaper(id)
+      set((state) => state.currentPaper?.id === id ? { currentPaper: paper } : state)
+    } catch {
+      // Parsing status polling is best effort; the reader remains usable if a refresh fails.
     }
   },
 

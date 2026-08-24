@@ -36,6 +36,16 @@ export function isEmptyAiResponseError(error: unknown): error is EmptyAiResponse
 type TextUpdateMode = "append" | "replace"
 type TextUpdateChannel = "content" | "reasoning"
 
+export interface AiChatResponseResult {
+  content: string
+  reasoning: string
+}
+
+export interface AiChatResponseCallbacks {
+  onContent?: (content: string) => void
+  onReasoning?: (reasoning: string) => void
+}
+
 interface TextUpdate {
   text: string
   mode: TextUpdateMode
@@ -57,6 +67,81 @@ const METADATA_FIELD =
   /^(?:id|.*_id|id_.*|model|object|role|status|status_code|code|created|created_at|timestamp|index|type|name|finish_reason|finishReason|response_format|system_fingerprint)$/i
 const TEXT_FIELD =
   /(?:text|content|answer|reply|response|completion|output|message|delta|token|generation|result|value|part|final)/i
+const THINK_OPEN_TAG = "<think>"
+const THINK_CLOSE_TAG = "</think>"
+
+interface ThinkSplitResult {
+  content: string
+  reasoning: string
+  hasThinkTag: boolean
+}
+
+function partialTagStart(value: string, cursor: number, tag: string): number {
+  const lower = value.toLowerCase()
+  const maxLength = Math.min(tag.length - 1, value.length - cursor)
+
+  for (let length = maxLength; length > 0; length -= 1) {
+    const start = value.length - length
+    if (start >= cursor && tag.startsWith(lower.slice(start))) return start
+  }
+
+  return value.length
+}
+
+/** Split accumulated model output so tags can span multiple network chunks. */
+export function splitThinkContent(value: string, final = true): ThinkSplitResult {
+  const lower = value.toLowerCase()
+  let cursor = 0
+  let inThink = false
+  let content = ""
+  let reasoning = ""
+  let hasThinkTag = false
+
+  while (cursor < value.length) {
+    if (inThink) {
+      const closeIndex = lower.indexOf(THINK_CLOSE_TAG, cursor)
+      if (closeIndex >= 0) {
+        reasoning += value.slice(cursor, closeIndex)
+        cursor = closeIndex + THINK_CLOSE_TAG.length
+        inThink = false
+        continue
+      }
+
+      const end = final
+        ? value.length
+        : partialTagStart(value, cursor, THINK_CLOSE_TAG)
+      reasoning += value.slice(cursor, end)
+      break
+    }
+
+    const openIndex = lower.indexOf(THINK_OPEN_TAG, cursor)
+    if (openIndex >= 0) {
+      content += value.slice(cursor, openIndex)
+      cursor = openIndex + THINK_OPEN_TAG.length
+      inThink = true
+      hasThinkTag = true
+      continue
+    }
+
+    const end = final
+      ? value.length
+      : partialTagStart(value, cursor, THINK_OPEN_TAG)
+    content += value.slice(cursor, end)
+    break
+  }
+
+  return { content, reasoning, hasThinkTag }
+}
+
+function mergeReasoning(structured: string, tagged: string): string {
+  const structuredText = structured.trim()
+  const taggedText = tagged.trim()
+  if (!structuredText) return taggedText
+  if (!taggedText) return structuredText
+  if (structuredText.includes(taggedText)) return structuredText
+  if (taggedText.includes(structuredText)) return taggedText
+  return `${structuredText}\n\n${taggedText}`
+}
 
 function textFromContent(value: unknown, depth = 0): string {
   if (depth > MAX_NESTING_DEPTH) return ""
@@ -435,6 +520,17 @@ function extractTextUpdates(
     if (updates.length > 0) return updates
   }
 
+  const reasoning = createFirstUpdate(
+    [
+      record.reasoning_content,
+      record.reasoning_text,
+      record.reasoning,
+      record.thinking,
+      record.analysis,
+    ],
+    mode,
+    "reasoning",
+  )
   const direct = createFirstUpdate(
     [
       record.output_text,
@@ -452,20 +548,8 @@ function extractTextUpdates(
     ],
     mode,
   )
-  if (direct) return [direct]
-
-  const reasoning = createFirstUpdate(
-    [
-      record.reasoning_content,
-      record.reasoning_text,
-      record.reasoning,
-      record.thinking,
-      record.analysis,
-    ],
-    mode,
-    "reasoning",
-  )
-  if (reasoning) return [reasoning]
+  const directUpdates = compactUpdates([reasoning, direct])
+  if (directUpdates.length > 0) return directUpdates
 
   for (const [key, value] of Object.entries(record)) {
     if (METADATA_FIELD.test(key) || NON_OUTPUT_CONTAINER.test(key)) continue
@@ -601,27 +685,45 @@ function buildResponseDiagnostic(
   )
 }
 
-export async function consumeAiChatResponse(
+export async function consumeAiChatResponseDetailed(
   response: Response,
-  onContent: (content: string) => void,
-): Promise<string> {
+  callbacks: AiChatResponseCallbacks = {},
+): Promise<AiChatResponseResult> {
   const contentType = response.headers.get("content-type")?.toLowerCase() ?? ""
+  let rawContent = ""
+  let structuredReasoning = ""
   let content = ""
   let reasoning = ""
+  let lastContentUpdate = ""
+  let lastReasoningUpdate = ""
   const parsedPayloads: unknown[] = []
 
+  const refreshSeparatedText = (final = false) => {
+    const separated = splitThinkContent(rawContent, final)
+    content = separated.hasThinkTag ? separated.content.trim() : separated.content
+    reasoning = mergeReasoning(structuredReasoning, separated.reasoning)
+
+    if (content.trim() && content !== lastContentUpdate) {
+      lastContentUpdate = content
+      callbacks.onContent?.(content)
+    }
+    if (reasoning.trim() && reasoning !== lastReasoningUpdate) {
+      lastReasoningUpdate = reasoning
+      callbacks.onReasoning?.(reasoning)
+    }
+  }
+
   const applyUpdate = (update: TextUpdate) => {
-    const current = update.channel === "reasoning" ? reasoning : content
+    const current = update.channel === "reasoning" ? structuredReasoning : rawContent
     const next = update.mode === "append" ? current + update.text : update.text
     if (next === current) return
 
     if (update.channel === "reasoning") {
-      reasoning = next
-      return
+      structuredReasoning = next
+    } else {
+      rawContent = next
     }
-
-    content = next
-    if (content.trim()) onContent(content)
+    refreshSeparatedText()
   }
 
   const applyParsed = (parsed: JsonParseResult) => {
@@ -759,12 +861,9 @@ export async function consumeAiChatResponse(
     }
   }
 
-  if (!content.trim() && reasoning.trim()) {
-    content = reasoning
-    onContent(content)
-  }
+  refreshSeparatedText(true)
 
-  if (content.trim()) return content
+  if (content.trim() || reasoning.trim()) return { content, reasoning }
 
   for (const payload of parsedPayloads) {
     const problem = findProviderProblem(payload)
@@ -778,4 +877,13 @@ export async function consumeAiChatResponse(
   throw new EmptyAiResponseError(
     buildResponseDiagnostic(rawResponse, contentType, parsedPayloads),
   )
+}
+
+/** Backward-compatible text-only consumer used by Provider tests and callers. */
+export async function consumeAiChatResponse(
+  response: Response,
+  onContent: (content: string) => void,
+): Promise<string> {
+  const result = await consumeAiChatResponseDetailed(response, { onContent })
+  return result.content || result.reasoning
 }

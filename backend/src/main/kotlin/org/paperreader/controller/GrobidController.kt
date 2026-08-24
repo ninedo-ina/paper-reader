@@ -4,18 +4,17 @@ import org.paperreader.dto.ApiResponse
 import org.paperreader.exception.ResourceNotFoundException
 import org.paperreader.repository.PaperRepository
 import org.paperreader.security.UserPrincipal
-import org.paperreader.service.FileStorageService
 import org.paperreader.service.GrobidClient
+import org.paperreader.service.PaperParsingService
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
-import java.time.Instant
 
 @RestController
 @RequestMapping("/api/papers/{paperId}/grobid")
 class GrobidController(
     private val paperRepository: PaperRepository,
     private val grobidClient: GrobidClient,
-    private val fileStorageService: FileStorageService,
+    private val paperParsingService: PaperParsingService,
 ) {
     @GetMapping
     fun getResult(
@@ -39,12 +38,9 @@ class GrobidController(
         val paper = paperRepository.findByIdAndUserId(paperId, principal.userId)
             ?: throw ResourceNotFoundException("Paper", paperId)
 
-        val path = paper.filePath ?: throw IllegalArgumentException("This paper has no file to reparse")
-        val pdfBytes = fileStorageService.read(path)
-        val teiXml = grobidClient.processHeader(pdfBytes)
-        paperRepository.save(paper.copy(grobidResult = teiXml, updatedAt = Instant.now()))
-
-        return ApiResponse(data = teiXml, message = "Parsing completed")
+        paper.filePath ?: throw IllegalArgumentException("This paper has no file to reparse")
+        val pending = paperParsingService.requestParse(paper)
+        return ApiResponse(data = pending.grobidResult, message = "Parsing started")
     }
 
     @GetMapping("/health")

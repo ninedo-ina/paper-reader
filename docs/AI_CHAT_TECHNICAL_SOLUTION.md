@@ -1,5 +1,73 @@
 # AI 对话技术方案
 
+## v0.1.19 论文场景问答与 reasoning 展示
+
+### 1. 目标
+
+v0.1.19 在现有浏览器直连 Provider 的对话基础上，增加论文阅读场景上下文，并把模型思考过程从正文中分离。Provider、模型和本地历史仍沿用 v0.1.18 的会话级隔离规则。
+
+### 2. reasoning 数据流
+
+```text
+Provider SSE/JSON
+  -> 响应结构解析
+  -> 结构化 reasoning / <think> 标签状态机
+  -> { content, reasoning }
+  -> ChatMessageItem
+  -> Markdown 正文 + 默认折叠的思考区域
+```
+
+解析器必须能处理结构化字段和正文内标签，并支持标签跨 chunk。`reasoning` 为空时保持现有正文流程；只有 reasoning 时也保留助手消息并显示可展开区域。
+
+### 3. 论文选区数据流
+
+```text
+PDF AnnotationLayer
+  -> { paperId, title, pageNumber, quote, requestId }
+  -> reader-store.pendingPaperQuestion
+  -> RightPanel 切换 aiChat
+  -> ChatPanel 消费待处理问题
+  -> 获取论文相关 chunks
+  -> 使用当前会话 Provider/模型发送
+```
+
+待处理问题必须有一次性消费语义，避免 React 重渲染重复发送。没有 Provider 时先保留事件并打开 AI 配置；Provider 配置完成后再继续。
+
+### 4. Prompt 组成
+
+模型请求的隐藏上下文按以下顺序组织：
+
+```text
+系统角色：你是论文阅读助手，只基于给定论文上下文回答；不确定时明确说明。
+论文元数据：标题、作者、摘要。
+相关片段：按选中文本匹配的章节、相邻段落和页码信息。
+选中文本：用户在 PDF 中标记的原文。
+用户问题：用户当前提出的问题或默认解释请求。
+```
+
+用户消息只展示问题和引用卡片，不展示完整内部上下文。后续追问继续绑定当前论文上下文，但不把整篇论文无限追加到历史消息。
+
+### 5. 全文提取链路
+
+```text
+上传/URL 导入
+  -> 保存 PDF
+  -> PENDING
+  -> 异步调用 GROBID /api/processFulltextDocument
+  -> 解析 TEI 元数据和 body
+  -> 生成章节/段落 chunks
+  -> READY 或 FAILED
+```
+
+GROBID 的职责是结构化提取，不是 AI 摘要。原始 TEI 使用 TEXT 保存，chunks 保存规范化正文、章节标题、顺序和可选页码。上下文接口只返回当前用户所属论文的有限相关片段。
+
+### 6. 兼容与回退
+
+- 旧本地对话没有 `reasoning` 字段时按空字符串兼容。
+- GROBID 不可用时仍返回论文和 PDF，问答退化到标题、摘要和选中文本。
+- 扫描版或加密 PDF 首版标记失败，不自动引入 OCR。
+- 首版不使用 embedding；文本匹配失败时使用摘要和邻近 chunks，后续再评估语义检索。
+
 ## v0.1.18-fix Provider 连接修复摘要
 
 `v0.1.18-fix` 在 `v0.1.18` 会话增强的基础上修复 Provider 端点和浏览器网络策略兼容性。

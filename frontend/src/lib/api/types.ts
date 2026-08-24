@@ -104,10 +104,39 @@ export interface PaperDetailDto {
   sourceUrl?: string
   pageCount?: number
   fileSize?: number
+  parseStatus?: "NOT_APPLICABLE" | "PENDING" | "PROCESSING" | "READY" | "FAILED" | string
+  parseError?: string
+  /** @deprecated Raw GROBID data is no longer used by the Reader UI. */
   grobidResult?: Record<string, unknown>
   tags?: string[]
   createdAt: string
   updatedAt: string
+}
+
+export interface PaperContextChunkDto {
+  id: number
+  sectionTitle?: string
+  ordinal: number
+  content: string
+  pageStart?: number
+  pageEnd?: number
+}
+
+export interface PaperContextDto {
+  paperId: number
+  title: string
+  authors?: string
+  abstractText?: string
+  parseStatus: "NOT_APPLICABLE" | "PENDING" | "PROCESSING" | "READY" | "FAILED" | string
+  parseError?: string
+  selectedText: string
+  pageNumber?: number
+  chunks: PaperContextChunkDto[]
+}
+
+export interface PaperContextRequest {
+  selectedText: string
+  pageNumber?: number
 }
 
 export interface UploadFromUrlRequest {

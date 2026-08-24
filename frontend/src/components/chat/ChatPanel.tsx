@@ -4,16 +4,21 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import {
   AlertTriangle,
   Bot,
+  Brain,
   ChevronDown,
+  ChevronRight,
   MessageSquarePlus,
   Send,
   Settings2,
   X,
 } from "lucide-react"
 import { useChatStore, MODELS } from "@/stores/chat-store"
+import type { PaperMessageContext } from "@/stores/chat-store"
 import { usePreferencesStore } from "@/stores/preferences-store"
 import { useToastStore } from "@/stores/toast-store"
 import { useUserStore } from "@/stores/user-store"
+import { getPaperContext } from "@/lib/api/papers"
+import { useReaderStore, type PendingPaperQuestion } from "@/stores/reader-store"
 import { MarkdownContent } from "@/components/reader/MarkdownContent"
 import { cn } from "@/lib/utils"
 
@@ -68,6 +73,37 @@ function ThinkingIndicator() {
   )
 }
 
+function ReasoningDisclosure({
+  content,
+  streaming,
+}: {
+  content: string
+  streaming: boolean
+}) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <div className="mb-2 border-l-2 border-[var(--border-color)] pl-2.5">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        className="flex w-full items-center gap-1.5 py-0.5 text-left text-xs text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+        aria-expanded={open}
+      >
+        <Brain className="size-3.5 shrink-0" />
+        <span>{streaming ? "正在思考" : "思考过程"}</span>
+        <ChevronRight className={cn("size-3.5 shrink-0 transition-transform", open && "rotate-90")} />
+      </button>
+      {open && (
+        <MarkdownContent
+          content={content}
+          className="mt-1.5 text-xs text-[var(--text-secondary)] [&_pre]:rounded-md [&_pre]:bg-[var(--surface-2)]"
+        />
+      )}
+    </div>
+  )
+}
+
 export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
   const {
     messages,
@@ -81,6 +117,8 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
   } = useChatStore()
   const addToast = useToastStore((state) => state.addToast)
   const profile = useUserStore((state) => state.profile)
+  const pendingPaperQuestion = useReaderStore((state) => state.pendingPaperQuestion)
+  const consumePendingPaperQuestion = useReaderStore((state) => state.consumePendingPaperQuestion)
   const providers = usePreferencesStore((state) => state.providers)
   const activeProviderId = usePreferencesStore((state) => state.activeProviderId)
   const activeDirectChat = directChats.find((chat) => chat.id === activeDirectChatId) ?? null
@@ -107,6 +145,7 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
   const historyRef = useRef<HTMLDivElement>(null)
   const providerRef = useRef<HTMLDivElement>(null)
   const modelRef = useRef<HTMLDivElement>(null)
+  const providerPromptedForRequest = useRef<string | null>(null)
   const currentChatSending = activeDirectChatId
     ? Boolean(directChatSending[activeDirectChatId])
     : false
@@ -250,6 +289,63 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
 
     await sendDirect(content, selectedModel, selectedProvider)
   }, [input, currentChatSending, selectedProvider, selectedModel, pastedImages, sendDirect, showProviderRequired])
+
+  const handlePaperQuestion = useCallback(async (question: PendingPaperQuestion) => {
+    if (!selectedProvider || currentChatSending) return
+
+    const defaultQuestion = "请解释这段内容在论文中的含义，并结合相关上下文说明。"
+    let context: PaperMessageContext = {
+      paperId: question.paperId,
+      paperTitle: question.paperTitle,
+      pageNumber: question.pageNumber,
+      quote: question.selectedText,
+      chunks: [],
+    }
+
+    try {
+      const response = await getPaperContext(question.paperId, {
+        selectedText: question.selectedText,
+        pageNumber: question.pageNumber,
+      })
+      context = {
+        ...context,
+        paperTitle: response.title || question.paperTitle,
+        abstractText: response.abstractText,
+        chunks: response.chunks,
+      }
+      if (response.parseStatus === "PENDING" || response.parseStatus === "PROCESSING") {
+        addToast({ message: "论文正文仍在解析，当前先使用选中文本提问；解析完成后可继续追问。", type: "info" })
+      }
+    } catch {
+      addToast({ message: "暂时无法获取论文上下文，已使用选中文本继续提问。", type: "info" })
+    }
+
+    await sendDirect(defaultQuestion, selectedModel, selectedProvider, context)
+  }, [addToast, currentChatSending, selectedModel, selectedProvider, sendDirect])
+
+  useEffect(() => {
+    if (!pendingPaperQuestion) return
+    if (!selectedProvider) {
+      if (providerPromptedForRequest.current !== pendingPaperQuestion.requestId) {
+        providerPromptedForRequest.current = pendingPaperQuestion.requestId
+        addToast({ message: "请先配置 Provider，论文选区问题已保留。", type: "info" })
+        onConfigureProvider?.()
+      }
+      return
+    }
+    if (currentChatSending) return
+
+    const question = consumePendingPaperQuestion()
+    if (question) void handlePaperQuestion(question)
+  }, [
+    addToast,
+    consumePendingPaperQuestion,
+    currentChatSending,
+    handlePaperQuestion,
+    onConfigureProvider,
+    pendingPaperQuestion,
+    selectedProvider,
+  ])
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
@@ -430,45 +526,56 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
               )}
             >
               {message.role === "assistant" ? (
-                message.status === "thinking" && !message.content.trim() ? (
-                  <div>
-                    <p className="mb-1 text-[10px] font-medium text-[var(--text-tertiary)]">PR助手</p>
+                <div>
+                  <p className="mb-1 text-[10px] font-medium text-[var(--text-tertiary)]">PR助手</p>
+                  {message.status === "thinking" && !message.content.trim() && !message.reasoning?.trim() ? (
                     <ThinkingIndicator />
-                  </div>
-                ) : message.status === "error" ? (
-                  <div>
-                    <p className="mb-1 text-[10px] font-medium text-[var(--text-tertiary)]">PR助手</p>
-                    {message.content.trim() && (
-                      <MarkdownContent
-                        content={message.content}
-                        images={message.images}
-                        className="text-sm [&_pre]:rounded-md [&_pre]:bg-[var(--surface-2)]"
-                      />
-                    )}
-                    <p
-                      className={cn(
-                        "whitespace-pre-wrap break-words text-xs text-red-600 dark:text-red-400",
-                        message.content.trim() && "mt-2 border-t border-red-500/15 pt-2",
+                  ) : (
+                    <>
+                      {message.reasoning?.trim() && (
+                        <ReasoningDisclosure
+                          content={message.reasoning}
+                          streaming={message.status === "streaming"}
+                        />
                       )}
-                      role="alert"
-                    >
-                      {message.statusMessage ?? "回复失败，请重新发送"}
-                    </p>
-                  </div>
-                ) : message.content.trim() ? (
-                  <div>
-                    <p className="mb-1 text-[10px] font-medium text-[var(--text-tertiary)]">PR助手</p>
-                    <MarkdownContent
-                      content={message.content}
-                      images={message.images}
-                      className="text-sm [&_pre]:rounded-md [&_pre]:bg-[var(--surface-2)]"
-                    />
-                  </div>
-                ) : (
-                  <p className="text-xs text-[var(--text-tertiary)]">未收到可显示的回复</p>
-                )
+                      {message.content.trim() && (
+                        <MarkdownContent
+                          content={message.content}
+                          images={message.images}
+                          className="text-sm [&_pre]:rounded-md [&_pre]:bg-[var(--surface-2)]"
+                        />
+                      )}
+                      {message.status === "error" && (
+                        <p
+                          className={cn(
+                            "whitespace-pre-wrap break-words text-xs text-red-600 dark:text-red-400",
+                            (message.content.trim() || message.reasoning?.trim()) && "mt-2 border-t border-red-500/15 pt-2",
+                          )}
+                          role="alert"
+                        >
+                          {message.statusMessage ?? "回复失败，请重新发送"}
+                        </p>
+                      )}
+                      {!message.content.trim() && !message.reasoning?.trim() && message.status !== "error" && (
+                        <p className="text-xs text-[var(--text-tertiary)]">未收到可显示的回复</p>
+                      )}
+                    </>
+                  )}
+                </div>
               ) : (
-                <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                <div>
+                  {message.paperContext && (
+                    <div className="mb-2 rounded-lg border border-current/15 bg-black/5 px-2.5 py-2 dark:bg-white/5">
+                      <p className="mb-1 text-[10px] font-medium opacity-70">
+                        {message.paperContext.paperTitle} · 第 {message.paperContext.pageNumber} 页
+                      </p>
+                      <p className="line-clamp-4 whitespace-pre-wrap break-words text-xs opacity-80">
+                        “{message.paperContext.quote}”
+                      </p>
+                    </div>
+                  )}
+                  <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                </div>
               )}
             </div>
             {message.role === "user" && (

@@ -54,9 +54,14 @@ data class Paper(
     @Column
     val filePath: String? = null,
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = "TEXT")
     val grobidResult: String? = null,
+
+    @Column(name = "parse_status", nullable = false, length = 20)
+    val parseStatus: String = "NOT_APPLICABLE",
+
+    @Column(name = "parse_error", columnDefinition = "TEXT")
+    val parseError: String? = null,
 
     @Column(nullable = false)
     val pageCount: Int = 0,

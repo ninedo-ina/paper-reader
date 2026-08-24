@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest"
 import {
   consumeAiChatResponse,
+  consumeAiChatResponseDetailed,
   EMPTY_AI_RESPONSE_MESSAGE,
+  splitThinkContent,
 } from "@/lib/ai-chat-response"
 
 function responseFromChunks(chunks: string[], contentType: string): Response {
@@ -17,6 +19,58 @@ function responseFromChunks(chunks: string[], contentType: string): Response {
 }
 
 describe("consumeAiChatResponse", () => {
+  it("splits think tags even when the tags span response chunks", async () => {
+    const contentUpdates: string[] = []
+    const reasoningUpdates: string[] = []
+    const response = responseFromChunks(
+      [
+        'data: {"choices":[{"delta":{"content":"<thi"}}]}\n\n',
+        'data: {"choices":[{"delta":{"content":"nk>先分析"}}]}\n\n',
+        'data: {"choices":[{"delta":{"content":"问题</thi"}}]}\n\n',
+        'data: {"choices":[{"delta":{"content":"nk>\\n\\n正式答案"}}]}\n\n',
+        "data: [DONE]\n\n",
+      ],
+      "text/event-stream",
+    )
+
+    await expect(
+      consumeAiChatResponseDetailed(response, {
+        onContent: (content) => contentUpdates.push(content),
+        onReasoning: (reasoning) => reasoningUpdates.push(reasoning),
+      }),
+    ).resolves.toEqual({ content: "正式答案", reasoning: "先分析问题" })
+    expect(contentUpdates.at(-1)).toBe("正式答案")
+    expect(reasoningUpdates.at(-1)).toBe("先分析问题")
+  })
+
+  it("keeps structured reasoning separate from the final answer", async () => {
+    const response = new Response(
+      JSON.stringify({
+        choices: [{ message: { reasoning_content: "内部思考", content: "公开答案" } }],
+      }),
+      { headers: { "content-type": "application/json" } },
+    )
+
+    await expect(consumeAiChatResponseDetailed(response)).resolves.toEqual({
+      content: "公开答案",
+      reasoning: "内部思考",
+    })
+  })
+
+  it("keeps an unclosed think block as reasoning-only output", async () => {
+    const result = splitThinkContent("<think>尚未关闭的思考", true)
+    expect(result).toMatchObject({ content: "", reasoning: "尚未关闭的思考" })
+
+    const response = new Response(
+      JSON.stringify({ choices: [{ message: { content: "<think>仅思考内容" } }] }),
+      { headers: { "content-type": "application/json" } },
+    )
+    await expect(consumeAiChatResponseDetailed(response)).resolves.toEqual({
+      content: "",
+      reasoning: "仅思考内容",
+    })
+  })
+
   it("supports SSE without a space after data and a final line without a newline", async () => {
     const updates: string[] = []
     const response = responseFromChunks(

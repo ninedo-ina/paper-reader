@@ -1,6 +1,17 @@
 # PaperReader 注意事项
 
-## v0.1.18-fix 当前迭代注意事项
+## v0.1.19 当前迭代注意事项
+
+- 本次是功能迭代，版本为 `v0.1.19`、分支为 `feature/v0.1.19`，不追加 `-fix`。
+- `<think>` 解析必须跨 SSE chunk，正文和 reasoning 要分别持久化；旧本地消息缺少 reasoning 字段时必须正常读取。
+- 论文问答只能使用当前用户有权限的论文上下文；后端返回 chunks 前必须校验 `paperId + userId`，不能通过接口读取其他用户的全文。
+- GROBID 原始 TEI 不包含 Provider Key，但仍可能包含论文全文；日志只能记录 paper ID、状态和错误类型，不记录 TEI、选中文本或 Prompt。
+- 上传解析使用状态机 `PENDING -> PROCESSING -> READY/FAILED`。删除论文时必须级联删除 chunks，并清理正在执行的任务结果。
+- 解析失败不得阻断 PDF 阅读和批注；问答必须有明确的上下文不可用提示，不得静默把空上下文当作完整论文。
+- 首版使用文本规范化和相邻 chunks，不引入 embedding、OCR 或向量数据库；任何扩展都要单独评估版本和资源占用。
+- 论文上下文只作为模型请求的隐藏上下文，用户气泡显示引用文本和问题，不显示完整系统 Prompt。
+
+## v0.1.18-fix 历史迭代注意事项
 
 - 本次是问题修复，版本为 `v0.1.18-fix`、分支为 `feature/v0.1.18-fix`。
 - 每个 `DirectChat` 的 `providerId` 和 `model` 独立持久化；不得用全局激活 Provider 覆盖历史会话。

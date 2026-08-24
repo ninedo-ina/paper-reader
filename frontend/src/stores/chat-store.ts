@@ -1,6 +1,7 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import type { AiChatListDto, AiChatDetailDto } from "@/lib/api/types"
+import type { PaperContextChunkDto } from "@/lib/api/types"
 import { listChats, getChat, createChat, sendMessage, deleteChat } from "@/lib/api/ai-chats"
 import { usePreferencesStore, type AiProvider } from "@/stores/preferences-store"
 import { EmptyAiResponseError } from "@/lib/ai-chat-response"
@@ -9,18 +10,30 @@ import {
   normalizeProviderBaseUrl,
   redactProviderErrorText,
   requestAiChatCompletion,
+  requestAiChatCompletionDetailed,
 } from "@/lib/ai-provider"
 
 export type ChatMessageStatus = "thinking" | "streaming" | "complete" | "error"
+
+export interface PaperMessageContext {
+  paperId: number
+  paperTitle: string
+  pageNumber: number
+  quote: string
+  abstractText?: string
+  chunks: PaperContextChunkDto[]
+}
 
 export interface ChatMessageItem {
   id: string
   role: "user" | "assistant" | "system"
   content: string
+  reasoning?: string
   images?: string[]
   createdAt: string
   status?: ChatMessageStatus
   statusMessage?: string
+  paperContext?: PaperMessageContext
 }
 
 /**
@@ -64,7 +77,12 @@ interface ChatState {
   removeChat: (id: number) => Promise<void>
 
   // Direct provider API
-  sendDirect: (content: string, model: string, provider: AiProvider) => Promise<void>
+  sendDirect: (
+    content: string,
+    model: string,
+    provider: AiProvider,
+    paperContext?: PaperMessageContext,
+  ) => Promise<void>
   addDirectMessage: (m: Omit<ChatMessageItem, "id" | "createdAt">) => void
   startDirectChat: (model: string, providerId: string) => string
   selectDirectChat: (id: string) => void
@@ -164,6 +182,27 @@ function titleContext(value: string): string {
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, TITLE_CONTEXT_LIMIT)
+}
+
+function buildPaperPrompt(content: string, context?: PaperMessageContext): string {
+  if (!context) return content
+
+  const chunks = context.chunks
+    .map((chunk) => {
+      const section = chunk.sectionTitle ? `章节：${chunk.sectionTitle}\n` : ""
+      const page = chunk.pageStart ? `页码：${chunk.pageStart}\n` : ""
+      return `${section}${page}${chunk.content}`
+    })
+    .join("\n\n")
+
+  return [
+    "你正在帮助用户阅读一篇论文。请只基于下方论文上下文回答；上下文不足时明确说明，不要编造论文没有提供的事实。",
+    `论文标题：${context.paperTitle}`,
+    context.abstractText ? `论文摘要：${context.abstractText}` : "",
+    chunks ? `与选区相关的论文片段：\n${chunks}` : "",
+    `用户选中的原文（第 ${context.pageNumber} 页）：\n${context.quote}`,
+    `用户问题：${content}`,
+  ].filter(Boolean).join("\n\n")
 }
 
 export function sanitizeDirectChatTitle(value: string): string {
@@ -274,7 +313,7 @@ function normalizeDirectMessages(
       }]
     }
 
-    if (message.content.trim()) return [message]
+    if (message.content.trim() || message.reasoning?.trim()) return [message]
     if (message.status === "error" && message.statusMessage) return [message]
     return []
   })
@@ -434,7 +473,12 @@ export const useChatStore = create<ChatState>()(
         })),
 
       // Direct provider API — streaming chat completions
-      sendDirect: async (content: string, model: string, provider: AiProvider) => {
+      sendDirect: async (
+        content: string,
+        model: string,
+        provider: AiProvider,
+        paperContext?: PaperMessageContext,
+      ) => {
         let directChatId = get().activeDirectChatId
         const currentDirectChat = get().directChats.find((chat) => chat.id === directChatId)
         if (!directChatId || !currentDirectChat) {
@@ -451,12 +495,14 @@ export const useChatStore = create<ChatState>()(
           id: createId(),
           role: "user",
           content,
+          paperContext,
           createdAt: new Date().toISOString(),
         }
         const assistantMessage: ChatMessageItem = {
           id: createId(),
           role: "assistant",
           content: "",
+          reasoning: "",
           createdAt: new Date().toISOString(),
           status: "thinking",
         }
@@ -483,12 +529,12 @@ export const useChatStore = create<ChatState>()(
 
         const apiMessages = [...previousMessages, userMessage].map((message) => ({
           role: message.role,
-          content: message.content,
+          content: buildPaperPrompt(message.content, message.paperContext),
         }))
         let completedAssistantContent = ""
         let resolvedBaseUrl = normalizeProviderBaseUrl(provider.baseUrl)
         try {
-          const assistantContent = await requestAiChatCompletion({
+          const assistantResult = await requestAiChatCompletionDetailed({
             baseUrl: provider.baseUrl,
             apiKey: provider.apiKey,
             model,
@@ -515,6 +561,28 @@ export const useChatStore = create<ChatState>()(
                 ),
               }))
             },
+            onReasoning: (nextReasoning) => {
+              set((state) => ({
+                messages:
+                  state.activeDirectChatId === targetChatId
+                    ? updateMessage(state.messages, assistantMessage.id, {
+                        reasoning: nextReasoning,
+                        status: "streaming",
+                        statusMessage: undefined,
+                      })
+                    : state.messages,
+                directChats: updateDirectChatMessage(
+                  state.directChats,
+                  targetChatId,
+                  assistantMessage.id,
+                  {
+                    reasoning: nextReasoning,
+                    status: "streaming",
+                    statusMessage: undefined,
+                  },
+                ),
+              }))
+            },
             onBaseUrlResolved: (nextBaseUrl) => {
               resolvedBaseUrl = normalizeProviderBaseUrl(nextBaseUrl)
               updateDirectChatProviderBaseUrl(
@@ -523,13 +591,14 @@ export const useChatStore = create<ChatState>()(
               )
             },
           })
-          completedAssistantContent = assistantContent
+          completedAssistantContent = assistantResult.content || assistantResult.reasoning
 
           set((state) => ({
             messages:
               state.activeDirectChatId === targetChatId
                 ? updateMessage(state.messages, assistantMessage.id, {
-                    content: assistantContent,
+                    content: assistantResult.content,
+                    reasoning: assistantResult.reasoning,
                     status: "complete",
                     statusMessage: undefined,
                   })
@@ -539,7 +608,8 @@ export const useChatStore = create<ChatState>()(
               targetChatId,
               assistantMessage.id,
               {
-                content: assistantContent,
+                content: assistantResult.content,
+                reasoning: assistantResult.reasoning,
                 status: "complete",
                 statusMessage: undefined,
               },

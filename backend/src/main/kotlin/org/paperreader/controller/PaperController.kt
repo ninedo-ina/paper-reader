@@ -3,6 +3,7 @@ package org.paperreader.controller
 import org.paperreader.dto.*
 import org.paperreader.security.UserPrincipal
 import org.paperreader.service.PaperService
+import org.paperreader.service.PaperContextService
 import org.springframework.core.io.Resource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -15,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile
 @RequestMapping("/api/papers")
 class PaperController(
     private val paperService: PaperService,
+    private val paperContextService: PaperContextService,
 ) {
     @PostMapping("/upload")
     fun upload(
@@ -60,6 +62,14 @@ class PaperController(
         @AuthenticationPrincipal principal: UserPrincipal,
     ): ApiResponse<PaperDetailDto> =
         ApiResponse(data = paperService.getPaper(id, principal.userId))
+
+    @PostMapping("/{id}/context")
+    fun context(
+        @PathVariable id: Long,
+        @RequestBody request: PaperContextRequest,
+        @AuthenticationPrincipal principal: UserPrincipal,
+    ): ApiResponse<PaperContextDto> =
+        ApiResponse(data = paperContextService.getContext(id, principal.userId, request))
 
     @PatchMapping("/{id}")
     fun update(
