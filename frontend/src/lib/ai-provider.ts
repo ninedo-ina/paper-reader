@@ -5,6 +5,7 @@ import {
   isProviderEndpointMismatchError,
   ProviderEndpointMismatchError,
 } from "@/lib/ai-chat-response"
+import { requestRaw } from "@/lib/api/client"
 
 export interface TestableAiProvider {
   baseUrl: string
@@ -20,6 +21,7 @@ export interface AiProviderTestResult {
 }
 
 type FetchLike = typeof fetch
+type RelayFetchLike = (path: string, options?: RequestInit) => Promise<Response>
 
 export interface AiChatCompletionMessage {
   role: "user" | "assistant" | "system"
@@ -35,6 +37,7 @@ interface AiChatCompletionOptions {
   onBaseUrlResolved?: (baseUrl: string) => void
   stream?: boolean
   fetchImpl?: FetchLike
+  relayFetchImpl?: RelayFetchLike
 }
 
 export function normalizeProviderBaseUrl(value: string): string {
@@ -205,6 +208,34 @@ function validateBaseUrl(baseUrl: string): string | null {
   }
 }
 
+function isProviderNetworkError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error)
+  return /failed to fetch|networkerror|network request failed|load failed|cors/i.test(message)
+}
+
+function defaultRelayFetch(path: string, options?: RequestInit): Promise<Response> {
+  return requestRaw(path, options)
+}
+
+async function requestProviderRelay(
+  baseUrl: string,
+  apiKey: string,
+  model: string,
+  messages: AiChatCompletionMessage[],
+  stream: boolean,
+  relayFetch: RelayFetchLike,
+  onContent: (content: string) => void,
+): Promise<string> {
+  const response = await relayFetch("/provider-relay/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ baseUrl, apiKey, model, messages, stream }),
+  })
+
+  if (!response.ok) throw await createProviderHttpError(response, apiKey)
+  return consumeAiChatResponse(response, onContent)
+}
+
 export async function requestAiChatCompletion({
   baseUrl: configuredBaseUrl,
   apiKey,
@@ -214,13 +245,29 @@ export async function requestAiChatCompletion({
   onBaseUrlResolved,
   stream: useStreaming = true,
   fetchImpl = fetch,
+  relayFetchImpl,
 }: AiChatCompletionOptions): Promise<string> {
   const baseUrl = normalizeProviderBaseUrl(configuredBaseUrl)
   const baseUrlError = validateBaseUrl(baseUrl)
   if (baseUrlError) throw new Error(baseUrlError)
 
-  const requestAtBaseUrl = async (candidateBaseUrl: string): Promise<string> => {
+  const relayFetch = relayFetchImpl ?? (fetchImpl === fetch ? defaultRelayFetch : undefined)
+
+  const requestAtBaseUrl = async (candidateBaseUrl: string, viaRelay = false): Promise<string> => {
     const request = async (stream: boolean) => {
+      if (viaRelay) {
+        if (!relayFetch) throw new Error("Provider 中继不可用")
+        return requestProviderRelay(
+          candidateBaseUrl,
+          apiKey,
+          model,
+          messages,
+          stream,
+          relayFetch,
+          onContent,
+        )
+      }
+
       const response = await fetchImpl(
         buildProviderEndpointUrl(candidateBaseUrl, "chat/completions"),
         {
@@ -253,6 +300,7 @@ export async function requestAiChatCompletion({
   }
 
   const candidates = buildProviderBaseUrlCandidates(baseUrl)
+  let lastNetworkError: unknown = null
   for (let index = 0; index < candidates.length; index += 1) {
     const candidateBaseUrl = candidates[index]
     try {
@@ -262,11 +310,29 @@ export async function requestAiChatCompletion({
     } catch (error) {
       const hasFallback = index < candidates.length - 1
       if (hasFallback && isProviderEndpointMismatchError(error)) continue
+      if (isProviderNetworkError(error)) {
+        lastNetworkError = error
+        if (hasFallback) continue
+        break
+      }
       throw error
     }
   }
 
-  throw new ProviderEndpointMismatchError()
+  if (relayFetch && lastNetworkError) {
+    for (let index = 0; index < candidates.length; index += 1) {
+      try {
+        const content = await requestAtBaseUrl(candidates[index], true)
+        onBaseUrlResolved?.(candidates[index])
+        return content
+      } catch (error) {
+        if (index < candidates.length - 1 && isProviderEndpointMismatchError(error)) continue
+        throw error
+      }
+    }
+  }
+
+  throw lastNetworkError ?? new ProviderEndpointMismatchError()
 }
 
 async function fetchProviderModels(
@@ -275,6 +341,8 @@ async function fetchProviderModels(
   fetchImpl: FetchLike,
 ): Promise<{ models: string[]; baseUrl?: string; error?: string }> {
   const candidates = buildProviderBaseUrlCandidates(configuredBaseUrl)
+  const relayFetch = fetchImpl === fetch ? defaultRelayFetch : undefined
+  let lastNetworkError: unknown = null
 
   for (let index = 0; index < candidates.length; index += 1) {
     const baseUrl = candidates[index]
@@ -315,11 +383,61 @@ async function fetchProviderModels(
 
       return { models, baseUrl }
     } catch (error) {
+      if (isProviderNetworkError(error)) {
+        lastNetworkError = error
+        continue
+      }
       return { models: [], error: describeProviderNetworkError(error) }
     }
   }
 
-  return { models: [], error: "模型接口未命中可用的 API 路径" }
+  if (relayFetch && lastNetworkError) {
+    for (let index = 0; index < candidates.length; index += 1) {
+      const baseUrl = candidates[index]
+      try {
+        const response = await relayFetch("/provider-relay/models", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ baseUrl, apiKey }),
+        })
+
+        if (!response.ok) {
+          const error = await createProviderHttpError(response, apiKey)
+          if (index < candidates.length - 1 && isProviderEndpointMismatchError(error)) continue
+          return { models: [], error: error.message }
+        }
+
+        const body = await response.text()
+        if (looksLikeHtmlResponse(response, body)) {
+          if (index < candidates.length - 1) continue
+          return { models: [], error: "模型接口返回了 HTML 页面而不是模型列表" }
+        }
+
+        let payload: unknown
+        try {
+          payload = JSON.parse(body)
+        } catch {
+          return { models: [], error: "模型接口返回的不是有效 JSON" }
+        }
+
+        const models = extractModelIds(payload)
+        if (models.length === 0) {
+          return { models: [], error: "模型接口响应中没有可识别的模型 ID" }
+        }
+        return { models, baseUrl }
+      } catch (error) {
+        if (isProviderNetworkError(error)) continue
+        return { models: [], error: describeProviderNetworkError(error) }
+      }
+    }
+  }
+
+  return {
+    models: [],
+    error: lastNetworkError
+      ? describeProviderNetworkError(lastNetworkError)
+      : "模型接口未命中可用的 API 路径",
+  }
 }
 
 export async function testAiProviderConnection(

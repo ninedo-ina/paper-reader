@@ -182,6 +182,100 @@ describe("requestAiChatCompletion", () => {
     })
   })
 
+  it("keeps using the direct provider when the browser request succeeds", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ choices: [{ message: { content: "直连成功" } }] }), {
+        headers: { "content-type": "application/json" },
+      }),
+    )
+    const relayFetchMock = vi.fn()
+
+    await expect(
+      requestAiChatCompletion({
+        baseUrl: "https://provider.example/v1",
+        apiKey: "secret-key",
+        model: "working-model",
+        messages: [{ role: "user", content: "测试" }],
+        onContent: () => undefined,
+        fetchImpl: fetchMock,
+        relayFetchImpl: relayFetchMock,
+      }),
+    ).resolves.toBe("直连成功")
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(relayFetchMock).not.toHaveBeenCalled()
+  })
+
+  it("uses the authenticated relay after browser network failures and resolves /v1", async () => {
+    const resolvedBaseUrls: string[] = []
+    const fetchMock = vi.fn<typeof fetch>().mockRejectedValue(new TypeError("Failed to fetch"))
+    const relayFetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response("<html><body>Provider portal</body></html>", {
+          status: 404,
+          headers: { "content-type": "text/html" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response('data: {"choices":[{"delta":{"content":"中继成功"}}]}\n\ndata: [DONE]\n', {
+          status: 200,
+          headers: { "content-type": "text/event-stream" },
+        }),
+      )
+
+    await expect(
+      requestAiChatCompletion({
+        baseUrl: "https://provider.example",
+        apiKey: "secret-key",
+        model: "working-model",
+        messages: [{ role: "user", content: "测试" }],
+        onContent: () => undefined,
+        onBaseUrlResolved: (baseUrl) => resolvedBaseUrls.push(baseUrl),
+        fetchImpl: fetchMock,
+        relayFetchImpl: relayFetchMock,
+      }),
+    ).resolves.toBe("中继成功")
+
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      "https://provider.example/chat/completions",
+      "https://provider.example/v1/chat/completions",
+    ])
+    expect(relayFetchMock).toHaveBeenCalledTimes(2)
+    expect(relayFetchMock.mock.calls.map(([, options]) => {
+      const body = JSON.parse(String(options?.body))
+      return body.baseUrl
+    })).toEqual([
+      "https://provider.example",
+      "https://provider.example/v1",
+    ])
+    expect(resolvedBaseUrls).toEqual(["https://provider.example/v1"])
+  })
+
+  it("keeps upstream authentication errors from the relay without retrying paths", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockRejectedValue(new TypeError("Failed to fetch"))
+    const relayFetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ error: { message: "invalid api key" } }), {
+        status: 401,
+        headers: { "content-type": "application/json" },
+      }),
+    )
+
+    await expect(
+      requestAiChatCompletion({
+        baseUrl: "https://provider.example/v1",
+        apiKey: "secret-key",
+        model: "working-model",
+        messages: [{ role: "user", content: "测试" }],
+        onContent: () => undefined,
+        fetchImpl: fetchMock,
+        relayFetchImpl: relayFetchMock,
+      }),
+    ).rejects.toThrow("HTTP 401：invalid api key")
+
+    expect(relayFetchMock).toHaveBeenCalledTimes(1)
+  })
+
   it("retries once without streaming when a successful stream has no text", async () => {
     const updates: string[] = []
     const fetchMock = vi

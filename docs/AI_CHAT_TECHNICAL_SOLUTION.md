@@ -1,5 +1,16 @@
 # AI 对话技术方案
 
+## v0.1.18-fix Provider 连接修复摘要
+
+`v0.1.18-fix` 在 `v0.1.18` 会话增强的基础上修复 Provider 端点和浏览器网络策略兼容性。
+
+- Base URL 会先按用户输入请求；遇到 HTML、404/405 或浏览器网络/CORS 失败时，有限尝试同一路径下的 `/v1` 变体。
+- 浏览器直连因 CORS 失败时，使用 `/api/provider-relay/models` 或 `/api/provider-relay/chat/completions` 进行同源转发。
+- relay 需要登录 JWT，只允许 HTTPS 公网主机和两个固定上游路径，禁止重定向，并且 API Key 仅存在于单次请求内。
+- Provider 返回的 HTTP 状态、HTML 和 JSON 错误会保持可诊断性；密钥和 Bearer 值始终脱敏。
+
+针对当前 Provider，配置值为：Base URL `https://lzhiyu.ccwu.cc/v1`，模型 `gpt-oss-20b`。API Key 只应在用户自己的偏好设置中填写，不应写进仓库或文档。
+
 ## v0.1.18 会话增强摘要
 
 `v0.1.18` 在现有右侧 AI 对话流程上增加以下约束：
@@ -86,7 +97,7 @@ Provider 配置通过现有 `AiConfigTab` 添加、编辑、测试、获取模�
 
 Zustand persist key 为 `pr-ai-direct-chats`。新对话先创建空记录；第一次发送后，将首条用户消息压缩为最多 32 个字符的标题。切换历史时恢复该记录的消息和模型。
 
-这里刻意不复用后台 `AiChatListDto`：后台接口的消息由服务器模型处理，而直接 Provider 对话由浏览器访问用户选择的 Base URL。混用会导致历史内容、模型和鉴权语义不一致。
+这里刻意不复用后台 `AiChatListDto`：后台接口的消息由服务器模型处理，而直接 Provider 对话由浏览器访问用户选择的 Base URL；只有浏览器网络/CORS 失败时才通过已认证 relay。混用会导致历史内容、模型和鉴权语义不一致。
 
 ## 6. 发送流程
 
@@ -101,7 +112,7 @@ Zustand persist key 为 `pr-ai-direct-chats`。新对话先创建空记录；第
   -> 同步持久化 DirectChat
 ```
 
-Provider 的 Base URL 只去掉末尾斜杠，然后追加 `/chat/completions`。现有实现沿用 OpenAI 兼容协议和 Bearer API Key。失败时移除空的 assistant 占位消息并在页面显示错误，不清除用户刚输入的历史消息。
+Provider 的 Base URL 去掉末尾斜杠后追加 `/chat/completions`；如果未包含 `/v1`，实现会有限尝试追加 `/v1`。浏览器网络/CORS 失败时再通过同源 relay 转发。失败时保留安全错误信息并在页面显示，不清除用户刚输入的历史消息。
 
 ## 7. 交互约束
 
@@ -122,7 +133,7 @@ Provider 配置页的“测试连接”必须验证与实际对话相同的请�
 4. `/models` 不是必需能力，不能因为它不可用就否定一个实际可对话的 Provider；但没有任何可测试模型时必须提示用户填写模型。
 5. HTTP 错误只展示状态码和解析后的安全错误摘要；API Key、Bearer 值和敏感文本必须脱敏。
 
-连接测试直接在浏览器请求用户配置的 Provider，因此仍受 Provider CORS、HTTPS Mixed Content 和浏览器网络策略影响；请求不经过 PaperReader 后端。
+连接测试优先直接请求用户配置的 Provider；当浏览器因 CORS 或网络策略无法读取响应时，自动回退到已认证的 PaperReader relay。HTTPS Mixed Content、Provider 认证、额度和模型错误仍会明确显示。
 
 ## 9. 后续扩展边界
 
