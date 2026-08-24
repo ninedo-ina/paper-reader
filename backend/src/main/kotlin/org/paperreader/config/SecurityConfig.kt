@@ -1,6 +1,7 @@
 package org.paperreader.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import jakarta.servlet.DispatcherType
 import jakarta.servlet.http.HttpServletResponse
 import org.paperreader.dto.ApiResponse
 import org.paperreader.security.JwtAuthFilter
@@ -28,6 +29,10 @@ class SecurityConfig(
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { auth ->
                 auth
+                    // StreamingResponseBody completes through an internal
+                    // async/error dispatch after the authenticated request has
+                    // already passed this filter chain.
+                    .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                     .requestMatchers(
                         "/api/auth/register",
                         "/api/auth/login",

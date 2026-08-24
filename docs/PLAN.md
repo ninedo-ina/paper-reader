@@ -18,6 +18,7 @@
 - `https://lzhiyu.ccwu.cc/v1/models` 能发现模型，`gpt-oss-20b` 的 `/v1/chat/completions` 能返回正文。
 - Base URL 填写 `https://lzhiyu.ccwu.cc/v1`、模型填写 `gpt-oss-20b` 时，连接测试和实际对话均可工作。
 - 直连可用时不调用 relay；直连因 CORS 失败时，relay 能完成流式和非流式响应转发。
+- relay 的 SSE 响应必须完整结束：包含 `[DONE]`、客户端正常关闭，且 Servlet 异步二次分发不会产生授权异常。
 - 前后端测试、生产构建、PM2 重启和公网健康检查全部通过。
 
 ### v0.1.18 已完成范围

@@ -277,8 +277,16 @@ v0.1.15-fix 上线后，用户使用浏览器中已配置的 Provider 发送消�
 - 客户端遇到浏览器网络/CORS 失败时调用同源 `/api/provider-relay`，模型发现和聊天请求共用同一回退逻辑；直连成功时不调用 relay。
 - 后端 relay 使用 JWT 登录保护，仅接受两个固定操作、HTTPS 公网目标和标准消息角色；禁用上游重定向并拦截本地/内网/保留地址，API Key 不落库、不写日志。
 - relay 保留上游状态、内容类型和安全错误正文，支持 SSE 流式响应和普通 JSON 响应。
+- `StreamingResponseBody` 写完正文后会触发 Servlet `ASYNC` 二次分发。初版安全链在这次内部调度中重新要求认证，导致响应已返回 `200` 且正文完整后仍抛出 `AuthorizationDeniedException`，客户端可能收到不完整传输。安全配置现仅放行 `DispatcherType.ASYNC`，原始 relay 请求仍必须先通过 JWT；回归验证要求流式请求收到 `[DONE]`、客户端正常结束且服务端无异步授权异常。
 - 当前 Provider 推荐配置：Base URL `https://lzhiyu.ccwu.cc/v1`，模型 `gpt-oss-20b`。
 
 ### 后续风险
 
 Provider 如果修改 CORS 或 API 路由，客户端仍会优先尝试直连并在必要时使用 relay；完全私有的响应协议、工具调用-only 响应和非 HTTPS 公网地址仍不在支持范围。relay 会让 API Key 经过 PaperReader 服务器，因此只作为浏览器无法直连时的受保护回退，不能在日志、截图或提交中暴露密钥。用户已在聊天中公开过的密钥应在验证后撤销并重新生成。
+
+### 本次验证
+
+- 后端 `clean test bootJar` 通过。
+- 临时 `0.1.18-fix` 实例验证未登录 relay 返回 `401`，原始请求的 JWT 保护未被放宽。
+- 使用推荐 Base URL 和模型验证 `/models` 返回 19 个模型并包含 `gpt-oss-20b`；非流式聊天返回 `200` 和可见正文。
+- SSE 聊天返回 `200`、包含 `[DONE]`，客户端正常结束且没有 `AuthorizationDeniedException`。

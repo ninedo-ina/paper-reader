@@ -26,6 +26,7 @@
 - Provider 配置目前保存在浏览器持久化存储中，API Key 属于敏感信息。
 - 不要把 API Key 放到 URL、commit、截图、README、服务端日志或错误信息中。
 - 直连 Provider 仍优先由浏览器发出；若发生 CORS/网络失败，才使用 JWT 保护的同源 relay。relay 不落库、不记录 API Key，并且只允许 HTTPS 公网目标。
+- relay 的原始请求必须通过 JWT；只允许 Servlet `ASYNC` 内部二次分发跳过重复授权，否则 `StreamingResponseBody` 可能在正文已发送后触发 `AuthorizationDeniedException`。
 - 用户修改或删除 Provider 后，历史对话仍可能保留旧 Provider ID 和消息，这是本地历史数据；发送新消息前必须重新选择一个当前激活的 Provider。
 - 未配置 Provider 时，模型选择器必须不可用，不能让用户误以为内置模型可以直接发送。
 - Provider 测试必须验证实际使用的 `/chat/completions`；`/models` 只能用于可选的模型发现，不能单独作为连接可用性的结论。
