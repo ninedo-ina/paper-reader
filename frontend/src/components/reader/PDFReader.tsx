@@ -38,6 +38,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
     addNote, removeNote,
     loadAnnotations, loadNotes,
     navigationTarget,
+    setPendingPaperQuestion,
   } = useReaderStore()
 
   // Load annotations & notes from API when paper changes
@@ -356,6 +357,12 @@ export function PDFReader({ paper }: PDFReaderProps) {
                   scale={scale}
                   onCreateAnnotation={(text, pos, positions, startOffset, endOffset) => handleCreateAnnotation(text, pos, positions, n, startOffset, endOffset)}
                   onCreateNote={(text, pos, positions, startOffset, endOffset) => handleCreateNote(text, pos, positions, n, startOffset, endOffset)}
+                  onAskAI={(text, selectedPage) => setPendingPaperQuestion({
+                    paperId: paper.id,
+                    paperTitle: paper.title,
+                    selectedText: text,
+                    pageNumber: selectedPage,
+                  })}
                 >
                   <Page
                     pageNumber={n}

@@ -33,12 +33,26 @@ export default function Home() {
   const [showPreferences, setShowPreferences] = useState(false)
   const [preferencesTab, setPreferencesTab] = useState<PreferencesTab>("ui")
   const [showProfile, setShowProfile] = useState(false)
-  const { currentPaper, loadPaper } = usePaperStore()
+  const { currentPaper, loadPaper, refreshPaper } = usePaperStore()
   const initSystemNotifications = useNotificationStore((s) => s.initSystemNotifications)
+  const currentPaperId = currentPaper?.id
+  const currentPaperParseStatus = currentPaper?.parseStatus
 
   useEffect(() => {
     initSystemNotifications()
   }, [initSystemNotifications])
+
+  useEffect(() => {
+    if (!currentPaperId || !["PENDING", "PROCESSING"].includes(currentPaperParseStatus ?? "")) {
+      return
+    }
+
+    const timer = window.setInterval(() => {
+      void refreshPaper(currentPaperId)
+    }, 2500)
+
+    return () => window.clearInterval(timer)
+  }, [currentPaperId, currentPaperParseStatus, refreshPaper])
 
   const handleSidebarClick = useCallback((key: string) => {
     if (key === "circle") {

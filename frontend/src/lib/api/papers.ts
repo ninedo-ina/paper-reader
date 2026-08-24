@@ -12,6 +12,8 @@ import type {
   UpdatePaperRequest,
   PaperTagDto,
   SharePaperResponse,
+  PaperContextDto,
+  PaperContextRequest,
 } from "./types"
 
 /** 获取用户论文列表（分页，可选 sourceType/favorite 过滤） */
@@ -47,6 +49,11 @@ export function uploadPdf(file: File): Promise<PaperDetailDto> {
 /** 从 URL 导入论文 */
 export function uploadFromUrl(data: UploadFromUrlRequest): Promise<PaperDetailDto> {
   return post<PaperDetailDto>("/papers/url", data)
+}
+
+/** 获取论文选区问答所需的有限上下文 */
+export function getPaperContext(id: number, data: PaperContextRequest): Promise<PaperContextDto> {
+  return post<PaperContextDto>(`/papers/${id}/context`, data)
 }
 
 /** 手动创建论文 */

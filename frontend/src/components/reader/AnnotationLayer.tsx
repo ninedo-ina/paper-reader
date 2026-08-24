@@ -30,7 +30,7 @@ interface AnnotationLayerProps {
   children?: React.ReactNode
   onCreateAnnotation?: (text: string, position: PositionRect, positions: PositionRect[], pageNumber: number, startOffset: number, endOffset: number) => void
   onCreateNote?: (text: string, position: PositionRect, positions: PositionRect[], pageNumber: number, startOffset: number, endOffset: number) => void
-  onAskAI?: (text: string) => void
+  onAskAI?: (text: string, pageNumber: number) => void
 }
 
 interface PopupMenuState {
@@ -485,10 +485,10 @@ export function AnnotationLayer({ pageNumber, anchors, scale, children, onCreate
 
   const handleAskAI = useCallback(() => {
     if (!popup || !onAskAI) return
-    onAskAI(popup.text)
+    onAskAI(popup.text, pageNumber)
     setPopup(null)
     window.getSelection()?.removeAllRanges()
-  }, [popup, onAskAI])
+  }, [popup, onAskAI, pageNumber])
 
   // Merge anchors using real-time matched positions from the text layer
   const mergedAnchors = mergeAnchors(pageAnchors, matchedPositions)

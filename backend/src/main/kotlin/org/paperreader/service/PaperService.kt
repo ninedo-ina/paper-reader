@@ -7,26 +7,21 @@ import org.paperreader.model.Paper
 import org.paperreader.model.PaperTag
 import org.paperreader.repository.PaperRepository
 import org.paperreader.repository.PaperTagRepository
-import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
-import java.io.StringReader
 import java.time.Instant
-import javax.xml.parsers.DocumentBuilderFactory
 
 @Service
 class PaperService(
     private val paperRepository: PaperRepository,
     private val paperTagRepository: PaperTagRepository,
     private val fileStorageService: FileStorageService,
-    private val grobidClient: GrobidClient,
+    private val paperParsingService: PaperParsingService,
     private val objectMapper: ObjectMapper,
     private val auditLogService: AuditLogService,
 ) {
-    private val logger = LoggerFactory.getLogger(PaperService::class.java)
-
     @Transactional
     fun uploadPdf(file: MultipartFile, userId: Long, title: String?): PaperDetailDto {
         val fileSize = file.size
@@ -43,11 +38,9 @@ class PaperService(
         )
 
         val filePath = fileStorageService.store(file, userId, paper.id)
-        val stored = paper.copy(filePath = filePath)
-        paperRepository.save(stored)
-
-        val grobidResult = parsePdf(file.bytes, filePath, stored)
-        val result = paperRepository.save(grobidResult).toDetailDto()
+        val stored = paperRepository.save(paper.copy(filePath = filePath, parseStatus = "PENDING"))
+        paperParsingService.requestParse(stored)
+        val result = stored.toDetailDto()
         auditLogService.log(userId, "上传论文", result.title)
         return result
     }
@@ -66,11 +59,11 @@ class PaperService(
         )
 
         val (filePath, pdfBytes) = fileStorageService.storeFromUrl(request.url, userId, paper.id)
-        val stored = paper.copy(filePath = filePath, fileSize = pdfBytes.size.toLong())
-        paperRepository.save(stored)
-
-        val grobidResult = parsePdf(pdfBytes, filePath, stored)
-        val result = paperRepository.save(grobidResult).toDetailDto()
+        val stored = paperRepository.save(
+            paper.copy(filePath = filePath, fileSize = pdfBytes.size.toLong(), parseStatus = "PENDING")
+        )
+        paperParsingService.requestParse(stored)
+        val result = stored.toDetailDto()
         auditLogService.log(userId, "上传论文", result.title)
         return result
     }
@@ -231,117 +224,6 @@ class PaperService(
         return SharePaperResponse(shareText = parts.joinToString(" — "))
     }
 
-    private fun parsePdf(pdfBytes: ByteArray, filePath: String, paper: Paper): Paper {
-        return try {
-            logger.info("Sending to GROBID: paper {}", paper.id)
-            val teiXml = grobidClient.processHeader(pdfBytes)
-            val metadata = parseTeiMetadata(teiXml)
-            paper.copy(
-                title = metadata.title ?: paper.title,
-                authors = metadata.authors,
-                abstractText = metadata.abstractText,
-                doi = metadata.doi,
-                year = metadata.year,
-                journal = metadata.journal,
-                pageCount = metadata.pageCount ?: paper.pageCount,
-                grobidResult = teiXml,
-            )
-        } catch (e: Exception) {
-            logger.error("GROBID parsing failed for paper {}: {}", paper.id, e.message)
-            paper
-        }
-    }
-
-    private fun parseTeiMetadata(teiXml: String): TeiMetadata {
-        try {
-            val factory = DocumentBuilderFactory.newInstance()
-            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
-            factory.setFeature("http://xml.org/sax/features/external-general-entities", false)
-            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false)
-            val doc = factory.newDocumentBuilder().parse(org.xml.sax.InputSource(teiXml.reader()))
-
-            val title = doc.getElementsByTagName("title").let { nl ->
-                if (nl.length > 0 && nl.item(0).textContent.isNotBlank()) nl.item(0).textContent.trim() else null
-            }
-
-            val authors = doc.getElementsByTagName("author").let { nl ->
-                (0 until nl.length).mapNotNull { i ->
-                    val el = nl.item(i)
-                    val surname = el.childNodes.let { cn ->
-                        (0 until cn.length).firstNotNullOfOrNull { j ->
-                            if (cn.item(j).nodeName == "persName") {
-                                val pn = cn.item(j)
-                                val sn = pn.childNodes.let { pcn ->
-                                    (0 until pcn.length).firstNotNullOfOrNull { k ->
-                                        if (pcn.item(k).nodeName == "surname") pcn.item(k).textContent.trim() else null
-                                    }
-                                }
-                                val fn = pn.childNodes.let { pcn ->
-                                    (0 until pcn.length).firstNotNullOfOrNull { k ->
-                                        if (pcn.item(k).nodeName == "forename") {
-                                            val t = pcn.item(k).textContent.trim()
-                                            if (t.length == 1) "$t." else t
-                                        } else null
-                                    }
-                                }
-                                if (sn != null && fn != null) "$fn $sn" else sn
-                            } else null
-                        }
-                    } ?: el.textContent.trim().takeIf { it.isNotBlank() }
-                }.joinToString(", ").takeIf { it.isNotBlank() }
-            }
-
-            val abstractText = doc.getElementsByTagName("abstract").let { nl ->
-                if (nl.length > 0 && nl.item(0).textContent.isNotBlank()) nl.item(0).textContent.trim() else null
-            }
-
-            val doi = doc.getElementsByTagName("idno").let { nl ->
-                (0 until nl.length).firstNotNullOfOrNull { i ->
-                    val el = nl.item(i)
-                    if (el.attributes?.getNamedItem("type")?.textContent == "DOI") el.textContent.trim() else null
-                }
-            }
-
-            val year = doc.getElementsByTagName("date").let { nl ->
-                if (nl.length > 0 && nl.item(0).textContent.isNotBlank()) nl.item(0).textContent.trim().take(4) else null
-            }
-
-            val journal = doc.getElementsByTagName("monogr").let { nl ->
-                if (nl.length > 0) {
-                    val monogr = nl.item(0) as org.w3c.dom.Element
-                    val titleEl = monogr.getElementsByTagName("title").let { tnl ->
-                        if (tnl.length > 0) tnl.item(0) else null
-                    }
-                    titleEl?.textContent?.trim()?.takeIf { it.isNotBlank() }
-                } else null
-            }
-
-            val pageCount = doc.getElementsByTagName("biblScope").let { nl ->
-                (0 until nl.length).firstNotNullOfOrNull { i ->
-                    val el = nl.item(i)
-                    if (el.attributes?.getNamedItem("unit")?.textContent == "page") {
-                        el.textContent.trim().split("-").lastOrNull()?.toIntOrNull()
-                    } else null
-                }
-            }
-
-            return TeiMetadata(title, authors, abstractText, doi, year, journal, pageCount)
-        } catch (e: Exception) {
-            logger.warn("Failed to parse TEI XML: {}", e.message)
-            return TeiMetadata(null, null, null, null, null, null, null)
-        }
-    }
-
-    private data class TeiMetadata(
-        val title: String?,
-        val authors: String?,
-        val abstractText: String?,
-        val doi: String?,
-        val year: String?,
-        val journal: String?,
-        val pageCount: Int?,
-    )
-
     private fun Paper.toDetailDto(tags: List<String> = emptyList()) = PaperDetailDto(
         id = id,
         title = title,
@@ -360,6 +242,8 @@ class PaperService(
         pageCount = pageCount,
         fileSize = fileSize,
         grobidResult = null,
+        parseStatus = parseStatus,
+        parseError = parseError,
         tags = tags,
         createdAt = createdAt,
         updatedAt = updatedAt,

@@ -1,5 +1,6 @@
 import {
-  consumeAiChatResponse,
+  consumeAiChatResponseDetailed,
+  type AiChatResponseResult,
   EmptyAiResponseError,
   isEmptyAiResponseError,
   isProviderEndpointMismatchError,
@@ -28,12 +29,13 @@ export interface AiChatCompletionMessage {
   content: string
 }
 
-interface AiChatCompletionOptions {
+export interface AiChatCompletionOptions {
   baseUrl: string
   apiKey: string
   model: string
   messages: AiChatCompletionMessage[]
   onContent: (content: string) => void
+  onReasoning?: (reasoning: string) => void
   onBaseUrlResolved?: (baseUrl: string) => void
   stream?: boolean
   fetchImpl?: FetchLike
@@ -217,7 +219,7 @@ function defaultRelayFetch(path: string, options?: RequestInit): Promise<Respons
   return requestRaw(path, options)
 }
 
-async function requestProviderRelay(
+async function requestProviderRelayDetailed(
   baseUrl: string,
   apiKey: string,
   model: string,
@@ -225,7 +227,8 @@ async function requestProviderRelay(
   stream: boolean,
   relayFetch: RelayFetchLike,
   onContent: (content: string) => void,
-): Promise<string> {
+  onReasoning?: (reasoning: string) => void,
+): Promise<AiChatResponseResult> {
   const response = await relayFetch("/provider-relay/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -233,31 +236,35 @@ async function requestProviderRelay(
   })
 
   if (!response.ok) throw await createProviderHttpError(response, apiKey)
-  return consumeAiChatResponse(response, onContent)
+  return consumeAiChatResponseDetailed(response, { onContent, onReasoning })
 }
 
-export async function requestAiChatCompletion({
+export async function requestAiChatCompletionDetailed({
   baseUrl: configuredBaseUrl,
   apiKey,
   model,
   messages,
   onContent,
+  onReasoning,
   onBaseUrlResolved,
   stream: useStreaming = true,
   fetchImpl = fetch,
   relayFetchImpl,
-}: AiChatCompletionOptions): Promise<string> {
+}: AiChatCompletionOptions): Promise<AiChatResponseResult> {
   const baseUrl = normalizeProviderBaseUrl(configuredBaseUrl)
   const baseUrlError = validateBaseUrl(baseUrl)
   if (baseUrlError) throw new Error(baseUrlError)
 
   const relayFetch = relayFetchImpl ?? (fetchImpl === fetch ? defaultRelayFetch : undefined)
 
-  const requestAtBaseUrl = async (candidateBaseUrl: string, viaRelay = false): Promise<string> => {
+  const requestAtBaseUrl = async (
+    candidateBaseUrl: string,
+    viaRelay = false,
+  ): Promise<AiChatResponseResult> => {
     const request = async (stream: boolean) => {
       if (viaRelay) {
         if (!relayFetch) throw new Error("Provider 中继不可用")
-        return requestProviderRelay(
+        return requestProviderRelayDetailed(
           candidateBaseUrl,
           apiKey,
           model,
@@ -265,6 +272,7 @@ export async function requestAiChatCompletion({
           stream,
           relayFetch,
           onContent,
+          onReasoning,
         )
       }
 
@@ -278,7 +286,7 @@ export async function requestAiChatCompletion({
       )
 
       if (!response.ok) throw await createProviderHttpError(response, apiKey)
-      return consumeAiChatResponse(response, onContent)
+      return consumeAiChatResponseDetailed(response, { onContent, onReasoning })
     }
 
     if (!useStreaming) return request(false)
@@ -333,6 +341,13 @@ export async function requestAiChatCompletion({
   }
 
   throw lastNetworkError ?? new ProviderEndpointMismatchError()
+}
+
+export async function requestAiChatCompletion(
+  options: AiChatCompletionOptions,
+): Promise<string> {
+  const result = await requestAiChatCompletionDetailed(options)
+  return result.content || result.reasoning
 }
 
 async function fetchProviderModels(

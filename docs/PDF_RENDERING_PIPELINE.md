@@ -1,7 +1,7 @@
 # PDF 渲染全链路技术分析
 
 > paper-reader 项目 PDF 阅读器从上传到浏览器渲染的端到端链路分析
-> 编写日期: 2026-07-16 | 当前分支: feature/v0.1.8
+> 编写日期: 2026-08-24 | 当前分支: feature/v0.1.19
 
 ---
 
@@ -59,10 +59,12 @@
 │  └────────────────┘     │ createPaper       │    └───────┬────────┘  │
 │                          │ downloadPaper     │            │          │
 │  ┌────────────────┐     │ deletePaper       │    ┌───────▼────────┐  │
-│  │AnnotationCtrl  │     │ parsePdf          │    │  PostgreSQL    │  │
+│  │AnnotationCtrl  │     │ async parse       │    │  PostgreSQL    │  │
 │  │NoteController  │     └──┬─────────┬──────┘    │  pr_papers     │  │
-│  └────────────────┘        │         │           │  grobidResult  │  │
-│                             │         │           │  (jsonb)       │  │
+│  └────────────────┘        │         │           │  grobid_result  │  │
+│                             │         │           │  (TEXT)        │  │
+│                             │         │           │  parse_status  │  │
+│                             │         │           │  paper_chunks  │  │
 │                             ▼         ▼           └────────────────┘  │
 │  ┌────────────────┐  ┌─────────┐  ┌──────────┐                      │
 │  │FileStorageSvc  │  │GrobidClient│ │  dufs    │                      │
@@ -73,8 +75,8 @@
 │      │   │    ┌────────────▼────────────┐                             │
 │      │   │    │ GROBID (Docker 0.8.1)   │                             │
 │      │   │    │ port:8070               │                             │
-│      │   │    │ processHeaderDocument   │                             │
-│      │   │    │ → TEI XML               │                             │
+│      │   │    │ processFulltextDocument │                             │
+│      │   │    │ → TEI XML + chunks      │                             │
 │      │   │    └─────────────────────────┘                             │
 │      ▼   ▼                                                            │
 │  ┌──────────┐   ┌──────────────┐                                     │
@@ -89,7 +91,7 @@
 | 步骤 | 描述 | 涉及组件 |
 |------|------|----------|
 | ① | 用户上传 PDF 或选择论文 | Page → PaperContentArea |
-| ② | 后端接收 PDF，存储文件，GROBID 解析元数据 | PaperService.uploadPdf() |
+| ② | 后端接收 PDF、保存文件并异步启动 GROBID 全文解析 | PaperService + PaperParsingService |
 | ③ | 前端获取 PaperDetailDto，存入 PaperStore | paper-store.ts |
 | ④ | 前端加载该论文的批注/笔记列表 | loadAnnotations / loadNotes |
 | ⑤ | AnnotationLayer 计算覆盖层位置 | findTextPositions |
@@ -106,9 +108,9 @@
 | 前端框架 | Next.js + React | 15 / 19 | App Router |
 | 状态管理 | Zustand | - | PaperStore + ReaderStore |
 | 后端框架 | Kotlin / Spring Boot | - | REST API |
-| PDF 解析 | GROBID | 0.8.1 (Docker) | 机器学习 PDF 元数据提取，返回 TEI XML |
+| PDF 解析 | GROBID | 0.8.1 (Docker) | PDF → TEI XML 全文结构化提取 |
 | 文件存储 | dufs / 本地文件系统 | - | HTTP 文件服务器或本地磁盘 |
-| 数据库 | PostgreSQL | - | grobidResult 存为 jsonb |
+| 数据库 | PostgreSQL | - | TEI 使用 TEXT，正文拆分为 `pr_paper_chunks` |
 
 ---
 
@@ -133,7 +135,7 @@
 **可影响的方式**：
 - pdfjs-dist 通过 **patch**（`patches/pdfjs-dist@5.4.296.patch`）修改 webpack bundle 输出，解决变量冲突和空值兼容性问题
 - react-pdf 通过组件 props（`file`, `onLoadSuccess`, `onLoadProgress`, `scale`, `renderTextLayer`）控制行为
-- GROBID 通过 HTTP 请求参数（`segment`, `consolidateHeader`）控制处理行为
+- GROBID 通过 `/api/processFulltextDocument` 等真实 REST 接口和 `consolidateHeader`、`consolidateCitations` 参数控制处理行为
 
 ### 2.2 Layer 1 — 可改但需谨慎
 
@@ -418,19 +420,37 @@ POST /api/papers/upload (multipart/form-data)
     ▼
 PaperService.uploadPdf(file, userId, title?)
     │
-    ├── ① 创建 Paper 实体 (title=filename, sourceType=UPLOAD, filePath="")
+    ├── ① 创建 Paper 实体并保存 PDF
     ├── ② FileStorageService.store(file, userId, paper.id)
-    │       └── 本地: file.transferTo(./uploads/{userId}/{paperId}/{uuid}.pdf)
-    │       └── dufs: HTTP PUT dufsUrl/userId/paperId/uuid.pdf
-    ├── ③ GrobidClient.processHeader(pdfBytes)
-    │       └── POST http://localhost:8070/api/service
-    │           multipart: input=pdf, segment=processHeaderDocument
-    │           → 返回 TEI XML 字符串
-    ├── ④ parseTeiMetadata(teiXml)
-    │       └── DOM 解析 TEI XML，提取 title/authors/abstract/doi/year/journal/pageCount
-    ├── ⑤ paper.copy(grobidResult=teiXml, ...metadata) → save
-    └── ⑥ 返回 PaperDetailDto
+    │       └── 本地: ./uploads/{userId}/{paperId}/{uuid}.pdf
+    │       └── dufs: HTTP PUT 到 dufs 对象路径
+    ├── ③ PaperParsingService.requestParse()
+    │       └── 设置 parseStatus=PENDING，并在事务提交后发布事件
+    ├── ④ 返回 PaperDetailDto（上传请求不等待 GROBID）
+    └── ⑤ 异步任务读取文件并调用 GrobidClient.processFulltext()
+            └── POST {grobid.base-url}/api/processFulltextDocument
+                multipart: input=pdf, consolidateHeader=1, consolidateCitations=1
+                → TEI XML
+                → TeiDocumentParser（header 元数据 + body chunks）
+                → pr_papers + pr_paper_chunks
+                → parseStatus=READY；异常则 FAILED
 ```
+
+解析状态按 `PENDING -> PROCESSING -> READY/FAILED` 流转。前端在当前论文处于前两种状态时轮询 `GET /api/papers/{id}`，解析失败不影响 PDF 阅读、下载和批注。
+
+#### 论文问答上下文
+
+```
+POST /api/papers/{id}/context
+Authorization: Bearer <JWT>
+Body: { "selectedText": "...", "pageNumber": 3 }
+    │
+    ├── 按 paperId + userId 校验论文权限
+    ├── 解析 READY 时按选中文本、页码匹配有限 chunks，并补充相邻段落
+    └── 返回标题、作者、摘要、解析状态、选中文本和相关 chunks
+```
+
+前端将上述结果拼接成论文场景 Prompt，Provider Key 仍只保存在浏览器，不经过后端。
 
 #### 下载流程
 
@@ -631,7 +651,19 @@ Error responses:
 | file_path | TEXT | PDF 文件路径（本地绝对路径或 dufs object key） |
 | file_size | BIGINT | 文件大小（字节） |
 | source_type | VARCHAR(20) | UPLOAD / URL / MANUAL |
-| grobid_result | JSONB | GROBID 解析的原始 TEI XML |
+| grobid_result | TEXT | GROBID 解析的原始 TEI XML |
+| parse_status | VARCHAR(20) | `PENDING` / `PROCESSING` / `READY` / `FAILED` |
+| parse_error | TEXT | 面向用户的解析失败摘要 |
+
+**pr_paper_chunks**:
+| 列 | 类型 | 说明 |
+|----|------|------|
+| id | BIGSERIAL | 主键 |
+| paper_id | BIGINT | 所属论文，删除论文时级联删除 |
+| section_title | VARCHAR(500) | 正文所属章节 |
+| ordinal | INTEGER | 论文内顺序 |
+| content | TEXT | 规范化后的正文片段，单片段约 1800 字符以内 |
+| page_start / page_end | INTEGER | GROBID 正文页码（可为空） |
 
 **pr_annotations**:
 | 列 | 类型 | 说明 |
@@ -756,14 +788,15 @@ interface ReaderAnnotation {
 | `frontend/src/components/reader/AnnotationLayer.tsx` | 批注覆盖层：选区检测、文本匹配、下划线渲染 |
 | `frontend/src/components/reader/AnnotationDialog.tsx` | 批注/笔记创建编辑对话框 |
 | `frontend/src/components/reader/PDFViewer.tsx` | PDF 阅读器外壳：dynamic import + 空状态 |
-| `frontend/src/stores/reader-store.ts` | Reader 状态管理：annotations/notes CRUD、DTO 转换 |
+| `frontend/src/stores/reader-store.ts` | Reader 状态管理：annotations/notes CRUD、DTO 转换、论文选区问答事件 |
 | `frontend/src/stores/paper-store.ts` | 论文状态管理：当前论文加载 |
 | `frontend/src/lib/api/papers.ts` | 论文 API：getDownloadUrl() |
 | `frontend/src/lib/api/annotations.ts` | 批注 API 客户端 |
 | `frontend/src/lib/api/notes.ts` | 笔记 API 客户端 |
 | `frontend/src/lib/api/types.ts` | 全局 TypeScript DTO 类型定义 |
 | `frontend/src/lib/api/client.ts` | HTTP 客户端封装（JWT 自动附加，401 自动刷新） |
-| `frontend/src/components/layout/RightPanel.tsx` | 右侧面板：批注/笔记列表、编辑/删除 |
+| `frontend/src/components/layout/RightPanel.tsx` | 右侧面板：批注/笔记列表、编辑/删除、AI Tab 调度 |
+| `frontend/src/components/chat/ChatPanel.tsx` | Provider/model 选择、会话历史、reasoning 折叠、论文选区问答 |
 | `frontend/src/components/annotations/CommentThread.tsx` | 批注评论线程 |
 | `frontend/patches/pdfjs-dist@5.4.296.patch` | pdfjs-dist webpack 兼容性 patch |
 | `frontend/next.config.ts` | Next.js 配置（含 pdfjs-dist 相关 webpack 调整） |
@@ -776,9 +809,13 @@ interface ReaderAnnotation {
 | `backend/.../controller/AnnotationController.kt` | 批注 REST API |
 | `backend/.../controller/NoteController.kt` | 笔记 REST API |
 | `backend/.../controller/GrobidController.kt` | GROBID 重新解析 API |
-| `backend/.../service/PaperService.kt` | 论文业务逻辑：上传编排、PDF 解析、下载 |
+| `backend/.../service/PaperService.kt` | 论文业务逻辑：上传编排、下载和解析任务提交 |
 | `backend/.../service/FileStorageService.kt` | 文件存储抽象：本地 / dufs |
 | `backend/.../service/GrobidClient.kt` | GROBID HTTP 客户端 |
+| `backend/.../service/PaperParsingService.kt` | 事务提交后的异步全文解析任务 |
+| `backend/.../service/PaperParsingPersistenceService.kt` | 解析状态、TEI 和 chunks 的事务持久化 |
+| `backend/.../service/TeiDocumentParser.kt` | 安全解析 TEI header 元数据和 body 正文 chunks |
+| `backend/.../service/PaperContextService.kt` | 按论文权限和选区返回有限问答上下文 |
 | `backend/.../service/AnnotationService.kt` | 批注 CRUD |
 | `backend/.../service/NoteService.kt` | 笔记 CRUD |
 | `backend/.../model/Paper.kt` | Paper JPA 实体 |
@@ -789,4 +826,5 @@ interface ReaderAnnotation {
 | `backend/.../dto/ApiResponse.kt` | 通用响应 + 认证 DTO |
 | `backend/.../dto/Requests.kt` | 论文、批注、笔记等 DTO 定义 |
 | `backend/src/main/resources/application.yml` | 后端配置文件 |
+| `backend/src/main/resources/db/migration/V11__paper_content_context.sql` | 解析状态、TEI TEXT 和正文 chunks 迁移 |
 | `docker-compose.yml` | 容器编排（GROBID 服务） |

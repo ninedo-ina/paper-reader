@@ -70,9 +70,37 @@ data class PaperDetailDto(
     val pageCount: Int,
     val fileSize: Long,
     val grobidResult: Map<String, Any?>?,
+    val parseStatus: String = "NOT_APPLICABLE",
+    val parseError: String? = null,
     val tags: List<String> = emptyList(),
     val createdAt: Instant,
     val updatedAt: Instant,
+)
+
+data class PaperContextRequest(
+    val selectedText: String,
+    val pageNumber: Int? = null,
+)
+
+data class PaperContextChunkDto(
+    val id: Long,
+    val sectionTitle: String?,
+    val ordinal: Int,
+    val content: String,
+    val pageStart: Int?,
+    val pageEnd: Int?,
+)
+
+data class PaperContextDto(
+    val paperId: Long,
+    val title: String,
+    val authors: String?,
+    val abstractText: String?,
+    val parseStatus: String,
+    val parseError: String?,
+    val selectedText: String,
+    val pageNumber: Int?,
+    val chunks: List<PaperContextChunkDto>,
 )
 
 data class UploadFromUrlRequest(
