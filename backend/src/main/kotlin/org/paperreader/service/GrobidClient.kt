@@ -17,28 +17,33 @@ class GrobidClient(
 
     companion object {
         const val CONSOLIDATE_HEADER = 1
-        const val CONSOLIDATE_CITATION = 2
+        const val CONSOLIDATE_CITATION = 1
     }
 
-    fun processHeader(pdfBytes: ByteArray, consolidate: Int = CONSOLIDATE_HEADER): String {
-        val body = buildMultipartBody(pdfBytes, "processHeaderDocument", listOf(
-            "consolidateHeader" to consolidate.toString(),
+    fun processHeader(pdfBytes: ByteArray, consolidateHeader: Int = CONSOLIDATE_HEADER): String {
+        val body = buildMultipartBody(pdfBytes, listOf(
+            "consolidateHeader" to consolidateHeader.toString(),
         ))
-        return call(body)
+        return call("processHeaderDocument", body)
     }
 
-    fun processFulltext(pdfBytes: ByteArray, consolidate: Int = CONSOLIDATE_HEADER + CONSOLIDATE_CITATION): String {
-        val body = buildMultipartBody(pdfBytes, "processFulltextDocument", listOf(
-            "consolidateHeader" to consolidate.toString(),
+    fun processFulltext(
+        pdfBytes: ByteArray,
+        consolidateHeader: Int = CONSOLIDATE_HEADER,
+        consolidateCitations: Int = CONSOLIDATE_CITATION,
+    ): String {
+        val body = buildMultipartBody(pdfBytes, listOf(
+            "consolidateHeader" to consolidateHeader.toString(),
+            "consolidateCitations" to consolidateCitations.toString(),
         ))
-        return call(body)
+        return call("processFulltextDocument", body)
     }
 
-    fun processReferences(pdfBytes: ByteArray, consolidate: Int = CONSOLIDATE_CITATION): String {
-        val body = buildMultipartBody(pdfBytes, "processReferences", listOf(
-            "consolidateHeader" to consolidate.toString(),
+    fun processReferences(pdfBytes: ByteArray, consolidateCitations: Int = CONSOLIDATE_CITATION): String {
+        val body = buildMultipartBody(pdfBytes, listOf(
+            "consolidateCitations" to consolidateCitations.toString(),
         ))
-        return call(body)
+        return call("processReferences", body)
     }
 
     fun processCitation(citation: String, consolidate: Int = CONSOLIDATE_CITATION): String {
@@ -50,19 +55,19 @@ class GrobidClient(
         headers.contentType = MediaType.MULTIPART_FORM_DATA
         headers.accept = listOf(MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.ALL)
 
-        return call(HttpEntity(body, headers))
+        return call("processCitation", HttpEntity(body, headers))
     }
 
     fun isHealthy(): Boolean = try {
         restTemplate.getForEntity("${config.baseUrl}/api/isalive", Void::class.java)
             .statusCode.is2xxSuccessful
     } catch (e: Exception) {
-        logger.warn("GROBID health check failed: {}", e.message)
+        logger.warn("GROBID health check failed (type={})", e.javaClass.simpleName)
         false
     }
 
-    private fun call(request: HttpEntity<LinkedMultiValueMap<String, Any>>): String {
-        val url = "${config.baseUrl}/api/service"
+    private fun call(endpoint: String, request: HttpEntity<LinkedMultiValueMap<String, Any>>): String {
+        val url = "${config.baseUrl.trimEnd('/')}/api/$endpoint"
         logger.debug("Calling GROBID at {}", url)
         val response: ResponseEntity<String> = restTemplate.exchange(
             url,
@@ -78,7 +83,6 @@ class GrobidClient(
 
     private fun buildMultipartBody(
         pdfBytes: ByteArray,
-        segment: String,
         extraParams: List<Pair<String, String>>,
     ): HttpEntity<LinkedMultiValueMap<String, Any>> {
         val body = LinkedMultiValueMap<String, Any>()
@@ -90,7 +94,6 @@ class GrobidClient(
         headers.accept = listOf(MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.ALL)
 
         body.add("input", part)
-        body.add("segment", segment)
         extraParams.forEach { (k, v) -> body.add(k, v) }
 
         return HttpEntity(body, headers)

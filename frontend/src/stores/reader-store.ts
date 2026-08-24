@@ -46,6 +46,14 @@ export interface NavigationTarget {
   timestamp: number
 }
 
+export interface PendingPaperQuestion {
+  requestId: string
+  paperId: number
+  paperTitle: string
+  selectedText: string
+  pageNumber: number
+}
+
 interface ReaderState {
   annotations: ReaderAnnotation[]
   notes: ReaderNote[]
@@ -58,6 +66,7 @@ interface ReaderState {
   loadingAllAnnotations: boolean
   loadingAllNotes: boolean
   navigationTarget: NavigationTarget | null
+  pendingPaperQuestion: PendingPaperQuestion | null
 
   setAnnotations: (annotations: ReaderAnnotation[]) => void
   addAnnotation: (a: ReaderAnnotation) => void
@@ -77,6 +86,8 @@ interface ReaderState {
   setAiMode: (mode: ReaderState["aiMode"]) => void
   setSelectedText: (text: string) => void
   setNavigationTarget: (target: NavigationTarget | null) => void
+  setPendingPaperQuestion: (question: Omit<PendingPaperQuestion, "requestId">) => void
+  consumePendingPaperQuestion: () => PendingPaperQuestion | null
 }
 
 function mapAnnotation(a: AnnotationDto): ReaderAnnotation {
@@ -115,7 +126,7 @@ function mapNote(n: NoteDto): ReaderNote {
   }
 }
 
-export const useReaderStore = create<ReaderState>((set) => ({
+export const useReaderStore = create<ReaderState>((set, get) => ({
   annotations: [],
   notes: [],
   allAnnotations: [],
@@ -127,6 +138,7 @@ export const useReaderStore = create<ReaderState>((set) => ({
   loadingAllAnnotations: false,
   loadingAllNotes: false,
   navigationTarget: null,
+  pendingPaperQuestion: null,
 
   setAnnotations: (annotations) => set({ annotations }),
   addAnnotation: (a) => set((s) => ({ annotations: [...s.annotations, a] })),
@@ -198,4 +210,15 @@ export const useReaderStore = create<ReaderState>((set) => ({
   setAiMode: (aiMode) => set({ aiMode }),
   setSelectedText: (selectedText) => set({ selectedText }),
   setNavigationTarget: (navigationTarget) => set({ navigationTarget }),
+  setPendingPaperQuestion: (question) => set({
+    pendingPaperQuestion: {
+      ...question,
+      requestId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    },
+  }),
+  consumePendingPaperQuestion: (): PendingPaperQuestion | null => {
+    const question = get().pendingPaperQuestion
+    if (question) set({ pendingPaperQuestion: null })
+    return question
+  },
 }))

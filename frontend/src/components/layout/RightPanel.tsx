@@ -32,13 +32,24 @@ export function RightPanel({ paper, onConfigureProvider }: RightPanelProps) {
   const [activeTab, setActiveTab] = useState<PanelTab>("metadata")
   const [collapsed, setCollapsed] = useState(false)
 
-  const { updateAnnotation: storeUpdateAnnotation, removeAnnotation, updateNote: storeUpdateNote, removeNote } = useReaderStore()
+  const {
+    updateAnnotation: storeUpdateAnnotation,
+    removeAnnotation,
+    updateNote: storeUpdateNote,
+    removeNote,
+    pendingPaperQuestion,
+  } = useReaderStore()
   const addToast = useToastStore((s) => s.addToast)
+  const pendingQuestionId = pendingPaperQuestion?.requestId
 
   // Edit dialog state
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [editDialogMode, setEditDialogMode] = useState<"annotation" | "note">("annotation")
   const [editItem, setEditItem] = useState<ReaderAnnotation | ReaderNote | null>(null)
+
+  useEffect(() => {
+    if (pendingQuestionId) setActiveTab("aiChat")
+  }, [pendingQuestionId])
 
   const handleDeleteAnnotation = useCallback(async (id: number) => {
     try {
@@ -526,6 +537,19 @@ function MetadataContent({ paper }: { paper?: PaperDetailDto | null }) {
         <FieldRow label={t("fileSize")}>
           <DisplayValue value={formatFileSize(paper.fileSize)} />
         </FieldRow>
+        {paper.parseStatus && paper.parseStatus !== "NOT_APPLICABLE" && (
+          <FieldRow label="全文解析">
+            <DisplayValue
+              value={
+                paper.parseStatus === "PENDING" ? "等待解析" :
+                  paper.parseStatus === "PROCESSING" ? "解析中" :
+                    paper.parseStatus === "READY" ? "已完成" :
+                      paper.parseStatus === "FAILED" ? `失败${paper.parseError ? `：${paper.parseError}` : ""}` :
+                        paper.parseStatus
+              }
+            />
+          </FieldRow>
+        )}
       </SectionCard>
 
       {/* Section: System Info */}

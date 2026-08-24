@@ -138,7 +138,41 @@ AI 对话目前存在两套技术路径：
 
 修改其中一套时，必须确认是否需要同步另一套，不能因为接口 DTO 名称相似就混用。任何涉及 API Key 的功能都应避免把密钥写入服务端日志、URL、错误提示或提交记录。
 
-## 8. v0.1.14-fix AI 对话空白气泡问题
+## 8. v0.1.19 AI 思考内容与论文上下文
+
+### 需求
+
+- Provider 返回的 `<think>`、`reasoning_content`、`thinking` 等内容属于模型思考过程，必须与正式答案分离。
+- AI 思考默认折叠，用户可以展开查看；正文 Markdown、图表和代码渲染不能受影响。
+- PDF 选区菜单的“询问 AI”必须真正进入当前 C 端 AI 对话，并携带论文、页码和选中文本。
+- 上传 PDF 后应立即启动 GROBID 全文解析，结果可用于后续论文问答。
+
+### 原因与实现
+
+- 旧解析器虽然识别 reasoning 字段，但只通过 `onContent` 输出正文，reasoning 在消费函数结束时被丢弃；直接混在正文里的 `<think>` 也没有跨 chunk 解析。
+- `AnnotationLayer` 已有 `onAskAI`，但 `PDFReader` 没有传入回调；`RightPanel` 的 Tab 状态是内部状态，需通过 reader store 的待处理问题事件连接阅读器和 AI 面板。
+- GROBID 客户端原先固定请求 `/api/service`，上传流程只调用 header 解析并捕获异常后返回原论文。v0.1.19 改为调用 `/api/processFulltextDocument`，将 TEI 转换为受限长度的章节/段落 chunks。
+- 每次问答只发送摘要、选区、相关 chunks 和用户问题；后端不接触 Provider Key。解析状态使用 `PENDING/PROCESSING/READY/FAILED`，避免全文解析阻塞上传请求。
+
+### 数据与兼容
+
+- `ChatMessageItem.reasoning` 为可选字段，旧的本地历史没有该字段时按空值兼容。
+- 论文原始 TEI 使用 TEXT 保存；解析状态、错误信息和 chunks 使用独立字段/表，不能把 XML 当作 `Map` 放入 `jsonb`。
+- GROBID 失败不影响 PDF 下载、阅读、批注和笔记；问答在没有解析上下文时退化为标题、摘要和选中文本。
+
+### 后续风险
+
+- `<think>` 标签可能跨 SSE chunk，任何按单 chunk 正则替换的实现都不可靠，必须使用累积缓冲或状态机。
+- GROBID 对扫描版、加密版和版式异常 PDF 可能提取失败；首版不引入 OCR，失败必须可见且可重试。
+- 相关片段匹配不是语义检索，长距离同义表达可能召回不足；后续增加 embedding 前要重新评估存储、成本和隐私。
+- reasoning 可能包含敏感内容，本地持久化前端历史时不得写入 URL、日志或服务端审计记录。
+
+### 验证记录
+
+- 本地 GROBID 0.8.1 已验证 `/api/processFulltextDocument` 可返回结构化 TEI；样例结果约 85KB，包含正文、章节、图表、公式和参考文献结构。
+- v0.1.19 代码、数据库迁移、构建和公网部署验证完成后，在本节补充提交、构建、重启和线上检查结果。
+
+## 9. v0.1.14-fix AI 对话空白气泡问题
 
 ### 问题
 
