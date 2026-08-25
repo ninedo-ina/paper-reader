@@ -12,7 +12,7 @@ The repository contains the C-side product and its API. The administration conso
 - Integration branch: `dev`
 - Active version branch: `feature/v0.1.22`
 - Client version: `0.1.22`
-- Production version at the start of this documentation iteration: `0.1.21` (promote only after deployment verification)
+- Production version: `0.1.22` (verified 2026-08-25 UTC)
 - Default locale: Chinese (`zh`)
 - Supported locales: Chinese (`zh`) and English (`en`)
 - Production client: `https://paper.pilo.eu.cc`
