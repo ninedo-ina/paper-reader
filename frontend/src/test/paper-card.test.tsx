@@ -39,4 +39,20 @@ describe("PaperCard actions", () => {
 
     expect(onDelete).toHaveBeenCalledTimes(1)
   })
+
+  it("marks the current paper with an inset theme-aware capsule", () => {
+    const { container } = render(
+      <NextIntlClientProvider locale="zh" messages={zhMessages}>
+        <PaperCard paper={paper} isActive />
+      </NextIntlClientProvider>,
+    )
+
+    const card = container.querySelector('[data-active="true"]')
+    const indicator = screen.getByTestId("paper-card-indicator")
+
+    expect(card).toHaveAttribute("aria-current", "page")
+    expect(card).toHaveClass("border-[var(--paper-active-border)]")
+    expect(indicator).toHaveClass("left-[5px]", "top-3", "bottom-3", "w-0.5", "rounded-full")
+    expect(indicator).toHaveStyle({ background: "var(--paper-active-indicator)", opacity: "1" })
+  })
 })

@@ -74,9 +74,30 @@ class TeiDocumentParser {
     private fun findTitle(header: Element): String? {
         val titleStatement = firstElement(header, "titleStmt")
         val title = titleStatement?.let { firstText(it, "title") }
-        if (!title.isNullOrBlank()) return title
+        if (!title.isNullOrBlank()) return cleanTitle(title)
 
-        return firstElement(header, "analytic")?.let { firstText(it, "title") }
+        return firstElement(header, "analytic")?.let { firstText(it, "title") }?.let(::cleanTitle)
+    }
+
+    /**
+     * Removes known publisher boilerplate that GROBID can merge into a main title.
+     *
+     * This deliberately does not try to infer a title by length, capitalization, or
+     * sentence position: those heuristics can damage legitimate long paper titles.
+     * If a known leading statement is the entire value (or leaves no title-like
+     * content), the normalized original is retained.
+     */
+    private fun cleanTitle(value: String): String {
+        val normalized = normalize(value)
+        val cleaned = LEADING_TITLE_BOILERPLATE_PATTERNS.firstNotNullOfOrNull { pattern ->
+            pattern.find(normalized)?.let { match ->
+                normalized.removeRange(match.range).trim()
+            }
+        }
+
+        return cleaned
+            ?.takeIf { candidate -> candidate.any { it.isLetterOrDigit() } }
+            ?: normalized
     }
 
     private fun parseAuthors(header: Element): String? {
@@ -234,5 +255,11 @@ class TeiDocumentParser {
     companion object {
         private const val CHUNK_SIZE = 1800
         private val YEAR_PATTERN = Regex("\\b(?:1[5-9]|20|21)\\d{2}\\b")
+        private val LEADING_TITLE_BOILERPLATE_PATTERNS = listOf(
+            Regex(
+                """^Provided\s+proper\s+attribution\s+is\s+provided,\s*Google\s+hereby\s+grants\s+permission\s+to\s+reproduce\s+the\s+tables\s+and\s+figures\s+in\s+this\s+paper\s+solely\s+for\s+use\s+in\s+journalistic\s+or\s+scholarly\s+works\.\s*""",
+                RegexOption.IGNORE_CASE,
+            ),
+        )
     }
 }

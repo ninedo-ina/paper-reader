@@ -60,20 +60,26 @@ export function PaperCard({ paper, isActive, onClick, onDelete, onTag, onShare }
     <div
       className={cn(
         "group relative rounded-xl border transition-all duration-200 cursor-pointer",
-        "hover:shadow-[var(--shadow-md)] hover:bg-[var(--surface-1)]/70 hover:backdrop-blur-sm",
         isActive
-          ? "border-[var(--accent)] bg-[var(--bg-active)] shadow-[var(--shadow-sm)]"
-          : "border-[var(--border-subtle)] bg-[var(--surface-2)]",
+          ? "border-[var(--paper-active-border)] bg-[var(--paper-active-bg)] shadow-[var(--paper-active-shadow)] hover:bg-[var(--paper-active-bg-hover)] hover:shadow-[var(--paper-active-shadow-hover)]"
+          : "border-[var(--border-subtle)] bg-[var(--surface-2)] hover:bg-[var(--surface-1)]/70 hover:shadow-[var(--shadow-md)] hover:backdrop-blur-sm",
       )}
       onClick={onClick}
+      data-active={isActive ? "true" : "false"}
+      aria-current={isActive ? "page" : undefined}
     >
-      {/* Accent color strip */}
+      {/* Inset capsule keeps the state visible without a heavy full-height edge. */}
       <div
-        className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl"
-        style={{ background: isActive ? "var(--accent)" : accentColor }}
+        aria-hidden="true"
+        data-testid="paper-card-indicator"
+        className="pointer-events-none absolute left-[5px] top-3 bottom-3 w-0.5 rounded-full transition-[background-color,opacity] duration-200"
+        style={{
+          background: isActive ? "var(--paper-active-indicator)" : accentColor,
+          opacity: isActive ? 1 : 0.72,
+        }}
       />
 
-      <div className="flex items-start gap-3 pl-[11px] pr-3 py-3.5">
+      <div className="flex items-start gap-3 py-3.5 pl-3.5 pr-3">
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Title row */}

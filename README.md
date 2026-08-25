@@ -8,8 +8,8 @@ The repository contains the C-side product and its API. The administration conso
 
 - Default branch: `main`
 - Integration branch: `dev`
-- Active version branch: `feature/v0.1.20`
-- Client version: `0.1.20`
+- Active version branch: `feature/v0.1.21`
+- Client version: `0.1.21`
 - Default locale: Chinese (`zh`)
 - Supported locales: Chinese (`zh`) and English (`en`)
 - Production client: `https://paper.pilo.eu.cc`
@@ -299,9 +299,10 @@ V8__im.sql
 V9__annotation_note_enhance.sql
 V10__note_position.sql
 V11__paper_content_context.sql
+V12__clean_known_paper_title_boilerplate.sql
 ```
 
-Add a new numbered migration for schema changes. Do not edit an already-applied migration in a shared environment.
+Add a new numbered migration for schema or controlled data changes. Do not edit an already-applied migration in a shared environment. V12 narrowly repairs stored titles beginning with one explicitly recognized Google permission statement; future imports use the same conservative cleanup in the TEI parser.
 
 ## API Surface
 
@@ -340,8 +341,10 @@ The frontend API wrapper is in [frontend/src/lib/api](frontend/src/lib/api), and
 - Provider relay endpoints are `/api/provider-relay/models` and `/api/provider-relay/chat/completions`; they forward only the current operation and never log the supplied Provider key.
 - AI replies separate `<think>`/reasoning content into a default-collapsed disclosure. PDF selection can open the AI panel with the selected quote, paper metadata, and relevant GROBID-extracted passages as hidden context.
 - Uploaded PDFs are parsed asynchronously through GROBID `/api/processFulltextDocument`; parsing status and failures are visible without blocking PDF reading.
+- GROBID metadata titles pass through a conservative PaperReader-side cleanup for explicitly recognized publisher permission boilerplate; ordinary long titles are never truncated by length heuristics.
 - `/api/health` reads the backend version from Spring Boot build metadata, so the reported release always follows the JAR being executed instead of a controller constant.
 - Paper cards reserve a dedicated action area beside the category badge. Their delete action uses a confirmation dialog and lets users choose whether the server should also remove the stored original file.
+- The current-paper card uses a short inset capsule, a low-contrast border, and theme-specific layered highlights/shadows instead of a heavy full-height black edge.
 - Source UI copy is localized under `frontend/src/i18n/locales/{zh,en}/common.json`.
 
 ## Versioned Development
@@ -354,7 +357,7 @@ The project uses a release-style branch and client version for every code iterat
 - Bug-fix iterations append `-fix` to the repaired version, for example `0.1.12-fix`, with a matching branch such as `feature/v0.1.12-fix`.
 - A minor release (`0.1.x` → `0.2.0`) or major release (`0.x.y` → `1.0.0`) is created only when the product owner explicitly requests it.
 - Keep every version branch after merging; it is part of the release and rollback history.
-- Keep the active version branch (`feature/v0.1.20`), `frontend/package.json`, `frontend/VERSION`, `backend/VERSION`, README release line, favicon cache-busting value, and visible UI version aligned.
+- Keep the active version branch (`feature/v0.1.21`), `frontend/package.json`, `frontend/VERSION`, `backend/VERSION`, README release line, favicon cache-busting value, and visible UI version aligned.
 - Every code iteration must be built, tested, deployed to the PM2 process, verified through the public domain, committed, and pushed to the matching remote branch.
 
 The detailed operating rules and handoff checklist are in [docs/MAINTENANCE.md](docs/MAINTENANCE.md). The current roadmap is in [docs/PLAN.md](docs/PLAN.md), project cautions are in [docs/ATTENTION.md](docs/ATTENTION.md), and the AI interaction design is in [docs/AI_CHAT_TECHNICAL_SOLUTION.md](docs/AI_CHAT_TECHNICAL_SOLUTION.md).
