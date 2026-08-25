@@ -170,7 +170,8 @@ AI 对话目前存在两套技术路径：
 ### 验证记录
 
 - 本地 GROBID 0.8.1 已验证 `/api/processFulltextDocument` 可返回结构化 TEI；样例结果约 85KB，包含正文、章节、图表、公式和参考文献结构。
-- v0.1.19 代码、数据库迁移、构建和公网部署验证完成后，在本节补充提交、构建、重启和线上检查结果。
+- v0.1.19 前端类型检查、59 个测试、生产构建和后端 `clean test bootJar` 均通过。
+- Flyway 已校验并应用 V11，生产后端运行 `paper-reader-backend-0.1.19.jar`，GROBID 存活检查和公网登录页均正常。
 
 ## 9. v0.1.14-fix AI 对话空白气泡问题
 
@@ -324,3 +325,25 @@ Provider 如果修改 CORS 或 API 路由，客户端仍会优先尝试直连并
 - 临时 `0.1.18-fix` 实例验证未登录 relay 返回 `401`，原始请求的 JWT 保护未被放宽。
 - 使用推荐 Base URL 和模型验证 `/models` 返回 19 个模型并包含 `gpt-oss-20b`；非流式聊天返回 `200` 和可见正文。
 - SSE 聊天返回 `200`、包含 `[DONE]`，客户端正常结束且没有 `AuthorizationDeniedException`。
+
+## 14. v0.1.19-fix 健康接口发布版本错误
+
+### 问题
+
+v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader-backend-0.1.19.jar`，但本机及公网 `/api/health` 仍返回 `version=0.1.18-fix`。这会让部署验收、监控和故障排查误判当前生产版本。
+
+### 原因
+
+`HealthController` 将 `0.1.18-fix` 直接写在响应代码中。后续版本虽然同步更新了 Gradle、前后端 `VERSION`、前端包版本和 UI，却没有同步这一处隐蔽常量。JAR 文件名与进程参数因此是新版本，接口响应仍长期停留在旧版本。
+
+### 解决
+
+- 后端版本更新为 `0.1.19-fix`，并启用 Spring Boot `buildInfo()`，在构建产物中生成 `META-INF/build-info.properties`。
+- `HealthController` 通过 `ObjectProvider<BuildProperties>` 读取当前构建的 `version`，不再包含发布版本常量。
+- IDE 或测试环境没有构建元数据时明确返回 `development`，避免伪装成任一正式版本，同时不阻止应用启动。
+- 增加 Controller 回归测试，覆盖构建版本读取和无元数据回退两条路径。
+- 前端包版本、前后端 `VERSION`、favicon 缓存参数、README、计划和注意事项同步更新为 `0.1.19-fix`。
+
+### 后续是否还会出现
+
+正常发布流程下不会再因遗漏 Controller 常量而返回旧版本；健康接口现在跟随正在运行的 JAR 构建元数据。但以下情况仍需在部署验收中检查：如果误删 `springBoot.buildInfo()`，接口会返回 `development`；如果 PM2 仍指向旧 JAR，接口会如实返回旧 JAR 的版本。因此每次后端发布都必须同时核对 JAR 文件名、JAR 内 build-info、PM2 启动参数和公网健康接口，不能只看其中一项。
