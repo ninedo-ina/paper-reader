@@ -9,7 +9,7 @@
 - 当前生产基础设施容器没有 Compose labels，不属于仓库 `backend/docker-compose.yml` 的可确认管理范围；生产禁止盲目执行 `docker compose up -d`。
 - 当前生产文件存储是 `local`，目录 `/root/paper-reader/backend/uploads` 是用户数据，禁止清空、移动、纳入 Git 或在部署中覆盖。
 - 当前生产后端使用 `development` profile，这是已知风险，但本轮只记录，不直接切换。
-- 线上在本轮开始时仍为 `0.1.21`；只有合并、构建、重启和公网验收后，才能记录生产为 `0.1.22`。
+- 线上已完成 `0.1.22` 验收；后续文档判断仍以 PM2 参数、本机/公网健康接口和实际静态资源为准，不能只看源码版本。
 - 本次不修改业务、Flyway、GROBID 服务或 `/root/paperread-admin`。
 
 ## v0.1.21 历史迭代注意事项
