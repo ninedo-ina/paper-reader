@@ -347,3 +347,12 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 ### 后续是否还会出现
 
 正常发布流程下不会再因遗漏 Controller 常量而返回旧版本；健康接口现在跟随正在运行的 JAR 构建元数据。但以下情况仍需在部署验收中检查：如果误删 `springBoot.buildInfo()`，接口会返回 `development`；如果 PM2 仍指向旧 JAR，接口会如实返回旧 JAR 的版本。因此每次后端发布都必须同时核对 JAR 文件名、JAR 内 build-info、PM2 启动参数和公网健康接口，不能只看其中一项。
+
+### 发布验证
+
+- 修复提交：`0f8fba0`；已按既定流程合并到 `dev`（`e44dca4`）和 `main`（`4b1a870`）。版本分支 `feature/v0.1.19-fix` 保留。
+- `pnpm exec tsc --noEmit`、前端 5 个测试文件共 59 个测试、`pnpm run build` 和后端 `./gradlew clean test bootJar` 全部通过。
+- JAR `paper-reader-backend-0.1.19-fix.jar` 内的 `META-INF/build-info.properties` 已确认 `build.version=0.1.19-fix`。
+- PM2 后端已重建并指向 `paper-reader-backend-0.1.19-fix.jar`；前端已重新构建并重启，PM2 状态已保存。
+- 本机与公网 `/api/health` 均返回 `status=ok`、`version=0.1.19-fix`；GROBID `/api/isalive` 返回 `true`；`https://paper.pilo.eu.cc/zh/login` 返回 200。
+- 公网页面已使用 `paperread-favicon-light.svg?v=0.1.19-fix`，用于确认前端新构建已生效。
