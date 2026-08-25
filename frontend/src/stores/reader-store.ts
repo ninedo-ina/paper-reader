@@ -88,6 +88,7 @@ interface ReaderState {
   setNavigationTarget: (target: NavigationTarget | null) => void
   setPendingPaperQuestion: (question: Omit<PendingPaperQuestion, "requestId">) => void
   consumePendingPaperQuestion: () => PendingPaperQuestion | null
+  removePaperData: (paperId: number, clearActiveContext?: boolean) => void
 }
 
 function mapAnnotation(a: AnnotationDto): ReaderAnnotation {
@@ -221,4 +222,16 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
     if (question) set({ pendingPaperQuestion: null })
     return question
   },
+  removePaperData: (paperId, clearActiveContext = false) => set((state) => ({
+    annotations: state.annotations.filter((annotation) => annotation.paperId !== paperId),
+    notes: state.notes.filter((note) => note.paperId !== paperId),
+    allAnnotations: state.allAnnotations.filter((annotation) => annotation.paperId !== paperId),
+    allNotes: state.allNotes.filter((note) => note.paperId !== paperId),
+    pendingPaperQuestion: state.pendingPaperQuestion?.paperId === paperId
+      ? null
+      : state.pendingPaperQuestion,
+    navigationTarget: clearActiveContext ? null : state.navigationTarget,
+    selectedText: clearActiveContext ? "" : state.selectedText,
+    aiMode: clearActiveContext ? null : state.aiMode,
+  })),
 }))

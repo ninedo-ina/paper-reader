@@ -72,6 +72,7 @@ function errorMessage(code: number, fallback: string): string {
     case 1002: return "权限不足"
     case 1003: return "参数错误"
     case 1004: return "资源不存在"
+    case 1005: return "原文件删除失败，论文记录已保留，请稍后重试"
     default: return fallback
   }
 }

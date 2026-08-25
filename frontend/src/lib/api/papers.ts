@@ -110,7 +110,7 @@ export async function downloadPdf(id: number, filename = "paper.pdf"): Promise<v
   URL.revokeObjectURL(url)
 }
 
-/** 删除论文 */
-export function deletePaper(id: number): Promise<null> {
-  return del<null>(`/papers/${id}`)
+/** 删除论文，可选择是否同时物理删除服务器中的原文件 */
+export function deletePaper(id: number, deleteFile = false): Promise<null> {
+  return del<null>(`/papers/${id}?deleteFile=${deleteFile}`)
 }

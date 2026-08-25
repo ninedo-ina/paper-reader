@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 import { usePaperStore } from "@/stores/paper-store"
 import { downloadPdf } from "@/lib/api/papers"
 import type { DropdownItem } from "@/components/ui/DropdownMenu"
-import { FileText, Globe, MoreHorizontal, Star, Tag, Share2, Download } from "lucide-react"
+import { FileText, Globe, MoreHorizontal, Star, Tag, Share2, Download, Trash2 } from "lucide-react"
 
 const categoryAccent: Record<string, string> = {
   THESIS: "#a78bfa",
@@ -53,6 +53,7 @@ export function PaperCard({ paper, isActive, onClick, onDelete, onTag, onShare }
     { label: t("tags"), icon: <Tag className="size-3.5" />, onClick: () => onTag?.() },
     { label: t("share"), icon: <Share2 className="size-3.5" />, onClick: () => onShare?.() },
     { label: t("download"), icon: <Download className="size-3.5" />, onClick: handleDownload },
+    { label: t("delete"), icon: <Trash2 className="size-3.5" />, onClick: () => onDelete?.(), danger: true },
   ]
 
   return (
@@ -98,19 +99,32 @@ export function PaperCard({ paper, isActive, onClick, onDelete, onTag, onShare }
           </p>
 
           {/* Metadata row */}
-          <div className="flex items-center justify-between mt-1.5">
-            <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-tertiary)]">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto_28px] items-center gap-2 mt-1.5">
+            <div className="min-w-0 flex items-center gap-1.5 text-[11px] text-[var(--text-tertiary)] overflow-hidden">
               {paper.year && <span>{paper.year}</span>}
               {paper.year && paper.journal && <span>&middot;</span>}
-              {paper.journal && <span className="truncate max-w-[100px]">{paper.journal}</span>}
+              {paper.journal && <span className="truncate">{paper.journal}</span>}
               {paper.journal && paper.pageCount && <span>&middot;</span>}
-              {paper.pageCount && <span>{paper.pageCount}p</span>}
+              {paper.pageCount && <span className="shrink-0">{paper.pageCount}p</span>}
             </div>
             <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0"
               style={{ background: `${accentColor}15`, color: accentColor }}
             >
               {catDef?.label ?? paper.category}
             </span>
+            <button
+              ref={menuRef}
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation()
+                setMenuOpen((previous) => !previous)
+              }}
+              className="flex size-7 shrink-0 items-center justify-center rounded-md text-[var(--text-tertiary)] opacity-60 transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] hover:opacity-100 focus-visible:opacity-100"
+              aria-label={t("moreActions")}
+              aria-expanded={menuOpen}
+            >
+              <MoreHorizontal className="size-4" />
+            </button>
           </div>
 
           {/* Tags */}
@@ -128,20 +142,6 @@ export function PaperCard({ paper, isActive, onClick, onDelete, onTag, onShare }
           )}
         </div>
       </div>
-
-      {/* Three-dot menu button — bottom-right corner */}
-      <button
-        ref={menuRef}
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation()
-          setMenuOpen((prev) => !prev)
-        }}
-        className="absolute bottom-1.5 right-1.5 p-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors opacity-0 group-hover:opacity-100"
-        aria-label="More"
-      >
-        <MoreHorizontal className="size-4" />
-      </button>
 
       {/* Portal dropdown menu */}
       {menuOpen &&

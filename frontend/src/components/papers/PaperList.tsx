@@ -8,9 +8,11 @@ import { PaperCard } from "./PaperCard"
 import { TabBar } from "@/components/ui/TabBar"
 import { TagDialog } from "./TagDialog"
 import { ShareDialog } from "./ShareDialog"
+import { DeletePaperDialog } from "./DeletePaperDialog"
 import { Button } from "@/components/ui/Button"
 import { ChevronLeft, ChevronRight, Plus, Upload, RefreshCw, X } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useToastStore } from "@/stores/toast-store"
 
 interface PaperListProps {
   activeId?: number | null
@@ -37,6 +39,9 @@ export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose, fav
 
   const [tagPaperId, setTagPaperId] = useState<number | null>(null)
   const [sharePaperId, setSharePaperId] = useState<number | null>(null)
+  const [deletePaperId, setDeletePaperId] = useState<number | null>(null)
+  const deleteTarget = papers.find((paper) => paper.id === deletePaperId) ?? null
+  const addToast = useToastStore((state) => state.addToast)
 
   useEffect(() => {
     if (accessToken) {
@@ -125,7 +130,7 @@ export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose, fav
               paper={paper}
               isActive={paper.id === activeId}
               onClick={() => onSelect?.(paper.id)}
-              onDelete={() => deletePaper(paper.id)}
+              onDelete={() => setDeletePaperId(paper.id)}
               onTag={() => setTagPaperId(paper.id)}
               onShare={() => setSharePaperId(paper.id)}
             />
@@ -159,6 +164,17 @@ export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose, fav
 
       <TagDialog open={tagPaperId !== null} paperId={tagPaperId} onClose={() => setTagPaperId(null)} />
       <ShareDialog open={sharePaperId !== null} paperId={sharePaperId} onClose={() => setSharePaperId(null)} />
+      <DeletePaperDialog
+        open={deleteTarget !== null}
+        paperTitle={deleteTarget?.title ?? ""}
+        hasOriginalFile={deleteTarget?.hasOriginalFile ?? false}
+        onClose={() => setDeletePaperId(null)}
+        onConfirm={async (deleteFile) => {
+          if (!deleteTarget) return
+          await deletePaper(deleteTarget.id, deleteFile)
+          addToast({ message: tp("deleteSuccess"), type: "success" })
+        }}
+      />
     </div>
   )
 }
