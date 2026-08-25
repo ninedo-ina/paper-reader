@@ -1,6 +1,15 @@
 # PaperReader 注意事项
 
-## v0.1.19 当前迭代注意事项
+## v0.1.19-fix 当前迭代注意事项
+
+- 本次是问题修复，版本为 `v0.1.19-fix`、分支为 `feature/v0.1.19-fix`。
+- `/api/health` 的版本只能来自当前构建生成的 `BuildProperties`，不得再次在 Controller、配置类或启动脚本中手写发布版本。
+- `springBoot.buildInfo()` 必须保留；移除后正式 JAR 会退回 `development`，健康检查将无法反映真实发布版本。
+- 发布验收必须同时确认 JAR 文件名、JAR 内 `META-INF/build-info.properties`、PM2 启动参数和公网 `/api/health` 四处一致。
+- 本次不涉及数据库迁移和 Provider 配置，不得借此修改或输出任何 API Key。
+- favicon 缓存参数为 `v=0.1.19-fix`，避免浏览器继续命中上一版本静态资源。
+
+## v0.1.19 历史迭代注意事项
 
 - 本次是功能迭代，版本为 `v0.1.19`、分支为 `feature/v0.1.19`，不追加 `-fix`。
 - `<think>` 解析必须跨 SSE chunk，正文和 reasoning 要分别持久化；旧本地消息缺少 reasoning 字段时必须正常读取。
@@ -26,7 +35,7 @@
 
 - 普通迭代只增加 patch 版本，当前规则是 `0.1.10 -> 0.1.11 -> 0.1.12`。
 - 问题修复迭代在被修复版本后追加 `-fix`，例如 `0.1.12 -> 0.1.12-fix`；分支名同步使用 `feature/v0.1.12-fix`。
-- 历史 Provider 测试修复迭代为 `0.1.13-fix`；当前 Provider relay 修复迭代为 `0.1.18-fix`。
+- 历史 Provider 测试修复迭代为 `0.1.13-fix`，Provider relay 修复迭代为 `0.1.18-fix`，当前健康接口版本修复迭代为 `0.1.19-fix`。
 - `main` 是仓库默认分支和生产主分支，`dev` 是集成分支；版本分支必须先合并到 `dev`，再由 `dev` 合并到 `main`。
 - 所有版本分支都要保留，不能因为已经合并就删除。
 - 未经明确要求，不要擅自改成 `0.2.0` 或 `1.0.0`。
@@ -57,7 +66,7 @@
 - 修改源码后只 push 不会生效；必须执行 `pnpm run build`、PM2 重启并验证公网。
 - favicon 使用版本 query string 防止浏览器/边缘缓存旧图标；更新版本时同步修改 metadata 和主题同步组件。
 - 本次 v0.1.12 只调整浏览器标签页 favicon；不要将 favicon 的尺寸调整误应用到首页左上角品牌 Logo。
-- 历史 v0.1.12-fix 修复了侧栏折叠按钮的点击层级；当前 v0.1.13-fix 修复 AI Provider 测试连接逻辑。
+- 历史 v0.1.12-fix 修复了侧栏折叠按钮的点击层级；当前 v0.1.19-fix 修复健康接口版本来源。
 - 不要用宽泛的 `rm -rf`、`killall` 或批量 kill 处理部署问题。
 
 ## UI 回归

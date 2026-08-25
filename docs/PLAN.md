@@ -1,34 +1,36 @@
 # PaperReader 迭代计划
 
-## 当前迭代：v0.1.19
+## 当前迭代：v0.1.19-fix
 
-分支：`feature/v0.1.19`
+分支：`feature/v0.1.19-fix`
 
-迭代类型：功能需求。实现 AI 思考内容折叠、论文选区询问 AI，以及 PDF 全文结构化提取和论文上下文问答。
+迭代类型：问题修复。修复生产后端已经运行 v0.1.19 JAR，但 `/api/health` 仍返回硬编码旧版本 `0.1.18-fix` 的问题。
 
 ### 本次目标与范围
 
-- 将 Provider 返回的结构化 reasoning 和 `<think>...</think>` 内容从正文中分离，默认折叠展示并持久化。
-- 接通 PDF 选区菜单中的“询问 AI”，自动切换右侧 AI 面板，保留论文、页码和选中文本上下文。
-- 修正 GROBID 0.8.1 的真实接口调用，从上传后的 PDF 中提取结构化全文。
-- 保存论文解析状态、原始 TEI（TEXT）和章节/段落 chunks；问答优先使用与选区相关的片段。
-- Provider Key 仍只存在浏览器配置中；后端只提供论文解析结果和受权限保护的上下文查询。
+- 将后端版本更新为 `0.1.19-fix`，同步前端版本、版本文件、favicon 缓存参数和发布文档。
+- 由 Spring Boot 构建任务生成 `META-INF/build-info.properties`。
+- `/api/health` 从当前 JAR 的 `BuildProperties.version` 读取版本，不再维护独立硬编码字符串。
+- 构建元数据不存在时返回 `development`，方便 IDE 或轻量测试环境明确区分非发布构建。
+- 增加健康接口版本来源和回退行为的回归测试。
 
 ### 验收标准
 
-- AI 回复包含 `<think>` 或 reasoning 字段时，正文不再显示思考标签；思考区域默认关闭，用户可展开查看。
-- reasoning-only 响应不会形成空消息气泡，历史消息刷新后仍可查看思考内容。
-- PDF 选中文本点击“询问 AI”后，右侧面板切换到 AI Tab，并使用当前会话 Provider/模型发送论文场景请求。
-- 无 Provider 时保留待处理选区，提示用户配置 Provider；配置完成后不会丢失选中文本。
-- 上传 PDF 后解析状态可见，GROBID 成功时可查询摘要、章节和相关段落；失败时显示可理解的失败状态。
-- 论文问答的模型请求包含论文元数据、选中文本、相关上下文和用户问题，不把整篇大文档无条件塞入每次 Prompt。
+- 构建产物包含版本为 `0.1.19-fix` 的 `META-INF/build-info.properties`。
+- 本机和公网 `/api/health` 均返回 `status=ok`、`version=0.1.19-fix`。
+- Controller 中不再出现历史版本硬编码，后续只需更新构建版本即可驱动健康接口。
 - 前端类型检查、测试、生产构建和后端 `clean test bootJar` 全部通过。
 
 ### 本次不包含
 
-- 向量数据库、embedding 和语义检索；首版使用规范化文本匹配和相邻 chunks。
-- 扫描版 PDF OCR；无法被 GROBID 识别的文件保留失败状态并允许继续阅读原 PDF。
-- 服务端 AI Provider 配置、跨设备 AI 历史同步，以及后台管理项目 `/root/paperread-admin`。
+- 不修改 AI 对话、PDF 解析、数据库结构或 Provider 配置。
+- 不修改后台管理项目 `/root/paperread-admin`。
+
+## 历史迭代：v0.1.19
+
+分支：`feature/v0.1.19`
+
+已完成 AI 思考内容折叠、论文选区询问 AI、GROBID 全文结构化提取、论文上下文查询和数据库 V11 迁移；详情见 AI 技术方案及维护文档第 8 节。
 
 ## 历史迭代：v0.1.18-fix
 

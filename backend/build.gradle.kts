@@ -8,7 +8,11 @@ plugins {
 }
 
 group = "org.paperreader"
-version = "0.1.19"
+version = "0.1.19-fix"
+
+springBoot {
+    buildInfo()
+}
 
 java {
     toolchain {
