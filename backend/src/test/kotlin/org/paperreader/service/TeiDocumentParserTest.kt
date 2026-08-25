@@ -105,6 +105,39 @@ class TeiDocumentParserTest {
     }
 
     @Test
+    fun `removes known Google permission statement merged before the paper title`() {
+        val result = parser.parse(
+            teiWithTitle(
+                "Provided proper attribution is provided, Google hereby grants permission " +
+                    "to reproduce the tables and figures in this paper solely for use in " +
+                    "journalistic or scholarly works. Attention Is All You Need",
+            ),
+        )
+
+        assertEquals("Attention Is All You Need", result.metadata.title)
+    }
+
+    @Test
+    fun `keeps an ordinary long paper title unchanged`() {
+        val title = "A Deliberately Long but Legitimate Paper Title About Reliable " +
+            "Sequence Modeling Across Multiple Scientific Domains"
+
+        val result = parser.parse(teiWithTitle(title))
+
+        assertEquals(title, result.metadata.title)
+    }
+
+    @Test
+    fun `keeps the original title when boilerplate removal leaves no title`() {
+        val statement = "Provided proper attribution is provided, Google hereby grants permission " +
+            "to reproduce the tables and figures in this paper solely for use in journalistic or scholarly works."
+
+        val result = parser.parse(teiWithTitle(statement))
+
+        assertEquals(statement, result.metadata.title)
+    }
+
+    @Test
     fun `does not read metadata or page breaks outside their TEI scopes`() {
         val result = parser.parse(
             """
@@ -145,4 +178,11 @@ class TeiDocumentParserTest {
             parser.parse(malicious)
         }
     }
+
+    private fun teiWithTitle(title: String): String = """
+        <TEI>
+          <teiHeader><fileDesc><titleStmt><title>$title</title></titleStmt></fileDesc></teiHeader>
+          <text><body><p>Body.</p></body></text>
+        </TEI>
+    """.trimIndent()
 }
