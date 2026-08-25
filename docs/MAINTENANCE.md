@@ -427,6 +427,10 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - 自动化覆盖声明清洗、普通长标题不变、只有声明时不返回空标题，以及选中卡片的语义与内缩胶囊样式。
 - `pnpm exec tsc --noEmit`、前端 8 个测试文件共 66 项测试、`pnpm run build` 与后端 `./gradlew clean test bootJar` 均通过；后端共 33 项测试，产物为 `paper-reader-backend-0.1.21.jar` 且 build info 为 `0.1.21`。
 - V12 已在生产数据库连接上使用显式事务试运行：只命中论文 ID 3，事务内标题变为 `Attention Is All You Need`，随后 `ROLLBACK` 并确认原记录未被提前修改；正式发布时由 Flyway 原子应用。
+- 功能提交 `d9ee334` 已推送并保留在 `feature/v0.1.21`；已合并到 `dev`（`ee14b97`）和 `main`（`f657b3c`），GitHub 默认分支仍为 `main`。
+- 生产后端 PM2 已重建并指向 `paper-reader-backend-0.1.21.jar`；Flyway 成功应用 V12。数据库已不再存在该声明前缀，论文 ID 3 的标题为 `Attention Is All You Need`。
+- 前端已重启并加载新构建；本机与公网 `/api/health` 均返回 `0.1.21`，公网登录页为 200、动态无缓存，并引用 `paperread-favicon-light.svg?v=0.1.21` 及包含新选中态变量/组件标记的静态资源。
+- 明暗两份 favicon 均返回 200，GROBID `/api/isalive` 返回 `true` 且容器未重建；前后端 PM2 进程均为 online，验证后已执行 `pm2 save`。
 - 新的未知出版社声明不会被自动猜测清洗，可能仍需按真实样例增补明确模式；这比通用截断误伤合法标题更安全。
 - 数据迁移只能修复当前明确模式。若数据库中已有其他形式的污染标题，应先审计真实 TEI/PDF，再以新版本增加独立、可测试的规则。
 - 本次只改 PaperReader C 端仓库中的解析消费层、数据库迁移和 UI；GROBID 服务及后台管理项目均不变。
