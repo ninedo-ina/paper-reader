@@ -2,6 +2,7 @@ package org.paperreader.controller
 
 import org.paperreader.dto.*
 import org.paperreader.security.UserPrincipal
+import org.paperreader.service.PaperDeletionService
 import org.paperreader.service.PaperService
 import org.paperreader.service.PaperContextService
 import org.springframework.core.io.Resource
@@ -17,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile
 class PaperController(
     private val paperService: PaperService,
     private val paperContextService: PaperContextService,
+    private val paperDeletionService: PaperDeletionService,
 ) {
     @PostMapping("/upload")
     fun upload(
@@ -137,9 +139,10 @@ class PaperController(
     @DeleteMapping("/{id}")
     fun delete(
         @PathVariable id: Long,
+        @RequestParam(defaultValue = "false") deleteFile: Boolean,
         @AuthenticationPrincipal principal: UserPrincipal,
     ): ApiResponse<Nothing> {
-        paperService.deletePaper(id, principal.userId)
+        paperDeletionService.deletePaper(id, principal.userId, deleteFile)
         return ApiResponse(message = "Deleted")
     }
 }

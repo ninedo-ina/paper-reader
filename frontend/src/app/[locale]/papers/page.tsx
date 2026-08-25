@@ -5,17 +5,24 @@ import { useRouter } from "next/navigation"
 import { PaperCard } from "@/components/papers/PaperCard"
 import { usePaperStore } from "@/stores/paper-store"
 import { useAuthStore } from "@/stores/auth-store"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { FileText } from "lucide-react"
 import { Button } from "@/components/ui/Button"
+import { DeletePaperDialog } from "@/components/papers/DeletePaperDialog"
+import { useToastStore } from "@/stores/toast-store"
+import { ToastContainer } from "@/components/ui/Toast"
 
 export default function PapersPage() {
   const t = useTranslations("nav")
   const c = useTranslations("common")
+  const tp = useTranslations("papers")
   const { papers, isListLoading, loadPapers, deletePaper } = usePaperStore()
   const accessToken = useAuthStore((s) => s.accessToken)
   const router = useRouter()
+  const [deletePaperId, setDeletePaperId] = useState<number | null>(null)
+  const deleteTarget = papers.find((paper) => paper.id === deletePaperId) ?? null
+  const addToast = useToastStore((state) => state.addToast)
 
   useEffect(() => {
     if (accessToken) {
@@ -51,11 +58,23 @@ export default function PapersPage() {
                 key={paper.id}
                 paper={paper}
                 onClick={() => router.push(`/papers/${paper.id}`)}
-                onDelete={() => { if (confirm("Delete this paper?")) deletePaper(paper.id) }}
+                onDelete={() => setDeletePaperId(paper.id)}
               />
             ))}
           </div>
         )}
+        <DeletePaperDialog
+          open={deleteTarget !== null}
+          paperTitle={deleteTarget?.title ?? ""}
+          hasOriginalFile={deleteTarget?.hasOriginalFile ?? false}
+          onClose={() => setDeletePaperId(null)}
+          onConfirm={async (deleteFile) => {
+            if (!deleteTarget) return
+            await deletePaper(deleteTarget.id, deleteFile)
+            addToast({ message: tp("deleteSuccess"), type: "success" })
+          }}
+        />
+        <ToastContainer />
       </div>
     </div>
   )

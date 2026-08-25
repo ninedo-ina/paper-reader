@@ -12,5 +12,5 @@ interface PaperChunkRepository : JpaRepository<PaperChunk, Long> {
     @Modifying
     @Transactional
     @Query("delete from PaperChunk chunk where chunk.paperId = :paperId")
-    fun deleteByPaperId(paperId: Long)
+    fun deleteByPaperId(paperId: Long): Int
 }

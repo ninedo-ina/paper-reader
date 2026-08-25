@@ -12,3 +12,4 @@ class InvalidParameterException(message: String) : BusinessException(1003, messa
 class ResourceNotFoundException(resource: String, id: Any?) : BusinessException(
     1004, "${resource} not found${id?.let { ": $it" } ?: ""}", 404,
 )
+class StorageOperationException(message: String) : BusinessException(1005, message, 502)
