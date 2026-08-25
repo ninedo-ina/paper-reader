@@ -4,12 +4,15 @@ PaperReader is an academic paper reading workspace. It combines a Next.js client
 
 The repository contains the C-side product and its API. The administration console is maintained separately in the companion project at `/root/paperread-admin`; it uses the same PostgreSQL instance but keeps administrator data in the `paperread_admin` schema.
 
+> **Maintainer start here:** read the [documentation index](docs/README.md), then the [new maintainer guide](docs/NEW_MAINTAINER_GUIDE.md) and [complete project status](docs/PROJECT_STATUS.md). They record the real production topology, configuration rules, known risks, and release workflow without requiring previous chat context.
+
 ## Current Release
 
 - Default branch: `main`
 - Integration branch: `dev`
-- Active version branch: `feature/v0.1.21`
-- Client version: `0.1.21`
+- Active version branch: `feature/v0.1.22`
+- Client version: `0.1.22`
+- Production version at the start of this documentation iteration: `0.1.21` (promote only after deployment verification)
 - Default locale: Chinese (`zh`)
 - Supported locales: Chinese (`zh`) and English (`en`)
 - Production client: `https://paper.pilo.eu.cc`
@@ -51,7 +54,7 @@ Apache virtual host: paper.pilo.eu.cc
 Spring Boot API :8080
   |-- PostgreSQL 16 :5432
   |-- Redis 7 :6379
-  |-- Dufs file storage :8400
+  |-- Local filesystem or Dufs storage
   `-- GROBID :8070
 ```
 
@@ -71,7 +74,7 @@ paper-reader/
 |-- backend/                  Kotlin/Spring Boot API
 |   |-- src/main/kotlin/       controllers, services, models, security
 |   |-- src/main/resources/    application config and Flyway migrations
-|   |-- docker-compose.yml     PostgreSQL, Redis, Dufs, GROBID
+|   |-- docker-compose.yml     isolated/new-environment infrastructure template
 |   `-- build.gradle.kts
 |-- docs/                     deployment and technical documents
 `-- ui-demo.html               standalone early UI exploration
@@ -85,7 +88,7 @@ paper-reader/
 - Browse papers by library, source type, reading history, tags, and favorites.
 - View paper metadata, abstract, authors, DOI, publication details, extra fields, and GROBID output.
 - Edit paper metadata, favorite papers, add/remove tags, generate share text, download PDFs, and delete papers.
-- Publish paper versions and optionally push version artifacts to a configured storage target.
+- Create and browse paper version records. External GitHub/Gitee/OSS/S3 artifact pushing is still a placeholder and must not be presented as complete.
 
 ### Reading and research
 
@@ -104,7 +107,7 @@ paper-reader/
 ### Authentication
 
 - Email/password login.
-- Email verification-code login when mail delivery is configured.
+- Email verification-code login API; the current implementation writes codes to the backend log and does not yet deliver real email.
 - GitHub OAuth callback flow.
 - Short-lived access token plus refresh token stored by the client session store.
 - Middleware route guard based on the `pr_session` cookie.
@@ -127,14 +130,14 @@ paper-reader/
 
 ## Requirements
 
-For the full stack:
+For an isolated full-stack development environment:
 
 - Node.js 22 or a compatible current LTS release.
 - pnpm 11 for the checked-in client lockfile.
 - JDK 17 for the Spring Boot API.
 - Docker and Docker Compose for PostgreSQL, Redis, Dufs, and GROBID.
 - At least one AI provider key if AI chat is required.
-- A configured SMTP provider if email-code login is required.
+- A future mail-service integration if real email-code delivery is required; SMTP delivery is not implemented yet.
 
 ## Configuration
 
@@ -165,7 +168,7 @@ The complete template is in [backend/.env.example](backend/.env.example). The im
 
 | Group | Variables | Purpose |
 | --- | --- | --- |
-| Application | `SPRING_PROFILES_ACTIVE`, `SERVER_PORT`, `LOG_LEVEL` | Runtime profile and port |
+| Application | `SPRING_PROFILES_ACTIVE`, `SERVER_ADDRESS`, `SERVER_PORT`, `LOG_LEVEL` | Runtime profile, bind address, and port |
 | PostgreSQL | `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USER`, `DATABASE_PASSWORD` | Main relational database |
 | Redis | `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` | Cache and session support |
 | JWT | `JWT_SECRET`, `JWT_ACCESS_EXPIRATION`, `JWT_REFRESH_EXPIRATION` | Token signing and TTL |
@@ -178,20 +181,26 @@ The complete template is in [backend/.env.example](backend/.env.example). The im
 
 ## Local Development
 
-### 1. Start infrastructure
+### 1. Start infrastructure (isolated development hosts only)
+
+Do **not** run this on the current production host. Production already uses external/shared containers that are not managed by this Compose project; starting the repository stack there can create port and data-volume conflicts. See [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ```bash
 cd backend
+export REDIS_PASSWORD='replace-with-a-local-random-password'
 docker compose up -d
 docker compose ps
 ```
 
-The default host ports are PostgreSQL `5432`, Redis `6379`, Dufs `8400`, and GROBID `8070`. GROBID may need a short warm-up period before PDF parsing is ready.
+The development template's default host ports are PostgreSQL `5432`, Redis `6379`, Dufs `8400`, and GROBID `8070`. GROBID may need a short warm-up period before PDF parsing is ready. Current production instead uses local storage at `/root/paper-reader/backend/uploads` and has no Dufs container.
 
 ### 2. Start the API
 
 ```bash
 cd backend
+set -a
+. ./.env
+set +a
 ./gradlew bootRun
 ```
 
@@ -218,8 +227,9 @@ Next.js development mode listens on `http://localhost:3000` by default. To use t
 ```bash
 cd frontend
 pnpm install --frozen-lockfile
-pnpm run build
+pnpm exec tsc --noEmit
 pnpm test
+pnpm run build
 ```
 
 `pnpm run build` compiles the Next.js production bundle, checks TypeScript, runs the configured lint checks, and generates `.next/`. Existing lint warnings do not fail the current build; new warnings should still be reviewed.
@@ -357,10 +367,10 @@ The project uses a release-style branch and client version for every code iterat
 - Bug-fix iterations append `-fix` to the repaired version, for example `0.1.12-fix`, with a matching branch such as `feature/v0.1.12-fix`.
 - A minor release (`0.1.x` → `0.2.0`) or major release (`0.x.y` → `1.0.0`) is created only when the product owner explicitly requests it.
 - Keep every version branch after merging; it is part of the release and rollback history.
-- Keep the active version branch (`feature/v0.1.21`), `frontend/package.json`, `frontend/VERSION`, `backend/VERSION`, README release line, favicon cache-busting value, and visible UI version aligned.
+- Keep the active version branch (`feature/v0.1.22`), `frontend/package.json`, `frontend/VERSION`, `backend/VERSION`, README release line, favicon cache-busting value, and visible UI version aligned.
 - Every code iteration must be built, tested, deployed to the PM2 process, verified through the public domain, committed, and pushed to the matching remote branch.
 
-The detailed operating rules and handoff checklist are in [docs/MAINTENANCE.md](docs/MAINTENANCE.md). The current roadmap is in [docs/PLAN.md](docs/PLAN.md), project cautions are in [docs/ATTENTION.md](docs/ATTENTION.md), and the AI interaction design is in [docs/AI_CHAT_TECHNICAL_SOLUTION.md](docs/AI_CHAT_TECHNICAL_SOLUTION.md).
+The documentation map is in [docs/README.md](docs/README.md). New maintainers should start with [docs/NEW_MAINTAINER_GUIDE.md](docs/NEW_MAINTAINER_GUIDE.md) and [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md). Detailed operating rules are in [docs/MAINTENANCE.md](docs/MAINTENANCE.md), the roadmap is in [docs/PLAN.md](docs/PLAN.md), cautions are in [docs/ATTENTION.md](docs/ATTENTION.md), and AI design is in [docs/AI_CHAT_TECHNICAL_SOLUTION.md](docs/AI_CHAT_TECHNICAL_SOLUTION.md).
 
 ## Troubleshooting
 
@@ -398,7 +408,7 @@ Check GROBID independently:
 
 ```bash
 curl http://localhost:8070/api/isalive
-docker compose -f backend/docker-compose.yml ps grobid
+docker ps --filter name=paper-reader-grobid
 ```
 
 GROBID is only required for parsing/import enrichment; already stored PDFs can still be served when parsing is unavailable.
@@ -409,6 +419,9 @@ Make sure the Compose environment provides `REDIS_PASSWORD` and the backend `.en
 
 ## Further Documentation
 
+- [Documentation index](docs/README.md)
+- [New maintainer guide](docs/NEW_MAINTAINER_GUIDE.md)
+- [Complete project status](docs/PROJECT_STATUS.md)
 - [Deployment guide](docs/DEPLOY.md)
 - [PDF rendering pipeline](docs/PDF_RENDERING_PIPELINE.md)
 - [Create paper feature](docs/CREATE_PAPER_FEATURE.md)

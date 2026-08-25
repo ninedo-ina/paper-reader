@@ -4,6 +4,8 @@
 
 本文档适用于 `/root/paper-reader` C 端论文阅读项目。后台管理项目是独立仓库，不在本项目的代码变更范围内；如果一个需求同时影响两个项目，必须分别确认、分别更新版本、分别构建和分别推送。
 
+新人先阅读 [文档索引](README.md)、[新人维护指引](NEW_MAINTAINER_GUIDE.md) 和 [项目完整现状](PROJECT_STATUS.md)。本文保留版本流程及历史问题记录，不应被当作唯一的动态生产清单。
+
 ## 2. 分支与版本
 
 当前采用版本分支：
@@ -63,7 +65,7 @@ feature/v主版本.次版本.修订版本
 6. `main` 合并完成后，按实际部署链路构建、重启生产 PM2 进程并检查公网。
 7. 保留版本分支、合并提交和验证记录，不通过强制推送改写 `main`、`dev` 或历史版本分支。
 
-当前仓库的初始化基线为已验证的 `feature/v0.1.12-fix` 提交；后续版本统一遵循上述流程。
+当前交接基线为 `feature/v0.1.22`；后续版本统一遵循上述流程。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。
 
 ## 4. 每次代码迭代的标准流程
 
@@ -434,3 +436,46 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - 新的未知出版社声明不会被自动猜测清洗，可能仍需按真实样例增补明确模式；这比通用截断误伤合法标题更安全。
 - 数据迁移只能修复当前明确模式。若数据库中已有其他形式的污染标题，应先审计真实 TEI/PDF，再以新版本增加独立、可测试的规则。
 - 本次只改 PaperReader C 端仓库中的解析消费层、数据库迁移和 UI；GROBID 服务及后台管理项目均不变。
+
+## 17. v0.1.22 项目交接、配置安全与新人指引
+
+### 需求
+
+- 将项目完整进度、架构、生产状态、配置方式、历次踩坑、技术债和发布流程集中记录在 `docs/`。
+- 提供从根 README 可直接到达的新人入口，使后续维护不依赖历史聊天上下文。
+- 提交并推送完整文档，按既定版本分支、`dev`、`main` 流程交付。
+
+### 调查结果
+
+- 生产链路实际是 Cloudflare -> Apache -> PM2，而不是 Cloudflare Pages；Apache 将 `/api`、`/ws` 和 `/` 分别代理到后端与前端。
+- Next 以 `localhost:3001` 运行且当前监听 `::1`，因此 `127.0.0.1:3001` 探活会误报；后端监听 `127.0.0.1:8080`。
+- 生产只有 `infra-postgres`、`infra-redis`、`paper-reader-grobid` 三个基础设施容器，均无 Compose labels；它们不能被视为仓库 Compose 管理的完整四服务。
+- 生产文件存储实际为 local，目录为 `/root/paper-reader/backend/uploads`；没有 Dufs 容器。后端仍使用 development profile，这是待单独评估的运维风险。
+- 主阅读器 AI 使用 `components/chat/ChatPanel.tsx` 和浏览器本地 Provider/历史；同名 `components/ai/ChatPanel.tsx` 是旧路径。
+- 邮件验证码只写日志、外部存储推送未实现、WebSocket 身份绑定/CORS/浏览器 Key 存储等边界此前没有集中呈现。
+- 真实 `backend/.env`、`frontend/.env.local` 和根目录工具脚本曾被 Git 跟踪，包含已配置运行信息或硬编码模型网关凭据。这是安全事件，取消当前跟踪和清理当前脚本不能清除历史。
+
+### 实现
+
+- 新增 `docs/README.md` 文档索引、`PROJECT_STATUS.md` 完整现状和 `NEW_MAINTAINER_GUIDE.md` 新人手册。
+- 根 README 增加维护者入口，纠正邮件投递、外部存储推送和生产存储/Compose 描述。
+- 更新计划、注意事项、维护和部署文档，统一记录生产拓扑、配置、验证和危险操作边界。
+- 补充 `NEXT_PUBLIC_WS_URL`、GROBID 解析线程池模板变量，并把 profile 注释改为代码真实名称。
+- `.gitignore` 显式保护各层 `.env`，只允许 `.env.example`；真实环境文件从 Git 索引移除，但服务器本地文件保留。
+- 根目录工具启动脚本移除硬编码 Key 和 Base URL，改为要求调用者从本机环境注入；脚本不再承担凭据存储。
+- TypeScript 增量构建缓存 `*.tsbuildinfo` 从版本控制移除并忽略，避免每次验证产生无意义的大型 diff。
+- 版本统一升级到 `0.1.22`，本轮属于普通维护需求，不使用 `-fix`。
+
+### 安全后续
+
+- 历史中可能出现的数据库、Redis、JWT、OAuth、模型网关等凭据都应视为可能泄漏，安排受控吊销或轮换。JWT 轮换会使现有用户下线，数据库和 Redis 轮换会影响共享服务，不能在文档提交中顺手执行。
+- 如需从 Git 历史彻底移除秘密，必须先确认仓库可见范围、所有长期/版本分支和协作者同步方案，再单独授权执行历史重写与强推。
+- Provider API Key 目前主要存浏览器 `pr-preferences`，不在前端 `.env.local`；仍需要后续的服务端加密或更安全存储方案。
+
+### 验证与发布记录
+
+- Markdown 相对链接、常见高置信 Secret 模式和 `git diff --check` 已通过；当前跟踪树不再命中已发现的硬编码模型凭据。
+- `pnpm exec tsc --noEmit`、前端 8 个测试文件共 66 项测试、`pnpm run build` 均通过；构建仍有项目既有的未使用变量、原生 `<img>` 和 Hook dependency 警告，无错误。
+- 后端 `./gradlew clean test bootJar` 通过，共 33 项测试；生成 `paper-reader-backend-0.1.22.jar`，`META-INF/build-info.properties` 为 `build.version=0.1.22`。
+- 已确认 `git ls-files backend/.env frontend/.env.local` 无输出，两个本机运行文件仍存在且被 ignore；`frontend/tsconfig.tsbuildinfo` 也已取消跟踪并保留为本地构建缓存。
+- 版本分支提交、`dev/main` 合并、PM2 部署与公网验证结果在实际完成后补充；未验证前生产仍记为 `0.1.21`。
