@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.core.io.ByteArrayResource
 import org.springframework.core.io.FileSystemResource
 import org.springframework.core.io.Resource
@@ -92,7 +93,7 @@ class FileStorageService(
         }
     }
 
-    fun delete(filePath: String) {
+    fun delete(filePath: String): Boolean {
         try {
             when (storageType) {
                 "local" -> Files.deleteIfExists(Path.of(filePath))
@@ -103,8 +104,14 @@ class FileStorageService(
                     )
                 }
             }
+            return true
         } catch (e: Exception) {
+            if (e is HttpClientErrorException.NotFound) {
+                logger.info("File was already absent: {}", filePath)
+                return true
+            }
             logger.warn("Failed to delete file: {}", filePath, e)
+            return false
         }
     }
 

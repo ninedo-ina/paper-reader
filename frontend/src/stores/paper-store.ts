@@ -5,6 +5,7 @@
 import { create } from "zustand"
 import * as papersApi from "@/lib/api/papers"
 import { getForumStats } from "@/lib/api/forum"
+import { useReaderStore } from "@/stores/reader-store"
 import type { PaperListDto, PaperDetailDto, CreatePaperRequest, UpdatePaperRequest } from "@/lib/api/types"
 
 export type TabKey = "all" | "create" | "import"
@@ -56,7 +57,7 @@ interface PaperState {
   createPaper: (data: CreatePaperRequest) => Promise<PaperDetailDto>
   updatePaper: (id: number, data: UpdatePaperRequest) => Promise<void>
   toggleFavorite: (id: number) => Promise<void>
-  deletePaper: (id: number) => Promise<void>
+  deletePaper: (id: number, deleteFile?: boolean) => Promise<void>
   clearCurrentPaper: () => void
   consumeShowInfoPanel: () => boolean
   clearError: () => void
@@ -218,13 +219,16 @@ export const usePaperStore = create<PaperState>((set, get) => ({
     get().loadCounts().catch(() => {})
   },
 
-  deletePaper: async (id) => {
+  deletePaper: async (id, deleteFile = false) => {
     set({ error: null })
-    await papersApi.deletePaper(id)
+    await papersApi.deletePaper(id, deleteFile)
+    const deletedCurrentPaper = get().currentPaper?.id === id
     set((s) => ({
       papers: s.papers.filter((p) => p.id !== id),
+      total: Math.max(0, s.total - 1),
       currentPaper: s.currentPaper?.id === id ? null : s.currentPaper,
     }))
+    useReaderStore.getState().removePaperData(id, deletedCurrentPaper)
     get().loadCounts().catch(() => {})
   },
 

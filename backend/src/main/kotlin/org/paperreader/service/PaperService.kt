@@ -143,14 +143,6 @@ class PaperService(
     }
 
     @Transactional
-    fun deletePaper(id: Long, userId: Long) {
-        val paper = paperRepository.findByIdAndUserId(id, userId)
-            ?: throw ResourceNotFoundException("Paper", id)
-        paper.filePath?.let { fileStorageService.delete(it) }
-        paperRepository.delete(paper)
-    }
-
-    @Transactional
     fun updatePaper(id: Long, userId: Long, request: UpdatePaperRequest): PaperDetailDto {
         val paper = paperRepository.findByIdAndUserId(id, userId)
             ?: throw ResourceNotFoundException("Paper", id)
@@ -239,6 +231,7 @@ class PaperService(
         favorite = favorite,
         sourceType = sourceType,
         sourceUrl = sourceUrl,
+        hasOriginalFile = !filePath.isNullOrBlank(),
         pageCount = pageCount,
         fileSize = fileSize,
         grobidResult = null,
@@ -258,6 +251,7 @@ class PaperService(
         journal = journal,
         category = category,
         sourceType = sourceType,
+        hasOriginalFile = !filePath.isNullOrBlank(),
         pageCount = pageCount,
         favorite = favorite,
         tags = tags,

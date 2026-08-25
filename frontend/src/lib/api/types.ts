@@ -81,6 +81,7 @@ export interface PaperListDto {
   journal?: string
   category: Category
   sourceType: SourceType
+  hasOriginalFile: boolean
   pageCount?: number
   favorite: boolean
   tags?: string[]
@@ -102,6 +103,7 @@ export interface PaperDetailDto {
   favorite: boolean
   sourceType: SourceType
   sourceUrl?: string
+  hasOriginalFile: boolean
   pageCount?: number
   fileSize?: number
   parseStatus?: "NOT_APPLICABLE" | "PENDING" | "PROCESSING" | "READY" | "FAILED" | string
