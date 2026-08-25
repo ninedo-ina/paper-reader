@@ -185,6 +185,7 @@ cd /root/paper-reader/backend
 set -a
 . ./.env
 set +a
+# 不要在这里改用 sudo；PM2 必须收到当前 shell 已导出的应用配置。
 pm2 delete paper-reader-backend
 pm2 start --name paper-reader-backend \
   --cwd /root/paper-reader/backend \
@@ -192,8 +193,14 @@ pm2 start --name paper-reader-backend \
 
 # 3. 前端加载刚生成的 .next 产物
 pm2 restart paper-reader-frontend --update-env
+
+# 4. 后端健康检查通过后才保存进程列表
+curl --fail --retry 10 --retry-connrefused --retry-delay 2 \
+  http://127.0.0.1:8080/api/health
 pm2 save
 ```
+
+重建后的 PM2 项不会继承已删除进程的应用环境变量，因此 `. ./.env`、`pm2 delete`、`pm2 start` 必须在同一个 shell 中连续执行。启动后先确认 `pm2 logs paper-reader-backend --lines 100 --nostream` 无缺少配置项，再执行 `pm2 save`；若启动循环，不要先保存错误状态。
 
 ---
 

@@ -77,6 +77,7 @@
 
 - `paper.pilo.eu.cc` 通过 Cloudflare -> Apache -> PM2 Next.js，不是 Cloudflare Pages。
 - 修改源码后只 push 不会生效；必须执行 `pnpm run build`、PM2 重启并验证公网。
+- 后端版本化 JAR 需要重建 PM2 项；新项不会继承被删除进程的应用环境变量，必须在同一个 shell 加载 `backend/.env` 后启动，并在健康检查通过后再 `pm2 save`。
 - favicon 使用版本 query string 防止浏览器/边缘缓存旧图标；更新版本时同步修改 metadata 和主题同步组件。
 - 本次 v0.1.12 只调整浏览器标签页 favicon；不要将 favicon 的尺寸调整误应用到首页左上角品牌 Logo。
 - 历史 v0.1.12-fix 修复了侧栏折叠按钮的点击层级；当前 v0.1.20 增加论文删除确认与原文件选项。
