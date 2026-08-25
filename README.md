@@ -258,14 +258,17 @@ test -f "build/libs/paper-reader-backend-${BACKEND_VERSION}.jar"
 set -a
 . ./.env
 set +a
+# `sudo` is not used here: PM2 must receive the exported application variables.
 pm2 delete paper-reader-backend
 pm2 start --name paper-reader-backend \
   --cwd /root/paper-reader/backend \
   java -- -jar "/root/paper-reader/backend/build/libs/paper-reader-backend-${BACKEND_VERSION}.jar"
+curl --fail --retry 10 --retry-connrefused --retry-delay 2 \
+  http://127.0.0.1:8080/api/health
 pm2 save
 ```
 
-The backend artifact filename is versioned. A plain `pm2 restart paper-reader-backend` preserves the old JAR argument, so recreate that one PM2 entry whenever the backend version changes and verify the new `script args` afterward.
+The backend artifact filename is versioned. A plain `pm2 restart paper-reader-backend` preserves the old JAR argument, so recreate that one PM2 entry whenever the backend version changes and verify the new `script args` afterward. Load `backend/.env` in the same shell immediately before `pm2 start`; a recreated PM2 entry does not inherit application variables from the deleted entry. If startup loops, inspect `pm2 logs paper-reader-backend --lines 100 --nostream` before saving the process list.
 
 ### Verify the running deployment
 
