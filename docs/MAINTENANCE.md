@@ -478,4 +478,9 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - `pnpm exec tsc --noEmit`、前端 8 个测试文件共 66 项测试、`pnpm run build` 均通过；构建仍有项目既有的未使用变量、原生 `<img>` 和 Hook dependency 警告，无错误。
 - 后端 `./gradlew clean test bootJar` 通过，共 33 项测试；生成 `paper-reader-backend-0.1.22.jar`，`META-INF/build-info.properties` 为 `build.version=0.1.22`。
 - 已确认 `git ls-files backend/.env frontend/.env.local` 无输出，两个本机运行文件仍存在且被 ignore；`frontend/tsconfig.tsbuildinfo` 也已取消跟踪并保留为本地构建缓存。
-- 版本分支提交、`dev/main` 合并、PM2 部署与公网验证结果在实际完成后补充；未验证前生产仍记为 `0.1.21`。
+- 交接提交 `52d479f` 已推送并保留在 `feature/v0.1.22`；已合并到 `dev`（`d166c4b`）和 `main`（`d4862c1`），GitHub 默认分支仍为 `main`。
+- 在 `main` 上再次完成前端生产构建和后端 `clean test bootJar`；生产后端 PM2 已重建并指向 `paper-reader-backend-0.1.22.jar`，前端 PM2 已重启加载新 `.next`。
+- 后端约 10 秒启动完成，Flyway 确认 public schema 已是 V12、无需新迁移；本机与公网 `/api/health` 均返回 `0.1.22`，本机和公网登录页均为 200 且动态无缓存。
+- 公网页面引用 `paperread-favicon-light.svg?v=0.1.22`，明暗 favicon 均返回 200；GROBID `/api/isalive` 为 `true`，`infra-postgres`、`infra-redis`、`paper-reader-grobid` 均未重建。
+- 两个 PM2 进程均 online、后端零重启；错误日志的最后修改时间早于本次发布，没有新增错误。上传目录保持存在且权限未变，全部验收通过后已执行 `pm2 save`。
+- 合并取消跟踪后，Git 按预期移除了工作区里的旧受跟踪 `.env` 副本；部署前已从可信基线提交 `d63a56d` 精确恢复到本机，并确认文件存在、被 ignore 且不在索引中。后续在已采用新 ignore 规则的分支间切换不会再重复删除，但首次落地该安全提交时应注意此迁移行为。
