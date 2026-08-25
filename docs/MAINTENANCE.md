@@ -94,7 +94,7 @@ feature/v主版本.次版本.修订版本
    pm2 save
    ```
 
-   后端版本变化时，JAR 文件名也会变化。不能只执行 `pm2 restart paper-reader-backend`，因为 PM2 会保留旧的 JAR 参数；应按 `docs/DEPLOY.md` 定向重建该 PM2 项，并确认 `pm2 show paper-reader-backend` 指向当前版本 JAR。
+   后端版本变化时，JAR 文件名也会变化。不能只执行 `pm2 restart paper-reader-backend`，因为 PM2 会保留旧的 JAR 参数；应按 `docs/DEPLOY.md` 定向重建该 PM2 项，并确认 `pm2 show paper-reader-backend` 指向当前版本 JAR。删除旧项后，新 PM2 项不会继承旧进程的应用环境变量，必须在同一 shell 先加载 `backend/.env` 再启动；健康检查通过前不要保存错误进程状态。
 
 9. 检查本机进程、页面状态码、静态资源状态码和公网域名；需要时检查 Apache、Cloudflare 缓存头和 PM2 日志。
 10. 查看 `git diff --check`、`git status` 和最终 diff，提交清晰的 commit，然后推送当前版本分支。
@@ -388,7 +388,11 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - `pnpm test` 通过：8 个测试文件、65 项测试；覆盖卡片删除入口、确认弹窗默认值/文件选项/失败状态，以及删除当前或非当前论文时的 Reader 缓存行为。
 - `pnpm run build` 通过；仅有项目既有 lint 警告，无构建错误。
 - `./gradlew clean test bootJar` 通过：30 项后端测试，生成 `paper-reader-backend-0.1.20.jar`。
-- 公网版本、PM2 与 GROBID 状态在部署后补录。
+- 功能提交 `787f58a` 已推送并保留在 `feature/v0.1.20`；已合并到 `dev`（`25eb547`）和 `main`（`5e60b6e`）。
+- 后端 PM2 已重建并指向 `paper-reader-backend-0.1.20.jar`，前端已重启加载新的 `.next` 构建，最终进程列表已执行 `pm2 save`。
+- 本机与公网 `/api/health` 均返回 `status=ok`、`version=0.1.20`；`https://paper.pilo.eu.cc/zh/login` 返回 200。
+- 公网页面引用 `paperread-favicon-light.svg?v=0.1.20`，明暗两份 favicon 均返回 200；GROBID `/api/isalive` 返回 `true`。
+- 部署中曾因重建 PM2 项时未继承旧进程应用变量而出现启动循环；从部署前 PM2 备份恢复同一组应用配置后正常启动。标准部署命令已补充“同一 shell 加载 `backend/.env`”和“健康检查通过前再 `pm2 save`”要求。
 
 ### 后续风险
 
