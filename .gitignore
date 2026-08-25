@@ -18,3 +18,15 @@ logs/
 
 # Uploads
 uploads/
+
+# Local runtime configuration and secrets
+# Keep the committed templates, never commit real environment files.
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example

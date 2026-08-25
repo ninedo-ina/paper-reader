@@ -8,6 +8,7 @@ out/
 # Build
 build/
 dist/
+*.tsbuildinfo
 
 # IDE
 .idea/
@@ -23,3 +24,8 @@ coverage/
 
 # Debug
 npm-debug.log*
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
