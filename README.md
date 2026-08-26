@@ -10,8 +10,8 @@ The repository contains the C-side product and its API. The administration conso
 
 - Default branch: `main`
 - Integration branch: `dev`
-- Active version branch: `feature/v0.1.22`
-- Client version: `0.1.22`
+- Active version branch: `feature/v0.1.23` (development; not deployed)
+- Client version: `0.1.23` (source/development)
 - Production version: `0.1.22` (verified 2026-08-25 UTC)
 - Default locale: Chinese (`zh`)
 - Supported locales: Chinese (`zh`) and English (`en`)
@@ -87,6 +87,8 @@ paper-reader/
 - Upload PDF files, import papers from a URL, or create paper metadata manually.
 - Browse papers by library, source type, reading history, tags, and favorites.
 - View paper metadata, abstract, authors, DOI, publication details, extra fields, and GROBID output.
+- From the Reader metadata panel, resolve exact arXiv IDs and DOIs through arXiv, DataCite, and Crossref, preview field-level candidates, and apply only selected values.
+- Metadata enrichment records source URLs, confidence, conflicts, short-lived previews, and applied-field provenance. The v0.1.23 implementation is present on the development branch; it has not been deployed to production.
 - Edit paper metadata, favorite papers, add/remove tags, generate share text, download PDFs, and delete papers.
 - Create and browse paper version records. External GitHub/Gitee/OSS/S3 artifact pushing is still a placeholder and must not be presented as complete.
 
@@ -367,7 +369,7 @@ The project uses a release-style branch and client version for every code iterat
 - Bug-fix iterations append `-fix` to the repaired version, for example `0.1.12-fix`, with a matching branch such as `feature/v0.1.12-fix`.
 - A minor release (`0.1.x` → `0.2.0`) or major release (`0.x.y` → `1.0.0`) is created only when the product owner explicitly requests it.
 - Keep every version branch after merging; it is part of the release and rollback history.
-- Keep the active version branch (`feature/v0.1.22`), `frontend/package.json`, `frontend/VERSION`, `backend/VERSION`, README release line, favicon cache-busting value, and visible UI version aligned.
+- Keep the active source version branch (`feature/v0.1.23`), `frontend/package.json`, `frontend/VERSION`, `backend/VERSION`, README release line, favicon cache-busting value, and visible UI version aligned. Production remains `0.1.22` until this branch is merged, deployed, and verified.
 - Every code iteration must be built, tested, deployed to the PM2 process, verified through the public domain, committed, and pushed to the matching remote branch.
 
 The documentation map is in [docs/README.md](docs/README.md). New maintainers should start with [docs/NEW_MAINTAINER_GUIDE.md](docs/NEW_MAINTAINER_GUIDE.md) and [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md). Detailed operating rules are in [docs/MAINTENANCE.md](docs/MAINTENANCE.md), the roadmap is in [docs/PLAN.md](docs/PLAN.md), cautions are in [docs/ATTENTION.md](docs/ATTENTION.md), and AI design is in [docs/AI_CHAT_TECHNICAL_SOLUTION.md](docs/AI_CHAT_TECHNICAL_SOLUTION.md).

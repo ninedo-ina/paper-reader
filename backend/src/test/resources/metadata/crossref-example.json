@@ -1,0 +1,15 @@
+{
+  "message": {
+    "DOI": "10.1234/example",
+    "title": ["An Example Paper"],
+    "author": [{ "given": "Ada", "family": "Lovelace" }],
+    "container-title": ["Example Journal"],
+    "publisher": "Example Publisher",
+    "type": "journal-article",
+    "ISSN": ["1234-5678"],
+    "volume": "12",
+    "issue": "3",
+    "page": "10-20",
+    "published": { "date-parts": [[2024, 5, 1]] }
+  }
+}

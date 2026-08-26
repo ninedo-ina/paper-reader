@@ -56,6 +56,7 @@ interface PaperState {
   uploadFromUrl: (url: string, title?: string) => Promise<PaperDetailDto>
   createPaper: (data: CreatePaperRequest) => Promise<PaperDetailDto>
   updatePaper: (id: number, data: UpdatePaperRequest) => Promise<void>
+  replacePaper: (paper: PaperDetailDto) => void
   toggleFavorite: (id: number) => Promise<void>
   deletePaper: (id: number, deleteFile?: boolean) => Promise<void>
   clearCurrentPaper: () => void
@@ -203,9 +204,16 @@ export const usePaperStore = create<PaperState>((set, get) => ({
     const updated = await papersApi.updatePaper(id, data)
     set((s) => ({
       papers: s.papers.map((p) => (p.id === id ? { ...p, ...updated } as unknown as PaperListDto : p)),
-      currentPaper: updated,
+      currentPaper: s.currentPaper?.id === id ? updated : s.currentPaper,
     }))
   },
+
+  replacePaper: (paper) => set((state) => ({
+    papers: state.papers.map((item) => (
+      item.id === paper.id ? { ...item, ...paper } as unknown as PaperListDto : item
+    )),
+    currentPaper: state.currentPaper?.id === paper.id ? paper : state.currentPaper,
+  })),
 
   toggleFavorite: async (id) => {
     set({ error: null })
