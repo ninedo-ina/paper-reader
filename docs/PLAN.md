@@ -1,6 +1,74 @@
 # PaperReader 迭代计划
 
-## 当前迭代：v0.1.22
+## 下一迭代：v0.1.23（方案已整理，待实施）
+
+分支：`feature/v0.1.23`
+
+迭代类型：论文元数据模型治理与外部权威数据补全。
+
+完整设计见 [外部论文元数据补全方案](EXTERNAL_METADATA_ENRICHMENT.md)。实施范围仍以产品负责人开始开发前的最终确认和实际数据审计为准。
+
+### 背景
+
+当前上传论文主要依赖 GROBID 从 PDF 提取元数据。标题、作者、摘要、DOI、年份和期刊/会议信息可能缺失或被 PDF 首页噪声污染；卷号、期号、出版页码、出版社、arXiv ID 等字段则没有稳定的规范存储和外部补全链路。
+
+现有模型还存在 `journal` 与 `extraFields.journalName` 双写，卷期页等只藏在 `extraFields`，列表与信息面板读取不一致的问题。直接增加 arXiv 请求但不先治理数据模型，会出现“查到了但页面仍为空”或新旧来源互相覆盖。
+
+### 核心目标
+
+- 从导入 URL、PDF 元数据、GROBID TEI header 中提取并规范化 DOI、arXiv ID 等稳定标识。
+- 用 arXiv 官方 Atom/OAI-PMH 精确补全预印本标题、作者、摘要、分类、提交/修订日期、版本、许可与仓储 DOI。
+- 用 Crossref/DataCite 精确 DOI 查询，并为出版社/会议站、DBLP 等正式发表来源预留 Provider 架构；正式版本候选须由用户主动触发并确认，确认后才读取官方记录。
+- 以 manifestation 分层区分预印本与正式发表记录、arXiv 版本与卷号、PDF 页数与出版页码、仓储 DOI 与正式出版 DOI。
+- 新增逐字段来源、置信度、冲突和抓取时间；所有结果先预览，再由用户选择应用。
+- 默认 `FILL_MISSING`，不静默覆盖人工填写值或已确认值。
+
+### 计划实施顺序
+
+1. 新增 Flyway V13，建立 manifestation、多标识、元数据来源、字段 provenance 和可过期 resolution 存储；旧 V1–V12 保持不可变。
+2. 审计并兼容读取 `extraFields.journalName/volume/issue/pages/issnIsbn`，不在同一迁移中删除旧值，也不把旧 DOI 默认认定为正式 DOI。
+3. 修复 journal 双数据源、前后端 year 类型不一致、`extraFields` 整包覆盖和 GROBID/人工编辑并发覆盖问题。
+4. 实现 DOI/arXiv ID 提取与归一化，支持新旧 arXiv ID、版本 URL、PDF URL 和 10.48550 arXiv DOI。
+5. 实现 arXiv Atom/OAI、Crossref/DataCite Provider，加入固定目标、超时、响应大小限制、安全 XML、缓存、限流、退避和降级。
+6. 提供用户主动触发的正式版本候选搜索；仅对用户确认且已有明确 arXiv/DOI/DBLP 关系的官方 proceedings 记录做固定域名、固定路径精确读取，补 venue、卷期页和出版社，并写入正式版 manifestation；不建设通用网页爬虫。
+7. 增加元数据 resolve/preview/apply API；候选按字段返回当前值、建议值、来源、置信度与冲突。
+8. 在 Reader 论文信息面板增加“补全元数据”入口与确认界面，中英文文案同步。
+9. 以 *Attention Is All You Need* 和同名误匹配反例完成端到端回归。
+
+### Attention 验收基准
+
+- 从已有 TEI 识别 `arXiv:1706.03762` 与版本 `v7`。
+- arXiv 元数据得到八位作者、2017 首次提交、2023 最后修订、`cs.CL/cs.LG` 和 `10.48550/arXiv.1706.03762`。
+- 用户主动确认正式版本候选后，在独立的正式版 manifestation 中通过 NeurIPS 官方记录或 DBLP 记录显示 NeurIPS/NIPS 2017、卷 30、页码 5998–6008，并标注该字段不是来自 arXiv。
+- `v7` 不写入卷号，`15 pages` 不写入出版页码，arXiv DOI 不冒充正式出版 DOI。
+- 不因 Crossref/OpenAlex 的 2025 同名异常候选写入错误 DOI或年份。
+- 没有期号或正式 DOI 时显示“不适用/权威来源未提供”，不猜值。
+- 应用前不修改论文；应用后只写用户勾选字段并保存来源记录。
+
+### 验证要求
+
+- arXiv/DOI 归一化、Provider fixture 解析、匹配冲突、幂等、并发和 `FILL_MISSING` 后端测试。
+- V13 兼容候选、work/manifestation 重复标识、resolution 篡改/过期、不可拆分 ISSN/ISBN 和 Paper 删除级联测试。
+- 前端预览、默认选择、冲突保护、失败降级和中英文 UI 测试。
+- 前端类型检查、全部测试与生产构建；后端 clean test bootJar。
+- 使用固定 fixture 做自动化测试，普通测试不依赖公网；上线前单独执行受控外部接口探测。
+
+### 本次不包含
+
+- 不按标题搜索结果静默写入 DOI 或覆盖现有字段。
+- 不在 v0.1.23 自动批量改写整个历史论文库；批量能力后续单独实施。
+- 不通过 arXiv/OpenAlex 推断 SCI、EI、SSCI、CSSCI 或北大核心。
+- 不构建通用网页爬虫，不把任意外部 URL 交给无约束下载器；官方 proceedings 只允许固定域名和固定路径。
+- 不修改 `/root/paperread-admin`、GROBID 镜像或共享 PostgreSQL/Redis 容器。
+
+### 数据源运行约束
+
+- arXiv legacy API 按官方要求保持单连接，所有受控机器合计每三秒最多一次请求；必须缓存并合并重复请求。官方 proceedings/DBLP 也要使用固定客户端、超时、缓存和来源记录。
+- 模糊标题/作者查询会向第三方发送论文书目信息，只能由用户显式触发或经偏好设置允许。
+- Provider 失败不得阻断 PDF 上传、解析、阅读、批注或人工编辑。
+- 外部元数据只保存白名单字段和必要来源，不保存 PDF 正文、批注、笔记、AI 对话或凭据。
+
+## 历史迭代：v0.1.22
 
 分支：`feature/v0.1.22`
 
