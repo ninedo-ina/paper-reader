@@ -1,12 +1,26 @@
 # PaperReader 迭代计划
 
-## 下一迭代：v0.1.23（方案已整理，待实施）
+## 当前迭代：v0.1.23（开发中，核心单篇闭环已实现，尚未部署）
 
 分支：`feature/v0.1.23`
 
 迭代类型：论文元数据模型治理与外部权威数据补全。
 
-完整设计见 [外部论文元数据补全方案](EXTERNAL_METADATA_ENRICHMENT.md)。实施范围仍以产品负责人开始开发前的最终确认和实际数据审计为准。
+完整设计见 [外部论文元数据补全方案](EXTERNAL_METADATA_ENRICHMENT.md)。当前工作区是开发分支实现，生产仍运行 `0.1.22`；合并、全量验证、迁移和线上验收完成前，不得把本功能描述为已上线。
+
+### 当前实现状态（2026-08-26 UTC）
+
+| 范围 | 状态 | 真实边界 |
+| --- | --- | --- |
+| Reader 入口与中英文基础文案 | 已实现 | 仅单篇手动触发；应用后立即刷新当前论文状态 |
+| `resolve` / `preview` / `apply` API | 已实现 | resolution 15 分钟过期并校验 `expectedUpdatedAt`；只接受快照中的字段 |
+| arXiv Atom 精确查询 | 已实现 | 当前版本、作者、摘要、年份、分类、提交/修订时间和 arXiv ID 写入候选；OAI-PMH 尚未接入 |
+| DataCite / Crossref 精确 DOI 查询 | 已实现 | 只对用户提供或论文中识别到的精确 DOI 查询；不做静默标题 DOI 搜索 |
+| 来源快照与字段 provenance | 已实现 | V13 只保存 resolution/source/provenance 三类表；无完整 manifestation/identifier 表 |
+| 正式版本候选 | 已实现（候选层） | 显式刷新触发严格 DBLP 标题+第一作者查询，并提供 Attention 固定关系适配器；候选默认不勾选、不写入独立 manifestation |
+| 历史库批量刷新、OAI 增量同步 | 未实施 | 另立需求和限流/暂停/恢复设计 |
+
+本轮代码改动不修改生产论文数据、不启动生产迁移、不重启生产服务。
 
 ### 背景
 
@@ -25,15 +39,15 @@
 
 ### 计划实施顺序
 
-1. 新增 Flyway V13，建立 manifestation、多标识、元数据来源、字段 provenance 和可过期 resolution 存储；旧 V1–V12 保持不可变。
+1. 新增 Flyway V13，先建立元数据来源、字段 provenance 和可过期 resolution 存储；完整 manifestation、多标识表仍是后续迁移，旧 V1–V12 保持不可变。
 2. 审计并兼容读取 `extraFields.journalName/volume/issue/pages/issnIsbn`，不在同一迁移中删除旧值，也不把旧 DOI 默认认定为正式 DOI。
 3. 修复 journal 双数据源、前后端 year 类型不一致、`extraFields` 整包覆盖和 GROBID/人工编辑并发覆盖问题。
 4. 实现 DOI/arXiv ID 提取与归一化，支持新旧 arXiv ID、版本 URL、PDF URL 和 10.48550 arXiv DOI。
-5. 实现 arXiv Atom/OAI、Crossref/DataCite Provider，加入固定目标、超时、响应大小限制、安全 XML、缓存、限流、退避和降级。
-6. 提供用户主动触发的正式版本候选搜索；仅对用户确认且已有明确 arXiv/DOI/DBLP 关系的官方 proceedings 记录做固定域名、固定路径精确读取，补 venue、卷期页和出版社，并写入正式版 manifestation；不建设通用网页爬虫。
-7. 增加元数据 resolve/preview/apply API；候选按字段返回当前值、建议值、来源、置信度与冲突。
-8. 在 Reader 论文信息面板增加“补全元数据”入口与确认界面，中英文文案同步。
-9. 以 *Attention Is All You Need* 和同名误匹配反例完成端到端回归。
+5. [部分完成] 实现 arXiv Atom、Crossref/DataCite Provider，加入固定目标、响应大小限制、安全 XML、进程内成功/失败缓存、节流和降级；OAI、分布式限流、退避和可观测性仍待完成。
+6. [已完成（候选层）] 提供用户主动触发的正式版本候选入口；DBLP 严格标题+第一作者查询排除 CoRR，Attention 固定官方 proceedings 适配器可生成候选；不写入独立 manifestation。
+7. [已完成] 增加元数据 resolve/preview/apply API；候选按字段返回当前值、建议值、来源、置信度与冲突。
+8. [已完成] Reader 论文信息面板增加“补全元数据”入口与基础中英文文案。
+9. [已完成] 以 *Attention Is All You Need*、同名误匹配、旧式 arXiv ID、DOI 回退、过期快照和字段篡改完成固定 fixture 回归。
 
 ### Attention 验收基准
 
@@ -48,7 +62,7 @@
 ### 验证要求
 
 - arXiv/DOI 归一化、Provider fixture 解析、匹配冲突、幂等、并发和 `FILL_MISSING` 后端测试。
-- V13 兼容候选、work/manifestation 重复标识、resolution 篡改/过期、不可拆分 ISSN/ISBN 和 Paper 删除级联测试。
+- V13 resolution/source/provenance 兼容候选、resolution 篡改/过期和 Paper 删除级联测试；完整 work/manifestation 重复标识、不可拆分 ISSN/ISBN 测试延期到模型迁移阶段。
 - 前端预览、默认选择、冲突保护、失败降级和中英文 UI 测试。
 - 前端类型检查、全部测试与生产构建；后端 clean test bootJar。
 - 使用固定 fixture 做自动化测试，普通测试不依赖公网；上线前单独执行受控外部接口探测。

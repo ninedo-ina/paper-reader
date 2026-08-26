@@ -1,0 +1,32 @@
+{
+  "result": {
+    "hits": {
+      "hit": [
+        {
+          "info": {
+            "authors": { "author": [{ "text": "Ashish Vaswani" }] },
+            "title": "Attention Is All You Need.",
+            "venue": "CoRR",
+            "volume": "abs/1706.03762",
+            "year": "2017",
+            "type": "Informal and Other Publications",
+            "key": "journals/corr/VaswaniSPUJGKP17",
+            "url": "https://dblp.org/rec/journals/corr/VaswaniSPUJGKP17"
+          }
+        },
+        {
+          "info": {
+            "authors": { "author": [{ "text": "Ashish Vaswani" }] },
+            "title": "Attention is All you Need.",
+            "venue": "NIPS",
+            "pages": "5998-6008",
+            "year": "2017",
+            "type": "Conference and Workshop Papers",
+            "key": "conf/nips/VaswaniSPUJGKP17",
+            "url": "https://dblp.org/rec/conf/nips/VaswaniSPUJGKP17"
+          }
+        }
+      ]
+    }
+  }
+}

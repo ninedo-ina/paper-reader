@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react"
 import { useTranslations } from "next-intl"
-import { PanelRightClose, PanelRightOpen, Pencil, Save, Loader2, MessageSquare, StickyNote, Trash2 } from "lucide-react"
+import { PanelRightClose, PanelRightOpen, Pencil, Save, Loader2, MessageSquare, StickyNote, Trash2, RefreshCw, Check, ExternalLink, AlertCircle, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { usePaperStore } from "@/stores/paper-store"
 import { useReaderStore } from "@/stores/reader-store"
@@ -11,14 +11,23 @@ import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { TabBar } from "@/components/ui/TabBar"
 import { getCategory, CATEGORIES } from "@/lib/paper-categories"
+import {
+  categoryExtraFieldValue,
+  extraFieldValue,
+  publicationPagesValue,
+  preserveEnrichmentFields,
+  toEditableExtraFields,
+  updateCategoryExtraField,
+} from "@/lib/paper-metadata"
 import { MarkdownContent } from "@/components/reader/MarkdownContent"
 import { ChatPanel } from "@/components/chat/ChatPanel"
 import { CommentThread } from "@/components/annotations/CommentThread"
 import { AnnotationDialog } from "@/components/reader/AnnotationDialog"
 import { deleteAnnotation, updateAnnotation } from "@/lib/api/annotations"
 import { deleteNote, updateNote } from "@/lib/api/notes"
+import { applyPaperMetadata, resolvePaperMetadata } from "@/lib/api/papers"
 import { useToastStore } from "@/stores/toast-store"
-import type { PaperDetailDto, Category } from "@/lib/api/types"
+import type { PaperDetailDto, Category, MetadataFieldCandidateDto, MetadataResolutionDto } from "@/lib/api/types"
 
 type PanelTab = "metadata" | "annotations" | "notes" | "aiChat"
 
@@ -239,7 +248,7 @@ function SectionCard({ title, children }: { title: string; children: React.React
   )
 }
 
-function FieldRow({ label, children, editing }: { label: string; children?: React.ReactNode; editing?: boolean }) {
+function FieldRow({ label, children }: { label: string; children?: React.ReactNode }) {
   return (
     <div className="flex items-start py-1.5 border-b border-[var(--border-subtle)] last:border-0 text-[13px] gap-3">
       <span className="text-[12px] text-[var(--text-tertiary)] min-w-[64px] shrink-0 pt-0.5">{label}</span>
@@ -266,8 +275,11 @@ function MetadataContent({ paper }: { paper?: PaperDetailDto | null }) {
   const t = useTranslations("metadata")
   const tp = useTranslations("paper")
   const tPapers = useTranslations("papers")
+  const tc = useTranslations("common")
 
   const updatePaper = usePaperStore((s) => s.updatePaper)
+  const replacePaper = usePaperStore((s) => s.replacePaper)
+  const addToast = useToastStore((s) => s.addToast)
 
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -282,6 +294,12 @@ function MetadataContent({ paper }: { paper?: PaperDetailDto | null }) {
   const [journal, setJournal] = useState("")
   const [category, setCategory] = useState<Category>("JOURNAL")
   const [extraFields, setExtraFields] = useState<Record<string, string>>({})
+  const [metadataResolution, setMetadataResolution] = useState<MetadataResolutionDto | null>(null)
+  const [metadataSelected, setMetadataSelected] = useState<Record<string, boolean>>({})
+  const [metadataIdentifier, setMetadataIdentifier] = useState("")
+  const [metadataLoading, setMetadataLoading] = useState(false)
+  const [metadataApplying, setMetadataApplying] = useState(false)
+  const [metadataError, setMetadataError] = useState<string | null>(null)
 
   // Sync form state when paper changes or editing toggles
   useEffect(() => {
@@ -292,14 +310,9 @@ function MetadataContent({ paper }: { paper?: PaperDetailDto | null }) {
       setAbstractText(paper.abstractText ?? "")
       setDoi(paper.doi ?? "")
       setYear(paper.year?.toString() ?? "")
-      setJournal(paper.journal ?? "")
+      setJournal(paper.journal ?? extraFieldValue(paper.extraFields, "journalName") ?? "")
       setCategory(paper.category)
-      const ef = paper.extraFields || {}
-      const result: Record<string, string> = {}
-      for (const [k, v] of Object.entries(ef)) {
-        result[k] = typeof v === "string" ? v : ""
-      }
-      setExtraFields(result)
+      setExtraFields(toEditableExtraFields(paper.extraFields))
     }
   }, [paper, editing])
 
@@ -331,23 +344,70 @@ function MetadataContent({ paper }: { paper?: PaperDetailDto | null }) {
   }, [])
 
   const handleExtraField = useCallback((key: string, value: string) => {
-    setExtraFields((prev) => ({ ...prev, [key]: value }))
+    setExtraFields((prev) => updateCategoryExtraField(prev, key, value))
   }, [])
 
   const handleCategoryChange = useCallback((newCat: Category) => {
     setCategory(newCat)
-    setExtraFields({})
+    setExtraFields((current) => preserveEnrichmentFields(current))
   }, [])
+
+  const handleResolveMetadata = useCallback(async () => {
+    if (!paper) return
+    setMetadataLoading(true)
+    setMetadataError(null)
+    try {
+      const resolution = await resolvePaperMetadata(paper.id, metadataIdentifier)
+      setMetadataResolution(resolution)
+      setMetadataSelected(Object.fromEntries(
+        resolution.fields.map((field) => [field.field, field.selectedByDefault]),
+      ))
+    } catch (error) {
+      setMetadataError((error as Error).message || t("metadataLookupFailed"))
+    } finally {
+      setMetadataLoading(false)
+    }
+  }, [paper, metadataIdentifier, t])
+
+  const handleApplyMetadata = useCallback(async () => {
+    if (!paper || !metadataResolution) return
+    setMetadataApplying(true)
+    setMetadataError(null)
+    try {
+      const fields = Object.entries(metadataSelected).filter(([, selected]) => selected).map(([field]) => field)
+      const result = await applyPaperMetadata(paper.id, metadataResolution.id, fields)
+      replacePaper(result.paper)
+      setMetadataResolution(null)
+      setMetadataSelected({})
+      addToast({ message: t("metadataApplied", { count: result.appliedFields.length }), type: "success" })
+    } catch (error) {
+      setMetadataError((error as Error).message || t("metadataApplyFailed"))
+    } finally {
+      setMetadataApplying(false)
+    }
+  }, [paper, metadataResolution, metadataSelected, replacePaper, addToast, t])
 
   if (!paper) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-sm text-[var(--text-tertiary)]">Select a paper</p>
+        <p className="text-sm text-[var(--text-tertiary)]">{t("selectPaper")}</p>
       </div>
     )
   }
 
   const catDef = getCategory(paper.category)
+  const hasExternalMetadata = [
+    "arxivId",
+    "arxivVersion",
+    "arxivCategories",
+    "arxivPrimaryCategory",
+    "arxivSubmittedAt",
+    "arxivUpdatedAt",
+    "arxivComment",
+    "repositoryDoi",
+    "dblpKey",
+    "licenseUrl",
+  ].some((key) => Boolean(extraFieldValue(paper.extraFields, key)))
 
   return (
     <div className="space-y-3 pb-6">
@@ -359,7 +419,7 @@ function MetadataContent({ paper }: { paper?: PaperDetailDto | null }) {
         {editing ? (
           <div className="flex items-center gap-1.5">
             <Button size="sm" variant="secondary" onClick={handleCancel} disabled={saving}>
-              Cancel
+              {tc("cancel")}
             </Button>
             <Button size="sm" onClick={handleSave} disabled={saving}>
               {saving ? (
@@ -367,37 +427,77 @@ function MetadataContent({ paper }: { paper?: PaperDetailDto | null }) {
               ) : (
                 <Save className="size-3" />
               )}
-              <span className="ml-1">Save</span>
+              <span className="ml-1">{tc("save")}</span>
             </Button>
           </div>
         ) : (
-          <button
-            onClick={() => setEditing(true)}
-            className="inline-flex items-center gap-1 text-[11.5px] text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors"
-          >
-            <Pencil className="size-3" />
-            {t("edit")}
-          </button>
+          <div className="flex items-center gap-2">
+            <Input
+              value={metadataIdentifier}
+              onChange={(event) => setMetadataIdentifier(event.target.value)}
+              placeholder={t("identifierPlaceholder")}
+              aria-label={t("identifierPlaceholder")}
+              className="w-[126px] h-7 text-[10px]"
+            />
+            <button
+              onClick={handleResolveMetadata}
+              disabled={metadataLoading}
+              title={t("enrichMetadata")}
+              className="inline-flex items-center gap-1 text-[11.5px] text-[var(--text-tertiary)] hover:text-[var(--accent)] disabled:opacity-50 transition-colors"
+            >
+              <RefreshCw className={cn("size-3", metadataLoading && "animate-spin")} />
+              {t("enrichMetadata")}
+            </button>
+            <button
+              onClick={() => setEditing(true)}
+              className="inline-flex items-center gap-1 text-[11.5px] text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors"
+            >
+              <Pencil className="size-3" />
+              {t("edit")}
+            </button>
+          </div>
         )}
       </div>
 
+      {metadataError && (
+        <div className="flex items-start gap-2 rounded-lg border border-red-400/25 bg-red-500/5 px-3 py-2 text-[12px] text-red-500">
+          <AlertCircle className="size-3.5 mt-0.5 shrink-0" />
+          <span className="flex-1 break-words">{metadataError}</span>
+          <button type="button" title={t("dismissMetadataError")} onClick={() => setMetadataError(null)} className="shrink-0 opacity-70 hover:opacity-100">
+            <X className="size-3.5" />
+          </button>
+        </div>
+      )}
+
+      {metadataResolution && (
+        <MetadataPreview
+          resolution={metadataResolution}
+          selected={metadataSelected}
+          applying={metadataApplying}
+          onToggle={(field) => setMetadataSelected((current) => ({ ...current, [field]: !current[field] }))}
+          onApply={handleApplyMetadata}
+          onClose={() => { setMetadataResolution(null); setMetadataSelected({}) }}
+          translate={t}
+        />
+      )}
+
       {/* Section: Basic Info */}
       <SectionCard title={tp("basicInfo")}>
-        <FieldRow label={t("title")} editing={editing}>
+        <FieldRow label={t("title")}>
           {editing ? (
             <Input value={title} onChange={(e) => setTitle(e.target.value)} />
           ) : (
             <DisplayValue value={paper.title} />
           )}
         </FieldRow>
-        <FieldRow label={t("authors")} editing={editing}>
+        <FieldRow label={t("authors")}>
           {editing ? (
             <Input value={authors} onChange={(e) => setAuthors(e.target.value)} />
           ) : (
             <DisplayValue value={paper.authors} />
           )}
         </FieldRow>
-        <FieldRow label={t("participants")} editing={editing}>
+        <FieldRow label={t("participants")}>
           {editing ? (
             <Input value={participants} onChange={(e) => setParticipants(e.target.value)} />
           ) : (
@@ -440,32 +540,74 @@ function MetadataContent({ paper }: { paper?: PaperDetailDto | null }) {
 
       {/* Section: Publication Info */}
       <SectionCard title={t("publicationInfo")}>
-        <FieldRow label={t("year")} editing={editing}>
+        <FieldRow label={t("year")}>
           {editing ? (
             <Input value={year} onChange={(e) => setYear(e.target.value)} />
           ) : (
             <DisplayValue value={paper.year} />
           )}
         </FieldRow>
-        <FieldRow label={t("journal")} editing={editing}>
+        <FieldRow label={t("journal")}>
           {editing ? (
             <Input value={journal} onChange={(e) => setJournal(e.target.value)} />
           ) : (
-            <DisplayValue value={paper.journal} />
+            <DisplayValue value={paper.journal ?? extraFieldValue(paper.extraFields, "journalName")} />
           )}
         </FieldRow>
-        <FieldRow label={t("doi")} editing={editing}>
+        <FieldRow label={t("doi")}>
           {editing ? (
             <Input value={doi} onChange={(e) => setDoi(e.target.value)} />
           ) : (
             <DisplayValue value={paper.doi} mono />
           )}
         </FieldRow>
+        <FieldRow label={t("volume")}>
+          <DisplayValue value={extraFieldValue(paper.extraFields, "volume")} />
+        </FieldRow>
+        <FieldRow label={t("issue")}>
+          <DisplayValue value={extraFieldValue(paper.extraFields, "issue")} />
+        </FieldRow>
+        <FieldRow label={t("publicationPages")}>
+          <DisplayValue value={publicationPagesValue(paper.extraFields)} />
+        </FieldRow>
+        <FieldRow label={t("publisher")}>
+          <DisplayValue value={extraFieldValue(paper.extraFields, "publisher")} />
+        </FieldRow>
+        <FieldRow label={t("publicationType")}>
+          <DisplayValue value={extraFieldValue(paper.extraFields, "publicationType")} />
+        </FieldRow>
+        <FieldRow label={t("publicationDate")}>
+          <DisplayValue value={extraFieldValue(paper.extraFields, "publicationDate")} />
+        </FieldRow>
+        <FieldRow label={t("articleNumber")}>
+          <DisplayValue value={extraFieldValue(paper.extraFields, "articleNumber")} />
+        </FieldRow>
+        <FieldRow label={t("issn")}>
+          <DisplayValue value={extraFieldValue(paper.extraFields, "issn")} mono />
+        </FieldRow>
+        <FieldRow label={t("isbn")}>
+          <DisplayValue value={extraFieldValue(paper.extraFields, "isbn")} mono />
+        </FieldRow>
       </SectionCard>
+
+      {hasExternalMetadata && (
+        <SectionCard title={t("externalMetadata")}>
+          <FieldRow label={t("arxivId")}><DisplayValue value={extraFieldValue(paper.extraFields, "arxivId")} mono /></FieldRow>
+          <FieldRow label={t("arxivVersion")}><DisplayValue value={extraFieldValue(paper.extraFields, "arxivVersion")} /></FieldRow>
+          <FieldRow label={t("arxivPrimaryCategory")}><DisplayValue value={extraFieldValue(paper.extraFields, "arxivPrimaryCategory")} /></FieldRow>
+          <FieldRow label={t("arxivCategories")}><DisplayValue value={extraFieldValue(paper.extraFields, "arxivCategories")} /></FieldRow>
+          <FieldRow label={t("submittedAt")}><DisplayValue value={extraFieldValue(paper.extraFields, "arxivSubmittedAt")} mono /></FieldRow>
+          <FieldRow label={t("lastRevised")}><DisplayValue value={extraFieldValue(paper.extraFields, "arxivUpdatedAt")} mono /></FieldRow>
+          <FieldRow label={t("arxivComment")}><DisplayValue value={extraFieldValue(paper.extraFields, "arxivComment")} /></FieldRow>
+          <FieldRow label={t("repositoryDoi")}><DisplayValue value={extraFieldValue(paper.extraFields, "repositoryDoi")} mono /></FieldRow>
+          <FieldRow label={t("dblpKey")}><DisplayValue value={extraFieldValue(paper.extraFields, "dblpKey")} mono /></FieldRow>
+          <FieldRow label={t("licenseUrl")}><DisplayValue value={extraFieldValue(paper.extraFields, "licenseUrl")} mono /></FieldRow>
+        </SectionCard>
+      )}
 
       {/* Section: Classification */}
       <SectionCard title={t("category")}>
-        <FieldRow label={t("category")} editing={editing}>
+        <FieldRow label={t("category")}>
           {editing ? (
             <select
               value={category}
@@ -481,17 +623,17 @@ function MetadataContent({ paper }: { paper?: PaperDetailDto | null }) {
           )}
         </FieldRow>
         {editing && catDef.fields.map((field) => (
-          <FieldRow key={field.key} label={field.label} editing>
+          <FieldRow key={field.key} label={field.label}>
             {field.type === "textarea" ? (
               <textarea
                 rows={3}
-                value={extraFields[field.key] || ""}
+                value={categoryExtraFieldValue(extraFields, field.key)}
                 onChange={(e) => handleExtraField(field.key, e.target.value)}
                 className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--surface-0)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]/40 resize-none"
               />
             ) : field.type === "select" ? (
               <select
-                value={extraFields[field.key] || ""}
+                value={categoryExtraFieldValue(extraFields, field.key)}
                 onChange={(e) => handleExtraField(field.key, e.target.value)}
                 className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--surface-0)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]/40"
               >
@@ -501,18 +643,17 @@ function MetadataContent({ paper }: { paper?: PaperDetailDto | null }) {
                 ))}
               </select>
             ) : field.type === "date" ? (
-              <Input type="date" value={extraFields[field.key] || ""} onChange={(e) => handleExtraField(field.key, e.target.value)} />
+              <Input type="date" value={categoryExtraFieldValue(extraFields, field.key)} onChange={(e) => handleExtraField(field.key, e.target.value)} />
             ) : (
-              <Input value={extraFields[field.key] || ""} onChange={(e) => handleExtraField(field.key, e.target.value)} />
+              <Input value={categoryExtraFieldValue(extraFields, field.key)} onChange={(e) => handleExtraField(field.key, e.target.value)} />
             )}
           </FieldRow>
         ))}
         {!editing && catDef.fields.map((field) => {
-          const val = paper.extraFields?.[field.key]
-          const display = val != null && val !== "" ? String(val) : "--"
+          const val = categoryExtraFieldValue(paper.extraFields, field.key)
           return (
             <FieldRow key={field.key} label={field.label}>
-              <DisplayValue value={val != null ? String(val) : null} />
+              <DisplayValue value={val || null} />
             </FieldRow>
           )
         })}
@@ -538,13 +679,13 @@ function MetadataContent({ paper }: { paper?: PaperDetailDto | null }) {
           <DisplayValue value={formatFileSize(paper.fileSize)} />
         </FieldRow>
         {paper.parseStatus && paper.parseStatus !== "NOT_APPLICABLE" && (
-          <FieldRow label="全文解析">
+          <FieldRow label={t("parseStatus")}>
             <DisplayValue
               value={
-                paper.parseStatus === "PENDING" ? "等待解析" :
-                  paper.parseStatus === "PROCESSING" ? "解析中" :
-                    paper.parseStatus === "READY" ? "已完成" :
-                      paper.parseStatus === "FAILED" ? `失败${paper.parseError ? `：${paper.parseError}` : ""}` :
+                paper.parseStatus === "PENDING" ? t("parsePending") :
+                  paper.parseStatus === "PROCESSING" ? t("parseProcessing") :
+                    paper.parseStatus === "READY" ? t("parseReady") :
+                      paper.parseStatus === "FAILED" ? t("parseFailed", { error: paper.parseError ? `: ${paper.parseError}` : "" }) :
                         paper.parseStatus
               }
             />
@@ -575,6 +716,137 @@ function MetadataContent({ paper }: { paper?: PaperDetailDto | null }) {
       )}
     </div>
   )
+}
+
+function MetadataPreview({
+  resolution,
+  selected,
+  applying,
+  onToggle,
+  onApply,
+  onClose,
+  translate,
+}: {
+  resolution: MetadataResolutionDto
+  selected: Record<string, boolean>
+  applying: boolean
+  onToggle: (field: string) => void
+  onApply: () => void
+  onClose: () => void
+  translate: (key: string) => string
+}) {
+  const fields = resolution.fields
+  const labelForField = (field: string) => {
+    const labels: Record<string, string> = {
+      title: translate("title"),
+      authors: translate("authors"),
+      abstractText: translate("abstract"),
+      doi: translate("doi"),
+      year: translate("year"),
+      journal: translate("journal"),
+      "extra.arxivId": translate("arxivId"),
+      "extra.arxivVersion": translate("arxivVersion"),
+      "extra.arxivCategories": translate("arxivCategories"),
+      "extra.arxivPrimaryCategory": translate("arxivPrimaryCategory"),
+      "extra.arxivComment": translate("arxivComment"),
+      "extra.arxivSubmittedAt": translate("submittedAt"),
+      "extra.arxivUpdatedAt": translate("lastRevised"),
+      "extra.repositoryDoi": translate("repositoryDoi"),
+      "extra.publicationType": translate("publicationType"),
+      "extra.publicationDate": translate("publicationDate"),
+      "extra.volume": translate("volume"),
+      "extra.issue": translate("issue"),
+      "extra.publicationPages": translate("publicationPages"),
+      "extra.articleNumber": translate("articleNumber"),
+      "extra.publisher": translate("publisher"),
+      "extra.issn": translate("issn"),
+      "extra.isbn": translate("isbn"),
+      "extra.licenseUrl": translate("licenseUrl"),
+      "extra.dblpKey": translate("dblpKey"),
+    }
+    return labels[field] || field.replace(/^extra\./, "")
+  }
+
+  return (
+    <div className="rounded-[10px] border border-[var(--accent)]/25 bg-[var(--accent)]/5 overflow-hidden">
+      <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-[var(--accent)]/15">
+        <div className="min-w-0">
+          <h3 className="text-[12px] font-semibold text-[var(--text-primary)]">{translate("metadataPreview")}</h3>
+          <div className="text-[10px] text-[var(--text-tertiary)] mt-0.5 break-all">
+            {Object.entries(resolution.identifiers).map(([type, value]) => `${type}: ${value}`).join(" · ") || translate("noExactIdentifier")}
+          </div>
+        </div>
+        <button type="button" title={translate("closeMetadataPreview")} onClick={onClose} className="p-1 rounded text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]">
+          <X className="size-3.5" />
+        </button>
+      </div>
+      {resolution.warnings && resolution.warnings.length > 0 && (
+        <div className="px-3 py-2 space-y-1 border-b border-[var(--accent)]/15">
+          {resolution.warnings.map((warning) => <p key={warning} className="text-[10.5px] leading-relaxed text-[var(--text-secondary)]">{translateWarning(warning, translate)}</p>)}
+        </div>
+      )}
+      <div className="px-3 py-2 space-y-1.5 max-h-72 overflow-y-auto">
+        {fields.length === 0 ? (
+          <p className="text-[11px] text-[var(--text-tertiary)]">{translate("noMetadataCandidates")}</p>
+        ) : fields.map((field) => <MetadataCandidateRow key={field.field} field={field} checked={Boolean(selected[field.field])} onToggle={() => onToggle(field.field)} label={labelForField(field.field)} translate={translate} />)}
+      </div>
+      <div className="flex items-center justify-between gap-2 px-3 py-2 border-t border-[var(--accent)]/15">
+        <span className="text-[10px] text-[var(--text-tertiary)]">{translate("metadataPreviewHint")}</span>
+        <Button size="sm" onClick={onApply} disabled={applying || !Object.values(selected).some(Boolean)}>
+          {applying ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3" />}
+          <span className="ml-1">{translate("applyMetadata")}</span>
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function MetadataCandidateRow({
+  field,
+  checked,
+  onToggle,
+  label,
+  translate,
+}: {
+  field: MetadataFieldCandidateDto
+  checked: boolean
+  onToggle: () => void
+  label: string
+  translate: (key: string, values?: Record<string, string | number>) => string
+}) {
+  return (
+    <label className={cn("flex items-start gap-2 rounded-md px-2 py-1.5 cursor-pointer transition-colors", checked ? "bg-[var(--surface-0)]" : "hover:bg-[var(--surface-0)]/70")}>
+      <input type="checkbox" checked={checked} onChange={onToggle} className="mt-0.5 accent-[var(--accent)]" />
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--text-secondary)]">
+          <span>{label}</span>
+          {field.conflict && <span className="text-[9px] text-amber-600">{translate("conflict")}</span>}
+          {field.source && <span className="text-[9px] text-[var(--text-tertiary)]">{field.source} · {field.matchMethod || "EXACT_ID"} · {Math.round(field.confidence * 100)}%</span>}
+        </span>
+        <span className="block mt-0.5 text-[11px] leading-relaxed break-words text-[var(--text-primary)]">{field.suggestedValue || "--"}</span>
+        {field.currentValue && field.conflict && <span className="block mt-0.5 text-[10px] leading-relaxed break-words text-[var(--text-tertiary)]">{translate("currentValue", { value: field.currentValue })}</span>}
+        {field.recordUrl && (
+          <a href={field.recordUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 mt-0.5 text-[9.5px] text-[var(--accent)] hover:underline" onClick={(event) => event.stopPropagation()}>
+            <ExternalLink className="size-2.5" /> {translate("source")}
+          </a>
+        )}
+      </span>
+    </label>
+  )
+}
+
+function translateWarning(warning: string, translate: (key: string) => string): string {
+  const knownWarnings: Record<string, string> = {
+    ARXIV_LOOKUP_FAILED: "warning.ARXIV_LOOKUP_FAILED",
+    REPOSITORY_DOI_UNVERIFIED: "warning.REPOSITORY_DOI_UNVERIFIED",
+    FORMAL_PUBLICATION_CANDIDATE: "warning.FORMAL_PUBLICATION_CANDIDATE",
+    DOI_LOOKUP_FAILED: "warning.DOI_LOOKUP_FAILED",
+    DBLP_PUBLICATION_CANDIDATE: "warning.DBLP_PUBLICATION_CANDIDATE",
+    IDENTIFIER_METADATA_MISMATCH: "warning.IDENTIFIER_METADATA_MISMATCH",
+    NO_EXACT_IDENTIFIER: "warning.NO_EXACT_IDENTIFIER",
+    NO_METADATA_CANDIDATES: "warning.NO_METADATA_CANDIDATES",
+  }
+  return knownWarnings[warning] ? translate(knownWarnings[warning]) : warning
 }
 
 function AnnotationList({

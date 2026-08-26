@@ -14,6 +14,9 @@ import type {
   SharePaperResponse,
   PaperContextDto,
   PaperContextRequest,
+  MetadataResolutionDto,
+  MetadataApplyResponse,
+  MetadataSourceDto,
 } from "./types"
 
 /** 获取用户论文列表（分页，可选 sourceType/favorite 过滤） */
@@ -64,6 +67,26 @@ export function createPaper(data: CreatePaperRequest): Promise<PaperDetailDto> {
 /** 更新论文元数据 */
 export function updatePaper(id: number, data: UpdatePaperRequest): Promise<PaperDetailDto> {
   return patch<PaperDetailDto>(`/papers/${id}`, data)
+}
+
+/** Resolve exact arXiv/DOI metadata into an expiring preview. */
+export function resolvePaperMetadata(id: number, identifier?: string): Promise<MetadataResolutionDto> {
+  return post<MetadataResolutionDto>(`/papers/${id}/metadata/resolve`, identifier?.trim() ? { identifier: identifier.trim() } : {})
+}
+
+/** Re-read a previously generated metadata preview. */
+export function getMetadataResolution(id: number, resolutionId: number): Promise<MetadataResolutionDto> {
+  return get<MetadataResolutionDto>(`/papers/${id}/metadata/resolutions/${resolutionId}`)
+}
+
+/** Apply only the fields selected in the preview. */
+export function applyPaperMetadata(id: number, resolutionId: number, fields?: string[]): Promise<MetadataApplyResponse> {
+  return post<MetadataApplyResponse>(`/papers/${id}/metadata/resolutions/${resolutionId}/apply`, fields ? { fields } : {})
+}
+
+/** List immutable provider snapshots captured for this paper. */
+export function listPaperMetadataSources(id: number): Promise<MetadataSourceDto[]> {
+  return get<MetadataSourceDto[]>(`/papers/${id}/metadata/sources`)
 }
 
 /** 切换收藏 */

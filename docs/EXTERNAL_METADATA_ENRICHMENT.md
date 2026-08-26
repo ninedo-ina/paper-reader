@@ -1,6 +1,6 @@
 # PaperReader 外部论文元数据补全方案
 
-> 方案版本：v0.1.23（待实施）
+> 方案版本：v0.1.23（开发中；单篇最小闭环已实现，尚未部署）
 > 编写及核对日期：2026-08-26（UTC）
 > 示例论文：arXiv `1706.03762`，*Attention Is All You Need*
 
@@ -30,6 +30,25 @@ PaperReader 当前主要依赖 GROBID 从 PDF 中提取标题、作者、摘要�
 - 为后续批量补全留出缓存、限流、幂等和来源审计能力。
 
 本方案不把“搜到相同标题”视为唯一论文证明，也不承诺仅靠公开接口自动判定 SCI、EI、SSCI、CSSCI 或北大核心等收录状态。
+
+## 1.1 当前实现核对（2026-08-26 UTC）
+
+本文件同时记录目标设计和当前开发状态，不能把目标模型误读为已上线能力。当前 `feature/v0.1.23` 工作区已实现：
+
+- Reader 论文信息面板的手动“补全/刷新元数据”入口，以及 arXiv ID/DOI 可选输入。
+- `POST /api/papers/{id}/metadata/resolve`、resolution 查询、候选 apply 和来源查询四个接口。
+- arXiv Atom 精确查询、DataCite/Crossref 精确 DOI 查询；进程内成功/失败缓存、arXiv 三秒节流和安全 XML 大小限制。
+- 逐字段候选、当前值、来源、置信度、冲突和默认选择；默认只填空字段，正式版本候选不默认选择。
+- Flyway V13 的短期 resolution、source snapshot、field provenance 三张表，均按论文/用户级联删除。
+- GROBID 保存结果时只填空字段，不覆盖已有非空人工值。
+
+当前尚未完成或不应宣称完成：
+
+- 完整 `manifestation`、多标识 `identifier` 和 preferred manifestation 数据模型；V13 不是该模型的替代品。
+- arXiv OAI-PMH、分布式缓存/限流、退避和后台批量任务。当前已有用户显式刷新时触发的严格 DBLP 标题+第一作者候选，并排除 CoRR；它只生成默认不勾选的候选。
+- 生产迁移、生产部署、历史论文批量刷新，以及自动判断 SCI/EI/SSCI/CSSCI/北大核心。
+
+本轮只在开发分支修改代码和文档；生产版本仍为 `0.1.22`，不修改生产论文数据。
 
 ## 2. Attention 示例核对结果
 
@@ -73,7 +92,9 @@ NeurIPS 官方页面与 DBLP 记录给出：
 - 新增正式 DOI 必须有直接标识关系、官方页面，或至少两个相互独立的可信来源交叉确认。
 - 聚合源之间可能复用相同上游数据，不能把“三个聚合源一致”机械视为三个独立证据。
 
-## 3. 当前项目差距
+## 3. 当前项目差距与已落地部分
+
+以下清单区分“当前开发分支已落地的最小闭环”和“目标设计仍待后续迁移”。目标设计中的完整模型不能作为当前数据库结构使用。
 
 ### 3.1 数据结构
 
@@ -85,10 +106,10 @@ NeurIPS 官方页面与 DBLP 记录给出：
 - `source_type`、`source_url`
 - `page_count`、`grobid_result`、解析状态
 
-但存在以下问题：
+仍存在以下差距：
 
 - 没有 arXiv ID、arXiv 版本、仓储 DOI、出版类型、出版社、卷、期、出版页码、文章号、ISSN/ISBN、正式发表日期等规范字段。
-- 没有把同一研究工作的预印本、会议版和期刊版分开的 manifestation 记录，也没有字段级 provenance 和可复核的补全 resolution 存储。
+- 已有字段级 provenance 和可复核的短期补全 resolution 存储，但还没有把同一研究工作的预印本、会议版和期刊版分开的 manifestation 记录。
 - 现有 `pr_paper_versions` 用于手工版本发布/外部存储推送状态，不是学术出版版本表，不能复用来保存 arXiv v7、会议版或期刊版。
 - `extra_fields.journalName` 与正式列 `journal` 重复，形成双数据源。
 - `extra_fields.volume/issue/pages/issnIsbn/indexing` 只在部分前端表单中使用，列表与通用出版信息读取不到。
@@ -99,7 +120,7 @@ NeurIPS 官方页面与 DBLP 记录给出：
 
 ### 3.2 现有提取链路
 
-GROBID 当前只消费标题、作者、摘要、DOI、年份、期刊/会议名称和 PDF 页数。即使 TEI 中含 arXiv ID、卷期页等信息，解析器也尚未保存。解析成功后还会用非空 GROBID 值覆盖已有字段，外部补全与异步解析并发时可能发生最后写入者覆盖。
+GROBID 当前只消费标题、作者、摘要、DOI、年份、期刊/会议名称和 PDF 页数。元数据补全服务可以从论文 URL、现有 DOI 和 GROBID XML 文本识别 arXiv/DOI，并在预览中提出扩展字段；TEI 中的卷期页等尚未进入独立 manifestation 结构。解析成功后当前已改为只填空字段，不覆盖已有非空值；外部补全仍通过 `expectedUpdatedAt` 防止过期快照覆盖并发修改。
 
 URL 导入当前假定目标 URL 直接返回 PDF。`https://arxiv.org/abs/...` 返回 HTML，不能直接复用现有下载逻辑；后续必须识别 arXiv 页面并转换成受信任的 PDF URL，同时校验 Content-Type、文件头、大小和重定向目标。
 
@@ -202,7 +223,7 @@ status / error_code
 
 仅保存 source snapshot 还不能回答“当前卷号到底来自哪里”。建议再增加 `pr_paper_field_provenance`，在字段被应用时记录 target、field name、value hash/受限值、source、匹配方式、置信度、是否经用户确认、应用与被替代时间。候选中的每个字段同时携带 `source`、`confidence`、`currentValue`、`suggestedValue` 和 `conflict`，以支持预览及逐字段选择。
 
-`apply` 需要服务端能够复核候选没有被客户端篡改，建议增加短期的 `pr_paper_metadata_resolutions`（保存用户、paper、候选快照、expectedUpdatedAt、状态和过期时间），或使用等价的带签名/过期校验的 Redis 存储；不能只把候选放在浏览器后直接接受回传值。
+当前实现使用短期的 `pr_paper_metadata_resolutions`（保存用户、paper、候选快照、expectedUpdatedAt、状态和过期时间）复核候选没有被客户端篡改；后续若改为 manifestation apply，仍必须保留同等的快照/签名校验，不能只把候选放在浏览器后直接接受回传值。
 
 不得在快照或字段溯源中保存用户 PDF 正文、完整 Prompt、认证信息或第三方 API Key。展示值变化时保留被替代记录，不把 provenance 覆盖成“最后一个 Provider”。
 
@@ -383,7 +404,7 @@ GET  /api/papers/{paperId}/metadata/sources
 - 每个字段的当前值、建议值、来源和冲突标记。
 - 未能补全的原因，例如“arXiv 未提供正式卷期页”。
 
-`apply` 只接受 resolution 中已存在的 manifestation ID/候选字段选择，不接受客户端随意伪造 Provider 原始值；后端再次校验论文所有权、resolution 所属用户、过期时间和并发版本。
+`apply` 当前只接受 resolution 快照中已存在的候选字段名，不接受客户端随意伪造 Provider 原始值；后端再次校验论文所有权、resolution 所属用户、过期时间和并发版本。完整 manifestation ID 选择会在后续模型迁移后加入。
 
 单篇精确查询可以同步返回；涉及多源、重试或批量历史补全时转为后台任务。批量功能不进入第一阶段 UI。
 
@@ -420,10 +441,10 @@ arXiv 官方要求所有受控机器合计：单连接、每三秒最多一次 l
 
 ## 10. 数据迁移顺序
 
-项目使用 Flyway，已应用的 V1–V12 不可修改。实施时新增 V13 及后续迁移：
+项目使用 Flyway，已应用的 V1–V12 不可修改。当前开发分支的 V13 只增加最小补全闭环表；完整模型仍需后续 V14+ 迁移：
 
 1. 先只读审计 `pr_papers` 数量、`journal` 与 `extra_fields.journalName` 冲突、旧 DOI 角色和 JSON 卷期页格式，输出可回滚的报告。
-2. 新增可空的 `pr_paper_manifestations`、`pr_paper_identifiers`、`pr_paper_metadata_sources`、`pr_paper_field_provenance` 和短期 resolution 存储；必要的规范字段挂在 manifestation，不立即添加破坏性约束。
+2. V13 已新增 `pr_paper_metadata_sources`、`pr_paper_field_provenance` 和短期 resolution 存储；后续 V14+ 再新增可空的 `pr_paper_manifestations`、`pr_paper_identifiers`，必要的规范字段挂在 manifestation，不立即添加破坏性约束。
 3. 为新表添加 `ON DELETE CASCADE`、检查约束和分开处理 NULL 的唯一索引；先完成 DOI/arXiv 规范化和重复审计，再启用约束。
 4. 将旧 `journal`、`extra_fields.journalName/volume/issue/pages` 只读兼容映射到候选 manifestation；仅在明确、无冲突且用户确认时创建正式/预印本记录。
 5. `issnIsbn` 只有在格式明确时才拆分；无法判断的原值继续保留并标记待确认，不强行拆成 ISSN 或 ISBN。
@@ -517,18 +538,20 @@ SCI、SSCI、EI、CSSCI、北大核心属于“某期刊或会议在特定年份
 - OA 状态、合法全文位置和元数据定期复核。
 - 收录数据库在获得授权后单独设计。
 
-## 15. v0.1.23 第一阶段范围
+## 15. v0.1.23 第一阶段范围（开发分支交付边界）
 
-本轮建议交付阶段 A、阶段 B 和阶段 B+，形成单篇补全闭环：
+本轮开发目标是阶段 A 的最小闭环和阶段 B 的精确单篇查询；阶段 B+ 的通用正式版本候选仍未完成：
 
-- 数据模型与 V13 兼容迁移。
-- `pr_paper_manifestations` 预印本/正式版分层，以及字段级来源记录。
+- V13 的 resolution/source/provenance 兼容迁移；完整 `pr_paper_manifestations`/`pr_paper_identifiers` 延后到后续迁移。
+- 字段级来源记录和短期候选快照。
 - arXiv ID/DOI 提取和规范化。
 - arXiv Atom/OAI、Crossref/DataCite 精确查询。
-- 对用户确认后的明确关系，精确读取 NeurIPS 官方记录和 DBLP 书目记录的卷、期、页、出版社；不做无标识静默抓取，并分别标注来源类型。
+- Attention 的已审核 NeurIPS 关系适配器和严格 DBLP 标题+第一作者查询可生成默认不勾选的正式版候选；用户确认后的独立 manifestation 写入仍待后续完整模型完成。
 - 逐字段候选、来源、冲突和 `FILL_MISSING` 合并。
 - Reader 元数据面板中的预览与确认入口。
-- Attention 示例端到端验收。
+- Attention 示例固定 fixture、旧式 arXiv ID、DOI 回退、过期快照和字段篡改回归已完成；端到端浏览器验收仍待部署环境。
+
+本分支不代表生产已具备上述能力；生产仍运行 `0.1.22`，不应在未部署前执行批量刷新。
 
 本轮不包含：全库自动批量写入、无标识论文的静默模糊匹配、自动新增未经确认的正式 DOI、SCI/EI/CSSCI 判定、通用网页抓取器、后台管理项目改造或任意第三方 PDF 镜像。
 

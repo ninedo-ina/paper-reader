@@ -10,7 +10,7 @@ const paper: PaperListDto = {
   title: "Attention Is All You Need",
   authors: "Ashish Vaswani",
   journal: "NeurIPS",
-  year: 2017,
+  year: "2017",
   category: "JOURNAL",
   sourceType: "UPLOAD",
   hasOriginalFile: true,
