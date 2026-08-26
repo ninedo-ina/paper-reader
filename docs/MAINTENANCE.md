@@ -65,7 +65,7 @@ feature/v主版本.次版本.修订版本
 6. `main` 合并完成后，按实际部署链路构建、重启生产 PM2 进程并检查公网。
 7. 保留版本分支、合并提交和验证记录，不通过强制推送改写 `main`、`dev` 或历史版本分支。
 
-当前交接基线为 `feature/v0.1.22`；后续版本统一遵循上述流程。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。
+当前开发基线为 `feature/v0.1.23`，生产仍为已核验的 `0.1.22`；后续版本统一遵循上述流程。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。v0.1.23 在合并、全量验证和生产验收前不得宣称已发布。
 
 ## 4. 每次代码迭代的标准流程
 
@@ -436,6 +436,38 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - 新的未知出版社声明不会被自动猜测清洗，可能仍需按真实样例增补明确模式；这比通用截断误伤合法标题更安全。
 - 数据迁移只能修复当前明确模式。若数据库中已有其他形式的污染标题，应先审计真实 TEI/PDF，再以新版本增加独立、可测试的规则。
 - 本次只改 PaperReader C 端仓库中的解析消费层、数据库迁移和 UI；GROBID 服务及后台管理项目均不变。
+
+## 18. v0.1.23 单篇论文元数据补全（开发中，尚未部署）
+
+### 需求与边界
+
+本轮响应“已有论文刷新并补全元数据”的需求。开发分支 `feature/v0.1.23` 增加了 Reader 右侧论文信息面板入口和后端四个元数据接口：
+
+- `POST /api/papers/{id}/metadata/resolve`
+- `GET /api/papers/{id}/metadata/resolutions/{resolutionId}`
+- `POST /api/papers/{id}/metadata/resolutions/{resolutionId}/apply`
+- `GET /api/papers/{id}/metadata/sources`
+
+用户可以输入或让系统从已有 URL/DOI/TEI 识别 arXiv ID、DOI，生成短期候选预览，再逐字段应用。默认只勾选空字段；冲突字段和正式发表候选不默认勾选。应用前后端都校验论文所有权、resolution 所属用户、15 分钟过期时间和 `expectedUpdatedAt`，避免刷新快照覆盖较新的人工编辑。
+
+### 实现记录
+
+- arXiv Atom 精确查询已接入；DataCite 与 Crossref 作为精确 DOI Provider 已接入。
+- arXiv 成功结果缓存 24 小时、失败结果缓存 5 小时，单进程按官方 legacy API 要求做三秒节流；响应限制为 2 MB 并禁用 XML 外部实体。
+- V13 只增加 `pr_paper_metadata_resolutions`、`pr_paper_metadata_sources`、`pr_paper_metadata_field_provenance` 三张最小闭环表，并对论文/用户使用级联删除。
+- 字段 provenance 保存 Provider、记录链接、匹配方式、置信度、应用时间和用户确认状态。外部 payload 只保留白名单元数据。
+- GROBID 解析保存改为只填空字段，不覆盖已有非空人工值或已确认值。
+- *Attention Is All You Need* 的 arXiv `1706.03762` 与已审核 NeurIPS 关系作为正式版本候选验收适配器；`v7`、PDF 页数、仓储 DOI 和正式卷页不混用。
+
+### 尚未完成
+
+- 完整 `manifestation`、多标识 `identifier` 和 preferred publication 数据模型尚未落地；V13 不应被描述为完整模型。
+- DBLP 通用标题/作者候选、arXiv OAI-PMH、分布式缓存/限流、指数退避和历史库批量刷新不在当前闭环内。
+- 前端 apply 后会立即刷新当前论文状态，出版页码兼容展示和新增元数据文案已接入；通用 OAI-PMH、批量刷新及完整 manifestation/identifier 模型仍不在本轮范围内。
+
+### 验证与发布纪律
+
+本节记录开发状态，不代表生产已部署。完成后必须重新运行前端类型检查、全部测试、生产构建以及后端 `clean test bootJar`；固定 fixture 不得依赖公网。确认 migration、API、UI 和删除级联后，才可按 `feature/v0.1.23 -> dev -> main` 流程合并。生产仍运行 `0.1.22`，本轮不启动 V13、不批量刷新论文、不重启 PM2，也不修改生产数据。
 
 ## 17. v0.1.22 项目交接、配置安全与新人指引
 

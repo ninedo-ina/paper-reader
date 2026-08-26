@@ -144,7 +144,7 @@ class PaperService(
 
     @Transactional
     fun updatePaper(id: Long, userId: Long, request: UpdatePaperRequest): PaperDetailDto {
-        val paper = paperRepository.findByIdAndUserId(id, userId)
+        val paper = paperRepository.findForUpdateByIdAndUserId(id, userId)
             ?: throw ResourceNotFoundException("Paper", id)
 
         val updated = paper.copy(
@@ -167,7 +167,7 @@ class PaperService(
 
     @Transactional
     fun toggleFavorite(id: Long, userId: Long, favorite: Boolean): PaperDetailDto {
-        val paper = paperRepository.findByIdAndUserId(id, userId)
+        val paper = paperRepository.findForUpdateByIdAndUserId(id, userId)
             ?: throw ResourceNotFoundException("Paper", id)
         val updated = paper.copy(favorite = favorite, updatedAt = Instant.now())
         val saved = paperRepository.save(updated)

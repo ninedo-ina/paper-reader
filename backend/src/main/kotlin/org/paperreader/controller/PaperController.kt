@@ -5,6 +5,7 @@ import org.paperreader.security.UserPrincipal
 import org.paperreader.service.PaperDeletionService
 import org.paperreader.service.PaperService
 import org.paperreader.service.PaperContextService
+import org.paperreader.service.MetadataService
 import org.springframework.core.io.Resource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -19,6 +20,7 @@ class PaperController(
     private val paperService: PaperService,
     private val paperContextService: PaperContextService,
     private val paperDeletionService: PaperDeletionService,
+    private val metadataService: MetadataService,
 ) {
     @PostMapping("/upload")
     fun upload(
@@ -72,6 +74,38 @@ class PaperController(
         @AuthenticationPrincipal principal: UserPrincipal,
     ): ApiResponse<PaperContextDto> =
         ApiResponse(data = paperContextService.getContext(id, principal.userId, request))
+
+    @PostMapping("/{id}/metadata/resolve")
+    fun resolveMetadata(
+        @PathVariable id: Long,
+        @RequestBody(required = false) request: MetadataResolveRequest?,
+        @AuthenticationPrincipal principal: UserPrincipal,
+    ): ApiResponse<MetadataResolutionDto> =
+        ApiResponse(data = metadataService.resolve(id, principal.userId, request ?: MetadataResolveRequest()))
+
+    @GetMapping("/{id}/metadata/resolutions/{resolutionId}")
+    fun getMetadataResolution(
+        @PathVariable id: Long,
+        @PathVariable resolutionId: Long,
+        @AuthenticationPrincipal principal: UserPrincipal,
+    ): ApiResponse<MetadataResolutionDto> =
+        ApiResponse(data = metadataService.getResolution(id, principal.userId, resolutionId))
+
+    @PostMapping("/{id}/metadata/resolutions/{resolutionId}/apply")
+    fun applyMetadata(
+        @PathVariable id: Long,
+        @PathVariable resolutionId: Long,
+        @RequestBody(required = false) request: MetadataApplyRequest?,
+        @AuthenticationPrincipal principal: UserPrincipal,
+    ): ApiResponse<MetadataApplyResponse> =
+        ApiResponse(data = metadataService.apply(id, principal.userId, resolutionId, request ?: MetadataApplyRequest()))
+
+    @GetMapping("/{id}/metadata/sources")
+    fun listMetadataSources(
+        @PathVariable id: Long,
+        @AuthenticationPrincipal principal: UserPrincipal,
+    ): ApiResponse<List<MetadataSourceDto>> =
+        ApiResponse(data = metadataService.listSources(id, principal.userId))
 
     @PatchMapping("/{id}")
     fun update(

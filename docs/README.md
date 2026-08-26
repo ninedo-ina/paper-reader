@@ -20,6 +20,7 @@
 | AI 对话 | [AI_CHAT_TECHNICAL_SOLUTION.md](AI_CHAT_TECHNICAL_SOLUTION.md) | Provider、响应兼容、会话隔离、reasoning、论文上下文 |
 | PDF 渲染 | [PDF_RENDERING_PIPELINE.md](PDF_RENDERING_PIPELINE.md) | PDF.js、文本层、选区、批注与渲染兼容 |
 | 论文创建 | [CREATE_PAPER_FEATURE.md](CREATE_PAPER_FEATURE.md) | 手动创建、字段模型和编辑器 |
+| 元数据补全 | [EXTERNAL_METADATA_ENRICHMENT.md](EXTERNAL_METADATA_ENRICHMENT.md) | arXiv/DOI 标识、外部 Provider、字段来源、冲突、已实现边界与后续计划 |
 | 历史问题 | [BUGFIX_TAB_SHARE_TOAST.md](BUGFIX_TAB_SHARE_TOAST.md) | Tab、分享弹窗和 Toast 的历史修复 |
 
 ## 文档维护规则
@@ -33,10 +34,11 @@
 
 ## 当前基线
 
-- 文档基线：`0.1.22`
-- 版本分支：`feature/v0.1.22`
+- 源码开发基线：`0.1.23`
+- 版本分支：`feature/v0.1.23`
+- 当前生产版本：`0.1.22`（2026-08-25 UTC 已核验；本轮未部署）
 - 长期分支：`dev`（集成）、`main`（默认/生产）
 - 生产域名：`https://paper.pilo.eu.cc`
-- 文档核对日期：2026-08-25（UTC）
+- 文档核对日期：2026-08-26（UTC）
 
 如果这里的版本低于根目录 `frontend/VERSION` 或 `backend/VERSION`，说明交接文档没有随发布更新，应在继续开发前先核实并修正文档。

@@ -1,5 +1,28 @@
 # PaperReader 注意事项
 
+## v0.1.23 外部论文元数据补全注意事项（开发中，尚未部署）
+
+- `feature/v0.1.23` 已包含单篇元数据 resolve/preview/apply 的开发实现；生产仍是已核验的 `0.1.22`。在合并、全量测试、迁移和线上验收前，不得执行生产迁移、批量刷新或重启服务。
+- arXiv ID 的版本后缀 `v7` 表示修订版本，绝不能写进出版卷号；`15 pages` 是预印本说明，不能写进出版页码。
+- `10.48550/arXiv.<id>` 是 arXiv/DataCite 仓储 DOI，不等于出版社正式 DOI。正式 DOI 不存在时必须保留为空，不能猜测。
+- arXiv Atom/OAI 的字段只代表预印本形态；正式会议/期刊卷期页必须来自明确关联的官方 proceedings 或领域书目源，并在来源中标注，不能把两个形态写进同一套字段。DBLP 是书目核对源，不自动等同于出版社官方证明。
+- 标题、作者和摘要完全相同也不足以自动认定 DOI。Crossref/OpenAlex 当前存在 Attention 论文的 2025 同名异常候选，模糊搜索永远只能生成候选，不能静默写入。
+- 外部补全默认只填空值。任何非空人工值、已确认值或来源冲突都必须展示差异并由用户选择，不能用 Provider 整条记录覆盖 Paper。
+- `pageCount` 是当前 PDF 物理页数，`publicationPages` 是正式出版页码；两者必须分别存储和展示。
+- 现有 `journal` 与 `extraFields.journalName`、以及 JSON 中的 volume/issue/pages 是迁移风险。V13 当前只增加 resolution/source/provenance 三类表并保留旧值；完整 manifestation/identifier 模型尚未落地，不得在文档或 UI 中宣称已完成。
+- 新增来源/标识表时使用 `ON DELETE CASCADE`，或同步更新 `PaperDeletionService`；不能让新增外键破坏论文删除流程。
+- 外部补全与异步 GROBID、人工编辑可能并发。必须使用字段级 merge 和并发版本校验，禁止 last-write-wins 整行覆盖。
+- arXiv Atom/OAI 等 legacy API 所有受控机器合计每三秒最多一次请求且单连接。必须加入缓存、全局限流、退避、负缓存和重复请求合并。
+- 常规链路使用官方机器接口，不解析 arXiv HTML；Provider 客户端只允许固定 HTTPS 域名/路径，禁用 XML 外部实体并限制响应大小。
+- 模糊查询会把论文标题、作者等信息发送给第三方；私密论文场景需显式触发或用户配置允许，绝不发送 PDF 正文、TEI 全文、批注、笔记或 AI 对话。
+- SCI、EI、SSCI、CSSCI、北大核心等需要授权名单和按年份核验；arXiv 分类、OpenAlex `is_core`、DOAJ 或主题字段都不能当作收录证明。
+- Provider 不可用或限流不得阻断 PDF 上传、GROBID 解析、阅读、批注、笔记和人工元数据编辑。
+- 官方 proceedings Provider 只能访问固定 HTTPS 域名和路径；不能为了补卷页而开放任意 URL 抓取或绕过来源校验。
+- resolve 结果是 15 分钟短期快照；apply 必须再次校验论文所属用户、resolution 所属用户、过期时间和 `expectedUpdatedAt`。论文被其他操作更新后必须重新刷新预览。
+- apply 只接受快照中已有的字段名，不接受客户端回传任意 Provider 值。默认只选择空字段；冲突字段与正式发表候选必须由用户明确勾选。
+- 当前 V13 的 `payload`、Provider 快照和 provenance 只允许白名单元数据；不得保存 PDF 正文、完整 TEI、批注、笔记、AI 对话或凭据。
+- 当前实现按 `extra.*` 保存 arXiv/出版扩展字段；`pageCount` 仍表示 PDF 物理页数，`extra.publicationPages` 才表示正式出版页码，不能互换。
+
 ## v0.1.22 当前迭代注意事项
 
 - 本次是交接与维护需求，版本为 `v0.1.22`、分支为 `feature/v0.1.22`，不追加 `-fix`。

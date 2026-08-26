@@ -1,6 +1,6 @@
 # PaperReader 项目完整现状
 
-> 基线版本：`0.1.22`；基线分支：`feature/v0.1.22`；核对日期：2026-08-25（UTC）；生产域名：`https://paper.pilo.eu.cc`
+> 源码开发版本：`0.1.23`；开发分支：`feature/v0.1.23`；生产版本：`0.1.22`（2026-08-25 UTC 已核验）；核对日期：2026-08-26（UTC）；生产域名：`https://paper.pilo.eu.cc`
 
 本文描述 `/root/paper-reader` 的代码与生产现状，是新维护者判断“已经有什么、实际怎么运行、哪些还不能承诺”的首要依据。动态状态在发布后可能变化，操作线上前仍需重新执行本文的只读检查。
 
@@ -21,10 +21,11 @@ PaperReader 是面向用户的论文阅读工作台，本仓库同时包含 C �
 
 - GitHub 默认分支和生产主分支：`main`。
 - 集成分支：`dev`。
-- 本轮版本分支：`feature/v0.1.22`，从最新 `dev` 创建。
+- 当前开发版本分支：`feature/v0.1.23`，从最新 `dev` 创建；该分支尚未部署。
 - 版本分支永久保留，标准流向为 `feature/vX.Y.Z -> dev -> main`。
 - 普通需求或维护增加 patch 版本；纯 Bug 修复使用同版本的 `-fix` 后缀。中版本和大版本只能由产品负责人明确提出。
 - `0.1.22` 是交接、安全配置模板和文档整理版本，已于 2026-08-25（UTC）完成合并、生产重启和公网验证，当前生产运行 `0.1.22`。
+- `0.1.23` 是当前论文元数据补全开发版本；工作区包含未提交的功能代码和 V13 迁移草案，不能视为生产状态。
 
 版本号必须同时更新：
 
@@ -45,7 +46,7 @@ PaperReader 是面向用户的论文阅读工作台，本仓库同时包含 C �
 | 状态与 UI | Zustand 5、Radix UI、Lucide、next-intl、next-themes |
 | PDF / 编辑器 | react-pdf 10、pdfjs-dist 5.4.296、TipTap 3、React Markdown |
 | API | Kotlin 2.1、Spring Boot 3.4.1、Spring Security、JPA、WebSocket/STOMP |
-| 数据 | PostgreSQL 16、Flyway V1-V12、Redis 7 |
+| 数据 | PostgreSQL 16、Flyway V1-V12（生产）；开发分支新增 V13 草案、Redis 7 |
 | 解析 | GROBID 0.8.1，调用 `/api/processFulltextDocument` |
 | 运行 | Java 17、Node 22、pnpm 11、Gradle Wrapper 8.7、PM2、Apache、Cloudflare |
 
@@ -72,7 +73,7 @@ paper-reader/
 │   │   ├── service/                  业务、文件、解析、Provider relay
 │   │   ├── model/                    JPA 实体
 │   │   └── security/                 JWT 过滤器
-│   ├── src/main/resources/db/migration/  Flyway V1-V12
+│   ├── src/main/resources/db/migration/  Flyway V1-V12（生产）与 V13 草案（开发）
 │   ├── uploads/                      当前生产本地 PDF（被忽略，绝不能清空）
 │   └── docker-compose.yml            新环境开发模板，不代表当前生产容器归属
 └── docs/                             维护知识库
@@ -141,6 +142,7 @@ Cloudflare 不是构建平台，项目也不是 Cloudflare Pages。Push 源码�
 | --- | --- | --- |
 | 认证 | 注册、密码登录、验证码登录接口、GitHub OAuth、access/refresh JWT | 验证码只写后端日志，没有真实邮件发送；未知邮箱密码登录会自动创建用户 |
 | 论文 | PDF 上传、URL 导入、手动创建、列表、详情、编辑、收藏、标签、分享文案、下载、删除 | URL 导入会由后端下载远程文件；手动记录可没有原文件 |
+| 元数据补全（开发分支） | Reader 手动触发 arXiv/DOI 精确查询、候选预览、逐字段应用、来源与 provenance | `feature/v0.1.23` 已实现最小单篇闭环；生产尚未部署；无完整 manifestation/identifier 模型、历史批量刷新或收录判定 |
 | 阅读 | PDF 翻页、缩放、搜索、进度、选区、批注、笔记 | 扫描型 PDF 无 OCR；PDF.js 依赖项目 patch |
 | 解析 | GROBID 异步提取标题、作者、摘要、TEI 与 chunks | 状态 `PENDING -> PROCESSING -> READY/FAILED`；失败不阻断阅读 |
 | AI 阅读 | 自定义 OpenAI-compatible Provider、模型选择、流式响应、reasoning 折叠、选区问答 | 当前主链路是浏览器会话，不是后端 `/api/ai-chats`；兼容不等于支持所有私有协议 |
@@ -213,7 +215,7 @@ REST API 的真实认证依赖 `Authorization: Bearer <JWT>`。不要把同名 c
 ## 9. 数据库与迁移
 
 - PostgreSQL 表使用 `pr_` 前缀，主要包括用户、论文、批注、笔记、阅读日志、AI、论坛、IM、版本、存储配置、审计和全文 chunks。
-- Flyway 当前为 V1-V12；应用启动时自动 migrate，Hibernate 使用 `ddl-auto=validate`。
+- 生产 Flyway 当前为 V1-V12；开发分支新增 V13 元数据 resolution/source/provenance 草案，尚未应用到生产；应用启动时自动 migrate，Hibernate 使用 `ddl-auto=validate`。
 - 已应用迁移是不可变历史。任何 schema 或受控数据修复都新增下一个版本文件，绝不编辑 V1-V12。
 - 生产迁移前应备份数据库，并对数据修复 SQL 使用显式事务/回滚试运行。不要把生产数据、连接密码或导出文件提交到仓库。
 - 本项目和后台管理共享数据库实例，确认 schema/表前缀后再操作，避免把后台 schema 当成本项目迁移目标。
@@ -227,6 +229,7 @@ REST API 的真实认证依赖 `Authorization: Bearer <JWT>`。不要把同名 c
 | 健康 | `/api/health` |
 | 认证 | `/api/auth` |
 | 论文/上下文/文件 | `/api/papers` |
+| 元数据补全（开发分支） | `/api/papers/{paperId}/metadata/resolve`、`/metadata/resolutions/{resolutionId}`、`/metadata/sources` |
 | GROBID | `/api/papers/{paperId}/grobid` |
 | 论文版本 | `/api/papers/{paperId}/versions` |
 | 阅读日志 | `/api/reading-logs` |
@@ -265,10 +268,11 @@ REST API 的真实认证依赖 `Authorization: Bearer <JWT>`。不要把同名 c
 - 当前后端运行 development profile，应在单独运维迭代中审计并迁移。
 - 文件系统与数据库删除不是分布式事务；保留文件会产生无法从 UI 重新关联的孤儿副本。
 - 旧 `components/ai` 与当前 `components/chat` 并存，增加误改风险，后续应确认无消费者后再清理。
+- 元数据 V13 当前把候选扩展字段放入 `extraFields`，尚未建立独立 manifestation/identifier 投影；正式卷期页、仓储 DOI 与正式 DOI 的长期模型仍需后续迁移设计。
 
 ## 12. 构建、测试和兼容约束
 
-当前回归基线：前端 8 个测试文件、66 项测试；后端 33 项测试。交接版本需重新运行后才能记录最终结果。
+当前历史回归基线：前端 8 个测试文件、66 项测试；后端 33 项测试。v0.1.23 新增元数据代码后必须重新运行全套检查，不能沿用该数字作为本轮最终结果。
 
 ```bash
 cd /root/paper-reader/frontend

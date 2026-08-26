@@ -77,7 +77,7 @@ export interface PaperListDto {
   title: string
   authors?: string
   doi?: string
-  year?: number
+  year?: string
   journal?: string
   category: Category
   sourceType: SourceType
@@ -95,7 +95,7 @@ export interface PaperDetailDto {
   abstractText?: string
   participants?: string
   doi?: string
-  year?: number
+  year?: string
   journal?: string
   category: Category
   extraFields?: Record<string, unknown>
@@ -113,6 +113,56 @@ export interface PaperDetailDto {
   tags?: string[]
   createdAt: string
   updatedAt: string
+}
+
+// --- External metadata enrichment ---
+
+export interface MetadataFieldCandidateDto {
+  field: string
+  currentValue?: string | null
+  suggestedValue?: string | null
+  source?: string | null
+  recordUrl?: string | null
+  matchMethod?: string
+  confidence: number
+  conflict: boolean
+  selectedByDefault: boolean
+}
+
+export interface MetadataManifestationDto {
+  type: string
+  label: string
+  fields: MetadataFieldCandidateDto[]
+}
+
+export interface MetadataSourceDto {
+  id: number
+  provider: string
+  externalId?: string | null
+  recordUrl?: string | null
+  matchMethod: string
+  confidence: number
+  status: string
+  errorCode?: string | null
+  fetchedAt: string
+}
+
+export interface MetadataResolutionDto {
+  id: number
+  paperId: number
+  expectedUpdatedAt: string
+  expiresAt: string
+  createdAt: string
+  identifiers: Record<string, string>
+  fields: MetadataFieldCandidateDto[]
+  manifestations?: MetadataManifestationDto[]
+  sources?: MetadataSourceDto[]
+  warnings?: string[]
+}
+
+export interface MetadataApplyResponse {
+  paper: PaperDetailDto
+  appliedFields: string[]
 }
 
 export interface PaperContextChunkDto {
