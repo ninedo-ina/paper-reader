@@ -65,7 +65,7 @@ feature/v主版本.次版本.修订版本
 6. `main` 合并完成后，按实际部署链路构建、重启生产 PM2 进程并检查公网。
 7. 保留版本分支、合并提交和验证记录，不通过强制推送改写 `main`、`dev` 或历史版本分支。
 
-当前开发基线为 `feature/v0.1.23`，生产仍为已核验的 `0.1.22`；后续版本统一遵循上述流程。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。v0.1.23 在合并、全量验证和生产验收前不得宣称已发布。
+当前发布基线为 `feature/v0.1.23`，生产已核验为 `0.1.23`；后续版本统一遵循上述流程。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。
 
 ## 4. 每次代码迭代的标准流程
 
@@ -437,7 +437,7 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - 数据迁移只能修复当前明确模式。若数据库中已有其他形式的污染标题，应先审计真实 TEI/PDF，再以新版本增加独立、可测试的规则。
 - 本次只改 PaperReader C 端仓库中的解析消费层、数据库迁移和 UI；GROBID 服务及后台管理项目均不变。
 
-## 18. v0.1.23 单篇论文元数据补全（开发中，尚未部署）
+## 18. v0.1.23 单篇论文元数据补全（已部署）
 
 ### 需求与边界
 
@@ -467,7 +467,27 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 
 ### 验证与发布纪律
 
-本节记录开发状态，不代表生产已部署。完成后必须重新运行前端类型检查、全部测试、生产构建以及后端 `clean test bootJar`；固定 fixture 不得依赖公网。确认 migration、API、UI 和删除级联后，才可按 `feature/v0.1.23 -> dev -> main` 流程合并。生产仍运行 `0.1.22`，本轮不启动 V13、不批量刷新论文、不重启 PM2，也不修改生产数据。
+本节记录 v0.1.23 的实现、发布和验收结果。前后端全量验证、数据库备份、V13 迁移、PM2 重启和公网验收均已完成；本轮未批量刷新或改写既有论文数据。
+
+### 发布与验收记录（2026-08-26 UTC）
+
+- 发布提交：`main` 合并提交 `123db8c`；`dev` 合并提交为 `3c01fd0`，功能提交为 `eb81f05`；版本分支 `feature/v0.1.23` 保留。
+- 验证通过：后端 `./gradlew clean test bootJar`；前端 `pnpm install --frozen-lockfile`、`pnpm exec tsc --noEmit`、68 项测试和 `pnpm run build`。构建仅有既有 lint 警告，无阻断错误。
+- 生产发布前数据库备份：`/root/paper-reader-backups/paper_reader_20260826T141104Z_pre_v0.1.23.dump`。
+- 生产 Flyway 已成功执行 V13 `paper metadata enrichment`；已确认 `pr_paper_metadata_resolutions`、`pr_paper_metadata_sources` 和 `pr_paper_metadata_field_provenance` 三张表存在。
+- 后端 PM2 已重建并指向 `paper-reader-backend-0.1.23.jar`；前端 PM2 已重启加载新的 `.next`。两个进程均为 `online`，完成后执行 `pm2 save`。
+- 本机与公网 `/api/health` 均返回 `status=ok`、`version=0.1.23`；公网 `/zh/login` 返回 200，明暗 favicon 均返回 200 且引用参数为 `v=0.1.23`。
+- GROBID `/api/isalive` 返回 `true`；`infra-postgres`、`infra-redis` 和 `paper-reader-grobid` 未重建；生产上传目录 `/root/paper-reader/backend/uploads` 未修改。
+- 回滚基线：已保存发布前 PM2 快照 `/root/paper-reader-backups/pm2_20260826T141212Z_pre_v0.1.23.json`，并保留已验证的 `0.1.22` JAR 备份（如存在）。数据库迁移已应用后不得直接删除 Flyway 记录；如需回滚，应按部署手册恢复对应 JAR、前端构建并采用向前兼容的数据库方案。
+
+
+### 两篇历史论文补全记录（2026-08-26 UTC）
+
+- 生产库盘点确认共有两条论文记录：ID `2` 和 ID `3`，均为 *Attention Is All You Need*，都识别到 arXiv `1706.03762`。
+- 两条记录均通过生产 API 的 `resolve -> apply` 流程完成补全，没有直接绕过业务层写入。补全内容包括标题、作者、摘要、年份、arXiv ID/版本/分类、提交与更新时间、仓储 DOI 和许可证。
+- 两条记录均应用了已审核的 NeurIPS 正式出版候选：`Advances in Neural Information Processing Systems`、卷 `30`、出版页码 `5998-6008`、出版社 `Curran Associates, Inc.`、`CONFERENCE_PAPER` 和 DBLP key `conf/nips/VaswaniSPUJGKP17`。
+- 记录 ID `3` 原有年份 `2023` 与 arXiv 首次发表年份冲突，经过显式候选确认后改为 `2017`；没有覆盖用户已有的其他非空字段。
+- 最终两条记录的 `title`、`year`、`journal`、`extra_fields` 和更新时间已复核；字段 provenance 分别为论文 ID `2` 的 19 项、论文 ID `3` 的 16 项。此次仅处理现有两条记录，未启动历史库批量任务。
 
 ## 17. v0.1.22 项目交接、配置安全与新人指引
 
