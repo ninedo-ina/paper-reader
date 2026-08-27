@@ -287,6 +287,26 @@ export function PDFReader({ paper }: PDFReaderProps) {
   const pageWidth = Math.max(280, 612 * scale)
   const effectiveScale = pageWidth / 612
 
+  const zoomToCenter = useCallback((nextScale: number) => {
+    const container = scrollRef.current
+    const currentScale = scale
+    const clampedScale = Math.max(0.5, Math.min(3, nextScale))
+    if (!container || clampedScale === currentScale) return
+
+    // Keep the point currently at the viewport center under the center after
+    // react-pdf re-renders the page at its new size.
+    const centerX = container.scrollLeft + container.clientWidth / 2
+    const centerY = container.scrollTop + container.clientHeight / 2
+    const ratio = clampedScale / currentScale
+    setScale(clampedScale)
+    requestAnimationFrame(() => {
+      const current = scrollRef.current
+      if (!current) return
+      current.scrollLeft = centerX * ratio - current.clientWidth / 2
+      current.scrollTop = centerY * ratio - current.clientHeight / 2
+    })
+  }, [scale])
+
   const revealScrollbars = useCallback(() => {
     setScrollbarsVisible(true)
     if (scrollbarTimer.current) clearTimeout(scrollbarTimer.current)
@@ -451,7 +471,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
             variant="ghost"
             size="sm"
             disabled={scale <= 0.5}
-            onClick={() => setScale((s) => Math.max(0.5, s - 0.1))}
+            onClick={() => zoomToCenter(scale - 0.1)}
           >
             <ZoomOut className="size-4" />
           </Button>
@@ -462,7 +482,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
             variant="ghost"
             size="sm"
             disabled={scale >= 3}
-            onClick={() => setScale((s) => Math.min(3, s + 0.1))}
+            onClick={() => zoomToCenter(scale + 0.1)}
           >
             <ZoomIn className="size-4" />
           </Button>
