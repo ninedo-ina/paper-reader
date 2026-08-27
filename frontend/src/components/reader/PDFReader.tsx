@@ -322,6 +322,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
     if (event.button !== 0 || !isPanTarget(event.target)) return
     const container = scrollRef.current
     if (!container) return
+    event.preventDefault()
     panRef.current = {
       active: true,
       x: event.clientX,
@@ -519,6 +520,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
         onPointerMove={handlePanMove}
         onPointerUp={handlePanEnd}
         onPointerCancel={handlePanEnd}
+        onLostPointerCapture={handlePanEnd}
         className={cn(
           "min-h-0 min-w-0 flex-1 overflow-auto pdf-reader-scroll",
           !scrollbarsVisible && "pdf-reader-scroll-hidden",
