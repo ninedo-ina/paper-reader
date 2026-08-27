@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useCallback, useMemo, useRef, useEffect } from "react"
+import { useTheme } from "next-themes"
+import type { PointerEvent as ReactPointerEvent } from "react"
 import { Document, Page, pdfjs } from "react-pdf"
 import "react-pdf/dist/Page/AnnotationLayer.css"
 import "react-pdf/dist/Page/TextLayer.css"
@@ -42,7 +44,8 @@ export function PDFReader({ paper }: PDFReaderProps) {
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [chromeVisible, setChromeVisible] = useState(true)
-  const [readerTheme, setReaderTheme] = useState<"light" | "dark">("light")
+  const { theme, setTheme } = useTheme()
+  const readerTheme: "light" | "dark" = theme === "dark" ? "dark" : "light"
   const [layout, setLayout] = useState<1 | 2 | 3 | 4 | 6>(1)
   const [layoutOpen, setLayoutOpen] = useState(false)
   const [containerWidth, setContainerWidth] = useState(0)
@@ -51,6 +54,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
   const chromeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const scrollbarTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const panRef = useRef({ active: false, x: 0, y: 0, left: 0, top: 0 })
   const addToast = useToastStore((s) => s.addToast)
   const {
     annotations, notes,
@@ -289,6 +293,43 @@ export function PDFReader({ paper }: PDFReaderProps) {
     scrollbarTimer.current = setTimeout(() => setScrollbarsVisible(false), 1400)
   }, [])
 
+  const isPanTarget = useCallback((target: EventTarget | null) => {
+    const element = target instanceof Element ? target : null
+    return Boolean(element && !element.closest(".textLayer, .react-pdf__Page__textContent, .annotationLayer, a, button, input, textarea, select"))
+  }, [])
+
+  const handlePanStart = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0 || !isPanTarget(event.target)) return
+    const container = scrollRef.current
+    if (!container) return
+    panRef.current = {
+      active: true,
+      x: event.clientX,
+      y: event.clientY,
+      left: container.scrollLeft,
+      top: container.scrollTop,
+    }
+    container.setPointerCapture(event.pointerId)
+    container.classList.add("pdf-reader-panning")
+    revealScrollbars()
+  }, [isPanTarget, revealScrollbars])
+
+  const handlePanMove = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    const pan = panRef.current
+    const container = scrollRef.current
+    if (!pan.active || !container) return
+    container.scrollLeft = pan.left - (event.clientX - pan.x)
+    container.scrollTop = pan.top - (event.clientY - pan.y)
+  }, [])
+
+  const handlePanEnd = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    const container = scrollRef.current
+    if (!panRef.current.active) return
+    panRef.current.active = false
+    if (container?.hasPointerCapture(event.pointerId)) container.releasePointerCapture(event.pointerId)
+    container?.classList.remove("pdf-reader-panning")
+  }, [])
+
   const layoutStart = Math.min(
     Math.max(1, pageNumber),
     Math.max(1, numPages - layoutConfig.step + 1),
@@ -427,7 +468,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
           </Button>
         </div>
         {isFullscreen && (
-          <Button variant="ghost" size="sm" onClick={() => setReaderTheme((theme) => theme === "light" ? "dark" : "light")} title={readerTheme === "light" ? "切换夜间模式" : "切换白天模式"}>
+          <Button variant="ghost" size="sm" onClick={() => setTheme(readerTheme === "light" ? "dark" : "light")} title={readerTheme === "light" ? "切换夜间模式" : "切换白天模式"}>
             {readerTheme === "light" ? <Moon className="size-4" /> : <Sun className="size-4" />}
           </Button>
         )}
@@ -454,8 +495,12 @@ export function PDFReader({ paper }: PDFReaderProps) {
         onScroll={revealScrollbars}
         onMouseEnter={revealScrollbars}
         onWheel={revealScrollbars}
+        onPointerDown={handlePanStart}
+        onPointerMove={handlePanMove}
+        onPointerUp={handlePanEnd}
+        onPointerCancel={handlePanEnd}
         className={cn(
-          "flex-1 overflow-auto pdf-reader-scroll",
+          "min-h-0 min-w-0 flex-1 overflow-auto pdf-reader-scroll",
           !scrollbarsVisible && "pdf-reader-scroll-hidden",
           readerTheme === "dark" ? "bg-[#111214]" : "bg-[var(--bg-root)]",
         )}
@@ -480,7 +525,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
             </p>
           }
           className={cn(
-            "grid w-max min-w-full items-start gap-4 p-4",
+            "grid w-max min-w-full grid-flow-row items-start gap-4 p-4",
             layoutConfig.columns === 1
               ? "grid-cols-1 justify-items-center"
               : layoutConfig.columns === 2
@@ -493,8 +538,9 @@ export function PDFReader({ paper }: PDFReaderProps) {
               <div
                 key={`${n}-${layout}`}
                 data-page={n}
+                style={{ width: pageWidth, minWidth: pageWidth }}
                 className={cn(
-                  "min-w-0 shadow-lg transition-opacity duration-200",
+                  "shrink-0 shadow-lg transition-opacity duration-200",
                   readerTheme === "dark" ? "bg-[#1b1c20]" : "bg-white",
                 )}
               >
