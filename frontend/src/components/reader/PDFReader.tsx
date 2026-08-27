@@ -276,11 +276,20 @@ export function PDFReader({ paper }: PDFReaderProps) {
   }, [pdfUrl])
 
   const layoutConfig = PDF_LAYOUTS[layout]
-  // Single-page mode is a true fitted, centered view; multi-page layouts keep
-  // the explicit zoom selected by the reader.
-  const effectiveScale = layout === 1 && containerWidth > 0
-    ? Math.min(3, Math.max(0.5, (containerWidth - 32) / 612))
-    : scale
+  // A PDF page has a 612pt reference width. Keep the rendered page inside its
+  // grid track; otherwise a fixed zoom makes adjacent pages overlap when the
+  // viewport is narrower than two full pages.
+  const availableWidth = containerWidth > 0
+    ? containerWidth - 32 - Math.max(0, layoutConfig.columns - 1) * 16
+    : 612 * layoutConfig.columns
+  const pageWidth = containerWidth > 0
+    ? layout === 1
+      ? Math.max(280, availableWidth)
+      : Math.min(612 * scale, Math.max(1, availableWidth / layoutConfig.columns))
+    : 612 * scale
+  // Used only as a text-layer re-match token. The actual PDF size is set with
+  // `width`, so every grid item has a hard pixel bound and cannot overlap.
+  const effectiveScale = pageWidth / 612
   const layoutStart = Math.min(
     Math.max(1, pageNumber),
     Math.max(1, numPages - layoutConfig.step + 1),
@@ -460,19 +469,21 @@ export function PDFReader({ paper }: PDFReaderProps) {
             </p>
           }
           className={cn(
-            "grid items-start gap-4 p-4",
+            "grid w-full items-start gap-4 p-4",
             layoutConfig.columns === 1
               ? "grid-cols-1 justify-items-center"
-              : layoutConfig.columns === 2 ? "grid-cols-2 justify-center" : "grid-cols-3 justify-center",
+              : layoutConfig.columns === 2
+                ? "grid-cols-2 justify-items-center"
+                : "grid-cols-3 justify-items-center",
           )}
         >
           {visiblePages
             .map((n) => (
               <div
-                key={n}
+                key={`${n}-${layout}`}
                 data-page={n}
                 className={cn(
-                  "shadow-lg transition-opacity duration-200",
+                  "min-w-0 max-w-full overflow-hidden shadow-lg transition-opacity duration-200",
                   readerTheme === "dark" ? "bg-[#1b1c20]" : "bg-white",
                 )}
               >
@@ -492,7 +503,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
                 >
                   <Page
                     pageNumber={n}
-                    scale={effectiveScale}
+                    width={pageWidth}
                     renderTextLayer={true}
                     renderAnnotationLayer={true}
                     className={readerTheme === "dark" ? "bg-[#1b1c20]" : "bg-white"}

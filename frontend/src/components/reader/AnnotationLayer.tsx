@@ -47,8 +47,8 @@ interface PopupMenuState {
 /** Convert viewport-absolute rects to layer-relative coordinates */
 function toLayerRelative(rects: PositionRect[], layerRect: DOMRect): PositionRect[] {
   return rects.map((r) => ({
-    x: r.x - layerRect.left,
-    y: r.y - layerRect.top,
+    x: Math.max(0, Math.min(layerRect.width - r.width, r.x - layerRect.left)),
+    y: Math.max(0, Math.min(layerRect.height - r.height, r.y - layerRect.top)),
     width: r.width,
     height: r.height,
   }))
