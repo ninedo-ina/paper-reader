@@ -140,7 +140,7 @@ body {
 .pdf-reader-scroll-hidden { scrollbar-width: none; -ms-overflow-style: none; }
 .pdf-reader-scroll-hidden::-webkit-scrollbar { width: 0; height: 0; }
 .pdf-reader-scroll { scrollbar-color: var(--text-tertiary) transparent; }
-.pdf-reader-scroll { overscroll-behavior: contain; touch-action: none; }
+.pdf-reader-scroll { overscroll-behavior: contain; }
 .pdf-reader-scroll:not(.pdf-reader-panning) { cursor: grab; }
 .pdf-reader-panning { cursor: grabbing; user-select: none; }
 .pdf-reader-panning * { cursor: grabbing !important; }

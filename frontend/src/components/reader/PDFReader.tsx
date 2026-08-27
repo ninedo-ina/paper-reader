@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useMemo, useRef, useEffect } from "react"
 import { useTheme } from "next-themes"
-import type { PointerEvent as ReactPointerEvent } from "react"
 import { Document, Page, pdfjs } from "react-pdf"
 import "react-pdf/dist/Page/AnnotationLayer.css"
 import "react-pdf/dist/Page/TextLayer.css"
@@ -313,43 +312,55 @@ export function PDFReader({ paper }: PDFReaderProps) {
     scrollbarTimer.current = setTimeout(() => setScrollbarsVisible(false), 1400)
   }, [])
 
-  const isPanTarget = useCallback((target: EventTarget | null) => {
-    const element = target instanceof Element ? target : null
-    return Boolean(element && !element.closest(".textLayer, .react-pdf__Page__textContent, .annotationLayer, a, button, input, textarea, select"))
-  }, [])
-
-  const handlePanStart = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    if (event.button !== 0 || !isPanTarget(event.target)) return
+  useEffect(() => {
     const container = scrollRef.current
     if (!container) return
-    event.preventDefault()
-    panRef.current = {
-      active: true,
-      x: event.clientX,
-      y: event.clientY,
-      left: container.scrollLeft,
-      top: container.scrollTop,
+
+    const isEmptyCanvas = (target: EventTarget | null) => {
+      const element = target instanceof Element ? target : null
+      return Boolean(element && !element.closest(
+        ".textLayer, .react-pdf__Page__textContent, .annotationLayer, a, button, input, textarea, select",
+      ))
     }
-    container.setPointerCapture(event.pointerId)
-    container.classList.add("pdf-reader-panning")
-    revealScrollbars()
-  }, [isPanTarget, revealScrollbars])
 
-  const handlePanMove = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    const pan = panRef.current
-    const container = scrollRef.current
-    if (!pan.active || !container) return
-    container.scrollLeft = pan.left - (event.clientX - pan.x)
-    container.scrollTop = pan.top - (event.clientY - pan.y)
-  }, [])
+    const stopPan = () => {
+      panRef.current.active = false
+      container.classList.remove("pdf-reader-panning")
+    }
 
-  const handlePanEnd = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    const container = scrollRef.current
-    if (!panRef.current.active) return
-    panRef.current.active = false
-    if (container?.hasPointerCapture(event.pointerId)) container.releasePointerCapture(event.pointerId)
-    container?.classList.remove("pdf-reader-panning")
-  }, [])
+    const onMouseDown = (event: MouseEvent) => {
+      if (event.button !== 0 || !isEmptyCanvas(event.target)) return
+      panRef.current = {
+        active: true,
+        x: event.clientX,
+        y: event.clientY,
+        left: container.scrollLeft,
+        top: container.scrollTop,
+      }
+      container.classList.add("pdf-reader-panning")
+      revealScrollbars()
+    }
+
+    const onMouseMove = (event: MouseEvent) => {
+      const pan = panRef.current
+      if (!pan.active) return
+      event.preventDefault()
+      container.scrollLeft = pan.left - (event.clientX - pan.x)
+      container.scrollTop = pan.top - (event.clientY - pan.y)
+    }
+
+    container.addEventListener("mousedown", onMouseDown)
+    window.addEventListener("mousemove", onMouseMove, { passive: false })
+    window.addEventListener("mouseup", stopPan)
+    window.addEventListener("blur", stopPan)
+    return () => {
+      container.removeEventListener("mousedown", onMouseDown)
+      window.removeEventListener("mousemove", onMouseMove)
+      window.removeEventListener("mouseup", stopPan)
+      window.removeEventListener("blur", stopPan)
+      stopPan()
+    }
+  }, [revealScrollbars])
 
   const layoutStart = Math.min(
     Math.max(1, pageNumber),
@@ -516,11 +527,6 @@ export function PDFReader({ paper }: PDFReaderProps) {
         onScroll={revealScrollbars}
         onMouseEnter={revealScrollbars}
         onWheel={revealScrollbars}
-        onPointerDown={handlePanStart}
-        onPointerMove={handlePanMove}
-        onPointerUp={handlePanEnd}
-        onPointerCancel={handlePanEnd}
-        onLostPointerCapture={handlePanEnd}
         className={cn(
           "min-h-0 min-w-0 flex-1 overflow-auto pdf-reader-scroll",
           !scrollbarsVisible && "pdf-reader-scroll-hidden",
