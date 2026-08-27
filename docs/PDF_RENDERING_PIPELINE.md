@@ -828,3 +828,60 @@ interface ReaderAnnotation {
 | `backend/src/main/resources/application.yml` | 后端配置文件 |
 | `backend/src/main/resources/db/migration/V11__paper_content_context.sql` | 解析状态、TEI TEXT 和正文 chunks 迁移 |
 | `docker-compose.yml` | 容器编排（GROBID 服务） |
+
+## 7. v0.1.24–v0.1.28 PDF 拖拽问题复盘与实现规范
+
+本节记录本次 PDF 拖拽问题从首次实现到最终修复的差异，供后续维护 PDF.js、文本选择、批注覆盖层和滚动交互时复用。
+
+### 7.1 根因：视觉区域与事件命中区域不是一回事
+
+阅读器不是只有一个 canvas。最外层是可滚动 viewport，页面内部还有 PDF.js canvas、覆盖整张页面的透明 text layer，以及批注/表单 annotation layer。用户看到的“页面空白处”包括纸张内部的行间距、段落间隙、页眉页脚和页边距，但这些位置的 `event.target` 可能是 text layer 容器、页面包装元素或 canvas，而不是纸张外围灰色背景。
+
+此前失败的共同原因是先按视觉直觉排除一整类 DOM：一旦把 `.textLayer` 或 `.react-pdf__Page__textContent` 整体列入排除选择器，整张页面内部都会失去拖拽能力，即使其中大部分区域实际上没有文字。
+
+### 7.2 历次修改与不足
+
+- v0.1.24 修复暗色模式画布反色，解决了 PDF 阅读区域的背景和文字对比度，但没有建立拖拽交互。
+- v0.1.25 增加以视口中心为基准的缩放，缩放后按比例恢复 `scrollLeft` / `scrollTop`，但这只解决了缩放坐标，不等于鼠标平移状态完整。
+- v0.1.26 调整 `grab` / `grabbing` 光标表现。它改善了视觉反馈，却没有修复事件触发区域；光标状态因此曾出现“点击后才变手”或“按下后恢复普通光标”的错觉。
+- v0.1.27 将旧 React Pointer Event 改成原生 `mousedown`、`window mousemove`、`window mouseup`，并补充失焦清理，解决了鼠标移出容器后事件丢失的问题；但当时仍将整个 text layer 当作不可拖拽区域，页面内部空白处依旧被错误排除。
+- v0.1.28 最终改为“只排除真正的交互元素和实际文字 span”：页面内部空白由最外层视口统一接收，文字 span 继续承担文本选择，才完整满足需求。
+
+### 7.3 最终有效方案为什么能解决问题
+
+1. 事件入口绑定在最外层 `.pdf-reader-scroll` 视口，而不是只绑定 canvas、纸张外围或某个覆盖层。这样纸张内外的空白都能进入同一套平移流程。
+2. 拖拽判定采用“排除交互元素”的策略。按钮、输入框、选择框、批注链接等控件不启动平移；除此之外默认允许平移。不要再使用“只允许命中灰色外围”的正向白名单。
+3. 不排除整个 `.textLayer`。PDF.js 的文本层通常覆盖整张纸且背景透明；只有真正命中的文字 span 需要保留原生文本选择，文本层容器没有 glyph span 的行间隙和页边距仍应启动拖拽。
+4. 使用完整的原生鼠标状态链：`mousedown` 记录鼠标起点及当时的 `scrollLeft` / `scrollTop`；`window mousemove` 即使鼠标移出视口仍持续计算位移；`window mouseup`、窗口 `blur` 和组件卸载统一结束拖拽。位移公式为：
+
+   `scrollLeft = startScrollLeft - (clientX - startX)`
+
+   `scrollTop = startScrollTop - (clientY - startY)`
+
+5. `mousedown` 时立即添加 `.pdf-reader-panning`、设置 `cursor: grabbing` 和 `body.userSelect = "none"`；结束时移除状态、恢复原始 `user-select` 并恢复 `cursor: grab`。这同时解决了“点击后才变手”“点击后卡住”“移出视口后失效”和“拖拽时误选文字”。
+6. CSS 只负责状态表现，不参与业务判定：视口默认显示 `grab`，拖拽中显示 `grabbing`；拖拽状态对子元素使用 `cursor: grabbing !important`，非拖拽状态下的文字 span 明确使用 `cursor: text`。
+
+### 7.4 后续排查顺序
+
+遇到 PDF 拖拽失效时，按以下顺序排查：
+
+- 在开发者工具确认鼠标落点的真实 `event.target`，检查是否被透明 text layer 或 annotation layer 覆盖；不要只观察视觉区域。
+- 确认事件入口位于真正的滚动 viewport，并检查 `mousedown`、`window mousemove`、`window mouseup` 是否成套绑定和清理。
+- 检查 `event.button`、交互控件排除规则和文字 span 排除规则，特别是不要把整个 text layer 容器排除。
+- 检查拖拽开始和结束是否对称：开始时记录滚动基线、加状态类、禁用选择；结束时清 active 状态、恢复光标、恢复原始 `user-select`。
+- 检查 CSS 级联和子元素光标。PDF.js 的 `.textLayer span { cursor: text }` 会覆盖继承光标，因此要明确区分文字 span 与页面空白，并让拖拽态使用更高优先级。
+
+### 7.5 回归验收清单
+
+- 页面内部行间距、段落间隙、页眉页脚和页边距无需先点击即可显示 `grab`。
+- 在页面空白处按住左键移动时，`scrollLeft` 和 `scrollTop` 随位移更新；鼠标移出视口后仍可继续拖拽。
+- 按住显示 `grabbing`，松开、窗口失焦或组件卸载后恢复 `grab`，不会卡住。
+- 实际文字 span 仍可选择文本；批注链接、按钮、输入框和选择框仍可正常交互。
+- 拖拽过程中不会误选文字，结束后其他区域原有的 `user-select` 行为不受影响。
+- 单页、多栏、缩放和明暗主题均使用同一套视口拖拽逻辑；隐藏滚动条只影响视觉，不影响可滚动范围。
+
+### 7.6 维护禁忌与核心经验
+
+不要把 `click`、`focus` 或 toggle 状态当作抓手模式开关；抓手状态应由鼠标进入、按下、移动和释放事件直接决定。不要只监听容器内部的 `mousemove`，也不要依赖触摸板 `wheel`、Pinch 或 Pointer Gesture 库替代鼠标长按链路。不要通过给整个 text layer 设置 `pointer-events: none` 或把整个 text layer 列入排除选择器来修复拖拽，这会破坏文字选择和页面内空白拖拽之一。
+
+本次问题的关键经验是：先画出真实 DOM 覆盖关系，再定义事件判定；交互区域采用“默认允许、明确排除控件和文字”的策略；事件生命周期、CSS 状态和清理逻辑必须成套验证。只有三层同时正确，PDF 页面空白拖拽、文字选择和控件交互才能共存。
