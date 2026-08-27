@@ -144,6 +144,10 @@ body {
 .pdf-reader-scroll:not(.pdf-reader-panning) { cursor: grab; }
 .pdf-reader-panning { cursor: grabbing; user-select: none; }
 .pdf-reader-panning * { cursor: grabbing !important; }
+/* PDF.js text spans remain selectable; whitespace in the transparent text
+   layer inherits the reader's grab cursor. */
+.pdf-reader-scroll:not(.pdf-reader-panning) .textLayer span,
+.pdf-reader-scroll:not(.pdf-reader-panning) .react-pdf__Page__textContent span { cursor: text; }
 
 /* Keep PDF text selectable while applying dark mode to the rendered page.
    hue-rotate restores the hue of colored PDF content after inversion. */

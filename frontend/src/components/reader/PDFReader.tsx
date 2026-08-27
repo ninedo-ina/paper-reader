@@ -316,20 +316,38 @@ export function PDFReader({ paper }: PDFReaderProps) {
     const container = scrollRef.current
     if (!container) return
 
-    const isEmptyCanvas = (target: EventTarget | null) => {
+    // PDF.js puts a transparent text layer over the whole page. Only actual
+    // glyph spans need to remain selectable; the text-layer container itself
+    // represents page whitespace and must still be pannable.
+    const isInteractive = (target: EventTarget | null) => {
       const element = target instanceof Element ? target : null
-      return Boolean(element && !element.closest(
-        ".textLayer, .react-pdf__Page__textContent, .annotationLayer, a, button, input, textarea, select",
+      return Boolean(element?.closest(
+        ".annotationLayer a, .annotationLayer input, .annotationLayer textarea, .annotationLayer select, button, input, textarea, select",
       ))
     }
+    const isTextSpan = (target: EventTarget | null) => {
+      const element = target instanceof Element ? target : null
+      return Boolean(element?.closest(".textLayer span, .react-pdf__Page__textContent span"))
+    }
+    const hasSelection = () => {
+      const selection = window.getSelection()
+      return Boolean(selection && !selection.isCollapsed && selection.toString().trim())
+    }
 
+    const previousBodyUserSelect = document.body.style.userSelect
     const stopPan = () => {
       panRef.current.active = false
       container.classList.remove("pdf-reader-panning")
+      container.style.cursor = "grab"
+      document.body.style.userSelect = previousBodyUserSelect
     }
 
     const onMouseDown = (event: MouseEvent) => {
-      if (event.button !== 0 || !isEmptyCanvas(event.target)) return
+      if (event.button !== 0 || isInteractive(event.target)) return
+      // A selected text range must remain selectable/clickable. Whitespace in
+      // the text layer has no span target and therefore still starts panning.
+      if (isTextSpan(event.target) && hasSelection()) return
+      event.preventDefault()
       panRef.current = {
         active: true,
         x: event.clientX,
@@ -338,6 +356,8 @@ export function PDFReader({ paper }: PDFReaderProps) {
         top: container.scrollTop,
       }
       container.classList.add("pdf-reader-panning")
+      container.style.cursor = "grabbing"
+      document.body.style.userSelect = "none"
       revealScrollbars()
     }
 
@@ -347,6 +367,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
       event.preventDefault()
       container.scrollLeft = pan.left - (event.clientX - pan.x)
       container.scrollTop = pan.top - (event.clientY - pan.y)
+      revealScrollbars()
     }
 
     container.addEventListener("mousedown", onMouseDown)
