@@ -45,6 +45,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
   const [readerTheme, setReaderTheme] = useState<"light" | "dark">("light")
   const [layout, setLayout] = useState<1 | 2 | 3 | 4 | 6>(1)
   const [layoutOpen, setLayoutOpen] = useState(false)
+  const [containerWidth, setContainerWidth] = useState(0)
   const readerRef = useRef<HTMLDivElement>(null)
   const chromeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -65,6 +66,16 @@ export function PDFReader({ paper }: PDFReaderProps) {
       loadNotes(paper.id)
     }
   }, [paper.id, loadAnnotations, loadNotes])
+
+  useEffect(() => {
+    const element = scrollRef.current
+    if (!element) return
+    const update = () => setContainerWidth(element.clientWidth)
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogMode, setDialogMode] = useState<"annotation" | "note">("annotation")
@@ -265,6 +276,11 @@ export function PDFReader({ paper }: PDFReaderProps) {
   }, [pdfUrl])
 
   const layoutConfig = PDF_LAYOUTS[layout]
+  // Single-page mode is a true fitted, centered view; multi-page layouts keep
+  // the explicit zoom selected by the reader.
+  const effectiveScale = layout === 1 && containerWidth > 0
+    ? Math.min(3, Math.max(0.5, (containerWidth - 32) / 612))
+    : scale
   const layoutStart = Math.min(
     Math.max(1, pageNumber),
     Math.max(1, numPages - layoutConfig.step + 1),
@@ -444,8 +460,10 @@ export function PDFReader({ paper }: PDFReaderProps) {
             </p>
           }
           className={cn(
-            "grid items-start justify-center gap-4 p-4",
-            layoutConfig.columns === 1 ? "grid-cols-1" : layoutConfig.columns === 2 ? "grid-cols-2" : "grid-cols-3",
+            "grid items-start gap-4 p-4",
+            layoutConfig.columns === 1
+              ? "grid-cols-1 justify-items-center"
+              : layoutConfig.columns === 2 ? "grid-cols-2 justify-center" : "grid-cols-3 justify-center",
           )}
         >
           {visiblePages
@@ -461,7 +479,8 @@ export function PDFReader({ paper }: PDFReaderProps) {
                 <AnnotationLayer
                   pageNumber={n}
                   anchors={anchors}
-                  scale={scale}
+                  scale={effectiveScale}
+                  layoutKey={`${layout}:${containerWidth}`}
                   onCreateAnnotation={(text, pos, positions, startOffset, endOffset) => handleCreateAnnotation(text, pos, positions, n, startOffset, endOffset)}
                   onCreateNote={(text, pos, positions, startOffset, endOffset) => handleCreateNote(text, pos, positions, n, startOffset, endOffset)}
                   onAskAI={(text, selectedPage) => setPendingPaperQuestion({
@@ -473,7 +492,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
                 >
                   <Page
                     pageNumber={n}
-                    scale={scale}
+                    scale={effectiveScale}
                     renderTextLayer={true}
                     renderAnnotationLayer={true}
                     className={readerTheme === "dark" ? "bg-[#1b1c20]" : "bg-white"}
