@@ -515,6 +515,8 @@ export function PDFReader({ paper }: PDFReaderProps) {
                   <Page
                     pageNumber={n}
                     width={pageWidth}
+                    pageColors={readerTheme === "dark" ? { background: "#000000", foreground: "#ffffff" } : { background: "#ffffff", foreground: "#000000" }}
+                    canvasBackground={readerTheme === "dark" ? "#000000" : "#ffffff"}
                     renderTextLayer={true}
                     renderAnnotationLayer={true}
                     className={readerTheme === "dark" ? "bg-[#1b1c20]" : "bg-white"}
