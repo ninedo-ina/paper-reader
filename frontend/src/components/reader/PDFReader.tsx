@@ -561,8 +561,12 @@ export function PDFReader({ paper }: PDFReaderProps) {
                   <Page
                     pageNumber={n}
                     width={pageWidth}
-                    pageColors={readerTheme === "dark" ? { background: "#000000", foreground: "#ffffff" } : { background: "#ffffff", foreground: "#000000" }}
-                    canvasBackground={readerTheme === "dark" ? "#000000" : "#ffffff"}
+                    // The bundled PDF.js HCM filter is not reliable in every
+                    // browser (and can leave the canvas/text layer washed out).
+                    // Render the normal page, then invert the canvas only in
+                    // dark mode; the text layer remains transparent/selectable.
+                    pageColors={undefined}
+                    canvasBackground="#ffffff"
                     renderTextLayer={true}
                     renderAnnotationLayer={true}
                     className={readerTheme === "dark" ? "bg-[#1b1c20]" : "bg-white"}
