@@ -8,6 +8,7 @@ import {
   ChevronDown,
   ChevronRight,
   MessageSquarePlus,
+  Quote,
   Send,
   Settings2,
   X,
@@ -127,6 +128,7 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
   const defaultProviderId = activeDirectChat?.providerId || activeProviderId || providers[0]?.id || ""
 
   const [input, setInput] = useState("")
+  const [composerQuote, setComposerQuote] = useState<PendingPaperQuestion | null>(null)
   const [selectedProviderId, setSelectedProviderId] = useState(defaultProviderId)
   const selectedProvider = providers.find((provider) => provider.id === selectedProviderId) ?? null
   const availableModels = useMemo(
@@ -254,6 +256,7 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
     setSelectedProviderId(inheritedProviderId)
     setSelectedModel(inheritedModel)
     setInput("")
+    setComposerQuote(null)
     setPastedImages([])
     setHistoryOpen(false)
     setProviderOpen(false)
@@ -269,6 +272,7 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
     setSelectedModel(chat.model)
     setHistoryOpen(false)
     setInput("")
+    setComposerQuote(null)
     setPastedImages([])
   }, [directChats, selectDirectChat])
 
@@ -281,35 +285,35 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
       return
     }
 
+    const quote = composerQuote
     setInput("")
+    setComposerQuote(null)
     const content = pastedImages.length > 0
       ? text + "\n" + pastedImages.map((image, index) => `![image-${index}](${image})`).join("\n")
       : text
     setPastedImages([])
 
-    await sendDirect(content, selectedModel, selectedProvider)
-  }, [input, currentChatSending, selectedProvider, selectedModel, pastedImages, sendDirect, showProviderRequired])
+    if (!quote) {
+      await sendDirect(content, selectedModel, selectedProvider)
+      return
+    }
 
-  const handlePaperQuestion = useCallback(async (question: PendingPaperQuestion) => {
-    if (!selectedProvider || currentChatSending) return
-
-    const defaultQuestion = "请解释这段内容在论文中的含义，并结合相关上下文说明。"
     let context: PaperMessageContext = {
-      paperId: question.paperId,
-      paperTitle: question.paperTitle,
-      pageNumber: question.pageNumber,
-      quote: question.selectedText,
+      paperId: quote.paperId,
+      paperTitle: quote.paperTitle,
+      pageNumber: quote.pageNumber,
+      quote: quote.selectedText,
       chunks: [],
     }
 
     try {
-      const response = await getPaperContext(question.paperId, {
-        selectedText: question.selectedText,
-        pageNumber: question.pageNumber,
+      const response = await getPaperContext(quote.paperId, {
+        selectedText: quote.selectedText,
+        pageNumber: quote.pageNumber,
       })
       context = {
         ...context,
-        paperTitle: response.title || question.paperTitle,
+        paperTitle: response.title || quote.paperTitle,
         abstractText: response.abstractText,
         chunks: response.chunks,
       }
@@ -320,28 +324,22 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
       addToast({ message: "暂时无法获取论文上下文，已使用选中文本继续提问。", type: "info" })
     }
 
-    await sendDirect(defaultQuestion, selectedModel, selectedProvider, context)
-  }, [addToast, currentChatSending, selectedModel, selectedProvider, sendDirect])
+    await sendDirect(content, selectedModel, selectedProvider, context)
+  }, [addToast, composerQuote, currentChatSending, input, pastedImages, selectedModel, selectedProvider, sendDirect, showProviderRequired])
 
   useEffect(() => {
-    if (!pendingPaperQuestion) return
-    if (!selectedProvider) {
-      if (providerPromptedForRequest.current !== pendingPaperQuestion.requestId) {
-        providerPromptedForRequest.current = pendingPaperQuestion.requestId
-        addToast({ message: "请先配置 Provider，论文选区问题已保留。", type: "info" })
-        onConfigureProvider?.()
-      }
-      return
-    }
-    if (currentChatSending) return
-
     const question = consumePendingPaperQuestion()
-    if (question) void handlePaperQuestion(question)
+    if (!question) return
+    setComposerQuote(question)
+    requestAnimationFrame(() => inputRef.current?.focus())
+    if (!selectedProvider && providerPromptedForRequest.current !== question.requestId) {
+      providerPromptedForRequest.current = question.requestId
+      addToast({ message: "请先配置 Provider，论文引用已保留在输入框。", type: "info" })
+      onConfigureProvider?.()
+    }
   }, [
     addToast,
     consumePendingPaperQuestion,
-    currentChatSending,
-    handlePaperQuestion,
     onConfigureProvider,
     pendingPaperQuestion,
     selectedProvider,
@@ -615,13 +613,31 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
       )}
       <div className="border-t border-[var(--border-subtle)] px-3 pb-3 pt-2">
         <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)]/70 shadow-[var(--shadow-sm)] transition-colors focus-within:border-[var(--accent)]/50">
+          {composerQuote && (
+            <div className="mx-3 mt-3 rounded-xl border border-[var(--accent)]/20 bg-[var(--accent)]/5 px-3 py-2.5">
+              <div className="flex items-start gap-2">
+                <Quote className="mt-0.5 size-3.5 shrink-0 text-[var(--accent)]" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] font-medium text-[var(--text-secondary)]">
+                    {composerQuote.paperTitle} · 第 {composerQuote.pageNumber} 页
+                  </p>
+                  <p className="mt-1 max-h-16 overflow-hidden whitespace-pre-wrap break-words text-xs leading-5 text-[var(--text-primary)]">
+                    “{composerQuote.selectedText}”
+                  </p>
+                </div>
+                <button type="button" onClick={() => setComposerQuote(null)} className="shrink-0 rounded-md p-1 text-[var(--text-tertiary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]" aria-label="移除引用">
+                  <X className="size-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
           <textarea
             ref={inputRef}
             value={input}
             onChange={(event) => setInput(event.target.value)}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
-            placeholder={selectedProvider ? "输入消息，Enter 发送，Shift+Enter 换行" : "请先配置 Provider 后开始对话"}
+            placeholder={selectedProvider ? (composerQuote ? "在引用下方输入你的问题，Enter 发送" : "输入消息，Enter 发送，Shift+Enter 换行") : "请先配置 Provider 后开始对话"}
             rows={3}
             disabled={currentChatSending}
             className="block max-h-32 min-h-[72px] w-full resize-none border-0 bg-transparent px-3.5 py-3 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-placeholder)] disabled:opacity-50"

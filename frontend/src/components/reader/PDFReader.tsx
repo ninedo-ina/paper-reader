@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useRef, useEffect } from "react"
 import { Document, Page, pdfjs } from "react-pdf"
 import "react-pdf/dist/Page/AnnotationLayer.css"
 import "react-pdf/dist/Page/TextLayer.css"
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Loader2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Loader2, Maximize, Minimize, Sun, Moon, LayoutGrid } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { cn, copyToClipboard } from "@/lib/utils"
 import type { PaperDetailDto } from "@/lib/api/types"
@@ -25,11 +25,28 @@ interface PDFReaderProps {
   paper: PaperDetailDto
 }
 
+type PdfLayout = 1 | 2 | 3 | 4 | 6
+
+const PDF_LAYOUTS: Record<PdfLayout, { columns: number; step: number; label: string }> = {
+  1: { columns: 1, step: 1, label: "单页" },
+  2: { columns: 2, step: 2, label: "两栏" },
+  3: { columns: 3, step: 3, label: "三栏" },
+  4: { columns: 2, step: 4, label: "四栏" },
+  6: { columns: 3, step: 6, label: "六栏" },
+}
+
 export function PDFReader({ paper }: PDFReaderProps) {
   const [numPages, setNumPages] = useState<number>(0)
   const [pageNumber, setPageNumber] = useState(1)
   const [scale, setScale] = useState(1.2)
   const [loadingProgress, setLoadingProgress] = useState(0)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [chromeVisible, setChromeVisible] = useState(true)
+  const [readerTheme, setReaderTheme] = useState<"light" | "dark">("light")
+  const [layout, setLayout] = useState<1 | 2 | 3 | 4 | 6>(1)
+  const [layoutOpen, setLayoutOpen] = useState(false)
+  const readerRef = useRef<HTMLDivElement>(null)
+  const chromeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const addToast = useToastStore((s) => s.addToast)
   const {
@@ -247,10 +264,80 @@ export function PDFReader({ paper }: PDFReaderProps) {
     return { url: pdfUrl, httpHeaders: { Authorization: `Bearer ${token}` } }
   }, [pdfUrl])
 
+  const layoutConfig = PDF_LAYOUTS[layout]
+  const layoutStart = Math.min(
+    Math.max(1, pageNumber),
+    Math.max(1, numPages - layoutConfig.step + 1),
+  )
+  const visiblePages = Array.from(
+    { length: Math.min(layoutConfig.step, Math.max(0, numPages - layoutStart + 1)) },
+    (_, index) => layoutStart + index,
+  )
+
+  const revealChrome = useCallback(() => {
+    setChromeVisible(true)
+    if (chromeTimer.current) clearTimeout(chromeTimer.current)
+    if (isFullscreen) {
+      chromeTimer.current = setTimeout(() => setChromeVisible(false), 2200)
+    }
+  }, [isFullscreen])
+
+  const toggleFullscreen = useCallback(async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen()
+      } else if (readerRef.current?.requestFullscreen) {
+        await readerRef.current.requestFullscreen()
+      } else {
+        setIsFullscreen(true)
+      }
+    } catch {
+      setIsFullscreen((value) => !value)
+    }
+  }, [])
+
+  useEffect(() => {
+    const handleFullscreenChange = () => setIsFullscreen(Boolean(document.fullscreenElement))
+    document.addEventListener("fullscreenchange", handleFullscreenChange)
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange)
+  }, [])
+
+  useEffect(() => {
+    if (!isFullscreen) {
+      setChromeVisible(true)
+      document.body.style.overflow = ""
+      if (chromeTimer.current) clearTimeout(chromeTimer.current)
+      return
+    }
+    document.body.style.overflow = "hidden"
+    revealChrome()
+    return () => {
+      document.body.style.overflow = ""
+      if (chromeTimer.current) clearTimeout(chromeTimer.current)
+    }
+  }, [isFullscreen, revealChrome])
+
   return (
-    <div className="h-full flex flex-col bg-[var(--surface-1)]">
+    <div
+      ref={readerRef}
+      onMouseMove={revealChrome}
+      onTouchStart={revealChrome}
+      className={cn(
+        "relative flex h-full flex-col",
+        isFullscreen && "fixed inset-0 z-50",
+        readerTheme === "dark" ? "pdf-reader-dark" : "pdf-reader-light",
+      )}
+      style={{ background: readerTheme === "dark" ? "#111214" : "var(--surface-1)" }}
+    >
       {/* Toolbar */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-[var(--border-subtle)] bg-[var(--surface-0)]">
+      <div
+        className={cn(
+          "z-30 flex items-center gap-2 border-b border-[var(--border-subtle)] bg-[var(--surface-0)] px-3 py-2 transition-opacity duration-300",
+          isFullscreen && "absolute inset-x-0 top-0",
+          isFullscreen && !chromeVisible && "pointer-events-none opacity-0",
+        )}
+        onMouseMove={revealChrome}
+      >
         <h1
           className="text-sm font-medium text-[var(--text-primary)] truncate flex-1 cursor-pointer"
           onClick={handleCopyTitle}
@@ -277,7 +364,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
             variant="ghost"
             size="sm"
             disabled={pageNumber <= 1}
-            onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
+            onClick={() => setPageNumber((p) => Math.max(1, p - layoutConfig.step))}
           >
             <ChevronLeft className="size-4" />
           </Button>
@@ -288,7 +375,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
             variant="ghost"
             size="sm"
             disabled={pageNumber >= numPages}
-            onClick={() => setPageNumber((p) => Math.min(numPages, p + 1))}
+            onClick={() => setPageNumber((p) => Math.min(Math.max(1, numPages - layoutConfig.step + 1), p + layoutConfig.step))}
           >
             <ChevronRight className="size-4" />
           </Button>
@@ -315,10 +402,28 @@ export function PDFReader({ paper }: PDFReaderProps) {
             <ZoomIn className="size-4" />
           </Button>
         </div>
+        <Button variant="ghost" size="sm" onClick={() => setReaderTheme((theme) => theme === "light" ? "dark" : "light")} title={readerTheme === "light" ? "切换夜间模式" : "切换白天模式"}>
+          {readerTheme === "light" ? <Moon className="size-4" /> : <Sun className="size-4" />}
+        </Button>
+        <div className="relative">
+          <Button variant="ghost" size="sm" onClick={() => { setLayoutOpen((open) => !open); revealChrome() }} title="分页布局" aria-label="分页布局">
+            <LayoutGrid className="size-4" />
+          </Button>
+          {layoutOpen && <div className="absolute right-0 top-full z-50 mt-1 flex gap-1 rounded-lg border border-[var(--border-color)] bg-[var(--surface-0)] p-1 shadow-xl">
+            {([1, 2, 3, 4, 6] as PdfLayout[]).map((value) => (
+              <button key={value} type="button" onClick={() => { setLayout(value); setLayoutOpen(false); revealChrome() }} className={cn("rounded px-2 py-1 text-xs whitespace-nowrap hover:bg-[var(--bg-hover)]", layout === value && "bg-[var(--accent)] text-[var(--surface-0)]")}>
+                {PDF_LAYOUTS[value].label}
+              </button>
+            ))}
+          </div>}
+        </div>
+        <Button variant="ghost" size="sm" onClick={() => void toggleFullscreen()} title={isFullscreen ? "退出全屏" : "全屏阅读"}>
+          {isFullscreen ? <Minimize className="size-4" /> : <Maximize className="size-4" />}
+        </Button>
       </div>
 
       {/* PDF Canvas */}
-      <div ref={scrollRef} className="flex-1 overflow-auto flex justify-center" style={{ background: "var(--bg-root)" }}>
+      <div ref={scrollRef} className={cn("flex-1 overflow-auto", readerTheme === "dark" ? "bg-[#111214]" : "bg-[var(--bg-root)]")}>
         <Document
           file={file}
           onLoadSuccess={onDocumentLoadSuccess}
@@ -338,17 +443,19 @@ export function PDFReader({ paper }: PDFReaderProps) {
               Failed to load PDF. Check the file URL or backend.
             </p>
           }
-          className="flex flex-col items-center py-4"
+          className={cn(
+            "grid items-start justify-center gap-4 p-4",
+            layoutConfig.columns === 1 ? "grid-cols-1" : layoutConfig.columns === 2 ? "grid-cols-2" : "grid-cols-3",
+          )}
         >
-          {Array.from({ length: numPages }, (_, i) => i + 1)
-            .filter((n) => Math.abs(n - pageNumber) <= 1)
+          {visiblePages
             .map((n) => (
               <div
                 key={n}
                 data-page={n}
                 className={cn(
-                  "shadow-lg mb-4 transition-opacity duration-200",
-                  n !== pageNumber && "opacity-50",
+                  "shadow-lg transition-opacity duration-200",
+                  readerTheme === "dark" ? "bg-[#1b1c20]" : "bg-white",
                 )}
               >
                 <AnnotationLayer
@@ -369,7 +476,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
                     scale={scale}
                     renderTextLayer={true}
                     renderAnnotationLayer={true}
-                    className="bg-white"
+                    className={readerTheme === "dark" ? "bg-[#1b1c20]" : "bg-white"}
                   />
                 </AnnotationLayer>
               </div>
