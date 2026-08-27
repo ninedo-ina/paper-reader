@@ -136,3 +136,7 @@ body {
   height: 0;
   pointer-events: none;
 }
+
+.pdf-reader-scroll-hidden { scrollbar-width: none; -ms-overflow-style: none; }
+.pdf-reader-scroll-hidden::-webkit-scrollbar { width: 0; height: 0; }
+.pdf-reader-scroll { scrollbar-color: var(--text-tertiary) transparent; }

@@ -46,9 +46,11 @@ export function PDFReader({ paper }: PDFReaderProps) {
   const [layout, setLayout] = useState<1 | 2 | 3 | 4 | 6>(1)
   const [layoutOpen, setLayoutOpen] = useState(false)
   const [containerWidth, setContainerWidth] = useState(0)
+  const [scrollbarsVisible, setScrollbarsVisible] = useState(false)
   const readerRef = useRef<HTMLDivElement>(null)
   const chromeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const scrollbarTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const addToast = useToastStore((s) => s.addToast)
   const {
     annotations, notes,
@@ -276,20 +278,17 @@ export function PDFReader({ paper }: PDFReaderProps) {
   }, [pdfUrl])
 
   const layoutConfig = PDF_LAYOUTS[layout]
-  // A PDF page has a 612pt reference width. Keep the rendered page inside its
-  // grid track; otherwise a fixed zoom makes adjacent pages overlap when the
-  // viewport is narrower than two full pages.
-  const availableWidth = containerWidth > 0
-    ? containerWidth - 32 - Math.max(0, layoutConfig.columns - 1) * 16
-    : 612 * layoutConfig.columns
-  const pageWidth = containerWidth > 0
-    ? layout === 1
-      ? Math.max(280, availableWidth)
-      : Math.min(612 * scale, Math.max(1, availableWidth / layoutConfig.columns))
-    : 612 * scale
-  // Used only as a text-layer re-match token. The actual PDF size is set with
-  // `width`, so every grid item has a hard pixel bound and cannot overlap.
+  // Zoom remains effective in every layout. Pages larger than the viewport are
+  // intentionally scrollable instead of being clipped or scaled back down.
+  const pageWidth = Math.max(280, 612 * scale)
   const effectiveScale = pageWidth / 612
+
+  const revealScrollbars = useCallback(() => {
+    setScrollbarsVisible(true)
+    if (scrollbarTimer.current) clearTimeout(scrollbarTimer.current)
+    scrollbarTimer.current = setTimeout(() => setScrollbarsVisible(false), 1400)
+  }, [])
+
   const layoutStart = Math.min(
     Math.max(1, pageNumber),
     Math.max(1, numPages - layoutConfig.step + 1),
@@ -427,9 +426,11 @@ export function PDFReader({ paper }: PDFReaderProps) {
             <ZoomIn className="size-4" />
           </Button>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => setReaderTheme((theme) => theme === "light" ? "dark" : "light")} title={readerTheme === "light" ? "切换夜间模式" : "切换白天模式"}>
-          {readerTheme === "light" ? <Moon className="size-4" /> : <Sun className="size-4" />}
-        </Button>
+        {isFullscreen && (
+          <Button variant="ghost" size="sm" onClick={() => setReaderTheme((theme) => theme === "light" ? "dark" : "light")} title={readerTheme === "light" ? "切换夜间模式" : "切换白天模式"}>
+            {readerTheme === "light" ? <Moon className="size-4" /> : <Sun className="size-4" />}
+          </Button>
+        )}
         <div className="relative">
           <Button variant="ghost" size="sm" onClick={() => { setLayoutOpen((open) => !open); revealChrome() }} title="分页布局" aria-label="分页布局">
             <LayoutGrid className="size-4" />
@@ -448,7 +449,17 @@ export function PDFReader({ paper }: PDFReaderProps) {
       </div>
 
       {/* PDF Canvas */}
-      <div ref={scrollRef} className={cn("flex-1 overflow-auto", readerTheme === "dark" ? "bg-[#111214]" : "bg-[var(--bg-root)]")}>
+      <div
+        ref={scrollRef}
+        onScroll={revealScrollbars}
+        onMouseEnter={revealScrollbars}
+        onWheel={revealScrollbars}
+        className={cn(
+          "flex-1 overflow-auto pdf-reader-scroll",
+          !scrollbarsVisible && "pdf-reader-scroll-hidden",
+          readerTheme === "dark" ? "bg-[#111214]" : "bg-[var(--bg-root)]",
+        )}
+      >
         <Document
           file={file}
           onLoadSuccess={onDocumentLoadSuccess}
@@ -469,7 +480,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
             </p>
           }
           className={cn(
-            "grid w-full items-start gap-4 p-4",
+            "grid w-max min-w-full items-start gap-4 p-4",
             layoutConfig.columns === 1
               ? "grid-cols-1 justify-items-center"
               : layoutConfig.columns === 2
@@ -483,7 +494,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
                 key={`${n}-${layout}`}
                 data-page={n}
                 className={cn(
-                  "min-w-0 max-w-full overflow-hidden shadow-lg transition-opacity duration-200",
+                  "min-w-0 shadow-lg transition-opacity duration-200",
                   readerTheme === "dark" ? "bg-[#1b1c20]" : "bg-white",
                 )}
               >
