@@ -412,10 +412,12 @@ function MetadataContent({ paper }: { paper?: PaperDetailDto | null }) {
   return (
     <div className="space-y-3 pb-6">
       {/* Edit / Save toolbar */}
-      <div className="flex items-center justify-between px-1">
-        <span className="text-[11px] text-[var(--text-tertiary)]">
-          {editing ? t("editing") : ""}
-        </span>
+      <div className="flex items-center gap-2">
+        {editing && (
+          <span className="text-[11px] text-[var(--text-tertiary)] flex-1">
+            {t("editing")}
+          </span>
+        )}
         {editing ? (
           <div className="flex items-center gap-1.5">
             <Button size="sm" variant="secondary" onClick={handleCancel} disabled={saving}>
@@ -431,13 +433,13 @@ function MetadataContent({ paper }: { paper?: PaperDetailDto | null }) {
             </Button>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="flex w-full min-w-0 items-center gap-2">
             <Input
               value={metadataIdentifier}
               onChange={(event) => setMetadataIdentifier(event.target.value)}
               placeholder={t("identifierPlaceholder")}
               aria-label={t("identifierPlaceholder")}
-              className="w-[126px] h-7 text-[10px]"
+              className="h-7 min-w-0 flex-1 text-[10px]"
             />
             <button
               onClick={handleResolveMetadata}
