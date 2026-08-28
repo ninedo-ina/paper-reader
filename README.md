@@ -6,6 +6,12 @@ The repository contains the C-side product and its API. The administration conso
 
 > **Maintainer start here:** read the [documentation index](docs/README.md), then the [new maintainer guide](docs/NEW_MAINTAINER_GUIDE.md) and [complete project status](docs/PROJECT_STATUS.md). They record the real production topology, configuration rules, known risks, and release workflow without requiring previous chat context.
 
+## Current Iteration: v0.1.29
+
+- Branch: `feature/v0.1.29`
+- Scope: unify version-notification opening behavior and theme-aware popup colors.
+- Status: implementation in progress; production remains `0.1.23`.
+
 ## Current Release
 
 - Default branch: `main`
