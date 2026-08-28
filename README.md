@@ -364,7 +364,9 @@ The frontend API wrapper is in [frontend/src/lib/api](frontend/src/lib/api), and
 The project uses a release-style branch and client version for every code iteration:
 
 - `main` is the repository default and production branch; `dev` is the integration branch.
-- Create each version branch from the latest `dev`, complete development and validation there, merge it into `dev`, then merge the verified `dev` into `main`.
+- Start every iteration from the latest remote release baseline: new requirements use the next `feature/vX.Y.Z` branch; bugs from a released version use that version's `feature/vX.Y.Z-fix` branch. Do not stack work on a stale iteration branch.
+- After type checks, tests, and production builds pass on the iteration branch, commit and push immediately; merge to `dev`, validate, then merge to `main`. Do not bypass `dev` or develop directly on `main`.
+- After merging `main`, perform a real production deployment through PM2/Apache, verify locally and through the public domain, and only then run `pm2 save`; development servers are not production deployment.
 - Ordinary maintenance or feature work increments the patch number: `0.1.10` → `0.1.11` → `0.1.12`.
 - Bug-fix iterations append `-fix` to the repaired version, for example `0.1.12-fix`, with a matching branch such as `feature/v0.1.12-fix`.
 - A minor release (`0.1.x` → `0.2.0`) or major release (`0.x.y` → `1.0.0`) is created only when the product owner explicitly requests it.

@@ -14,7 +14,7 @@ interface TopbarProps {
 export function Topbar({ onProfile, onPreferences }: TopbarProps) {
 
   return (
-    <header className="h-[52px] glass-surface border-b border-[var(--border-subtle)] flex items-center px-4 select-none justify-between relative z-10">
+    <header className="h-[52px] glass-surface border-b border-[var(--border-subtle)] flex items-center px-4 select-none justify-between relative z-40">
       <div className="flex-1" />
       <div className="flex items-center gap-1 ml-3">
         <SearchDialog />

@@ -333,8 +333,8 @@ curl -fsS https://paper.pilo.eu.cc/api/health
 ## 15. 下一位维护者的起点
 
 1. 先读 [NEW_MAINTAINER_GUIDE.md](NEW_MAINTAINER_GUIDE.md) 并执行只读核验。
-2. 从远程最新 `dev` 创建新的版本分支，不要直接在 `main` 开发。
+2. 新需求从远程最新发布版本基线创建下一个版本分支；已发布版本的 Bug 从对应版本基线创建 `-fix` 分支，不要直接在 `main` 开发。
 3. 先更新 [PLAN.md](PLAN.md)，确认需求是普通迭代还是 `-fix`。
 4. 修改前沿真实 import、API 和数据链路定位，不按文件名猜入口。
-5. 完成后运行前后端全套检查，推版本分支，再依次合并 `dev`、`main`。
-6. 部署后用本机与公网两层验证，最后才 `pm2 save`，并把验证记录追加到 [MAINTENANCE.md](MAINTENANCE.md)。
+5. 完成后运行前后端全套检查，立即提交并推送版本分支，再依次合并 `dev`、`main`。
+6. 合并 `main` 后立即执行生产环境部署（不是开发模式启动），用本机与公网两层验证，最后才 `pm2 save`，并把验证记录追加到 [MAINTENANCE.md](MAINTENANCE.md)。
