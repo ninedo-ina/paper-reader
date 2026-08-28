@@ -57,15 +57,16 @@ feature/v主版本.次版本.修订版本
 
 标准流程如下：
 
-1. 从最新的 `dev` 创建下一版本分支；如果是紧急线上修复，也从当前 `main` 创建对应的 `-fix` 分支。
+1. 从远程最新发布版本对应的基线创建下一迭代分支：新需求创建下一个版本的 `feature/vX.Y.Z`；修复某个已发布版本产生的 Bug，创建该版本对应的 `feature/vX.Y.Z-fix`。不得从陈旧分支继续堆叠。
 2. 在版本分支完成开发，并同步版本文件、计划、注意事项和技术文档。
-3. 在版本分支执行类型检查、测试和生产构建，全部通过后推送远程版本分支。
-4. 通过 Pull Request 或等价的受控合并，将版本分支合并到 `dev`。
-5. 在 `dev` 上再次确认构建和集成结果；确认无误后，将 `dev` 合并到 `main`。
-6. `main` 合并完成后，按实际部署链路构建、重启生产 PM2 进程并检查公网。
-7. 保留版本分支、合并提交和验证记录，不通过强制推送改写 `main`、`dev` 或历史版本分支。
+3. 在版本分支执行完整的类型检查、测试和生产构建；全部通过后立即提交并推送远程版本分支。
+4. 通过 Pull Request 或等价的受控合并，将版本分支合并到 `dev`；合并后再次执行必要的集成验证。
+5. `dev` 验证通过后立即合并到 `main`。不得跳过 `dev`，也不得直接在 `main` 开发。
+6. `main` 合并完成后立即执行生产环境部署：重新构建生产产物，按实际 PM2/Apache 链路重启服务，完成本机和公网验收；不得以 `dev`、`development` 或临时开发服务器代替生产部署。
+7. 生产验收通过后再执行 `pm2 save`，并记录提交、构建、部署、健康检查和公网验收结果。
+8. 保留版本分支、合并提交和验证记录，不通过强制推送改写 `main`、`dev` 或历史版本分支。
 
-当前开发基线为 `feature/v0.1.23`，生产仍为已核验的 `0.1.22`；后续版本统一遵循上述流程。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。v0.1.23 在合并、全量验证和生产验收前不得宣称已发布。
+当前发布基线为 `feature/v0.1.23`，生产已核验为 `0.1.23`；后续版本统一遵循上述流程。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。
 
 ## 4. 每次代码迭代的标准流程
 
@@ -87,19 +88,11 @@ feature/v主版本.次版本.修订版本
    ./gradlew clean test bootJar
    ```
 
-8. 对前端生产进程执行构建、重启和保存：
-
-   ```bash
-   cd /root/paper-reader/frontend
-   pnpm run build
-   pm2 restart paper-reader-frontend --update-env
-   pm2 save
-   ```
-
-   后端版本变化时，JAR 文件名也会变化。不能只执行 `pm2 restart paper-reader-backend`，因为 PM2 会保留旧的 JAR 参数；应按 `docs/DEPLOY.md` 定向重建该 PM2 项，并确认 `pm2 show paper-reader-backend` 指向当前版本 JAR。删除旧项后，新 PM2 项不会继承旧进程的应用环境变量，必须在同一 shell 先加载 `backend/.env` 再启动；健康检查通过前不要保存错误进程状态。
-
-9. 检查本机进程、页面状态码、静态资源状态码和公网域名；需要时检查 Apache、Cloudflare 缓存头和 PM2 日志。
-10. 查看 `git diff --check`、`git status` 和最终 diff，提交清晰的 commit，然后推送当前版本分支。
+8. 查看 `git diff --check`、`git status` 和最终 diff，提交清晰的 commit，然后立即推送当前版本分支。提交和推送必须发生在生产部署之前。
+9. 按受控流程将已推送分支合并到 `dev`，完成集成验证后再合并到 `main`；合并前不得部署，也不得把本地未推送改动直接部署为正式版本。
+10. `main` 合并完成后立即执行生产部署：前端重新生产构建并重启 `paper-reader-frontend`；后端版本变化时按 `docs/DEPLOY.md` 定向重建并启动当前版本 JAR。不能只执行 `pm2 restart paper-reader-backend`，因为 PM2 会保留旧的 JAR 参数。删除旧项后，新 PM2 项不会继承应用环境变量，必须在同一 shell 先加载 `backend/.env` 再启动。
+11. 检查本机进程、页面状态码、静态资源状态码和公网域名；需要时检查 Apache、Cloudflare 缓存头和 PM2 日志。生产部署必须使用生产构建和 PM2/Apache 链路，不得用 `pnpm dev`、`./gradlew bootRun` 或其他开发服务器替代。
+12. 只有本机和公网验收全部通过后才执行 `pm2 save`，并记录提交、合并、构建、部署、健康检查和公网验收结果。
 
 ## 5. 实际部署链路
 
@@ -437,7 +430,7 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - 数据迁移只能修复当前明确模式。若数据库中已有其他形式的污染标题，应先审计真实 TEI/PDF，再以新版本增加独立、可测试的规则。
 - 本次只改 PaperReader C 端仓库中的解析消费层、数据库迁移和 UI；GROBID 服务及后台管理项目均不变。
 
-## 18. v0.1.23 单篇论文元数据补全（开发中，尚未部署）
+## 18. v0.1.23 单篇论文元数据补全（已部署）
 
 ### 需求与边界
 
@@ -467,7 +460,27 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 
 ### 验证与发布纪律
 
-本节记录开发状态，不代表生产已部署。完成后必须重新运行前端类型检查、全部测试、生产构建以及后端 `clean test bootJar`；固定 fixture 不得依赖公网。确认 migration、API、UI 和删除级联后，才可按 `feature/v0.1.23 -> dev -> main` 流程合并。生产仍运行 `0.1.22`，本轮不启动 V13、不批量刷新论文、不重启 PM2，也不修改生产数据。
+本节记录 v0.1.23 的实现、发布和验收结果。前后端全量验证、数据库备份、V13 迁移、PM2 重启和公网验收均已完成；本轮未批量刷新或改写既有论文数据。
+
+### 发布与验收记录（2026-08-26 UTC）
+
+- 发布提交：`main` 合并提交 `123db8c`；`dev` 合并提交为 `3c01fd0`，功能提交为 `eb81f05`；版本分支 `feature/v0.1.23` 保留。
+- 验证通过：后端 `./gradlew clean test bootJar`；前端 `pnpm install --frozen-lockfile`、`pnpm exec tsc --noEmit`、68 项测试和 `pnpm run build`。构建仅有既有 lint 警告，无阻断错误。
+- 生产发布前数据库备份：`/root/paper-reader-backups/paper_reader_20260826T141104Z_pre_v0.1.23.dump`。
+- 生产 Flyway 已成功执行 V13 `paper metadata enrichment`；已确认 `pr_paper_metadata_resolutions`、`pr_paper_metadata_sources` 和 `pr_paper_metadata_field_provenance` 三张表存在。
+- 后端 PM2 已重建并指向 `paper-reader-backend-0.1.23.jar`；前端 PM2 已重启加载新的 `.next`。两个进程均为 `online`，完成后执行 `pm2 save`。
+- 本机与公网 `/api/health` 均返回 `status=ok`、`version=0.1.23`；公网 `/zh/login` 返回 200，明暗 favicon 均返回 200 且引用参数为 `v=0.1.23`。
+- GROBID `/api/isalive` 返回 `true`；`infra-postgres`、`infra-redis` 和 `paper-reader-grobid` 未重建；生产上传目录 `/root/paper-reader/backend/uploads` 未修改。
+- 回滚基线：已保存发布前 PM2 快照 `/root/paper-reader-backups/pm2_20260826T141212Z_pre_v0.1.23.json`，并保留已验证的 `0.1.22` JAR 备份（如存在）。数据库迁移已应用后不得直接删除 Flyway 记录；如需回滚，应按部署手册恢复对应 JAR、前端构建并采用向前兼容的数据库方案。
+
+
+### 两篇历史论文补全记录（2026-08-26 UTC）
+
+- 生产库盘点确认共有两条论文记录：ID `2` 和 ID `3`，均为 *Attention Is All You Need*，都识别到 arXiv `1706.03762`。
+- 两条记录均通过生产 API 的 `resolve -> apply` 流程完成补全，没有直接绕过业务层写入。补全内容包括标题、作者、摘要、年份、arXiv ID/版本/分类、提交与更新时间、仓储 DOI 和许可证。
+- 两条记录均应用了已审核的 NeurIPS 正式出版候选：`Advances in Neural Information Processing Systems`、卷 `30`、出版页码 `5998-6008`、出版社 `Curran Associates, Inc.`、`CONFERENCE_PAPER` 和 DBLP key `conf/nips/VaswaniSPUJGKP17`。
+- 记录 ID `3` 原有年份 `2023` 与 arXiv 首次发表年份冲突，经过显式候选确认后改为 `2017`；没有覆盖用户已有的其他非空字段。
+- 最终两条记录的 `title`、`year`、`journal`、`extra_fields` 和更新时间已复核；字段 provenance 分别为论文 ID `2` 的 19 项、论文 ID `3` 的 16 项。此次仅处理现有两条记录，未启动历史库批量任务。
 
 ## 17. v0.1.22 项目交接、配置安全与新人指引
 
