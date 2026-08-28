@@ -57,13 +57,14 @@ feature/v主版本.次版本.修订版本
 
 标准流程如下：
 
-1. 从最新的 `dev` 创建下一版本分支；如果是紧急线上修复，也从当前 `main` 创建对应的 `-fix` 分支。
+1. 从远程最新发布版本对应的基线创建下一迭代分支：新需求创建下一个版本的 `feature/vX.Y.Z`；修复某个已发布版本产生的 Bug，创建该版本对应的 `feature/vX.Y.Z-fix`。不得从陈旧分支继续堆叠。
 2. 在版本分支完成开发，并同步版本文件、计划、注意事项和技术文档。
-3. 在版本分支执行类型检查、测试和生产构建，全部通过后推送远程版本分支。
-4. 通过 Pull Request 或等价的受控合并，将版本分支合并到 `dev`。
-5. 在 `dev` 上再次确认构建和集成结果；确认无误后，将 `dev` 合并到 `main`。
-6. `main` 合并完成后，按实际部署链路构建、重启生产 PM2 进程并检查公网。
-7. 保留版本分支、合并提交和验证记录，不通过强制推送改写 `main`、`dev` 或历史版本分支。
+3. 在版本分支执行完整的类型检查、测试和生产构建；全部通过后立即提交并推送远程版本分支。
+4. 通过 Pull Request 或等价的受控合并，将版本分支合并到 `dev`；合并后再次执行必要的集成验证。
+5. `dev` 验证通过后立即合并到 `main`。不得跳过 `dev`，也不得直接在 `main` 开发。
+6. `main` 合并完成后立即执行生产环境部署：重新构建生产产物，按实际 PM2/Apache 链路重启服务，完成本机和公网验收；不得以 `dev`、`development` 或临时开发服务器代替生产部署。
+7. 生产验收通过后再执行 `pm2 save`，并记录提交、构建、部署、健康检查和公网验收结果。
+8. 保留版本分支、合并提交和验证记录，不通过强制推送改写 `main`、`dev` 或历史版本分支。
 
 当前发布基线为 `feature/v0.1.23`，生产已核验为 `0.1.23`；后续版本统一遵循上述流程。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。
 
@@ -87,19 +88,11 @@ feature/v主版本.次版本.修订版本
    ./gradlew clean test bootJar
    ```
 
-8. 对前端生产进程执行构建、重启和保存：
-
-   ```bash
-   cd /root/paper-reader/frontend
-   pnpm run build
-   pm2 restart paper-reader-frontend --update-env
-   pm2 save
-   ```
-
-   后端版本变化时，JAR 文件名也会变化。不能只执行 `pm2 restart paper-reader-backend`，因为 PM2 会保留旧的 JAR 参数；应按 `docs/DEPLOY.md` 定向重建该 PM2 项，并确认 `pm2 show paper-reader-backend` 指向当前版本 JAR。删除旧项后，新 PM2 项不会继承旧进程的应用环境变量，必须在同一 shell 先加载 `backend/.env` 再启动；健康检查通过前不要保存错误进程状态。
-
-9. 检查本机进程、页面状态码、静态资源状态码和公网域名；需要时检查 Apache、Cloudflare 缓存头和 PM2 日志。
-10. 查看 `git diff --check`、`git status` 和最终 diff，提交清晰的 commit，然后推送当前版本分支。
+8. 查看 `git diff --check`、`git status` 和最终 diff，提交清晰的 commit，然后立即推送当前版本分支。提交和推送必须发生在生产部署之前。
+9. 按受控流程将已推送分支合并到 `dev`，完成集成验证后再合并到 `main`；合并前不得部署，也不得把本地未推送改动直接部署为正式版本。
+10. `main` 合并完成后立即执行生产部署：前端重新生产构建并重启 `paper-reader-frontend`；后端版本变化时按 `docs/DEPLOY.md` 定向重建并启动当前版本 JAR。不能只执行 `pm2 restart paper-reader-backend`，因为 PM2 会保留旧的 JAR 参数。删除旧项后，新 PM2 项不会继承应用环境变量，必须在同一 shell 先加载 `backend/.env` 再启动。
+11. 检查本机进程、页面状态码、静态资源状态码和公网域名；需要时检查 Apache、Cloudflare 缓存头和 PM2 日志。生产部署必须使用生产构建和 PM2/Apache 链路，不得用 `pnpm dev`、`./gradlew bootRun` 或其他开发服务器替代。
+12. 只有本机和公网验收全部通过后才执行 `pm2 save`，并记录提交、合并、构建、部署、健康检查和公网验收结果。
 
 ## 5. 实际部署链路
 

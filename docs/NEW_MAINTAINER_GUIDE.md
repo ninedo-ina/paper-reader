@@ -41,7 +41,7 @@ cd backend && ./gradlew --version
 - `origin` 指向正确 PaperReader 仓库。
 - GitHub 的 HEAD/default branch 是 `main`。
 - 没有把用户未提交的工作当成自己的改动覆盖。
-- 新迭代应从最新 `origin/dev` 创建，不从陈旧版本分支继续堆叠。
+- 新需求从远程最新发布版本基线创建下一个版本分支；已发布版本的 Bug 从对应版本基线创建 `-fix` 分支，不从陈旧版本分支继续堆叠。
 - 版本号在前后端、README 和 favicon 参数中一致。
 
 如果工作区不干净，先用 `git diff` 和 `git status` 区分现有改动；不要执行 `git reset --hard`、`git clean -fd` 或宽泛删除。
@@ -210,27 +210,28 @@ Provider 测试应验证真实 `/chat/completions`，不能只依赖 `/models`�
 
 ## 7. 开始一个迭代
 
-先同步远程并确认最新 `dev`：
+每次需求必须基于远程最新版本创建新的迭代分支，不得在旧迭代分支上继续堆叠：
 
-```bash
-cd /root/paper-reader
-git fetch origin --prune
-git switch dev
-git pull --ff-only origin dev
-git switch -c feature/v0.1.23
-```
+- 新需求、功能、维护或文档迭代：从最新发布版本创建下一个版本的 `feature/vX.Y.Z`。
+- 某个已发布版本产生的 Bug：从该版本基线创建 `feature/vX.Y.Z-fix`；修复分支完成后仍按完整发布流程交付。
+- 版本分支和修复分支合并后均永久保留，作为追溯与回滚依据。
 
-命名规则：
+标准交付顺序必须是：
 
-- 普通需求、文档或维护：下一 patch，例如 `feature/v0.1.23`。
-- 修复刚发现的 Bug：按约定使用目标版本 `-fix`，例如 `feature/v0.1.23-fix`。
-- `0.2.0`、`1.0.0` 只在产品负责人明确要求时使用。
+1. 同步远程最新基线并创建对应分支。
+2. 在分支上修改代码、测试和文档。
+3. 类型检查、测试和生产构建全部通过后，立即提交并推送远程分支。
+4. 先合并到 `dev` 并完成集成验证，再合并到 `main`；不得绕过 `dev` 或直接在 `main` 开发。
+5. 合并 `main` 后立即执行生产环境部署：构建生产产物、按 PM2/Apache 链路重启服务，并完成本机和公网验收。
+6. 生产验收通过后才执行 `pm2 save`，并将提交、构建、合并、部署和验收结果记录到维护文档。
+
+生产部署不等于开发模式启动。`pnpm dev`、`./gradlew bootRun` 仅用于隔离的本地开发验证，不能替代生产构建、生产进程重启和线上验收。
 
 开始编码前：
 
-1. 在 `docs/PLAN.md` 写清目标、验收、不包含范围。
+1. 在 `docs/PLAN.md` 写清目标、验收、不包含范围和分支类型。
 2. 在 `docs/ATTENTION.md` 写本次不可破坏的约束。
-3. 更新所有版本位置。
+3. 更新所有版本位置（如本迭代需要发布版本）。
 4. 检查工作区已有改动并保留用户内容。
 
 开发完成后，追加 `docs/MAINTENANCE.md`：问题/需求、原因、方案、验证、上线结果、遗留风险。
@@ -280,8 +281,8 @@ git ls-files backend/.env frontend/.env.local
 ## 9. Git、合并和发布流程
 
 ```text
-最新 dev
-  -> feature/vX.Y.Z 开发、测试、build
+远程最新发布版本基线
+  -> feature/vX.Y.Z 或 feature/vX.Y.Z-fix 开发、测试、build
   -> push 并永久保留版本分支
   -> merge 到 dev，验证
   -> dev merge 到 main

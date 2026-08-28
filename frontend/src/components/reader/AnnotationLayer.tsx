@@ -27,6 +27,8 @@ interface AnnotationLayerProps {
   pageNumber: number
   anchors: TextAnchor[]
   scale: number
+  /** Changes whenever the page's layout/viewport changes, forcing a fresh match. */
+  layoutKey?: string
   children?: React.ReactNode
   onCreateAnnotation?: (text: string, position: PositionRect, positions: PositionRect[], pageNumber: number, startOffset: number, endOffset: number) => void
   onCreateNote?: (text: string, position: PositionRect, positions: PositionRect[], pageNumber: number, startOffset: number, endOffset: number) => void
@@ -45,8 +47,8 @@ interface PopupMenuState {
 /** Convert viewport-absolute rects to layer-relative coordinates */
 function toLayerRelative(rects: PositionRect[], layerRect: DOMRect): PositionRect[] {
   return rects.map((r) => ({
-    x: r.x - layerRect.left,
-    y: r.y - layerRect.top,
+    x: Math.max(0, Math.min(layerRect.width - r.width, r.x - layerRect.left)),
+    y: Math.max(0, Math.min(layerRect.height - r.height, r.y - layerRect.top)),
     width: r.width,
     height: r.height,
   }))
@@ -259,6 +261,7 @@ function useTextMatchPositions(
   anchors: TextAnchor[],
   pageNumber: number,
   scale: number,
+  layoutKey: string,
 ): Map<string, PositionRect[]> {
   const [positions, setPositions] = useState<Map<string, PositionRect[]>>(new Map())
   const matchIdRef = useRef(0)
@@ -268,6 +271,11 @@ function useTextMatchPositions(
   useEffect(() => {
     const scaleChanged = prevScaleRef.current !== scale
     prevScaleRef.current = scale
+
+    // Never keep coordinates from the previous viewport while a page is
+    // being re-laid out. They are based on an old text-layer rect and can
+    // briefly appear outside the page until the fresh match is ready.
+    setPositions(new Map())
 
     // On scale change, reset stability tracking so we wait for the text layer
     // to be re-rendered by react-pdf before matching
@@ -361,18 +369,18 @@ function useTextMatchPositions(
       cancelled = true
       clearTimeout(timer)
     }
-  }, [anchors, pageNumber, scale, layerRef])
+  }, [anchors, pageNumber, scale, layoutKey, layerRef])
 
   return positions
 }
 
-export function AnnotationLayer({ pageNumber, anchors, scale, children, onCreateAnnotation, onCreateNote, onAskAI }: AnnotationLayerProps) {
+export function AnnotationLayer({ pageNumber, anchors, scale, layoutKey = "", children, onCreateAnnotation, onCreateNote, onAskAI }: AnnotationLayerProps) {
   const [popup, setPopup] = useState<PopupMenuState | null>(null)
   const layerRef = useRef<HTMLDivElement>(null)
   const addToast = useToastStore((s) => s.addToast)
 
   const pageAnchors = anchors.filter((a) => a.pageNumber === pageNumber)
-  const matchedPositions = useTextMatchPositions(layerRef, anchors, pageNumber, scale)
+  const matchedPositions = useTextMatchPositions(layerRef, anchors, pageNumber, scale, layoutKey)
 
   const computeOffsets = useCallback((searchText: string): { startOffset: number; endOffset: number } => {
     const layer = layerRef.current
@@ -574,31 +582,29 @@ interface MergedAnchor {
 /**
  * Merge annotation + note anchors on the same text into a single underline.
  * Yellow = annotation only, Purple = note only, Blue = both.
- * Tries real-time text matching first, falls back to stored coordinates.
+ * Uses only real-time text matching. Stored coordinates are persisted for
+ * editing/navigation, but belong to an old viewport and must not be rendered
+ * after a zoom or layout change because they can drift outside the page.
  */
 function mergeAnchors(anchors: TextAnchor[], matchedPositions: Map<string, PositionRect[]>): MergedAnchor[] {
-  const groups = new Map<string, { hasAnnotation: boolean; hasNote: boolean; fallbackRects: PositionRect[] }>()
+  const groups = new Map<string, { hasAnnotation: boolean; hasNote: boolean }>()
   for (const a of anchors) {
     const key = `${a.pageNumber}:${a.text}`
-    const storedRects = a.positions?.length ? a.positions : [a.position]
     const existing = groups.get(key)
     if (existing) {
       if (a.type === "annotation") existing.hasAnnotation = true
       if (a.type === "note") existing.hasNote = true
-      if (!existing.fallbackRects.length) existing.fallbackRects = storedRects
     } else {
       groups.set(key, {
         hasAnnotation: a.type === "annotation",
         hasNote: a.type === "note",
-        fallbackRects: storedRects,
       })
     }
   }
   return Array.from(groups.entries()).map(([key, g]) => ({
     key,
     color: g.hasAnnotation && g.hasNote ? "#60A5FA" : g.hasNote ? "#A78BFA" : "#FBBF24",
-    // Use real-time matched positions, fall back to stored coordinates if text matching fails
-    rects: matchedPositions.get(key) || g.fallbackRects,
+    rects: matchedPositions.get(key) || [],
     noteOnly: g.hasNote && !g.hasAnnotation,
   }))
 }
