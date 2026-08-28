@@ -43,7 +43,7 @@ export function VersionPopup() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <Card variant="glass" className="w-full max-w-lg mx-4 shadow-2xl">
+      <Card variant="default" className="w-full max-w-lg mx-4 bg-[var(--surface-0)] text-[var(--text-primary)] shadow-2xl">
         <CardHeader className="text-center">
           <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-[var(--accent)]/10">
             <Sparkles className="size-6 text-[var(--accent)]" />

@@ -18,6 +18,14 @@ export function NotificationDropdown() {
   const markAllRead = useNotificationStore((s) => s.markAllRead)
   const setShowVersionPopup = useNotificationStore((s) => s.setShowVersionPopup)
 
+  const handleNotificationClick = (id: string, actionKey?: string) => {
+    markRead(id)
+    setOpen(false)
+    if (actionKey === "version") {
+      setShowVersionPopup(true)
+    }
+  }
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
@@ -34,6 +42,7 @@ export function NotificationDropdown() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
+        aria-label={t("title")}
         className="relative flex size-8 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-2)] transition-colors"
       >
         <Bell className="size-4" />
@@ -89,7 +98,7 @@ export function NotificationDropdown() {
               filtered.map((n) => (
                 <div
                   key={n.id}
-                  onClick={() => markRead(n.id)}
+                  onClick={() => handleNotificationClick(n.id, n.actionKey)}
                   className={cn(
                     "px-4 py-3 border-b border-[var(--border-subtle)] cursor-pointer transition-colors hover:bg-[var(--surface-1)]",
                     !n.read && "bg-[var(--accent)]/5",
@@ -115,8 +124,7 @@ export function NotificationDropdown() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
-                        setShowVersionPopup(true)
-                        setOpen(false)
+                        handleNotificationClick(n.id, n.actionKey)
                       }}
                       className="mt-2 text-xs text-[var(--accent)] hover:underline"
                     >
