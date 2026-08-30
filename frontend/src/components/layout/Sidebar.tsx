@@ -2,11 +2,11 @@
 
 import { useState, useEffect, type ElementType } from "react"
 import { useTranslations } from "next-intl"
-import { Library, Clock, FileText, Star, Tag, MessageCircle, MessageSquare, PanelLeftClose, PanelLeftOpen, Highlighter } from "lucide-react"
+import { Library, Clock, FileText, PenLine, Tag, MessageCircle, MessageSquare, PanelLeftClose, PanelLeftOpen, Highlighter } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { usePaperStore } from "@/stores/paper-store"
 import { useAuthStore } from "@/stores/auth-store"
-import { PaperReadBrand, PaperReadMark } from "@/components/ui/Logo"
+import { PaperHelperBrand, PaperHelperMark } from "@/components/ui/Logo"
 
 const sections = [
   {
@@ -14,7 +14,7 @@ const sections = [
     items: [
       { key: "library", icon: Library, dynamicBadge: true },
       { key: "history", icon: Clock, badge: "0" },
-      { key: "starred", icon: Star, dynamicBadge: true },
+      { key: "created", icon: PenLine, dynamicBadge: true },
     ],
   },
   {
@@ -39,11 +39,6 @@ interface SidebarProps {
   onNavigate?: (key: string) => void
 }
 
-interface SidebarSection {
-  labelKey: string
-  items: SidebarItem[]
-}
-
 interface SidebarItem {
   key: string
   icon: ElementType
@@ -54,18 +49,16 @@ interface SidebarItem {
 export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
   const t = useTranslations("nav")
   const [collapsed, setCollapsed] = useState(false)
-  const { total, favoriteCount, forumBadge, loadPapers, loadCounts } = usePaperStore()
+  const { totalCount, createCount, forumBadge, activeTab, loadCounts } = usePaperStore()
   const accessToken = useAuthStore((s) => s.accessToken)
 
   useEffect(() => {
     if (accessToken) {
-      loadPapers(0)
       loadCounts()
     }
-  }, [accessToken, loadPapers, loadCounts])
+  }, [accessToken, loadCounts])
 
-  const papersBadge = total > 99 ? "99+" : String(total)
-  const favoritesBadge = favoriteCount > 99 ? "99+" : String(favoriteCount)
+  const papersBadge = totalCount > 99 ? "99+" : String(totalCount)
   const forumBadgeStr = forumBadge > 99 ? "99+" : String(forumBadge)
 
   const renderCollapsedItem = (item: SidebarItem) => (
@@ -76,7 +69,7 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
       className={cn(
         "flex items-center justify-center w-9 h-9 mx-auto rounded-[10px] transition-all duration-150",
         "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]",
-        activePanel === item.key &&
+        ((activePanel === item.key && !(item.key === "library" && activeTab === "create")) || (item.key === "created" && activePanel === "library" && activeTab === "create")) &&
           "bg-[var(--bg-active)] text-[var(--text-primary)]",
       )}
     >
@@ -86,7 +79,7 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
 
   const renderExpandedItem = (item: SidebarItem) => {
     const badge = item.dynamicBadge
-      ? (item.key === "starred" ? favoritesBadge : item.key === "circle" ? forumBadgeStr : papersBadge)
+      ? (item.key === "circle" ? forumBadgeStr : item.key === "created" ? (createCount > 99 ? "99+" : String(createCount)) : papersBadge)
       : item.badge
 
     return (
@@ -96,7 +89,7 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
         className={cn(
           "flex items-center gap-2.5 px-3 py-2 mx-1 rounded-[10px] text-[13.5px] font-[470] transition-all duration-150",
           "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]",
-          activePanel === item.key &&
+          ((activePanel === item.key && !(item.key === "library" && activeTab === "create")) || (item.key === "created" && activePanel === "library" && activeTab === "create")) &&
             "bg-[var(--bg-active)] text-[var(--text-primary)] font-[550]",
         )}
       >
@@ -135,11 +128,11 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
 
       {collapsed ? (
         <div className="flex justify-center mb-1">
-          <PaperReadMark className="size-7 rounded-[8px] text-[13px]" />
+          <PaperHelperMark className="size-7 rounded-[8px] text-[13px]" />
         </div>
       ) : (
         <div className="flex items-center justify-center px-3 mb-4">
-          <PaperReadBrand />
+          <PaperHelperBrand />
         </div>
       )}
 
@@ -169,7 +162,7 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
 
           <div className="border-t border-[var(--border-subtle)] px-3 pt-3 pb-1 text-center">
             <p className="text-[13px] font-[650] tracking-[-0.1px] text-[var(--text-primary)]">
-              PaperReader
+              PaperHelper
             </p>
             <p className="mt-1 text-[11px] text-[var(--text-tertiary)]">
               More Interest Less Interests

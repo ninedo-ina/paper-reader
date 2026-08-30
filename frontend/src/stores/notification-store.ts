@@ -68,7 +68,7 @@ export const useNotificationStore = create<NotificationState>()(
             id: "version-info",
             type: "system",
             title: "系统功能介绍",
-            message: "欢迎使用 PaperReader！点击查看当前版本功能特性",
+            message: "欢迎使用 PaperHelper！点击查看当前版本功能特性",
             actionKey: "version",
           })
         }

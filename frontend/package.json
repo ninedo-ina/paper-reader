@@ -1,6 +1,6 @@
 {
-  "name": "paper-reader-frontend",
-  "version": "0.1.29",
+  "name": "paperhelper-frontend",
+  "version": "0.1.30",
   "private": true,
   "scripts": {
     "dev": "next dev",

@@ -1,15 +1,15 @@
 {
   "app": {
-    "name": "PaperReader",
+    "name": "PaperHelper",
     "tagline": "Academic Paper Reading Platform"
   },
   "nav": {
-    "library": "My Papers",
+    "library": "My Bookshelf",
     "upload": "Upload",
     "history": "Reading History",
     "notes": "My Notes",
     "annotations": "Annotations",
-    "starred": "Starred",
+    "created": "My Creations",
     "tags": "Tags",
     "settings": "Preferences",
     "circle": "Research Circles",
@@ -210,7 +210,7 @@
     "empty": "No notifications"
   },
   "version": {
-    "title": "Welcome to PaperReader",
+    "title": "Welcome to PaperHelper",
     "subtitle": "Your academic paper reading & management platform",
     "gotIt": "Got it",
     "features": {
@@ -238,8 +238,8 @@
     "deleteDescription": "The paper record and its annotations, notes, reading history, and parsed content cannot be recovered.",
     "deleteOriginalFile": "Also delete the original file",
     "deleteOriginalFileHint": "When selected, the server will not retain a copy of this file.",
-    "deleteRecordOnlyHint": "When not selected, only the PaperReader record is deleted and the server file is retained.",
-    "noOriginalFile": "This paper has no uploaded original file. Only its PaperReader record and related data will be deleted.",
+    "deleteRecordOnlyHint": "When not selected, only the PaperHelper record is deleted and the server file is retained.",
+    "noOriginalFile": "This paper has no uploaded original file. Only its PaperHelper record and related data will be deleted.",
     "deleting": "Deleting...",
     "deleteSuccess": "Paper deleted",
     "deleteFailed": "Failed to delete paper",
@@ -256,8 +256,8 @@
     "allTab": "All",
     "createTab": "Created",
     "importTab": "Imported",
+    "favoriteTab": "Favorites",
     "saved": "Saved",
-    "starredPapers": "Starred Papers",
     "participants": "Participants",
     "noPaperSelected": "Upload a paper or select one from your library to start reading"
   },
@@ -312,7 +312,7 @@
     "confirm": "Confirm",
     "search": "Search",
     "noData": "No data",
-    "myPapers": "My Papers",
+    "myPapers": "My Bookshelf",
     "papers": "papers",
     "error": "Something went wrong"
   }

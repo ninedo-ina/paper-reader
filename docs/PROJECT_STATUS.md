@@ -1,4 +1,4 @@
-# PaperReader 项目完整现状
+# PaperHelper 项目完整现状
 
 > 当前发布版本：`0.1.23`；发布分支：`feature/v0.1.23`；生产版本：`0.1.23`（2026-08-26 UTC 已核验）；核对日期：2026-08-26（UTC）；生产域名：`https://paper.pilo.eu.cc`
 
@@ -6,7 +6,7 @@
 
 ## 1. 项目边界与仓库关系
 
-PaperReader 是面向用户的论文阅读工作台，本仓库同时包含 C 端 Next.js 客户端和 Kotlin/Spring Boot API。
+PaperHelper 是面向用户的论文阅读工作台，本仓库同时包含 C 端 Next.js 客户端和 Kotlin/Spring Boot API。
 
 | 范围 | 位置 | 是否属于本仓库 |
 | --- | --- | --- |
@@ -15,7 +15,7 @@ PaperReader 是面向用户的论文阅读工作台，本仓库同时包含 C �
 | GROBID 解析服务 | 当前机器上的 `paper-reader-grobid` 容器 | 否，本仓库只有调用客户端和本地 Compose 定义 |
 | PostgreSQL / Redis | 当前机器共享基础设施容器 | 否，不应随本项目部署盲目重建 |
 
-后台管理项目与本项目使用同一 PostgreSQL 实例，但后台数据位于 `paperread_admin` schema。本仓库的 Flyway 只维护 PaperReader 自身的 `pr_*` 表。除非需求明确同时覆盖两个项目，否则不要修改、提交或部署 `/root/paperread-admin`。
+后台管理项目与本项目使用同一 PostgreSQL 实例，但后台数据位于 `paperread_admin` schema。本仓库的 Flyway 只维护 PaperHelper 自身的 `pr_*` 表。除非需求明确同时覆盖两个项目，否则不要修改、提交或部署 `/root/paperread-admin`。
 
 ## 2. 当前发布与 Git 状态
 
@@ -339,8 +339,8 @@ curl -fsS https://paper.pilo.eu.cc/api/health
 5. 完成后运行前后端全套检查，立即提交并推送版本分支，再依次合并 `dev`、`main`。
 6. 合并 `main` 后立即执行生产环境部署（不是开发模式启动），用本机与公网两层验证，最后才 `pm2 save`，并把验证记录追加到 [MAINTENANCE.md](MAINTENANCE.md)。
 
-## v0.1.29 当前迭代
+## v0.1.30 当前迭代
 
-- 分支：`feature/v0.1.29`。
-- 内容：统一版本通知内容与“查看版本功能”的弹窗行为，并适配明暗主题背景。
+- 分支：`feature/v0.1.30`。
+- 内容：产品更名为 PaperHelper、图标改为 H，并完成我的书架四个 Tab（所有、创建、导入、收藏）与侧栏菜单调整。
 - 状态：实现与回归测试已完成，待全量构建、合并和生产验收；生产仍为 `0.1.23`。

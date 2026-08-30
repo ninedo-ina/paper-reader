@@ -1,16 +1,16 @@
-# PaperReader
+# PaperHelper
 
-PaperReader is an academic paper reading workspace. It combines a Next.js client, a Kotlin/Spring Boot API, PDF storage, GROBID metadata extraction, annotations, notes, AI-assisted reading, research discussions, and private messaging.
+PaperHelper is an academic paper reading workspace. It combines a Next.js client, a Kotlin/Spring Boot API, PDF storage, GROBID metadata extraction, annotations, notes, AI-assisted reading, research discussions, and private messaging.
 
 The repository contains the C-side product and its API. The administration console is maintained separately in the companion project at `/root/paperread-admin`; it uses the same PostgreSQL instance but keeps administrator data in the `paperread_admin` schema.
 
 > **Maintainer start here:** read the [documentation index](docs/README.md), then the [new maintainer guide](docs/NEW_MAINTAINER_GUIDE.md) and [complete project status](docs/PROJECT_STATUS.md). They record the real production topology, configuration rules, known risks, and release workflow without requiring previous chat context.
 
-## Current Iteration: v0.1.29
+## Current Iteration: v0.1.30
 
-- Branch: `feature/v0.1.29`
-- Scope: unify version-notification opening behavior and theme-aware popup colors.
-- Status: implementation in progress; production remains `0.1.23`.
+- Branch: `feature/v0.1.30`
+- Scope: rename the product to PaperHelper, refresh the H brand mark, and reorganize the bookshelf with a Favorites tab.
+- Status: implementation in progress; production remains `0.1.23` until this release is deployed.
 
 ## Current Release
 
@@ -25,20 +25,20 @@ The repository contains the C-side product and its API. The administration conso
 
 ## Product Preview
 
-The current client layout keeps the brand centered in the left navigation header, places the collapse control on the sidebar boundary, and centers the original English footer copy. The single-letter `R` mark and browser favicon use high-contrast light/dark variants.
+The current client layout keeps the brand centered in the left navigation header, places the collapse control on the sidebar boundary, and centers the original English footer copy. The single-letter `H` mark and browser favicon use high-contrast light/dark variants.
 
-![Expanded PaperReader sidebar in light mode](docs/screenshots/paperreader-expanded-light.png)
+![Expanded PaperHelper sidebar in light mode](docs/screenshots/paperhelper-expanded-light.png)
 
-![Collapsed PaperReader sidebar in light mode](docs/screenshots/paperreader-collapsed-light.png)
+![Collapsed PaperHelper sidebar in light mode](docs/screenshots/paperhelper-collapsed-light.png)
 
-![Expanded PaperReader sidebar in dark mode](docs/screenshots/paperreader-expanded-dark.png)
+![Expanded PaperHelper sidebar in dark mode](docs/screenshots/paperhelper-expanded-dark.png)
 
-The browser icon assets are [paperread-favicon-light.svg](frontend/public/paperread-favicon-light.svg) and [paperread-favicon-dark.svg](frontend/public/paperread-favicon-dark.svg). The client updates the active favicon when the selected theme changes.
+The browser icon assets are [paperhelper-favicon-light.svg](frontend/public/paperhelper-favicon-light.svg) and [paperhelper-favicon-dark.svg](frontend/public/paperhelper-favicon-dark.svg). The client updates the active favicon when the selected theme changes.
 
 AI Provider requests use the OpenAI-compatible `/models` and
 `/chat/completions` endpoints. The client first tries the configured Provider
 directly and, when browser CORS or another network policy prevents access,
-retries through the authenticated PaperReader relay. The relay only accepts
+retries through the authenticated PaperHelper relay. The relay only accepts
 HTTPS public targets, supports the standard `/v1` path correction, does not
 persist API keys, and is available only to authenticated users.
 
@@ -349,17 +349,17 @@ The frontend API wrapper is in [frontend/src/lib/api](frontend/src/lib/api), and
 
 ## UI Conventions
 
-- The product brand is `PaperReader`; the compact mark is a single uppercase `R`.
-- The left sidebar uses a centered brand header and centered footer copy: `PaperReader` and `More Interest Less Interests`.
+- The product brand is `PaperHelper`; the compact mark is a single uppercase `H`.
+- The left sidebar uses a centered brand header and centered footer copy: `PaperHelper` and `More Interest Less Interests`.
 - The collapse button is positioned on the sidebar boundary so it does not push the brand when the sidebar is expanded.
 - Favicon and logo colors remain grayscale and follow the selected light/dark theme.
 - Preferences are available from the avatar menu between Profile and Log Out.
 - In the AI chat panel, an unconfigured Provider is shown as a warning. The warning and the composer’s Provider action open Preferences directly on the AI configuration tab. The model selector stays unavailable until a Provider is active.
-- Direct Provider conversations are stored in the browser under the `pr-ai-direct-chats` Zustand store. They are separate from the backend `/api/ai-chats` records because they use the user-selected Provider; the Provider API key is sent to PaperReader only when the authenticated relay is needed after a browser network/CORS failure.
+- Direct Provider conversations are stored in the browser under the `pr-ai-direct-chats` Zustand store. They are separate from the backend `/api/ai-chats` records because they use the user-selected Provider; the Provider API key is sent to PaperHelper only when the authenticated relay is needed after a browser network/CORS failure.
 - Provider relay endpoints are `/api/provider-relay/models` and `/api/provider-relay/chat/completions`; they forward only the current operation and never log the supplied Provider key.
 - AI replies separate `<think>`/reasoning content into a default-collapsed disclosure. PDF selection can open the AI panel with the selected quote, paper metadata, and relevant GROBID-extracted passages as hidden context.
 - Uploaded PDFs are parsed asynchronously through GROBID `/api/processFulltextDocument`; parsing status and failures are visible without blocking PDF reading.
-- GROBID metadata titles pass through a conservative PaperReader-side cleanup for explicitly recognized publisher permission boilerplate; ordinary long titles are never truncated by length heuristics.
+- GROBID metadata titles pass through a conservative PaperHelper-side cleanup for explicitly recognized publisher permission boilerplate; ordinary long titles are never truncated by length heuristics.
 - `/api/health` reads the backend version from Spring Boot build metadata, so the reported release always follows the JAR being executed instead of a controller constant.
 - Paper cards reserve a dedicated action area beside the category badge. Their delete action uses a confirmation dialog and lets users choose whether the server should also remove the stored original file.
 - The current-paper card uses a short inset capsule, a low-contrast border, and theme-specific layered highlights/shadows instead of a heavy full-height black edge.
