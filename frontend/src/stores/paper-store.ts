@@ -8,8 +8,7 @@ import { getForumStats } from "@/lib/api/forum"
 import { useReaderStore } from "@/stores/reader-store"
 import type { PaperListDto, PaperDetailDto, CreatePaperRequest, UpdatePaperRequest } from "@/lib/api/types"
 
-export type TabKey = "all" | "create" | "import"
-export type FavoriteTabKey = "all" | "create" | "import"
+export type TabKey = "all" | "create" | "import" | "favorite"
 
 interface PaperState {
   // 论文列表
@@ -22,10 +21,8 @@ interface PaperState {
   activeTab: TabKey
   sourceTypeFilter: string | undefined
 
-  // 收藏面板
-  activeFavoriteTab: FavoriteTabKey
+  // 收藏统计
   favoriteCount: number
-  favoriteSourceType: string | undefined
 
   // 当前论文
   currentPaper: PaperDetailDto | null
@@ -51,7 +48,6 @@ interface PaperState {
   refreshPaper: (id: number) => Promise<void>
   loadCounts: () => Promise<void>
   setActiveTab: (tab: TabKey) => void
-  setFavoriteTab: (tab: FavoriteTabKey) => void
   uploadPdf: (file: File) => Promise<PaperDetailDto>
   uploadFromUrl: (url: string, title?: string) => Promise<PaperDetailDto>
   createPaper: (data: CreatePaperRequest) => Promise<PaperDetailDto>
@@ -71,9 +67,7 @@ export const usePaperStore = create<PaperState>((set, get) => ({
   isListLoading: false,
   activeTab: "all",
   sourceTypeFilter: undefined,
-  activeFavoriteTab: "all",
   favoriteCount: 0,
-  favoriteSourceType: undefined,
   currentPaper: null,
   isDetailLoading: false,
   error: null,
@@ -138,21 +132,16 @@ export const usePaperStore = create<PaperState>((set, get) => ({
   },
 
   setActiveTab: (tab) => {
-    const sourceType = tab === "all" ? undefined : tab === "create" ? "create" : "import"
+    const sourceType = tab === "create" ? "create" : tab === "import" ? "import" : undefined
+    const favorite = tab === "favorite"
     set({ activeTab: tab, sourceTypeFilter: sourceType, page: 0 })
-    get().loadPapers(0, sourceType)
-  },
-
-  setFavoriteTab: (tab) => {
-    const sourceType = tab === "all" ? undefined : tab === "create" ? "create" : "import"
-    set({ activeFavoriteTab: tab, favoriteSourceType: sourceType, page: 0 })
-    get().loadPapers(0, sourceType, true)
+    void get().loadPapers(0, sourceType, favorite)
   },
 
   uploadPdf: async (file) => {
     set({ error: null })
     const paper = await papersApi.uploadPdf(file)
-    const list = await papersApi.listPapers(0, 20)
+    const list = await papersApi.listPapers(0, 20, "import")
     set({
       papers: list.items,
       total: list.total,
@@ -169,7 +158,7 @@ export const usePaperStore = create<PaperState>((set, get) => ({
   uploadFromUrl: async (url, title) => {
     set({ error: null })
     const paper = await papersApi.uploadFromUrl({ url, title })
-    const list = await papersApi.listPapers(0, 20)
+    const list = await papersApi.listPapers(0, 20, "import")
     set({
       papers: list.items,
       total: list.total,
@@ -186,7 +175,7 @@ export const usePaperStore = create<PaperState>((set, get) => ({
   createPaper: async (data) => {
     set({ error: null })
     const paper = await papersApi.createPaper(data)
-    const list = await papersApi.listPapers(0, 20)
+    const list = await papersApi.listPapers(0, 20, "create")
     set({
       papers: list.items,
       total: list.total,
@@ -220,10 +209,17 @@ export const usePaperStore = create<PaperState>((set, get) => ({
     const paper = get().papers.find((p) => p.id === id)
     if (!paper) return
     const updated = await papersApi.toggleFavorite(id, !paper.favorite)
-    set((s) => ({
-      papers: s.papers.map((p) => (p.id === id ? { ...p, ...updated } as unknown as PaperListDto : p)),
-      currentPaper: s.currentPaper?.id === id ? updated : s.currentPaper,
-    }))
+    set((s) => {
+      const isFavoriteTab = s.activeTab === "favorite"
+      const nextPapers = isFavoriteTab && !updated.favorite
+        ? s.papers.filter((p) => p.id !== id)
+        : s.papers.map((p) => (p.id === id ? { ...p, ...updated } as unknown as PaperListDto : p))
+      return {
+        papers: nextPapers,
+        total: isFavoriteTab && !updated.favorite ? Math.max(0, s.total - 1) : s.total,
+        currentPaper: s.currentPaper?.id === id ? updated : s.currentPaper,
+      }
+    })
     get().loadCounts().catch(() => {})
   },
 

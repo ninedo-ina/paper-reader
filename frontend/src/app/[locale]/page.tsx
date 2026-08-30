@@ -21,7 +21,7 @@ import { usePaperStore } from "@/stores/paper-store"
 import { useNotificationStore } from "@/stores/notification-store"
 import type { NoteDto, AnnotationDto } from "@/lib/api/types"
 
-type SidebarPanel = "library" | "history" | "notes" | "annotations" | "starred" | null
+type SidebarPanel = "library" | "history" | "notes" | "annotations" | null
 type MainView = "reader" | "forum" | "chats"
 type PreferencesTab = "ui" | "ai"
 
@@ -33,7 +33,7 @@ export default function Home() {
   const [showPreferences, setShowPreferences] = useState(false)
   const [preferencesTab, setPreferencesTab] = useState<PreferencesTab>("ui")
   const [showProfile, setShowProfile] = useState(false)
-  const { currentPaper, loadPaper, refreshPaper } = usePaperStore()
+  const { currentPaper, loadPaper, refreshPaper, setActiveTab } = usePaperStore()
   const initSystemNotifications = useNotificationStore((s) => s.initSystemNotifications)
   const currentPaperId = currentPaper?.id
   const currentPaperParseStatus = currentPaper?.parseStatus
@@ -74,18 +74,20 @@ export default function Home() {
       setShowPreferences(true)
       return
     }
-    // Reader sidebar panels
-    setMainView("reader")
-    if (key === "starred") {
-      setSidebarPanel((p) => (p === "starred" ? null : "starred"))
+    if (key === "created") {
+      setMainView("reader")
+      setActiveTab("create")
+      setSidebarPanel("library")
       return
     }
+    // Reader sidebar panels
+    setMainView("reader")
     if (key === "library" || key === "history" || key === "notes" || key === "annotations") {
       setSidebarPanel((p) => (p === key ? null : key as SidebarPanel))
       return
     }
     setSidebarPanel(null)
-  }, [])
+  }, [setActiveTab])
 
   const handlePaperSelect = useCallback(
     (id: number) => {
@@ -161,18 +163,6 @@ export default function Home() {
                 onSelect={(ann: AnnotationDto) => handlePaperSelect(ann.paperId)}
                 onNavigateToPaper={handlePaperSelect}
                 onClose={() => setSidebarPanel(null)}
-              />
-            </aside>
-          )}
-
-          {/* Starred panel */}
-          {showReaderPanel && sidebarPanel === "starred" && (
-            <aside className="w-72 border-r border-[var(--border-subtle)] glass-surface flex flex-col shrink-0">
-              <PaperList
-                activeId={currentPaper?.id ?? null}
-                onSelect={handlePaperSelect}
-                onClose={() => setSidebarPanel(null)}
-                favoriteMode
               />
             </aside>
           )}

@@ -1,15 +1,15 @@
 {
   "app": {
-    "name": "PaperReader",
+    "name": "PaperHelper",
     "tagline": "论文在线阅读平台"
   },
   "nav": {
-    "library": "我的论文",
+    "library": "我的书架",
     "upload": "上传论文",
     "history": "阅读历史",
     "notes": "我的笔记",
     "annotations": "论文批注",
-    "starred": "收藏论文",
+    "created": "我的创作",
     "tags": "标签",
     "settings": "偏好设置",
     "circle": "科研圈子",
@@ -210,7 +210,7 @@
     "empty": "暂无通知"
   },
   "version": {
-    "title": "欢迎使用 PaperReader",
+    "title": "欢迎使用 PaperHelper",
     "subtitle": "一站式学术论文阅读与管理平台",
     "gotIt": "知道了",
     "features": {
@@ -238,8 +238,8 @@
     "deleteDescription": "删除后，论文记录以及相关的批注、笔记、阅读记录和解析内容将无法恢复。",
     "deleteOriginalFile": "同时删除原文件",
     "deleteOriginalFileHint": "勾选后，服务器将不会保留此文件副本。",
-    "deleteRecordOnlyHint": "未勾选时仅删除 PaperReader 中的记录，服务器原文件仍会保留。",
-    "noOriginalFile": "这篇论文没有上传的原文件，只会删除 PaperReader 中的论文记录和关联数据。",
+    "deleteRecordOnlyHint": "未勾选时仅删除 PaperHelper 中的记录，服务器原文件仍会保留。",
+    "noOriginalFile": "这篇论文没有上传的原文件，只会删除 PaperHelper 中的论文记录和关联数据。",
     "deleting": "删除中...",
     "deleteSuccess": "论文已删除",
     "deleteFailed": "删除论文失败",
@@ -256,8 +256,8 @@
     "allTab": "所有",
     "createTab": "创建",
     "importTab": "导入",
+    "favoriteTab": "收藏",
     "saved": "已保存",
-    "starredPapers": "收藏论文",
     "participants": "参与者",
     "noPaperSelected": "请从左侧上传论文或选择已上传的论文开始阅读"
   },
@@ -312,7 +312,7 @@
     "confirm": "确认",
     "search": "搜索",
     "noData": "暂无数据",
-    "myPapers": "我的论文",
+    "myPapers": "我的书架",
     "papers": "篇论文",
     "error": "出错了"
   }

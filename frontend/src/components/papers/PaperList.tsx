@@ -20,17 +20,15 @@ interface PaperListProps {
   onUpload?: () => void
   onCreate?: () => void
   onClose?: () => void
-  favoriteMode?: boolean
 }
 
-export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose, favoriteMode }: PaperListProps) {
+export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose }: PaperListProps) {
   const t = useTranslations("common")
   const tp = useTranslations("papers")
   const {
     papers, total, page, isListLoading, error, activeTab,
     totalCount, createCount, importCount, favoriteCount,
-    activeFavoriteTab, loadPapers, loadCounts,
-    setActiveTab, setFavoriteTab, deletePaper,
+    loadPapers, loadCounts, setActiveTab, deletePaper,
   } = usePaperStore()
   const pageSize = 20
   const totalPages = Math.ceil(total / pageSize)
@@ -45,33 +43,35 @@ export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose, fav
 
   useEffect(() => {
     if (accessToken) {
-      loadPapers(0)
+      const tab = usePaperStore.getState().activeTab
+      const sourceType = tab === "create" ? "create" : tab === "import" ? "import" : undefined
+      loadPapers(0, sourceType, tab === "favorite")
       loadCounts()
     }
   }, [accessToken, loadPapers, loadCounts])
 
-  const handleRefresh = useCallback(() => { loadPapers(page) }, [loadPapers, page])
+  const handleRefresh = useCallback(() => {
+    const tab = usePaperStore.getState().activeTab
+    const sourceType = tab === "create" ? "create" : tab === "import" ? "import" : undefined
+    loadPapers(page, sourceType, tab === "favorite")
+  }, [loadPapers, page])
 
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 py-3 border-b border-[var(--border-subtle)]">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-[var(--text-primary)]">
-            {favoriteMode ? (tp("starredPapers") || "收藏论文") : (t("myPapers") || "我的论文")}
+            {t("myPapers")}
           </h2>
           <div className="flex items-center gap-0.5">
-            {!favoriteMode && (
-              <>
-                <button onClick={onCreate} title="创建论文"
-                  className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all">
-                  <Plus className="w-3.5 h-3.5" />
-                </button>
-                <button onClick={onUpload} title="导入论文"
-                  className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all">
-                  <Upload className="w-3.5 h-3.5" />
-                </button>
-              </>
-            )}
+            <button onClick={onCreate} title="创建论文"
+              className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all">
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+            <button onClick={onUpload} title="导入论文"
+              className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all">
+              <Upload className="w-3.5 h-3.5" />
+            </button>
             <button onClick={handleRefresh} title="刷新" disabled={isListLoading}
               className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all disabled:opacity-50">
               <RefreshCw className={cn("w-3.5 h-3.5", isListLoading && "animate-spin")} />
@@ -87,27 +87,16 @@ export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose, fav
       </div>
 
       {/* TabBar */}
-      {favoriteMode ? (
-        <TabBar
-          tabs={[
-            { key: "all", label: tp("allTab") || "全部", count: favoriteCount },
-            { key: "create", label: tp("createTab"), count: 0 },
-            { key: "import", label: tp("importTab"), count: 0 },
-          ]}
-          activeKey={activeFavoriteTab}
-          onChange={(key) => setFavoriteTab(key as "all" | "create" | "import")}
-        />
-      ) : (
-        <TabBar
-          tabs={[
-            { key: "all", label: tp("allTab") || "所有", count: totalCount },
-            { key: "create", label: tp("createTab"), count: createCount },
-            { key: "import", label: tp("importTab"), count: importCount },
-          ]}
-          activeKey={activeTab}
-          onChange={(key) => setActiveTab(key as "all" | "create" | "import")}
-        />
-      )}
+      <TabBar
+        tabs={[
+          { key: "all", label: tp("allTab"), count: totalCount },
+          { key: "create", label: tp("createTab"), count: createCount },
+          { key: "import", label: tp("importTab"), count: importCount },
+          { key: "favorite", label: tp("favoriteTab"), count: favoriteCount },
+        ]}
+        activeKey={activeTab}
+        onChange={(key) => setActiveTab(key as "all" | "create" | "import" | "favorite")}
+      />
 
       {isListLoading ? (
         <div className="flex-1 flex items-center justify-center">
@@ -144,7 +133,11 @@ export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose, fav
             variant="ghost"
             size="sm"
             disabled={page <= 0}
-            onClick={() => loadPapers(page - 1)}
+            onClick={() => {
+              const tab = usePaperStore.getState().activeTab
+              const sourceType = tab === "create" ? "create" : tab === "import" ? "import" : undefined
+              loadPapers(page - 1, sourceType, tab === "favorite")
+            }}
           >
             <ChevronLeft className="size-4" />
           </Button>
@@ -155,7 +148,11 @@ export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose, fav
             variant="ghost"
             size="sm"
             disabled={page >= totalPages}
-            onClick={() => loadPapers(page + 1)}
+            onClick={() => {
+              const tab = usePaperStore.getState().activeTab
+              const sourceType = tab === "create" ? "create" : tab === "import" ? "import" : undefined
+              loadPapers(page + 1, sourceType, tab === "favorite")
+            }}
           >
             <ChevronRight className="size-4" />
           </Button>

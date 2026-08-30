@@ -1,4 +1,4 @@
-# Paper Reader 部署文档
+# PaperHelper 部署文档
 
 > **先确认环境**：本页的 Compose 命令只适合全新、隔离环境。当前生产机使用既有的 `infra-postgres`、`infra-redis`、`paper-reader-grobid` 容器，它们没有 Compose labels，且生产存储是本地目录 `/root/paper-reader/backend/uploads`。在当前生产机直接执行仓库 `docker compose up -d` 可能造成端口、数据卷和共享服务冲突。
 

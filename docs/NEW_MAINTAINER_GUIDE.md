@@ -1,10 +1,10 @@
-# PaperReader 新人维护指引
+# PaperHelper 新人维护指引
 
-本文目标是让第一次接触 PaperReader 的维护者，在不依赖历史聊天上下文的情况下安全开始工作。先完成“只读认识”，再启动或修改服务。
+本文目标是让第一次接触 PaperHelper 的维护者，在不依赖历史聊天上下文的情况下安全开始工作。先完成“只读认识”，再启动或修改服务。
 
 ## 1. 十分钟快速认识
 
-PaperReader 仓库位于 `/root/paper-reader`，包含：
+PaperHelper 仓库位于 `/root/paper-reader`，包含：
 
 - `frontend/`：Next.js 15 + React 19 的用户端。
 - `backend/`：Kotlin + Spring Boot API。
@@ -14,7 +14,7 @@ PaperReader 仓库位于 `/root/paper-reader`，包含：
 不包含：
 
 - `/root/paperread-admin` 后台管理仓库。它独立维护，不要随手一起提交。
-- GROBID 源码或镜像定制。PaperReader 只调用已有解析服务。
+- GROBID 源码或镜像定制。PaperHelper 只调用已有解析服务。
 - 生产 PostgreSQL/Redis 的生命周期管理。当前容器是共享/外置基础设施，不归仓库 Compose 管理。
 
 开始前按顺序读：本文件 → [项目完整现状](PROJECT_STATUS.md) → [注意事项](ATTENTION.md) → [当前计划](PLAN.md)。涉及上线再读 [部署手册](DEPLOY.md)。
@@ -38,7 +38,7 @@ cd backend && ./gradlew --version
 
 确认：
 
-- `origin` 指向正确 PaperReader 仓库。
+- `origin` 指向正确 PaperHelper 仓库。
 - GitHub 的 HEAD/default branch 是 `main`。
 - 没有把用户未提交的工作当成自己的改动覆盖。
 - 新需求从远程最新发布版本基线创建下一个版本分支；已发布版本的 Bug 从对应版本基线创建 `-fix` 分支，不从陈旧版本分支继续堆叠。
@@ -348,7 +348,7 @@ git ls-files backend/.env frontend/.env.local
 1. Base URL 是 API 根路径，不是官网页面。
 2. 是否需要 `/v1`。
 3. 模型名是否由 Provider 实际支持。
-4. 浏览器 Network 是 Provider 直连还是 PaperReader relay。
+4. 浏览器 Network 是 Provider 直连还是 PaperHelper relay。
 5. HTTP 状态、Content-Type 和脱敏响应形状；绝不复制 Key。
 
 ### 删除论文失败
