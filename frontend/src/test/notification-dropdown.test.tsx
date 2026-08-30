@@ -11,7 +11,7 @@ const notification = {
   id: "version-info",
   type: "system" as const,
   title: "系统功能介绍",
-  message: "欢迎使用 PaperReader！点击查看当前版本功能特性",
+  message: "欢迎使用 PaperHelper！点击查看当前版本功能特性",
   timestamp: Date.now(),
   read: false,
   actionKey: "version",

@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="PaperHelper">
+  <rect width="64" height="64" rx="15" fill="#171717"/>
+  <path fill="#ffffff" d="M12 8h10v19h20V8h10v48H42V36H22v20H12V8Z"/>
+</svg>

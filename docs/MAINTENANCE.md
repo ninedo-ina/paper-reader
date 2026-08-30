@@ -1,4 +1,4 @@
-# PaperReader 维护规范
+# PaperHelper 维护规范
 
 ## 1. 适用范围
 
@@ -66,7 +66,7 @@ feature/v主版本.次版本.修订版本
 7. 生产验收通过后再执行 `pm2 save`，并记录提交、构建、部署、健康检查和公网验收结果。
 8. 保留版本分支、合并提交和验证记录，不通过强制推送改写 `main`、`dev` 或历史版本分支。
 
-当前发布基线为 `feature/v0.1.23`，生产已核验为 `0.1.23`；后续版本统一遵循上述流程。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。
+当前发布基线为 `feature/v0.1.30`，生产已核验为 `0.1.30`；后续版本统一遵循上述流程。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。
 
 ## 4. 每次代码迭代的标准流程
 
@@ -216,7 +216,7 @@ Provider 返回 HTTP 2xx 后，AI 对话仍显示“Provider 返回成功，但�
 
 ### 问题
 
-v0.1.15-fix 上线后，用户使用浏览器中已配置的 Provider 发送消息，流式请求和自动非流式重试仍都返回“没有可显示文本”。PaperReader 服务器无法直接取得该响应，因为 Provider 配置和请求都只存在于用户浏览器中。
+v0.1.15-fix 上线后，用户使用浏览器中已配置的 Provider 发送消息，流式请求和自动非流式重试仍都返回“没有可显示文本”。PaperHelper 服务器无法直接取得该响应，因为 Provider 配置和请求都只存在于用户浏览器中。
 
 ### 原因
 
@@ -240,7 +240,7 @@ v0.1.15-fix 上线后，用户使用浏览器中已配置的 Provider 发送消�
 
 ### 问题
 
-用户配置的 Base URL 未包含 Provider 的标准 `/v1` API 路径时，PaperReader 原先直接请求 `${Base URL}/chat/completions`。部分服务会把这个地址路由到官网、控制台或登录页，因此浏览器收到 HTML，聊天显示“Provider 返回了 HTML 页面而不是模型响应”，连接测试也无法完成。
+用户配置的 Base URL 未包含 Provider 的标准 `/v1` API 路径时，PaperHelper 原先直接请求 `${Base URL}/chat/completions`。部分服务会把这个地址路由到官网、控制台或登录页，因此浏览器收到 HTML，聊天显示“Provider 返回了 HTML 页面而不是模型响应”，连接测试也无法完成。
 
 ### 原因
 
@@ -312,7 +312,7 @@ v0.1.15-fix 上线后，用户使用浏览器中已配置的 Provider 发送消�
 
 ### 后续风险
 
-Provider 如果修改 CORS 或 API 路由，客户端仍会优先尝试直连并在必要时使用 relay；完全私有的响应协议、工具调用-only 响应和非 HTTPS 公网地址仍不在支持范围。relay 会让 API Key 经过 PaperReader 服务器，因此只作为浏览器无法直连时的受保护回退，不能在日志、截图或提交中暴露密钥。用户已在聊天中公开过的密钥应在验证后撤销并重新生成。
+Provider 如果修改 CORS 或 API 路由，客户端仍会优先尝试直连并在必要时使用 relay；完全私有的响应协议、工具调用-only 响应和非 HTTPS 公网地址仍不在支持范围。relay 会让 API Key 经过 PaperHelper 服务器，因此只作为浏览器无法直连时的受保护回退，不能在日志、截图或提交中暴露密钥。用户已在聊天中公开过的密钥应在验证后撤销并重新生成。
 
 ### 本次验证
 
@@ -350,7 +350,7 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - JAR `paper-reader-backend-0.1.19-fix.jar` 内的 `META-INF/build-info.properties` 已确认 `build.version=0.1.19-fix`。
 - PM2 后端已重建并指向 `paper-reader-backend-0.1.19-fix.jar`；前端已重新构建并重启，PM2 状态已保存。
 - 本机与公网 `/api/health` 均返回 `status=ok`、`version=0.1.19-fix`；GROBID `/api/isalive` 返回 `true`；`https://paper.pilo.eu.cc/zh/login` 返回 200。
-- 公网页面已使用 `paperread-favicon-light.svg?v=0.1.19-fix`，用于确认前端新构建已生效。
+- 公网页面已使用 `paperhelper-favicon-light.svg?v=0.1.19-fix`，用于确认前端新构建已生效。
 
 ## 15. v0.1.20 论文卡片操作区与可选原文件删除
 
@@ -386,7 +386,7 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - 功能提交 `787f58a` 已推送并保留在 `feature/v0.1.20`；已合并到 `dev`（`25eb547`）和 `main`（`5e60b6e`）。
 - 后端 PM2 已重建并指向 `paper-reader-backend-0.1.20.jar`，前端已重启加载新的 `.next` 构建，最终进程列表已执行 `pm2 save`。
 - 本机与公网 `/api/health` 均返回 `status=ok`、`version=0.1.20`；`https://paper.pilo.eu.cc/zh/login` 返回 200。
-- 公网页面引用 `paperread-favicon-light.svg?v=0.1.20`，明暗两份 favicon 均返回 200；GROBID `/api/isalive` 返回 `true`。
+- 公网页面引用 `paperhelper-favicon-light.svg?v=0.1.20`，明暗两份 favicon 均返回 200；GROBID `/api/isalive` 返回 `true`。
 - 部署中曾因重建 PM2 项时未继承旧进程应用变量而出现启动循环；从部署前 PM2 备份恢复同一组应用配置后正常启动。标准部署命令已补充“同一 shell 加载 `backend/.env`”和“健康检查通过前再 `pm2 save`”要求。
 
 ### 后续风险
@@ -424,11 +424,11 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - V12 已在生产数据库连接上使用显式事务试运行：只命中论文 ID 3，事务内标题变为 `Attention Is All You Need`，随后 `ROLLBACK` 并确认原记录未被提前修改；正式发布时由 Flyway 原子应用。
 - 功能提交 `d9ee334` 已推送并保留在 `feature/v0.1.21`；已合并到 `dev`（`ee14b97`）和 `main`（`f657b3c`），GitHub 默认分支仍为 `main`。
 - 生产后端 PM2 已重建并指向 `paper-reader-backend-0.1.21.jar`；Flyway 成功应用 V12。数据库已不再存在该声明前缀，论文 ID 3 的标题为 `Attention Is All You Need`。
-- 前端已重启并加载新构建；本机与公网 `/api/health` 均返回 `0.1.21`，公网登录页为 200、动态无缓存，并引用 `paperread-favicon-light.svg?v=0.1.21` 及包含新选中态变量/组件标记的静态资源。
+- 前端已重启并加载新构建；本机与公网 `/api/health` 均返回 `0.1.21`，公网登录页为 200、动态无缓存，并引用 `paperhelper-favicon-light.svg?v=0.1.21` 及包含新选中态变量/组件标记的静态资源。
 - 明暗两份 favicon 均返回 200，GROBID `/api/isalive` 返回 `true` 且容器未重建；前后端 PM2 进程均为 online，验证后已执行 `pm2 save`。
 - 新的未知出版社声明不会被自动猜测清洗，可能仍需按真实样例增补明确模式；这比通用截断误伤合法标题更安全。
 - 数据迁移只能修复当前明确模式。若数据库中已有其他形式的污染标题，应先审计真实 TEI/PDF，再以新版本增加独立、可测试的规则。
-- 本次只改 PaperReader C 端仓库中的解析消费层、数据库迁移和 UI；GROBID 服务及后台管理项目均不变。
+- 本次只改 PaperHelper C 端仓库中的解析消费层、数据库迁移和 UI；GROBID 服务及后台管理项目均不变。
 
 ## 18. v0.1.23 单篇论文元数据补全（已部署）
 
@@ -526,12 +526,21 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - 交接提交 `52d479f` 已推送并保留在 `feature/v0.1.22`；已合并到 `dev`（`d166c4b`）和 `main`（`d4862c1`），GitHub 默认分支仍为 `main`。
 - 在 `main` 上再次完成前端生产构建和后端 `clean test bootJar`；生产后端 PM2 已重建并指向 `paper-reader-backend-0.1.22.jar`，前端 PM2 已重启加载新 `.next`。
 - 后端约 10 秒启动完成，Flyway 确认 public schema 已是 V12、无需新迁移；本机与公网 `/api/health` 均返回 `0.1.22`，本机和公网登录页均为 200 且动态无缓存。
-- 公网页面引用 `paperread-favicon-light.svg?v=0.1.22`，明暗 favicon 均返回 200；GROBID `/api/isalive` 为 `true`，`infra-postgres`、`infra-redis`、`paper-reader-grobid` 均未重建。
+- 公网页面引用 `paperhelper-favicon-light.svg?v=0.1.22`，明暗 favicon 均返回 200；GROBID `/api/isalive` 为 `true`，`infra-postgres`、`infra-redis`、`paper-reader-grobid` 均未重建。
 - 两个 PM2 进程均 online、后端零重启；错误日志的最后修改时间早于本次发布，没有新增错误。上传目录保持存在且权限未变，全部验收通过后已执行 `pm2 save`。
 - 合并取消跟踪后，Git 按预期移除了工作区里的旧受跟踪 `.env` 副本；部署前已从可信基线提交 `d63a56d` 精确恢复到本机，并确认文件存在、被 ignore 且不在索引中。后续在已采用新 ignore 规则的分支间切换不会再重复删除，但首次落地该安全提交时应注意此迁移行为。
 
-## 19. v0.1.29 版本通知与主题弹窗（开发中）
+## 19. v0.1.30 PaperHelper 品牌与书架升级（已部署）
 
-本轮在 `feature/v0.1.29` 统一版本通知的两个入口：点击通知内容或“查看版本功能”都会标记通知为已读、关闭下拉并打开根页面统一渲染的 `VersionPopup`。弹窗主体改用主题变量，浅色使用白色表面，深色使用深色表面，避免玻璃卡片造成灰色显示。
+本轮在 `feature/v0.1.30` 完成 PaperHelper 品牌升级：产品名称统一为 PaperHelper，Logo 与 favicon 使用大写 H，版本升级为 0.1.30；书架侧栏移除独立收藏菜单，原“我的论文”改为“我的书架”，并在书架中提供所有、创建、导入、收藏四个 Tab。
 
-已增加通知交互和主题样式回归测试；本轮不涉及后端、数据库迁移和用户数据。
+已完成通知交互回归、品牌资源更新和书架 Tab 功能验证；本轮不涉及后端接口、数据库迁移和用户数据。
+
+## 20. v0.1.30 PaperHelper 品牌与书架升级发布记录（2026-08-30 UTC）
+
+- 发布提交：`eeb98aa`；`feature/v0.1.30` 已推送并合并到 `main`，合并提交为 `93c0733`。
+- 前端测试、TypeScript 类型检查、Lint 和 Next.js 生产构建通过；Lint 仅有既有 warning。后端 `./gradlew clean test bootJar` 通过，产物为 `paper-reader-backend-0.1.30.jar`。
+- 产品名称、Logo、favicon、环境模板、demo 和用户可见文案已统一为 PaperHelper；Logo 与 favicon 使用大写 H。书架调整为“我的书架”，侧栏收藏入口改为“我的创作”，书架提供所有、创建、导入、收藏四个 Tab。
+- 后端 PM2 已重建并指向 `paper-reader-backend-0.1.30.jar`；前端已重新生产构建并重启。两个 PM2 进程均为 `online`，未重建共享 PostgreSQL、Redis、GROBID 或覆盖 uploads。
+- 本机与公网 `/api/health` 均返回 `status=ok`、`version=0.1.30`；本机与公网 `/zh/login` 均返回 200；新版明暗 favicon 均返回 200；验收后已执行 `pm2 save`。
+- 当前发布基线为 `feature/v0.1.30`，生产版本为 `0.1.30`；后续新需求从最新发布基线创建下一个版本分支，已发布版本 Bug 使用对应 `-fix` 分支。

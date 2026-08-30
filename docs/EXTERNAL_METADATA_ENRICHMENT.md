@@ -1,4 +1,4 @@
-# PaperReader 外部论文元数据补全方案
+# PaperHelper 外部论文元数据补全方案
 
 > 方案版本：v0.1.23（已部署；单篇最小闭环已完成线上验收）
 > 编写及核对日期：2026-08-26（UTC）
@@ -6,7 +6,7 @@
 
 ## 1. 背景与目标
 
-PaperReader 当前主要依赖 GROBID 从 PDF 中提取标题、作者、摘要、DOI、年份和期刊/会议名称。PDF 首页、文件元数据和 GROBID 结果可能缺失、过时或混入机构名，卷号、期号、出版页码、出版社、ISSN/ISBN、预印本编号等字段也没有稳定来源。
+PaperHelper 当前主要依赖 GROBID 从 PDF 中提取标题、作者、摘要、DOI、年份和期刊/会议名称。PDF 首页、文件元数据和 GROBID 结果可能缺失、过时或混入机构名，卷号、期号、出版页码、出版社、ISSN/ISBN、预印本编号等字段也没有稳定来源。
 
 本方案建立一条可追溯的补全链路：
 
@@ -128,7 +128,7 @@ URL 导入当前假定目标 URL 直接返回 PDF。`https://arxiv.org/abs/...` 
 
 ### 4.1 必须区分的概念
 
-- `sourceType`：PaperReader 如何得到记录，现有值为 UPLOAD / URL / MANUAL。
+- `sourceType`：PaperHelper 如何得到记录，现有值为 UPLOAD / URL / MANUAL。
 - `paper/work`：用户库中“这篇研究工作”的阅读记录、文件、批注和人工展示信息。
 - `manifestation`：同一研究工作的具体公开形态，例如 arXiv 预印本、accepted manuscript、会议版或期刊正式版。
 - `publicationType`：具体形态的载体类型，例如 REPOSITORY_RECORD / JOURNAL_ARTICLE / CONFERENCE_PAPER。

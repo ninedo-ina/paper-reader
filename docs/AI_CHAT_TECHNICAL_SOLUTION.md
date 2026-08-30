@@ -201,7 +201,7 @@ Provider 配置页的“测试连接”必须验证与实际对话相同的请�
 4. `/models` 不是必需能力，不能因为它不可用就否定一个实际可对话的 Provider；但没有任何可测试模型时必须提示用户填写模型。
 5. HTTP 错误只展示状态码和解析后的安全错误摘要；API Key、Bearer 值和敏感文本必须脱敏。
 
-连接测试优先直接请求用户配置的 Provider；当浏览器因 CORS 或网络策略无法读取响应时，自动回退到已认证的 PaperReader relay。HTTPS Mixed Content、Provider 认证、额度和模型错误仍会明确显示。
+连接测试优先直接请求用户配置的 Provider；当浏览器因 CORS 或网络策略无法读取响应时，自动回退到已认证的 PaperHelper relay。HTTPS Mixed Content、Provider 认证、额度和模型错误仍会明确显示。
 
 ## 9. 后续扩展边界
 

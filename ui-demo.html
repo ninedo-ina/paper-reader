@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PaperReader — 论文在线阅读</title>
+<title>PaperHelper — 论文在线阅读</title>
 <style>
 /* ===== CSS Variables / Design Tokens ===== */
 :root {
@@ -739,7 +739,7 @@ input { font-family: inherit; font-size: inherit; }
   <!-- ===== Top Bar ===== -->
   <header class="topbar">
     <div class="topbar-left">
-      <span class="logo"><span class="logo-dot"></span>PaperReader</span>
+      <span class="logo"><span class="logo-dot"></span>PaperHelper</span>
     </div>
     <div class="topbar-center">
       <div class="search-box">
@@ -1050,7 +1050,7 @@ input { font-family: inherit; font-size: inherit; }
 <script>
 // ===== Theme Toggle (with persistence) =====
 (function initTheme() {
-  const saved = localStorage.getItem('paperreader-theme');
+  const saved = localStorage.getItem('paperhelper-theme');
   if (saved) document.documentElement.setAttribute('data-theme', saved);
   updateThemeIcon(document.documentElement.getAttribute('data-theme'));
 })();
@@ -1060,7 +1060,7 @@ function toggleTheme() {
   const current = html.getAttribute('data-theme');
   const next = current === 'light' ? 'dark' : 'light';
   html.setAttribute('data-theme', next);
-  localStorage.setItem('paperreader-theme', next);
+  localStorage.setItem('paperhelper-theme', next);
   updateThemeIcon(next);
 }
 

@@ -1,12 +1,12 @@
-# PaperReader 项目完整现状
+# PaperHelper 项目完整现状
 
-> 当前发布版本：`0.1.23`；发布分支：`feature/v0.1.23`；生产版本：`0.1.23`（2026-08-26 UTC 已核验）；核对日期：2026-08-26（UTC）；生产域名：`https://paper.pilo.eu.cc`
+> 当前发布版本：`0.1.30`；发布分支：`feature/v0.1.30`；生产版本：`0.1.30`（2026-08-30 UTC 已核验）；核对日期：2026-08-30（UTC）；生产域名：`https://paper.pilo.eu.cc`
 
 本文描述 `/root/paper-reader` 的代码与生产现状，是新维护者判断“已经有什么、实际怎么运行、哪些还不能承诺”的首要依据。动态状态在发布后可能变化，操作线上前仍需重新执行本文的只读检查。
 
 ## 1. 项目边界与仓库关系
 
-PaperReader 是面向用户的论文阅读工作台，本仓库同时包含 C 端 Next.js 客户端和 Kotlin/Spring Boot API。
+PaperHelper 是面向用户的论文阅读工作台，本仓库同时包含 C 端 Next.js 客户端和 Kotlin/Spring Boot API。
 
 | 范围 | 位置 | 是否属于本仓库 |
 | --- | --- | --- |
@@ -15,13 +15,13 @@ PaperReader 是面向用户的论文阅读工作台，本仓库同时包含 C �
 | GROBID 解析服务 | 当前机器上的 `paper-reader-grobid` 容器 | 否，本仓库只有调用客户端和本地 Compose 定义 |
 | PostgreSQL / Redis | 当前机器共享基础设施容器 | 否，不应随本项目部署盲目重建 |
 
-后台管理项目与本项目使用同一 PostgreSQL 实例，但后台数据位于 `paperread_admin` schema。本仓库的 Flyway 只维护 PaperReader 自身的 `pr_*` 表。除非需求明确同时覆盖两个项目，否则不要修改、提交或部署 `/root/paperread-admin`。
+后台管理项目与本项目使用同一 PostgreSQL 实例，但后台数据位于 `paperread_admin` schema。本仓库的 Flyway 只维护 PaperHelper 自身的 `pr_*` 表。除非需求明确同时覆盖两个项目，否则不要修改、提交或部署 `/root/paperread-admin`。
 
 ## 2. 当前发布与 Git 状态
 
 - GitHub 默认分支和生产主分支：`main`。
 - 集成分支：`dev`。
-- 当前发布分支：`feature/v0.1.23`，已按 `feature -> dev -> main` 流程合并；生产正在运行 `0.1.23`。
+- 当前发布分支：`feature/v0.1.30`，已按发布流程合并到 `main`；生产正在运行 `0.1.30`。
 - 版本分支永久保留，标准流向为 `feature/vX.Y.Z -> dev -> main`。
 - 普通需求或维护增加 patch 版本；纯 Bug 修复使用同版本的 `-fix` 后缀。中版本和大版本只能由产品负责人明确提出。
 - `0.1.22` 是上一版交接、安全配置模板和文档整理版本，已于 2026-08-25（UTC）完成合并、生产重启和公网验证；随后已由 `0.1.23` 替换。
@@ -339,8 +339,8 @@ curl -fsS https://paper.pilo.eu.cc/api/health
 5. 完成后运行前后端全套检查，立即提交并推送版本分支，再依次合并 `dev`、`main`。
 6. 合并 `main` 后立即执行生产环境部署（不是开发模式启动），用本机与公网两层验证，最后才 `pm2 save`，并把验证记录追加到 [MAINTENANCE.md](MAINTENANCE.md)。
 
-## v0.1.29 当前迭代
+## v0.1.30 当前发布
 
-- 分支：`feature/v0.1.29`。
-- 内容：统一版本通知内容与“查看版本功能”的弹窗行为，并适配明暗主题背景。
-- 状态：实现与回归测试已完成，待全量构建、合并和生产验收；生产仍为 `0.1.23`。
+- 分支：`feature/v0.1.30`。
+- 内容：产品更名为 PaperHelper、图标改为 H，并完成我的书架四个 Tab（所有、创建、导入、收藏）与侧栏菜单调整。
+- 状态：已完成全量验证、提交、推送、合并和生产验收；生产已运行 `0.1.30`。
