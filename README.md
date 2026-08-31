@@ -6,19 +6,19 @@ The repository contains the C-side product and its API. The administration conso
 
 > **Maintainer start here:** read the [documentation index](docs/README.md), then the [new maintainer guide](docs/NEW_MAINTAINER_GUIDE.md) and [complete project status](docs/PROJECT_STATUS.md). They record the real production topology, configuration rules, known risks, and release workflow without requiring previous chat context.
 
-## Current Iteration: v0.1.30
+## Current Iteration: v0.1.31
 
-- Branch: `feature/v0.1.30`
-- Scope: rename the product to PaperHelper, refresh the H brand mark, and reorganize the bookshelf with a Favorites tab.
-- Status: deployed to production and verified on 2026-08-30 UTC.
+- Branch: `feature/v0.1.31`
+- Scope: rename the bookshelf “我的创作” menu to “我的论文” in Chinese and “My Papers” in English.
+- Status: in progress; release and production verification are pending.
 
 ## Current Release
 
 - Default branch: `main`
 - Integration branch: `dev`
-- Released version branch: `feature/v0.1.30` (released to production)
-- Client version: `0.1.30`
-- Production version: `0.1.30` (verified 2026-08-30 UTC)
+- Release branch: `feature/v0.1.31` (pending release)
+- Client version: `0.1.31`
+- Production version: `0.1.30` (last verified 2026-08-30 UTC)
 - Default locale: Chinese (`zh`)
 - Supported locales: Chinese (`zh`) and English (`en`)
 - Production client: `https://paper.pilo.eu.cc`
@@ -377,7 +377,7 @@ The project uses a release-style branch and client version for every code iterat
 - Bug-fix iterations append `-fix` to the repaired version, for example `0.1.12-fix`, with a matching branch such as `feature/v0.1.12-fix`.
 - A minor release (`0.1.x` → `0.2.0`) or major release (`0.x.y` → `1.0.0`) is created only when the product owner explicitly requests it.
 - Keep every version branch after merging; it is part of the release and rollback history.
-- Keep the released version branch (`feature/v0.1.30`), `frontend/package.json`, `frontend/VERSION`, `backend/VERSION`, README release line, favicon cache-busting value, and visible UI version aligned. Production is currently `0.1.30`; future work starts from the latest `dev`.
+- Keep the current release branch (`feature/v0.1.31`), `frontend/package.json`, `frontend/VERSION`, `backend/VERSION`, README release line, favicon cache-busting value, and visible UI version aligned. Production remains `0.1.30` until this iteration is deployed; future work starts from the latest `dev`.
 - Every code iteration must be built, tested, deployed to the PM2 process, verified through the public domain, committed, and pushed to the matching remote branch.
 
 The documentation map is in [docs/README.md](docs/README.md). New maintainers should start with [docs/NEW_MAINTAINER_GUIDE.md](docs/NEW_MAINTAINER_GUIDE.md) and [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md). Detailed operating rules are in [docs/MAINTENANCE.md](docs/MAINTENANCE.md), the roadmap is in [docs/PLAN.md](docs/PLAN.md), cautions are in [docs/ATTENTION.md](docs/ATTENTION.md), and AI design is in [docs/AI_CHAT_TECHNICAL_SOLUTION.md](docs/AI_CHAT_TECHNICAL_SOLUTION.md).
