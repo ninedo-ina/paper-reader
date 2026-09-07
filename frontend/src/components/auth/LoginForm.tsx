@@ -66,13 +66,13 @@ export function LoginForm() {
   }
 
   return (
-    <Card variant="glass" className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>{t("loginUnifiedTitle")}</CardTitle>
-        <CardDescription>{t("loginUnifiedSubtitle")}</CardDescription>
+    <Card variant="default" className="w-full max-w-md border-white/70 bg-white/90 shadow-[0_24px_70px_rgba(34,71,96,0.16)] backdrop-blur-xl">
+      <CardHeader className="px-8 pt-8 pb-5">
+        <CardTitle className="text-2xl tracking-tight text-slate-900">{t("loginUnifiedTitle")}</CardTitle>
+        <CardDescription className="mt-2 text-slate-500">{t("loginUnifiedSubtitle")}</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-5 px-8 py-2">
           <div className="space-y-2">
             <Label htmlFor="email">{t("email")}</Label>
             <Input
@@ -132,7 +132,7 @@ export function LoginForm() {
           <button
             type="button"
             onClick={switchMode}
-            className="text-sm text-[var(--accent)] hover:underline"
+            className="text-sm font-medium text-cyan-700 hover:text-cyan-900 hover:underline"
           >
             {mode === "password" ? t("switchToCode") : t("switchToPassword")}
           </button>
@@ -141,7 +141,7 @@ export function LoginForm() {
             <p className="text-sm text-red-500">{error}</p>
           )}
         </CardContent>
-        <CardFooter className="flex-col gap-3">
+        <CardFooter className="flex-col gap-3 px-8 pb-8 pt-5">
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? t("loggingIn") : mode === "password" ? t("login") : t("verifyCode")}
           </Button>
@@ -150,7 +150,7 @@ export function LoginForm() {
               <span className="w-full border-t border-[var(--border-subtle)]" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-[var(--surface-0)] px-2 text-[var(--text-tertiary)]">or</span>
+              <span className="bg-white px-2 text-slate-400">or</span>
             </div>
           </div>
           <GitHubLoginButton />
