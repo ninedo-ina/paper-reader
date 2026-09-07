@@ -6,18 +6,18 @@ The repository contains the C-side product and its API. The administration conso
 
 > **Maintainer start here:** read the [documentation index](docs/README.md), then the [new maintainer guide](docs/NEW_MAINTAINER_GUIDE.md) and [complete project status](docs/PROJECT_STATUS.md). They record the real production topology, configuration rules, known risks, and release workflow without requiring previous chat context.
 
-## Current Iteration: v0.1.31
+## Current Iteration: v0.1.32
 
-- Branch: `feature/v0.1.31`
-- Scope: rename the bookshelf “我的创作” menu to “我的论文” in Chinese and “My Papers” in English.
-- Status: deployed to production and verified on 2026-08-31 UTC.
+- Branch: `feature/v0.1.32`
+- Scope: redesign the C-side login page with a particle-network paper background, carousel, and split login layout.
+- Status: implemented on `feature/v0.1.32`; deployment pending.
 
 ## Current Release
 
 - Default branch: `main`
 - Integration branch: `dev`
 - Released version branch: `feature/v0.1.31` (released to production)
-- Client version: `0.1.31`
+- Client version: `0.1.32`
 - Production version: `0.1.31` (verified 2026-08-31 UTC)
 - Default locale: Chinese (`zh`)
 - Supported locales: Chinese (`zh`) and English (`en`)
