@@ -201,6 +201,11 @@
     "error": "Login failed",
     "loginEyebrow": "MAKE EVERY READING COUNT",
     "loginTagline": "Connect papers, ideas, and future research",
+    "agreementPrefix": "By logging in, you agree to PaperHelper's ",
+    "termsLink": "Terms of Service",
+    "privacyLink": "Privacy Policy",
+    "and": " and ",
+    "copyright": "© {year} PaperHelper. All rights reserved.",
     "previousSlide": "Previous introduction",
     "nextSlide": "Next introduction",
     "slideNumber": "Introduction {number}",
@@ -349,5 +354,18 @@
     "myPapers": "My Bookshelf",
     "papers": "papers",
     "error": "Something went wrong"
+  },
+  "legal": {
+    "back": "Back to Login",
+    "terms": {
+      "title": "Terms of Service",
+      "updatedAt": "Last updated: September 2026",
+      "body": "Welcome to PaperHelper. This is a placeholder Terms of Service page; the formal terms are still being drafted. By using this service you agree to the formal terms once published. Contact the product owner with any questions about this placeholder."
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "updatedAt": "Last updated: September 2026",
+      "body": "PaperHelper takes your privacy seriously. This is a placeholder Privacy Policy page; the formal policy is still being drafted and will describe how we collect, use, and protect your data. Contact the product owner with any questions about this placeholder."
+    }
   }
 }

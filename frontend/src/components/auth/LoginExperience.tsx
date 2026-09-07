@@ -34,6 +34,20 @@ function ParticleField() {
       canvas.height = canvas.clientHeight * ratio
       context.setTransform(ratio, 0, 0, ratio, 0, 0)
     }
+    const readAccentRgb = () => {
+      const style = getComputedStyle(canvas)
+      const accent = style.getPropertyValue("--accent").trim()
+      const probe = document.createElement("span")
+      probe.style.color = accent || "#1a1a1a"
+      document.body.appendChild(probe)
+      const rgb = getComputedStyle(probe).color
+      document.body.removeChild(probe)
+      const match = rgb.match(/\d+/g)
+      return match ? match.slice(0, 3).join(",") : "26,26,26"
+    }
+    let accentRgb = readAccentRgb()
+    const observer = new MutationObserver(() => { accentRgb = readAccentRgb() })
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] })
     const draw = () => {
       const width = canvas.clientWidth
       const height = canvas.clientHeight
@@ -48,14 +62,14 @@ function ParticleField() {
         points.slice(index + 1).forEach((other) => {
           const distance = Math.hypot((point.x - other.x) * width, (point.y - other.y) * height)
           if (distance < 145) {
-            context.strokeStyle = `rgba(125,211,252,${0.15 * (1 - distance / 145)})`
+            context.strokeStyle = `rgba(${accentRgb},${0.18 * (1 - distance / 145)})`
             context.beginPath()
             context.moveTo(point.x * width, point.y * height)
             context.lineTo(other.x * width, other.y * height)
             context.stroke()
           }
         })
-        context.fillStyle = "rgba(186,230,253,.8)"
+        context.fillStyle = `rgba(${accentRgb},.55)`
         context.beginPath()
         context.arc(point.x * width, point.y * height, 2 + Math.sin(frame * 0.02 + point.phase) * 0.6, 0, Math.PI * 2)
         context.fill()
@@ -69,9 +83,10 @@ function ParticleField() {
     return () => {
       cancelAnimationFrame(animation)
       window.removeEventListener("resize", resize)
+      observer.disconnect()
     }
   }, [])
-  return <canvas ref={canvasRef} aria-hidden="true" className="absolute inset-0 size-full opacity-80" />
+  return <canvas ref={canvasRef} aria-hidden="true" className="absolute inset-0 size-full opacity-40" />
 }
 
 export function LoginExperience() {
@@ -93,24 +108,25 @@ export function LoginExperience() {
     resetTimer()
   }
   return (
-    <section className="relative hidden min-h-[620px] overflow-hidden rounded-[28px] border border-cyan-200/15 bg-[#071525] p-10 text-white shadow-2xl lg:flex lg:flex-col">
+    <section className="relative hidden h-full min-h-[620px] overflow-hidden rounded-[28px] border border-[var(--border-color)] bg-[var(--surface-0)] p-10 text-[var(--text-primary)] shadow-2xl lg:flex lg:flex-col">
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,var(--bg-root),var(--surface-0))] opacity-90" aria-hidden="true" />
       <ParticleField />
-      <div className="relative z-10 flex items-center gap-3 text-sm font-semibold tracking-[.18em] text-cyan-100">
-        <span className="grid size-10 place-items-center rounded-xl border border-cyan-200/30 bg-cyan-200/10"><BookOpen className="size-5" /></span>
+      <div className="relative z-10 flex items-center gap-3 text-sm font-semibold tracking-[.18em] text-[var(--accent)]">
+        <span className="grid size-10 place-items-center rounded-xl border border-[var(--border-color)] bg-[var(--accent-soft)]"><BookOpen className="size-5" /></span>
         PAPERHELPER
       </div>
       <div className="relative z-10 mt-auto max-w-lg">
-        <div className="mb-7 flex size-14 items-center justify-center rounded-2xl border border-cyan-200/25 bg-cyan-300/10 text-cyan-200"><Icon className="size-7" /></div>
-        <p className="mb-4 text-xs font-semibold uppercase tracking-[.28em] text-cyan-200/70">{t("loginEyebrow")}</p>
-        <h2 className="max-w-md text-4xl font-semibold leading-tight tracking-[-.04em]">{t(`loginSlides.${slide.key}.title`)}</h2>
-        <p className="mt-5 max-w-md text-base leading-7 text-slate-300">{t(`loginSlides.${slide.key}.description`)}</p>
+        <div className="mb-7 flex size-14 items-center justify-center rounded-2xl border border-[var(--border-color)] bg-[var(--accent-soft)] text-[var(--accent)]"><Icon className="size-7" /></div>
+        <p className="mb-4 text-xs font-semibold uppercase tracking-[.28em] text-[var(--text-tertiary)]">{t("loginEyebrow")}</p>
+        <h2 className="max-w-md text-4xl font-semibold leading-tight tracking-[-.04em] text-[var(--text-primary)]">{t(`loginSlides.${slide.key}.title`)}</h2>
+        <p className="mt-5 max-w-md text-base leading-7 text-[var(--text-secondary)]">{t(`loginSlides.${slide.key}.description`)}</p>
         <div className="mt-9 flex items-center gap-3">
-          <button type="button" aria-label={t("previousSlide")} onClick={() => change(active - 1)} className="grid size-9 place-items-center rounded-full border border-white/15 hover:bg-white/10"><ChevronLeft className="size-4" /></button>
-          <div className="flex gap-1.5">{slides.map((item, index) => <button key={item.key} type="button" aria-label={t("slideNumber", { number: index + 1 })} onClick={() => change(index)} className={cn("h-1.5 rounded-full transition-all", index === active ? "w-8 bg-cyan-300" : "w-1.5 bg-white/30")} />)}</div>
-          <button type="button" aria-label={t("nextSlide")} onClick={() => change(active + 1)} className="grid size-9 place-items-center rounded-full border border-white/15 hover:bg-white/10"><ChevronRight className="size-4" /></button>
+          <button type="button" aria-label={t("previousSlide")} onClick={() => change(active - 1)} className="grid size-9 place-items-center rounded-full border border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"><ChevronLeft className="size-4" /></button>
+          <div className="flex gap-1.5">{slides.map((item, index) => <button key={item.key} type="button" aria-label={t("slideNumber", { number: index + 1 })} onClick={() => change(index)} className={cn("h-1.5 rounded-full transition-all", index === active ? "w-8 bg-[var(--accent)]" : "w-1.5 bg-[var(--border-color)]")} />)}</div>
+          <button type="button" aria-label={t("nextSlide")} onClick={() => change(active + 1)} className="grid size-9 place-items-center rounded-full border border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"><ChevronRight className="size-4" /></button>
         </div>
       </div>
-      <div className="relative z-10 mt-10 flex items-center gap-2 text-xs text-slate-400"><Sparkles className="size-3.5 text-cyan-300" /> {t("loginTagline")}</div>
+      <div className="relative z-10 mt-10 flex items-center gap-2 text-xs text-[var(--text-tertiary)]"><Sparkles className="size-3.5 text-[var(--accent)]" /> {t("loginTagline")}</div>
     </section>
   )
 }
