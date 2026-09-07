@@ -564,3 +564,22 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 本轮需求编号为 `REQ-202609-0070`，基于 `dev` 创建普通迭代分支 `feature/v0.1.32`。登录页改为左右分栏：左侧使用 Canvas 绘制动态粒子网络背景并展示论文阅读主题轮播，右侧保留原有邮箱密码、验证码和 GitHub OAuth 登录流程；中英文文案同步补齐，窄屏隐藏左侧展示区。前后端版本、页面 favicon 缓存参数升级到 `0.1.32`。
 
 本轮不涉及数据库迁移、后端接口、用户数据、后台管理项目或共享基础设施。前端 `pnpm exec tsc --noEmit`、`pnpm test`（10 个文件、71 项测试）、`pnpm run lint` 和 `pnpm run build` 已通过；Lint 仅有既有 warning。后端 `./gradlew clean test bootJar` 已通过，Kotlin 仅有既有 unchecked cast warning。
+
+## 23. v0.1.33 登录页收尾修复（补齐 v0.1.32 遗留问题）
+
+本轮需求编号为 `REQ-202609-0071`，基于 `dev` 创建修复迭代分支 `feature/v0.1.33`。v0.1.32 的登录页改版验收不完整：左右两栏未等高、右侧登录卡片配色写死不跟随暗色模式、缺少主题/语言切换入口、缺少服务条款与隐私政策链接及对应页面、缺少版本号与版权页脚。本轮逐项修复。
+
+### 实现要点
+
+- `(auth)/layout.tsx` 改为 `items-stretch` 等高布局，右上角加入 `ThemeToggle`/`LangToggle`，底部新增 `AuthFooter`。
+- `LoginExperience.tsx` 外层加 `h-full`，全部写死颜色改为读取 `var(--surface-*)`/`var(--text-*)`/`var(--accent)` 等主题变量；粒子背景改为读取 `--accent` 计算颜色并监听 `data-theme` 变化实时更新。
+- `LoginForm.tsx` 卡片加 `h-full flex flex-col`，去除写死颜色，底部新增服务条款/隐私政策链接行。
+- 新增 `terms`、`privacy` 占位页面（中英文），并加入 `middleware.ts` 公开路径白名单，未登录用户可直接访问。
+- `zh/en common.json` 新增 `auth.agreementPrefix/termsLink/privacyLink/and/copyright` 与 `legal.*` 文案。
+
+### 验证记录
+
+- 本地使用 Playwright 对 `zh`/`en` 两种语言、亮/暗两种主题共 4 种组合截图核对：左右卡片高度一致（DOM 测量均为 `height: 688`）、右侧登录卡片颜色随主题切换、主题/语言切换按钮和条款/隐私/版本/版权页脚均正确显示。
+- `curl` 确认 `/zh/terms`、`/zh/privacy`、`/en/terms` 均返回 200。
+- 前端 `pnpm exec tsc --noEmit` 无错误；`pnpm test` 10 个文件 71 项测试全部通过；`pnpm run build` 成功，新增 `/[locale]/terms`、`/[locale]/privacy` 路由正常生成；Lint 仅有既有 warning（改动文件均未引入新增 lint 问题）。
+- 后端 `./gradlew clean test bootJar` 通过，44 项测试全部通过，产物为 `paper-reader-backend-0.1.33.jar`，Kotlin 仅有既有 unchecked cast warning。

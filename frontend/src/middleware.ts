@@ -15,7 +15,7 @@ import type { NextRequest } from "next/server"
 const intlMiddleware = createMiddleware(routing)
 
 /** 无需登录即可访问的路径 / Paths accessible without authentication */
-const PUBLIC = ["/login"]
+const PUBLIC = ["/login", "/terms", "/privacy"]
 
 export default function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname

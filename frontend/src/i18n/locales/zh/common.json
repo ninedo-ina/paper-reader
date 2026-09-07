@@ -201,6 +201,11 @@
     "error": "登录失败",
     "loginEyebrow": "让每一次阅读，都更接近洞见",
     "loginTagline": "连接论文、想法与未来研究",
+    "agreementPrefix": "登录即表示您同意 PaperHelper 的",
+    "termsLink": "使用条款",
+    "privacyLink": "隐私政策",
+    "and": "与",
+    "copyright": "© {year} PaperHelper. 保留所有权利。",
     "previousSlide": "上一张介绍",
     "nextSlide": "下一张介绍",
     "slideNumber": "第 {number} 张介绍",
@@ -349,5 +354,18 @@
     "myPapers": "我的书架",
     "papers": "篇论文",
     "error": "出错了"
+  },
+  "legal": {
+    "back": "返回登录",
+    "terms": {
+      "title": "使用条款",
+      "updatedAt": "最后更新：2026 年 9 月",
+      "body": "欢迎使用 PaperHelper。本页面为占位版使用条款，正式条款内容正在编写中。使用本服务即表示您同意遵守后续发布的正式条款；如对当前占位内容有疑问，请联系产品负责人。"
+    },
+    "privacy": {
+      "title": "隐私政策",
+      "updatedAt": "最后更新：2026 年 9 月",
+      "body": "PaperHelper 重视您的隐私。本页面为占位版隐私政策，正式政策内容正在编写中，将说明我们收集、使用和保护您数据的具体方式。如对当前占位内容有疑问，请联系产品负责人。"
+    }
   }
 }
