@@ -198,7 +198,26 @@
     "loggingIn": "Logging in...",
     "sendingCode": "Sending...",
     "codeSentCountdown": "Resend in {seconds}s",
-    "error": "Login failed"
+    "error": "Login failed",
+    "loginEyebrow": "MAKE EVERY READING COUNT",
+    "loginTagline": "Connect papers, ideas, and future research",
+    "previousSlide": "Previous introduction",
+    "nextSlide": "Next introduction",
+    "slideNumber": "Introduction {number}",
+    "loginSlides": {
+      "discover": {
+        "title": "Find the signal in a sea of papers",
+        "description": "Surface the research worth your attention and keep important ideas from getting lost."
+      },
+      "understand": {
+        "title": "Make complex ideas easier to understand",
+        "description": "Organize abstracts, annotations, and notes in a focused reading space built for clarity."
+      },
+      "connect": {
+        "title": "Turn inspiration into new directions",
+        "description": "Follow the connections between papers and make every reading the start of a new discovery."
+      }
+    }
   },
   "notification": {
     "title": "Notifications",
@@ -214,11 +233,26 @@
     "subtitle": "Your academic paper reading & management platform",
     "gotIt": "Got it",
     "features": {
-      "upload": { "title": "Paper Upload & Management", "desc": "Upload PDFs, import via URL, or create papers manually" },
-      "annotate": { "title": "Reading Annotations", "desc": "Highlight, underline, strikethrough, notes and more" },
-      "aiChat": { "title": "AI-Powered Reading", "desc": "Chat with AI to summarize, explain, and translate papers" },
-      "notify": { "title": "Notification Center", "desc": "System and app notifications organized by category" },
-      "github": { "title": "Multiple Login Methods", "desc": "Email/password, verification code, and GitHub OAuth" }
+      "upload": {
+        "title": "Paper Upload & Management",
+        "desc": "Upload PDFs, import via URL, or create papers manually"
+      },
+      "annotate": {
+        "title": "Reading Annotations",
+        "desc": "Highlight, underline, strikethrough, notes and more"
+      },
+      "aiChat": {
+        "title": "AI-Powered Reading",
+        "desc": "Chat with AI to summarize, explain, and translate papers"
+      },
+      "notify": {
+        "title": "Notification Center",
+        "desc": "System and app notifications organized by category"
+      },
+      "github": {
+        "title": "Multiple Login Methods",
+        "desc": "Email/password, verification code, and GitHub OAuth"
+      }
     }
   },
   "theme": {

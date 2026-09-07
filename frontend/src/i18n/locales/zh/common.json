@@ -198,7 +198,26 @@
     "loggingIn": "登录中...",
     "sendingCode": "发送中...",
     "codeSentCountdown": "{seconds} 秒后重发",
-    "error": "登录失败"
+    "error": "登录失败",
+    "loginEyebrow": "让每一次阅读，都更接近洞见",
+    "loginTagline": "连接论文、想法与未来研究",
+    "previousSlide": "上一张介绍",
+    "nextSlide": "下一张介绍",
+    "slideNumber": "第 {number} 张介绍",
+    "loginSlides": {
+      "discover": {
+        "title": "从海量论文中发现关键线索",
+        "description": "快速定位值得深入阅读的研究，让重要想法不再被信息洪流淹没。"
+      },
+      "understand": {
+        "title": "让复杂内容变得清晰可读",
+        "description": "在专注的阅读空间里整理摘要、批注与笔记，建立属于你的知识脉络。"
+      },
+      "connect": {
+        "title": "把灵感连接成新的研究方向",
+        "description": "追踪论文之间的关联，让每一次阅读都成为下一次发现的起点。"
+      }
+    }
   },
   "notification": {
     "title": "通知",
@@ -214,11 +233,26 @@
     "subtitle": "一站式学术论文阅读与管理平台",
     "gotIt": "知道了",
     "features": {
-      "upload": { "title": "论文上传与管理", "desc": "支持 PDF 上传、URL 导入和手动创建论文" },
-      "annotate": { "title": "阅读批注", "desc": "高亮、下划线、便签等多种批注方式" },
-      "aiChat": { "title": "AI 辅助阅读", "desc": "与 AI 对话，总结、解释、翻译论文内容" },
-      "notify": { "title": "通知中心", "desc": "系统通知与应用通知分类管理" },
-      "github": { "title": "多种登录方式", "desc": "支持邮箱密码、验证码和 GitHub 授权登录" }
+      "upload": {
+        "title": "论文上传与管理",
+        "desc": "支持 PDF 上传、URL 导入和手动创建论文"
+      },
+      "annotate": {
+        "title": "阅读批注",
+        "desc": "高亮、下划线、便签等多种批注方式"
+      },
+      "aiChat": {
+        "title": "AI 辅助阅读",
+        "desc": "与 AI 对话，总结、解释、翻译论文内容"
+      },
+      "notify": {
+        "title": "通知中心",
+        "desc": "系统通知与应用通知分类管理"
+      },
+      "github": {
+        "title": "多种登录方式",
+        "desc": "支持邮箱密码、验证码和 GitHub 授权登录"
+      }
     }
   },
   "theme": {
