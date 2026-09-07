@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/Input"
 import { Label } from "@/components/ui/Label"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/Card"
 import { GitHubLoginButton } from "@/components/auth/GitHubLoginButton"
+import NextLink from "next/link"
 
 type LoginMode = "password" | "code"
 
@@ -66,13 +67,13 @@ export function LoginForm() {
   }
 
   return (
-    <Card variant="default" className="w-full max-w-md border-white/70 bg-white/90 shadow-[0_24px_70px_rgba(34,71,96,0.16)] backdrop-blur-xl">
+    <Card variant="default" className="flex h-full w-full max-w-md flex-col shadow-[0_24px_70px_rgba(34,71,96,0.12)] backdrop-blur-xl">
       <CardHeader className="px-8 pt-8 pb-5">
-        <CardTitle className="text-2xl tracking-tight text-slate-900">{t("loginUnifiedTitle")}</CardTitle>
-        <CardDescription className="mt-2 text-slate-500">{t("loginUnifiedSubtitle")}</CardDescription>
+        <CardTitle className="text-2xl tracking-tight">{t("loginUnifiedTitle")}</CardTitle>
+        <CardDescription className="mt-2">{t("loginUnifiedSubtitle")}</CardDescription>
       </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-5 px-8 py-2">
+      <form onSubmit={handleSubmit} className="flex flex-1 flex-col">
+        <CardContent className="flex-1 space-y-5 px-8 py-2">
           <div className="space-y-2">
             <Label htmlFor="email">{t("email")}</Label>
             <Input
@@ -132,7 +133,7 @@ export function LoginForm() {
           <button
             type="button"
             onClick={switchMode}
-            className="text-sm font-medium text-cyan-700 hover:text-cyan-900 hover:underline"
+            className="text-sm font-medium text-[var(--accent)] hover:underline"
           >
             {mode === "password" ? t("switchToCode") : t("switchToPassword")}
           </button>
@@ -150,10 +151,20 @@ export function LoginForm() {
               <span className="w-full border-t border-[var(--border-subtle)]" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-slate-400">or</span>
+              <span className="bg-[var(--surface-0)] px-2 text-[var(--text-tertiary)]">or</span>
             </div>
           </div>
           <GitHubLoginButton />
+          <p className="mt-2 text-center text-xs leading-5 text-[var(--text-tertiary)]">
+            {t("agreementPrefix")}
+            <NextLink href="/terms" className="text-[var(--accent)] hover:underline">
+              {t("termsLink")}
+            </NextLink>
+            {t("and")}
+            <NextLink href="/privacy" className="text-[var(--accent)] hover:underline">
+              {t("privacyLink")}
+            </NextLink>
+          </p>
         </CardFooter>
       </form>
     </Card>
