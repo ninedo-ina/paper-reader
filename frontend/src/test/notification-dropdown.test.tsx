@@ -6,6 +6,7 @@ import { VersionPopup } from "@/components/layout/VersionPopup"
 import { useNotificationStore } from "@/stores/notification-store"
 import { useAuthStore } from "@/stores/auth-store"
 import zhMessages from "@/i18n/locales/zh/common.json"
+import type { AbstractIntlMessages } from "next-intl"
 
 const notification = {
   id: "version-info",
@@ -19,7 +20,7 @@ const notification = {
 
 function renderDropdown() {
   return render(
-    <NextIntlClientProvider locale="zh" messages={zhMessages}>
+    <NextIntlClientProvider locale="zh" messages={zhMessages as unknown as AbstractIntlMessages}>
       <NotificationDropdown />
     </NextIntlClientProvider>,
   )
@@ -56,7 +57,7 @@ describe("version notification", () => {
   it("uses the active theme surface instead of the glass card", () => {
     useNotificationStore.setState({ showVersionPopup: true })
     const { container } = render(
-      <NextIntlClientProvider locale="zh" messages={zhMessages}>
+      <NextIntlClientProvider locale="zh" messages={zhMessages as unknown as AbstractIntlMessages}>
         <VersionPopup />
       </NextIntlClientProvider>,
     )

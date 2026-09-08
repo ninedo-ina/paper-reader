@@ -26,7 +26,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <LoginExperience />
         <div className="flex w-full items-center justify-center">{children}</div>
       </div>
-      <div className="relative z-10"><AuthFooter /></div>
+      <div className="relative z-10 mt-auto"><AuthFooter /></div>
     </main>
   )
 }
