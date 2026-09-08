@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "org.paperreader"
-version = "0.1.33"
+version = "0.1.34"
 
 springBoot {
     buildInfo()
