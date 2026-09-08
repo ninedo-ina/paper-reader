@@ -3,11 +3,12 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import { NextIntlClientProvider } from "next-intl"
 import { DeletePaperDialog } from "@/components/papers/DeletePaperDialog"
 import zhMessages from "@/i18n/locales/zh/common.json"
+import type { AbstractIntlMessages } from "next-intl"
 
 function renderDialog(onConfirm = vi.fn().mockResolvedValue(undefined)) {
   const onClose = vi.fn()
   render(
-    <NextIntlClientProvider locale="zh" messages={zhMessages}>
+    <NextIntlClientProvider locale="zh" messages={zhMessages as unknown as AbstractIntlMessages}>
       <DeletePaperDialog
         open
         paperTitle="Attention Is All You Need"

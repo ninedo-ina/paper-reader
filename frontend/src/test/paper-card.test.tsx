@@ -1,3 +1,4 @@
+import type { AbstractIntlMessages } from "next-intl"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { NextIntlClientProvider } from "next-intl"
@@ -26,7 +27,7 @@ describe("PaperCard actions", () => {
   it("exposes a separate more-actions control and invokes delete from its menu", () => {
     const onDelete = vi.fn()
     render(
-      <NextIntlClientProvider locale="zh" messages={zhMessages}>
+      <NextIntlClientProvider locale="zh" messages={zhMessages as unknown as AbstractIntlMessages}>
         <PaperCard paper={paper} onDelete={onDelete} />
       </NextIntlClientProvider>,
     )
@@ -42,7 +43,7 @@ describe("PaperCard actions", () => {
 
   it("marks the current paper with an inset theme-aware capsule", () => {
     const { container } = render(
-      <NextIntlClientProvider locale="zh" messages={zhMessages}>
+      <NextIntlClientProvider locale="zh" messages={zhMessages as unknown as AbstractIntlMessages}>
         <PaperCard paper={paper} isActive />
       </NextIntlClientProvider>,
     )
