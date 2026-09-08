@@ -612,3 +612,12 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - 版本链：`feature/v0.1.35`（`a39d2e9`）→ dev → main，已推送；前后端 VERSION/favicon `?v=` 均升 0.1.35。
 - 运维：mylife-backend 已由用户停掉，8080 释放；paper-reader 后端以 `backend/.env` 环境变量重建 PM2 进程并指向 `0.1.35.jar`，本机与公网 `/api/health` 返回 `status=ok version=0.1.35`，已 `pm2 save`。注：v0.1.34 部署时曾因重建 PM2 丢失 `.env`（JWT_SECRET）导致启动失败，后端进程必须带 env 启动。
 - 本轮不涉及数据库迁移。
+
+### v0.1.36/v0.1.37 轮播区上下边界对齐登录卡片（2026-09-08 UTC）
+
+- 需求：左侧轮播内容的顶部与登录卡片顶部水平对齐、底部与卡片底部水平对齐，中间间距可自由留白。
+- `LoginExperience.tsx`：内容块去掉 `mt-auto`（顶到 section 顶部），底部标语改用 `mt-auto` 推到 section 底部。
+- `(auth)/layout.tsx`（v0.1.37）：v0.1.35 重写时误把 grid `flex-1` 带回，行高又被撑到视口（section 680 / 卡片 526 且卡片垂直居中）；再次去掉 `flex-1`，行高由内容决定。
+- 验证（Playwright 公网 1440×900）：section 与卡片 top=96 / bottom=622 完全一致；图标顶=卡片顶（96），标语底=卡片底（622）；截图核对布局正常；`/api/health` 返回 `version=0.1.37`。
+- 版本链：`feature/v0.1.36` + `feature/v0.1.37` → dev → main 已推送；favicon `?v=0.1.37`。
+- 本轮不涉及数据库迁移。

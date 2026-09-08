@@ -6,19 +6,19 @@ The repository contains the C-side product and its API. The administration conso
 
 > **Maintainer start here:** read the [documentation index](docs/README.md), then the [new maintainer guide](docs/NEW_MAINTAINER_GUIDE.md) and [complete project status](docs/PROJECT_STATUS.md). They record the real production topology, configuration rules, known risks, and release workflow without requiring previous chat context.
 
-## Current Iteration: v0.1.35
+## Current Iteration: v0.1.37
 
-- Branch: `feature/v0.1.35`
-- Scope: blend the login showcase into the page — full-page fixed particle background, borderless left text column, PAPERHELPER logo/wordmark moved to the top-left header.
+- Branch: `feature/v0.1.37`
+- Scope: blend the login showcase into the page — full-page fixed particle background, borderless left text column, PAPERHELPER logo/wordmark in the top-left header, showcase text pinned to the sign-in card's top and bottom edges.
 - Status: deployed to production and verified on 2026-09-08 UTC.
 
 ## Current Release
 
 - Default branch: `main`
 - Integration branch: `dev`
-- Released version branch: `feature/v0.1.35` (released to production)
-- Client version: `0.1.35`
-- Production version: `0.1.35` (verified 2026-09-08 UTC)
+- Released version branch: `feature/v0.1.37` (released to production)
+- Client version: `0.1.37`
+- Production version: `0.1.37` (verified 2026-09-08 UTC)
 - Default locale: Chinese (`zh`)
 - Supported locales: Chinese (`zh`) and English (`en`)
 - Production client: `https://paper.pilo.eu.cc`
