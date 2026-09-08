@@ -34,7 +34,7 @@ export function LoginExperience() {
   }
   return (
     <section className="relative hidden lg:flex lg:flex-col">
-      <div className="mt-auto max-w-lg">
+      <div className="max-w-lg">
         <div className="mb-7 flex size-14 items-center justify-center rounded-2xl border border-[var(--border-color)] bg-[var(--accent-soft)] text-[var(--accent)]"><Icon className="size-7" /></div>
         <p className="mb-4 text-xs font-semibold uppercase tracking-[.28em] text-[var(--text-tertiary)]">{t("loginEyebrow")}</p>
         <h2 className="max-w-md text-4xl font-semibold leading-tight tracking-[-.04em] text-[var(--text-primary)]">{t(`loginSlides.${slide.key}.title`)}</h2>
@@ -45,7 +45,7 @@ export function LoginExperience() {
           <button type="button" aria-label={t("nextSlide")} onClick={() => change(active + 1)} className="grid size-9 place-items-center rounded-full border border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"><ChevronRight className="size-4" /></button>
         </div>
       </div>
-      <div className="mt-10 flex items-center gap-2 text-xs text-[var(--text-tertiary)]"><Sparkles className="size-3.5 text-[var(--accent)]" /> {t("loginTagline")}</div>
+      <div className="mt-auto flex items-center gap-2 text-xs text-[var(--text-tertiary)]"><Sparkles className="size-3.5 text-[var(--accent)]" /> {t("loginTagline")}</div>
     </section>
   )
 }
