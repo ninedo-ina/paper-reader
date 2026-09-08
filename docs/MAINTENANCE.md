@@ -66,7 +66,7 @@ feature/v主版本.次版本.修订版本
 7. 生产验收通过后再执行 `pm2 save`，并记录提交、构建、部署、健康检查和公网验收结果。
 8. 保留版本分支、合并提交和验证记录，不通过强制推送改写 `main`、`dev` 或历史版本分支。
 
-当前已发布基线为 `feature/v0.1.31`，生产已核验为 `0.1.31`；后续新需求从最新发布基线创建下一个版本分支，已发布版本 Bug 使用对应 `-fix` 分支。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。
+当前已发布基线为 `feature/v0.1.32`，生产已核验为 `0.1.32`；后续新需求从最新发布基线创建下一个版本分支，已发布版本 Bug 使用对应 `-fix` 分支。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。
 
 ## 4. 每次代码迭代的标准流程
 
@@ -559,11 +559,11 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - 本机与公网 `/api/health` 均返回 `status=ok`、`version=0.1.31`；公网 `/zh/login` 返回 200；明暗 favicon 返回 200 且页面引用 `v=0.1.31`；验收后已执行 `pm2 save`。
 - 本轮不涉及数据库迁移、后台管理项目、共享基础设施或 `backend/uploads`。
 
-## 22. v0.1.32 论文助手 C 端登录页面优化
+## 22. v0.1.32 论文助手 C 端登录页面优化（已部署）
 
 本轮需求编号为 `REQ-202609-0070`，基于 `dev` 创建普通迭代分支 `feature/v0.1.32`。登录页改为左右分栏：左侧使用 Canvas 绘制动态粒子网络背景并展示论文阅读主题轮播，右侧保留原有邮箱密码、验证码和 GitHub OAuth 登录流程；中英文文案同步补齐，窄屏隐藏左侧展示区。前后端版本、页面 favicon 缓存参数升级到 `0.1.32`。
 
-本轮不涉及数据库迁移、后端接口、用户数据、后台管理项目或共享基础设施。前端 `pnpm exec tsc --noEmit`、`pnpm test`（10 个文件、71 项测试）、`pnpm run lint` 和 `pnpm run build` 已通过；Lint 仅有既有 warning。后端 `./gradlew clean test bootJar` 已通过，Kotlin 仅有既有 unchecked cast warning。
+本轮不涉及数据库迁移、后端接口、用户数据、后台管理项目或共享基础设施。发布提交为 `a602471`；后端 PM2 使用 `paper-reader-backend-0.1.32.jar`，前端已重启并执行 `pm2 save`。本机与公网健康接口均返回 `version=0.1.32`，本机与公网 `/zh/login` 均返回 200，页面包含新登录展示和 `v=0.1.32` favicon。前端 `pnpm exec tsc --noEmit`、`pnpm test`（10 个文件、71 项测试）、`pnpm run lint` 和 `pnpm run build` 已通过；Lint 仅有既有 warning。后端 `./gradlew clean test bootJar` 已通过，Kotlin 仅有既有 unchecked cast warning。
 
 ## 23. v0.1.33 登录页收尾修复（补齐 v0.1.32 遗留问题）
 
@@ -583,3 +583,10 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - `curl` 确认 `/zh/terms`、`/zh/privacy`、`/en/terms` 均返回 200。
 - 前端 `pnpm exec tsc --noEmit` 无错误；`pnpm test` 10 个文件 71 项测试全部通过；`pnpm run build` 成功，新增 `/[locale]/terms`、`/[locale]/privacy` 路由正常生成；Lint 仅有既有 warning（改动文件均未引入新增 lint 问题）。
 - 后端 `./gradlew clean test bootJar` 通过，44 项测试全部通过，产物为 `paper-reader-backend-0.1.33.jar`，Kotlin 仅有既有 unchecked cast warning。
+
+### 发布与验收记录（2026-09-07 UTC）
+
+- 功能提交：`183a7a9`；`feature/v0.1.33` 已推送并依次合并到 `dev` 和 `main`（合并提交 `61bc50f`），GitHub 默认分支仍为 `main`。
+- 后端 PM2 已重建并指向 `paper-reader-backend-0.1.33.jar`；前端已使用 `main` 上的最新构建重启。两个 PM2 进程均为 `online`，后端 0 次重启，验收后已执行 `pm2 save`。
+- 本机与公网 `/api/health` 均返回 `status=ok`、`version=0.1.33`；本机与公网 `/zh/login` 均返回 200；`/zh/terms`、`/zh/privacy` 均返回 200；页面 favicon 引用 `v=0.1.33`。
+- 本轮不涉及数据库迁移、后台管理项目、共享基础设施或 `backend/uploads`。

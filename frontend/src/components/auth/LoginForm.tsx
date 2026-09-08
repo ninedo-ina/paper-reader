@@ -67,13 +67,13 @@ export function LoginForm() {
   }
 
   return (
-    <Card variant="default" className="flex h-full w-full max-w-md flex-col shadow-[0_24px_70px_rgba(34,71,96,0.12)] backdrop-blur-xl">
+    <Card variant="default" className="w-full max-w-md shadow-[0_24px_70px_rgba(34,71,96,0.12)] backdrop-blur-xl">
       <CardHeader className="px-8 pt-8 pb-5">
         <CardTitle className="text-2xl tracking-tight">{t("loginUnifiedTitle")}</CardTitle>
         <CardDescription className="mt-2">{t("loginUnifiedSubtitle")}</CardDescription>
       </CardHeader>
-      <form onSubmit={handleSubmit} className="flex flex-1 flex-col">
-        <CardContent className="flex-1 space-y-5 px-8 py-2">
+      <form onSubmit={handleSubmit}>
+        <CardContent className="space-y-5 px-8 py-2">
           <div className="space-y-2">
             <Label htmlFor="email">{t("email")}</Label>
             <Input

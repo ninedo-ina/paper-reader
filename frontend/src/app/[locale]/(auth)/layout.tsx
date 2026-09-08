@@ -12,7 +12,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       </div>
       <div className="mx-auto grid w-full max-w-7xl flex-1 items-stretch gap-6 py-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(380px,.8fr)]">
         <LoginExperience />
-        <div className="flex w-full items-stretch justify-center">{children}</div>
+        <div className="flex w-full items-center justify-center">{children}</div>
       </div>
       <AuthFooter />
     </main>
