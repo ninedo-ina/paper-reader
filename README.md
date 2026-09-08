@@ -6,19 +6,19 @@ The repository contains the C-side product and its API. The administration conso
 
 > **Maintainer start here:** read the [documentation index](docs/README.md), then the [new maintainer guide](docs/NEW_MAINTAINER_GUIDE.md) and [complete project status](docs/PROJECT_STATUS.md). They record the real production topology, configuration rules, known risks, and release workflow without requiring previous chat context.
 
-## Current Iteration: v0.1.33
+## Current Iteration: v0.1.34
 
-- Branch: `feature/v0.1.33`
-- Scope: fix the v0.1.32 login page redesign — equal-height split layout, theme-aware colors for both panels, light/dark and language toggles on the auth screen, terms/privacy links, and a version/copyright footer.
-- Status: deployed to production and verified on 2026-09-07 UTC.
+- Branch: `feature/v0.1.34`
+- Scope: correct the v0.1.33 equal-height direction on the login page — the sign-in card keeps its natural height and the left carousel panel stretches to match it.
+- Status: deployed to production and verified on 2026-09-08 UTC.
 
 ## Current Release
 
 - Default branch: `main`
 - Integration branch: `dev`
-- Released version branch: `feature/v0.1.33` (released to production)
-- Client version: `0.1.33`
-- Production version: `0.1.33` (verified 2026-09-07 UTC)
+- Released version branch: `feature/v0.1.34` (released to production)
+- Client version: `0.1.34`
+- Production version: `0.1.34` (verified 2026-09-08 UTC)
 - Default locale: Chinese (`zh`)
 - Supported locales: Chinese (`zh`) and English (`en`)
 - Production client: `https://paper.pilo.eu.cc`

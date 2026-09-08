@@ -590,3 +590,14 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - 后端 PM2 已重建并指向 `paper-reader-backend-0.1.33.jar`；前端已使用 `main` 上的最新构建重启。两个 PM2 进程均为 `online`，后端 0 次重启，验收后已执行 `pm2 save`。
 - 本机与公网 `/api/health` 均返回 `status=ok`、`version=0.1.33`；本机与公网 `/zh/login` 均返回 200；`/zh/terms`、`/zh/privacy` 均返回 200；页面 favicon 引用 `v=0.1.33`。
 - 本轮不涉及数据库迁移、后台管理项目、共享基础设施或 `backend/uploads`。
+
+### v0.1.34 登录页等高方向修正（2026-09-08 UTC）
+
+- 背景：v0.1.33 把等高做反了——登录卡片被 `h-full flex flex-col` 拉到轮播卡片的 `min-h-[620px]`，正确方向应是登录卡片保持自然高度、轮播卡片对齐登录卡片。
+- `(auth)/layout.tsx`：登录列容器 `items-stretch`→`items-center`（登录卡片不再被拉伸、保持自然高度）；grid 去掉 `flex-1`（此前行高被撑到视口剩余高度，轮播 688 / 卡片 526 不等高），行高改由内容决定。
+- `LoginForm.tsx`：卡片去掉 `h-full flex flex-col`，form 去掉 `flex flex-1 flex-col`、CardContent 去掉 `flex-1`，恢复上一版自然高度（主题变量、条款/隐私链接等 v0.1.33 改动全部保留）。
+- `LoginExperience.tsx`：去掉 `min-h-[620px]`，作为 grid 拉伸项跟随登录卡片高度。
+- 验证：Playwright 对公网 `/zh/login`（1440×900）DOM 测量，轮播与登录卡片 top=88 / bottom=614 / height=526 完全一致；截图核对表单间距正常。
+- `pnpm exec tsc --noEmit` 无错误；`pnpm test` 10 个文件 71 项全部通过；`pnpm run build` 成功。
+- 版本链：`feature/v0.1.34`（提交 `8489e91` + `7ea316e`）→ dev → main；favicon 缓存参数与 `VERSION`/`package.json`/`build.gradle.kts` 均升到 `0.1.34`，前端 PM2 已重启，公网 `/zh/login` 返回 200 且 favicon 引用 `v=0.1.34`。
+- **注意：2026-09-08 03:06 起 `mylife-backend.service` 占用了 8080，paper-reader 后端无法绑定端口进入 crash loop，`/api/health` 实际由 mylife 后端应答；后端 jar 已重建成 `0.1.34`，待端口冲突解决后恢复。本轮不涉及数据库迁移。**
