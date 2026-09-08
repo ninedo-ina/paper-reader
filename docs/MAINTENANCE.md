@@ -583,3 +583,10 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - `curl` 确认 `/zh/terms`、`/zh/privacy`、`/en/terms` 均返回 200。
 - 前端 `pnpm exec tsc --noEmit` 无错误；`pnpm test` 10 个文件 71 项测试全部通过；`pnpm run build` 成功，新增 `/[locale]/terms`、`/[locale]/privacy` 路由正常生成；Lint 仅有既有 warning（改动文件均未引入新增 lint 问题）。
 - 后端 `./gradlew clean test bootJar` 通过，44 项测试全部通过，产物为 `paper-reader-backend-0.1.33.jar`，Kotlin 仅有既有 unchecked cast warning。
+
+### 发布与验收记录（2026-09-07 UTC）
+
+- 功能提交：`183a7a9`；`feature/v0.1.33` 已推送并依次合并到 `dev` 和 `main`（合并提交 `61bc50f`），GitHub 默认分支仍为 `main`。
+- 后端 PM2 已重建并指向 `paper-reader-backend-0.1.33.jar`；前端已使用 `main` 上的最新构建重启。两个 PM2 进程均为 `online`，后端 0 次重启，验收后已执行 `pm2 save`。
+- 本机与公网 `/api/health` 均返回 `status=ok`、`version=0.1.33`；本机与公网 `/zh/login` 均返回 200；`/zh/terms`、`/zh/privacy` 均返回 200；页面 favicon 引用 `v=0.1.33`。
+- 本轮不涉及数据库迁移、后台管理项目、共享基础设施或 `backend/uploads`。

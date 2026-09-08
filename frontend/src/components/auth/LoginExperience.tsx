@@ -108,7 +108,7 @@ export function LoginExperience() {
     resetTimer()
   }
   return (
-    <section className="relative hidden h-full min-h-[620px] overflow-hidden rounded-[28px] border border-[var(--border-color)] bg-[var(--surface-0)] p-10 text-[var(--text-primary)] shadow-2xl lg:flex lg:flex-col">
+    <section className="relative hidden overflow-hidden rounded-[28px] border border-[var(--border-color)] bg-[var(--surface-0)] p-10 text-[var(--text-primary)] shadow-2xl lg:flex lg:flex-col">
       <div className="absolute inset-0 bg-[linear-gradient(180deg,var(--bg-root),var(--surface-0))] opacity-90" aria-hidden="true" />
       <ParticleField />
       <div className="relative z-10 flex items-center gap-3 text-sm font-semibold tracking-[.18em] text-[var(--accent)]">

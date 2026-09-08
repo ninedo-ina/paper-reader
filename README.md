@@ -10,15 +10,15 @@ The repository contains the C-side product and its API. The administration conso
 
 - Branch: `feature/v0.1.33`
 - Scope: fix the v0.1.32 login page redesign — equal-height split layout, theme-aware colors for both panels, light/dark and language toggles on the auth screen, terms/privacy links, and a version/copyright footer.
-- Status: implemented on `feature/v0.1.33`; deployment pending.
+- Status: deployed to production and verified on 2026-09-07 UTC.
 
 ## Current Release
 
 - Default branch: `main`
 - Integration branch: `dev`
-- Released version branch: `feature/v0.1.32` (released to production)
+- Released version branch: `feature/v0.1.33` (released to production)
 - Client version: `0.1.33`
-- Production version: `0.1.32` (verified 2026-09-07 UTC)
+- Production version: `0.1.33` (verified 2026-09-07 UTC)
 - Default locale: Chinese (`zh`)
 - Supported locales: Chinese (`zh`) and English (`en`)
 - Production client: `https://paper.pilo.eu.cc`
