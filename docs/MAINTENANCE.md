@@ -621,3 +621,14 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - 验证（Playwright 公网 1440×900）：section 与卡片 top=96 / bottom=622 完全一致；图标顶=卡片顶（96），标语底=卡片底（622）；截图核对布局正常；`/api/health` 返回 `version=0.1.37`。
 - 版本链：`feature/v0.1.36` + `feature/v0.1.37` → dev → main 已推送；favicon `?v=0.1.37`。
 - 本轮不涉及数据库迁移。
+
+### v0.1.38 页脚沉底 + 使用条款/隐私政策扩充至约一万字（2026-09-08 UTC）
+
+- 需求：登录页底部版权与「使用条款/隐私政策」链接移到页面最底部；两个法律页各扩充约一万字（中英双语）。
+- `(auth)/layout.tsx`：footer 包一层 `<div className="relative z-10 mt-auto">` 沉到页面底部。
+- `terms/page.tsx` / `privacy/page.tsx`：改为渲染 `t.raw("*.sections")` 的 `{heading, body}` 数组，带序号小节。
+- `zh/en common.json`：注入 `legal.terms.sections`（37 节）与 `legal.privacy.sections`（35 节）；中文正文各约 9.3k–9.7k 字符，英文各约 3.2 万字符。移除旧 `body` 字段。
+- 测试修复：messages JSON 现在含数组节点，三个测试文件的 `NextIntlClientProvider messages` 加 `as unknown as AbstractIntlMessages` 断言。
+- 验证（Playwright 公网 1440×900）：footer bottom=868���视口 900）位于页面最底；section/卡片仍 top=96 / bottom=622；`/zh/terms` 37 节正文 10008 字符、`/zh/privacy` 35 节 9643、`/en/terms` 31981、`/en/privacy` 32967；`tsc --noEmit` 无错误，71 项测试全过，build 成功。
+- 版本链：`feature/v0.1.38`（`8e9c375`）→ dev → main 已推送；前后端 VERSION/favicon `?v=` 均升 0.1.38；前端 PM2 重启，后端以 `.env` 环境变量重建 PM2 并指向 `0.1.38.jar`，`/api/health` 返回 `version=0.1.38`，已 `pm2 save`。
+- 本轮不涉及数据库迁移。
