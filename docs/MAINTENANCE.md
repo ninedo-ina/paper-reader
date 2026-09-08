@@ -601,3 +601,14 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - `pnpm exec tsc --noEmit` 无错误；`pnpm test` 10 个文件 71 项全部通过；`pnpm run build` 成功。
 - 版本链：`feature/v0.1.34`（提交 `8489e91` + `7ea316e`）→ dev → main；favicon 缓存参数与 `VERSION`/`package.json`/`build.gradle.kts` 均升到 `0.1.34`，前端 PM2 已重启，公网 `/zh/login` 返回 200 且 favicon 引用 `v=0.1.34`。
 - **注意：2026-09-08 03:06 起 `mylife-backend.service` 占用了 8080，paper-reader 后端无法绑定端口进入 crash loop，`/api/health` 实际由 mylife 后端应答；后端 jar 已重建成 `0.1.34`，待端口冲突解决后恢复。本轮不涉及数据库迁移。**
+
+### v0.1.35 登录页背景全局化（2026-09-08 UTC）
+
+- 需求：左侧轮播卡片去掉轮廓（边框/背景/阴影），粒子动态背景改为整个登录页全局背景，左侧只留文字，PAPERHELPER logo 与标题移到页面左上角。
+- 新增 `components/auth/ParticleField.tsx`：粒子画布从 LoginExperience 抽出，逻辑不变（`--accent` 取色、`data-theme` 监听、DPR 缩放）。
+- `(auth)/layout.tsx`：新增 `fixed inset-0 z-0 pointer-events-none` 全局背景层（渐变 + ParticleField），顶栏 `justify-between`——左侧 logo+PAPERHELPER 字标、右侧 LangToggle/ThemeToggle；内容区加 `relative z-10`。
+- `LoginExperience.tsx`：section 去掉 `rounded-[28px] border bg shadow-2xl overflow-hidden` 与内部渐变/画布，仅保留文案、图标、轮播控件。
+- 验证（Playwright 公网 1440×900）：section `border: 0px`、背景透明；canvas 尺寸 1440×900 且父层 `position: fixed`（全局背景生效）；logo 位于左上角；favicon `v=0.1.35`；亮/暗主题截图均正常。`tsc --noEmit` 无错误，71 项测试全过，build 成功。
+- 版本链：`feature/v0.1.35`（`a39d2e9`）→ dev → main，已推送；前后端 VERSION/favicon `?v=` 均升 0.1.35。
+- 运维：mylife-backend 已由用户停掉，8080 释放；paper-reader 后端以 `backend/.env` 环境变量重建 PM2 进程并指向 `0.1.35.jar`，本机与公网 `/api/health` 返回 `status=ok version=0.1.35`，已 `pm2 save`。注：v0.1.34 部署时曾因重建 PM2 丢失 `.env`（JWT_SECRET）导致启动失败，后端进程必须带 env 启动。
+- 本轮不涉及数据库迁移。
