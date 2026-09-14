@@ -1,13 +1,15 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
-import { Loader2, ShieldCheck, ShieldOff, Smartphone } from "lucide-react"
+import { useCallback, useEffect, useState, type ReactNode } from "react"
+import { Copy, Loader2, ShieldCheck, ShieldOff, Smartphone } from "lucide-react"
 import { useToastStore } from "@/stores/toast-store"
 import { useUserStore } from "@/stores/user-store"
 import * as securityApi from "@/lib/api/security"
+import { copyToClipboard } from "@/lib/clipboard"
 import type { TwoFactorSetup, TwoFactorStatus } from "@/lib/api/types"
 import { ThemeAwareQrCode } from "./ThemeAwareQrCode"
 import { RecoveryCodesPanel } from "./RecoveryCodesPanel"
+import { OtpInput } from "./OtpInput"
 
 type Step = "loading" | "idle" | "bind" | "codes"
 
@@ -111,6 +113,21 @@ export function TwoFactorTab() {
   )
 }
 
+/**
+ * 表单行：宽屏下标签在左、输入在右，中间留出固定间距（标签列定宽对齐）。
+ * 窄屏放不下时自动改回上下堆叠，避免输入框被挤成一条缝。
+ */
+function FieldRow({ label, htmlFor, children }: { label: string; htmlFor?: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-6">
+      <label htmlFor={htmlFor} className="shrink-0 text-xs font-medium text-[var(--text-secondary)] sm:w-24 sm:text-right">
+        {label}
+      </label>
+      <div className="min-w-0 sm:flex-1">{children}</div>
+    </div>
+  )
+}
+
 /** 扫码绑定：生成密钥 → 扫码 → 校验密码 + 动态码 → 下发恢复码 */
 function BindWizard({
   onCancel,
@@ -167,6 +184,16 @@ function BindWizard({
     }
   }, [password, code, onFinished])
 
+  const copySecret = async () => {
+    if (!setup?.secret) return
+    try {
+      await copyToClipboard(setup.secret)
+      useToastStore.getState().addToast({ message: "密钥已复制到剪贴板", type: "success" })
+    } catch {
+      useToastStore.getState().addToast({ message: "复制失败，请手动选择后复制", type: "error" })
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center pt-16">
@@ -186,7 +213,17 @@ function BindWizard({
       <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
         {setup && <ThemeAwareQrCode value={setup.otpauthUri} />}
         <div className="min-w-0 flex-1 space-y-2">
-          <p className="text-xs font-medium text-[var(--text-secondary)]">无法扫码？手动输入密钥</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-medium text-[var(--text-secondary)]">无法扫码？手动输入密钥</p>
+            <button
+              type="button"
+              onClick={copySecret}
+              className="inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+            >
+              <Copy className="size-3.5" />
+              复制
+            </button>
+          </div>
           <code className="block break-all rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] px-3 py-2 font-mono text-xs tracking-wider text-[var(--text-primary)]">
             {setup?.secret}
           </code>
@@ -196,28 +233,21 @@ function BindWizard({
         </div>
       </div>
 
-      <div className="space-y-1.5">
-        <label className="text-xs font-medium text-[var(--text-secondary)]">当前密码</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          autoComplete="current-password"
-          className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
-        />
-      </div>
+      <div className="space-y-4">
+        <FieldRow label="当前密码" htmlFor="two-factor-password">
+          <input
+            id="two-factor-password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
+            className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+          />
+        </FieldRow>
 
-      <div className="space-y-1.5">
-        <label className="text-xs font-medium text-[var(--text-secondary)]">6 位动态码</label>
-        <input
-          value={code}
-          onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-          inputMode="numeric"
-          maxLength={6}
-          autoComplete="one-time-code"
-          placeholder="000000"
-          className="w-40 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] px-3 py-2 font-mono text-sm tracking-[0.3em] text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
-        />
+        <FieldRow label="6 位动态码" htmlFor="two-factor-code">
+          <OtpInput id="two-factor-code" value={code} onChange={setCode} />
+        </FieldRow>
       </div>
 
       <div className="flex gap-2">
@@ -283,13 +313,16 @@ function RegenerateSection({ onDone }: { onDone: (codes: string[]) => void }) {
   return (
     <div className="space-y-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-4">
       <p className="text-xs font-medium text-[var(--text-secondary)]">输入当前密码以重新生成 9 个恢复码</p>
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        autoComplete="current-password"
-        className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-1)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
-      />
+      <FieldRow label="当前密码" htmlFor="regenerate-password">
+        <input
+          id="regenerate-password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          autoComplete="current-password"
+          className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-1)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+        />
+      </FieldRow>
       <div className="flex gap-2">
         <button
           type="button"
@@ -355,24 +388,21 @@ function DisableSection({ onDone }: { onDone: () => void }) {
   return (
     <div className="space-y-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-4">
       <p className="text-xs font-medium text-[var(--text-secondary)]">
-        关闭后登录不再需要动态码，已下发的恢复码会立即失效。请用密码 + 动态码确认。
+        关闭后登录不再需要动态码，已下发的恢复码会立即失效。请用密码 + 动态码确认，动态码也可以用恢复码代替。
       </p>
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        autoComplete="current-password"
-        placeholder="当前密码"
-        className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-1)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
-      />
-      <input
-        value={code}
-        onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-        inputMode="numeric"
-        maxLength={6}
-        placeholder="6 位动态码或恢复码"
-        className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-1)] px-3 py-2 font-mono text-sm tracking-widest text-[var(--text-primary)] placeholder:font-sans placeholder:tracking-normal placeholder:text-[var(--text-placeholder)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
-      />
+      <FieldRow label="当前密码" htmlFor="disable-password">
+        <input
+          id="disable-password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          autoComplete="current-password"
+          className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-1)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+        />
+      </FieldRow>
+      <FieldRow label="动态码" htmlFor="disable-code">
+        <OtpInput id="disable-code" value={code} onChange={setCode} variant="inset" label="动态码或恢复码" />
+      </FieldRow>
       <div className="flex gap-2">
         <button
           type="button"

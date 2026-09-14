@@ -2,6 +2,7 @@
 
 import { Copy, Download } from "lucide-react"
 import { useToastStore } from "@/stores/toast-store"
+import { copyToClipboard } from "@/lib/clipboard"
 
 interface RecoveryCodesPanelProps {
   codes: string[]
@@ -13,13 +14,8 @@ interface RecoveryCodesPanelProps {
 /** 只提供两种保存方式：一键复制，或下载成 txt 文本文件（不做 PDF）。 */
 export function RecoveryCodesPanel({ codes, email, onDone }: RecoveryCodesPanelProps) {
   const copyAll = async () => {
-    const text = codes.join("\n")
     try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text)
-      } else {
-        fallbackCopy(text)
-      }
+      await copyToClipboard(codes.join("\n"))
       useToastStore.getState().addToast({ message: "恢复码已复制到剪贴板", type: "success" })
     } catch {
       useToastStore.getState().addToast({ message: "复制失败，请手动选择后复制", type: "error" })
@@ -102,15 +98,4 @@ export function RecoveryCodesPanel({ codes, email, onDone }: RecoveryCodesPanelP
       )}
     </div>
   )
-}
-
-function fallbackCopy(text: string) {
-  const textarea = document.createElement("textarea")
-  textarea.value = text
-  textarea.style.position = "fixed"
-  textarea.style.opacity = "0"
-  document.body.appendChild(textarea)
-  textarea.select()
-  document.execCommand("copy")
-  document.body.removeChild(textarea)
 }

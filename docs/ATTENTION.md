@@ -1,3 +1,13 @@
+## v0.1.42 两步验证表单排版
+
+- 本轮仍是 `REQ-202609-0104`，在已发布的 v0.1.41 上开的 UI 打磨迭代 `feature/v0.1.42`。
+- **6 位动态码现在是 6 个独立输入格**（`frontend/src/components/settings/OtpInput.tsx`），受控组件的 `value` 是纯数字字符串、不补空格。内部按「单格覆盖、整串粘贴铺开」改写字符串，别改成非受控或加 `defaultValue`，否则退格/粘贴逻辑会错乱。
+- `OtpInput` 的 `variant` 只管底色：放进铺了 `surface-2` 的面板里要传 `inset`，格子才改用 `surface-1`，否则格子跟面板糊成一片。新增使用处时先看父容器底色。
+- 复制逻辑已抽到 `frontend/src/lib/clipboard.ts` 的 `copyToClipboard()`，恢复码面板与手动密钥共用。**不要再各写一份 `navigator.clipboard` + `fallbackCopy`**：内网 http 部署下 Clipboard API 不存在，兜底分支不能删。
+- `FieldRow` 负责「左标签右输入」：标签列 `sm:w-24` + `sm:text-right`、输入列 `sm:flex-1`、两列间距 `sm:gap-6`。它是 `TwoFactorTab.tsx` 内的局部组件，目前只有这一个文件在用；若要挪到公共位置，记得同步改「重新生成恢复码」「关闭两步验证」两处调用。
+- 窄屏（`sm` 以下）故意回到上下堆叠，不是漏写响应式：6 格动态码在 375px 宽度下横排会被挤变形。
+- 本轮**没有改任何请求**：`enableTwoFactor({ password, code })`、`disableTwoFactor({ password, code })` 的入参不变，`code` 仍是 6 位纯数字字符串。后端无迁移、无接口改动、Kotlin 代码未改，只跟着版本号重新构建与重启。
+
 ## v0.1.41 两步验证挑战失效提示
 
 - 本轮需求编号仍为 `REQ-202609-0104`，是在已发布的 v0.1.40 上开的补丁迭代 `feature/v0.1.41`。
