@@ -1,3 +1,11 @@
+## v0.1.41 两步验证挑战失效提示
+
+- 本轮需求编号仍为 `REQ-202609-0104`，是在已发布的 v0.1.40 上开的补丁迭代 `feature/v0.1.41`。
+- 唯一的行为改动在 `AuthService.verifyTwoFactor()`：`jwtUtil.extractClaims()` 外包一层 `catch (io.jsonwebtoken.JwtException)`，转成 `InvalidCredentialsException("登录凭证已失效，请重新登录")`。改动前挑战 token 过期会返回 500。
+- **只包这一处，不要顺手把 `login`/`refresh`/`emailLogin` 也改成同样处理**。项目既有约定就是「JWT 解析失败 → 兜底 500」（`GlobalExceptionHandler` 只翻译 `BusinessException` 与 `IllegalArgumentException`），公网核验 `/api/auth/refresh` 传垃圾 token 同样返回 500。要统一改那是另一个迭代的事，本轮刻意不扩大改动面。
+- 挑战 token 有效期 5 分钟，由 `JwtUtil.generateTwoFactorChallengeToken()` 决定。这条提示只保证「过期后不报 500」，前端仍需引导用户回到密码步骤；`auth-store` 的 `cancelTwoFactor()` 已把 `twoFactorChallengeToken` 与 `sessionStorage` 中的 `pr_2fa_challenge` 一起清掉。
+- 本轮无数据库迁移、无前端业务逻辑改动、无新依赖，版本号（前后端 VERSION、`package.json`、`build.gradle.kts`、favicon `?v=`）统一升到 `0.1.41`。
+
 ## v0.1.40 个人中心两步验证功能完善
 
 - 本轮需求编号为 `REQ-202609-0104`，使用普通迭代分支 `feature/v0.1.40`（与 v0.1.33 之后的迭代命名保持一致）。
