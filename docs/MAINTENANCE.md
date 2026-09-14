@@ -66,7 +66,7 @@ feature/v主版本.次版本.修订版本
 7. 生产验收通过后再执行 `pm2 save`，并记录提交、构建、部署、健康检查和公网验收结果。
 8. 保留版本分支、合并提交和验证记录，不通过强制推送改写 `main`、`dev` 或历史版本分支。
 
-当前已发布基线为 `feature/v0.1.39`，生产已核验为 `0.1.39`；后续新需求从最新发布基线创建下一个版本分支。v0.1.33 之后本项目实际按普通迭代分支（`feature/v0.1.40`）递进，不再追加 `-fix`；历史 `-fix` 分支仅用于 v0.1.32 及更早版本。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。
+当前已发布基线为 `feature/v0.1.41`，生产已核验为 `0.1.41`；后续新需求从最新发布基线创建下一个版本分支。v0.1.33 之后本项目实际按普通迭代分支（`feature/v0.1.40`、`feature/v0.1.41`）递进，不再追加 `-fix`，即使本轮只是补丁也照常开下一个修订号分支；历史 `-fix` 分支仅用于 v0.1.32 及更早版本。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。
 
 ## 4. 每次代码迭代的标准流程
 
@@ -655,3 +655,22 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - 前端：`ThemeAwareQrCode.tsx` 生成主题自适应二维码（浅色主题深色码点 + 白底，深色主题反相 `#e8eef5`/`#101823`，两种配色都保持高对比度，二倍图避免高分屏发虚）；`RecoveryCodesPanel.tsx` 提供 9 码网格与一键复制 / 下载 TXT 两个按钮（`Blob` + `<a download>`，不做 PDF）；`TwoFactorTab.tsx` 覆盖扫码绑定向导、关闭（密码 + 动态码/恢复码）、重新生成恢复码；`TrustedDevicesTab.tsx` 列出设备并支持多选删除。`ProfileDialog.tsx` 菜单由 4 个变 5 个，新增「信任设备」，原来的本地 `TwoFactorTab` 占位函数已删除，改为从 `./TwoFactorTab` 导入。
 - GitHub 回调登录是整页跳转，2FA 挑战 token 暂存在 `sessionStorage`（`pr_2fa_challenge`），`/callback` 跳回 `/{locale}/login?twofactor=1` 后由 `hydrateChallenge()` 恢复挑战态。
 - 本轮不涉及后台管理项目、共享 PostgreSQL/Redis/GROBID 配置或 `backend/uploads`。
+
+#### v0.1.40 发布与生产验收记录（2026-09-14 UTC）
+
+- 版本链：`5f88fbf`（`feature/v0.1.40`）→ `91045dc`（并入 `dev`）→ `de2ea29`（并入 `main`），均已推送。
+- 构建：生产机 `/root/paper-reader` 上 `./gradlew clean test bootJar` 通过（54 项后端测试全绿，`BUILD SUCCESSFUL`），产出 `paper-reader-backend-0.1.40.jar`；前端 `pnpm run build` 退出码 0，仅剩既有的 `no-img-element`/`exhaustive-deps` 告警类别。版本分支上 `tsc --noEmit` 无错误、vitest 12 个文件 77 项测试全过（新增 `recovery-codes-panel.test.tsx` 3 项、`device.test.ts` 3 项）。
+- **数据库迁移已在生产执行**：启动日志 `Successfully validated 14 migrations`、`Migrating schema "public" to version "14 - two factor and trusted devices"`、`Successfully applied 1 migration to schema "public", now at version v14`；`psql` 确认 `pr_user_two_factor`、`pr_user_recovery_codes`、`pr_user_devices` 三张表存在且 owner 为 `paper_reader`。后端 `ddl-auto: validate` 能启动本身就是迁移成功的证明。
+- **部署踩坑（重要，已写入 DEPLOY.md 同款流程）**：`pm2 restart paper-reader-backend --update-env` 会继续使用 PM2 缓存的旧 `script args`，而 `./gradlew clean` 刚把 `paper-reader-backend-0.1.39.jar` 删掉了，于是重启失败 —— `Error: Unable to access jarfile /root/paper-reader/backend/build/libs/paper-reader-backend-0.1.39.jar`。旧进程在收到优雅停止前仍在服务，因此表现为一次短暂的生产中断。正确做法就是 `docs/DEPLOY.md` 里写的：同一 shell 内 `. ./.env` → `pm2 delete paper-reader-backend` → 用**新** JAR 绝对路径 `pm2 start`。本次重建把后端 PM2 的 **id 从 2 变成 3**（v0.1.41 部署后又变为 4），文档里引用 PM2 身份的地方按下标即当前 `pm2 list` 为准，不要假定 id 恒定。
+- 线上验收（2026-09-14 UTC）：`https://paper.pilo.eu.cc/api/health` 返回 `version=0.1.40`；`/zh/login` 200，favicon 为 `paperhelper-favicon-light.svg?v=0.1.40`；`/api/security/two-factor` 与 `/api/security/devices` 未带 token 时返回 401（证明新接口已挂载且受 `.anyRequest().authenticated()` 保护，而不是 404），`/api/auth/two-factor/verify` 已进入 permitAll 名单；`/api/auth/login` 仍 200。已 `pm2 save`。
+
+### v0.1.41 两步验证挑战失效提示（2026-09-14 UTC）
+
+- 需求（`REQ-202609-0104` 收尾）：v0.1.40 公网核验时发现，两步验证的挑战 token 只有 5 分钟有效期，而登录页停在这一步更久（切去 Authenticator 复制验证码、GitHub 回调整页跳转后返回）完全正常；此前 `verifyTwoFactor` 直接调用 `jwtUtil.extractClaims()`，`ExpiredJwtException` 冒到 `GlobalExceptionHandler` 兜底分支，浏览器拿到 `{"code":9999,"message":"Internal server error"}`，用户无法判断该重新登录还是该重输验证码。
+- 改动：`AuthService.verifyTwoFactor()` 把该调用包进 `try/catch (io.jsonwebtoken.JwtException)`，转成 `InvalidCredentialsException("登录凭证已失效，请重新登录")`，即 `code=1006`、HTTP 400。**只包这一处**：`login`/`refresh`/`emailLogin` 维持项目既有的「JWT 解析失败 → 兜底 500」约定（线上实测 `/api/auth/refresh` 传垃圾 token 仍是 500），统一改造属于另一个迭代。
+- 测试：`AuthServiceTest` 新增 `verify two-factor should ask for a fresh login when the challenge expired`，用 `ExpiredJwtException` 桩锁住「抛 `InvalidCredentialsException`」并断言 `verifySecondFactor` 零调用（过期挑战不得进入验证码校验与用户查询）。后端 55 项测试全绿。
+- 顺带修复：新增的 `recovery-codes-panel.test.tsx` 里 `click.mock.instances[0] as HTMLAnchorElement` 存在 TS2352（`void` 转 `HTMLAnchorElement`），vitest 只转译不做类型检查所以此前没暴露；改为通过 `mockImplementation(function (this: HTMLAnchorElement))` 记录真实节点。教训：**新增测试后必须跑 `tsc --noEmit`，不能只信 vitest 的绿**。
+- 版本链：`22de352`（`feature/v0.1.41`）→ `2d39e5d`（并入 `dev`）→ `5746de0`（并入 `main`）。注意 `main` 已被生产目录 `/root/paper-reader` 检出，worktree 里无法再 checkout `main`，所以 `dev -> main` 的合并提交在 `/root/paper-reader` 里完成（只做合并与推送，不改代码）。
+- 构建与部署：前后端 VERSION、`package.json`、`build.gradle.kts`、favicon `?v=` 统一升到 `0.1.41`；生产机重新 `./gradlew clean test bootJar`（55 项测试通过）与 `pnpm run build`，按 `DEPLOY.md` 用新 JAR 重建后端 PM2（id 变 4）、`pm2 restart paper-reader-frontend --update-env`。启动日志 `Successfully validated 14 migrations` / `Schema "public" is up to date. No migration necessary.` / `Tomcat started on port 8080` / `Started PaperReaderApplicationKt in 8.305 seconds`，无配置缺失。
+- 线上验收（2026-09-14 UTC）：`https://paper.pilo.eu.cc/api/health` 返回 `version=0.1.41`；`/zh/login` 200 且 favicon 为 `paperhelper-favicon-light.svg?v=0.1.41`；用生产 `JWT_SECRET` 自签一个已过期的 `2fa_challenge` token 请求 `/api/auth/two-factor/verify`，返回 `{"code":1006,"message":"登录凭证已失效，请重新登录"}`（HTTP 400），传 `"not-a-jwt"` 同样返回 1006 —— 不再出现 500；`/api/security/**` 无 token 仍 401。已 `pm2 save`。
+- 本轮无数据库迁移、无前端业务逻辑改动、无新依赖。
