@@ -190,7 +190,15 @@ class AuthService(
 
     /** Second step of a challenged login: checks the code, then logs the user in. */
     fun verifyTwoFactor(request: TwoFactorVerifyRequest, ctx: DeviceContext): TokenResponse {
-        val claims = jwtUtil.extractClaims(request.challengeToken)
+        // The challenge lives for five minutes, so "the user went for coffee
+        // between the password step and the code step" is an ordinary event,
+        // not a 500. Anything unparseable is reported as a restart rather than
+        // letting ExpiredJwtException escape as an internal error.
+        val claims = try {
+            jwtUtil.extractClaims(request.challengeToken)
+        } catch (ex: io.jsonwebtoken.JwtException) {
+            throw InvalidCredentialsException("登录凭证已失效，请重新登录")
+        }
         if (claims[JwtUtil.SCOPE_CLAIM] != JwtUtil.SCOPE_TWO_FACTOR_CHALLENGE) {
             throw InvalidCredentialsException("登录凭证已失效，请重新登录")
         }

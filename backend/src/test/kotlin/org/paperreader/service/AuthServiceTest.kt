@@ -2,6 +2,7 @@ package org.paperreader.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.mockk.every
+import io.mockk.verify
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import org.junit.jupiter.api.BeforeEach
@@ -231,6 +232,21 @@ class AuthServiceTest {
         assertThrows<InvalidCredentialsException> {
             createService().verifyTwoFactor(request, device)
         }
+    }
+
+    @Test
+    fun `verify two-factor should ask for a fresh login when the challenge expired`() {
+        val request = TwoFactorVerifyRequest(challengeToken = "expired", code = "123456")
+        every { jwtUtil.extractClaims("expired") } throws
+            io.jsonwebtoken.ExpiredJwtException(null, null, "expired")
+
+        assertThrows<InvalidCredentialsException> {
+            createService().verifyTwoFactor(request, device)
+        }
+
+        // Nothing past the token parse may run: an expired challenge must not
+        // reach the code check, let alone the user lookup.
+        verify(exactly = 0) { twoFactorService.verifySecondFactor(any(), any(), any()) }
     }
 
     @Test

@@ -1,4 +1,16 @@
-## 当前迭代：v0.1.40
+## 当前迭代：v0.1.41
+
+发布分支：`feature/v0.1.41`；类型：补丁迭代（两步验证挑战失效提示）；需求编号：`REQ-202609-0104`。
+
+两步验证的挑战 token 只有 5 分钟有效期，而登录页停在这一步更久（切去 Authenticator 复制验证码、GitHub 回调整页跳转后返回）是常见情形。此前 `verifyTwoFactor` 直接调用 `jwtUtil.extractClaims()`，`ExpiredJwtException` 会一路冒到 `GlobalExceptionHandler` 的兜底分支，前端拿到的是 `{"code":9999,"message":"Internal server error"}`——用户看不出该重新登录还是该重输验证码。
+
+本轮把该调用包进 `try/catch (io.jsonwebtoken.JwtException)`，统一转成 `InvalidCredentialsException("登录凭证已失效，请重新登录")`（`code=1002`），前端两步验证步骤会直接把这句话显示出来。改动只覆盖「挑战 token 本身无法解析」这一种情况：解析成功但 scope 不对、验证码错误等既有分支行为不变。`/api/auth/login`、`/api/auth/refresh` 等既有接口对垃圾 token 仍沿用项目原有的 500 约定，即 `GlobalExceptionHandler` 只把 `BusinessException`/`IllegalArgumentException` 翻译成业务码，本轮不扩散改动面。
+
+验收标准：挑战 token 过期或被篡改时，`POST /api/auth/two-factor/verify` 返回 `code=1002` 与「登录凭证已失效，请重新登录」，且不再进入验证码校验与用户查询；`AuthServiceTest` 新增用例锁住该行为；后端测试与 `bootJar` 通过；按 `feature/v0.1.41 -> dev -> main` 发布并完成生产验收。
+
+本轮不涉及数据库迁移、前端业务逻辑、后台管理项目或共享基础设施。
+
+## 当前迭代：v0.1.40（已发布）
 
 发布分支：`feature/v0.1.40`；类型：功能迭代（个人中心两步验证功能完善）；需求编号：`REQ-202609-0104`。
 
@@ -7,6 +19,8 @@
 前端补齐扫码绑定向导（主题自适应二维码 + 手动密钥）、恢复码面板（一键复制 / 下载 TXT 文本文件，不做 PDF）、关闭与重新生成流程，并在个人中心新增与「两步验证」同级的「信任设备」菜单，菜单数由 4 个变为 5 个。信任设备页列出所有登录过的设备，支持手动勾选删除；设备表是 token 校验的一环，删除后该设备已签发的 access/refresh token 立即失效，必须重新登录。
 
 验收标准：未开启两步验证的账号可扫码绑定并成功开启；开启后密码/邮箱验证码/GitHub 三种登录都需要二次验证，信任设备可免动态码；每次开启都下发 9 个 6 位恢复码，且「一键复制」「下载 TXT」两种保存方式都可用；恢复码在关闭两步验证后失效；二维码在浅色与深色主题下均可扫描；个人中心出现第 5 个菜单「信任设备」，列表可多选删除，被删设备的 token 立即失效并需重新登录；前端类型检查、测试、生产构建及后端测试和 bootJar 通过；按 `feature/v0.1.40 -> dev -> main` 发布并完成生产验收。
+
+发布结果（2026-09-14 UTC）：`feature/v0.1.40`（`5f88fbf`）已并入 `dev`（`91045dc`）与 `main`（`de2ea29`），生产前后端已重建部署，Flyway 迁移 `V14` 已在生产库执行，`/api/health` 返回 `0.1.40`。
 
 ## 当前迭代：v0.1.39
 
