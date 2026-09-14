@@ -32,8 +32,11 @@ export function LoginExperience() {
     setActive((next + slides.length) % slides.length)
     resetTimer()
   }
+  // The showcase is inset from the top-left corner of its grid cell so it sits
+  // right and low enough to balance against the taller sign-in card. Only the
+  // padding moves; the sign-in column keeps its own position.
   return (
-    <section className="relative hidden lg:flex lg:flex-col">
+    <section className="relative hidden lg:flex lg:flex-col lg:pl-10 lg:pt-10 xl:pl-16 xl:pt-14">
       <div className="max-w-lg">
         <div className="mb-7 flex size-14 items-center justify-center rounded-2xl border border-[var(--border-color)] bg-[var(--accent-soft)] text-[var(--accent)]"><Icon className="size-7" /></div>
         <p className="mb-4 text-xs font-semibold uppercase tracking-[.28em] text-[var(--text-tertiary)]">{t("loginEyebrow")}</p>
