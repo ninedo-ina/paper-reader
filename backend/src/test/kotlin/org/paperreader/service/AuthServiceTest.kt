@@ -4,11 +4,14 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.paperreader.dto.*
 import org.paperreader.model.User
+import org.paperreader.model.UserDevice
+import org.paperreader.exception.InvalidCredentialsException
 import org.paperreader.repository.UserRepository
 import org.paperreader.security.JwtUtil
 import org.springframework.data.redis.core.RedisTemplate
@@ -42,12 +45,35 @@ class AuthServiceTest {
     @MockK(relaxed = true)
     private lateinit var auditLogService: AuditLogService
 
+    @MockK(relaxed = true)
+    private lateinit var twoFactorService: TwoFactorService
+
+    @MockK(relaxed = true)
+    private lateinit var deviceService: DeviceService
+
     private val objectMapper = ObjectMapper()
+
+    private val device = AuthService.DeviceContext(
+        deviceKey = "test-device",
+        deviceName = "JUnit",
+        userAgent = "junit",
+        ipAddress = "127.0.0.1",
+    )
+
+    @BeforeEach
+    fun stubDeviceRegistration() {
+        every { deviceService.register(any(), any(), any(), any(), any(), any()) } returns UserDevice(
+            id = 1,
+            userId = 1,
+            deviceKey = "test-device",
+            deviceName = "JUnit",
+        )
+    }
 
     private fun createService() = AuthService(
         userRepository, passwordEncoder, jwtUtil,
         redisTemplate, restTemplate, objectMapper,
-        auditLogService,
+        auditLogService, twoFactorService, deviceService,
         "test-client-id", "test-client-secret", "test@test.local",
     )
 
@@ -59,10 +85,10 @@ class AuthServiceTest {
         every { userRepository.existsByEmail(request.email) } returns false
         every { passwordEncoder.encode(request.password) } returns "hashed"
         every { userRepository.save(any()) } returns mockUser
-        every { jwtUtil.generateAccessToken(1, request.email) } returns "access-token"
-        every { jwtUtil.generateRefreshToken(1, request.email) } returns "refresh-token"
+        every { jwtUtil.generateAccessToken(1, request.email, any()) } returns "access-token"
+        every { jwtUtil.generateRefreshToken(1, request.email, any()) } returns "refresh-token"
 
-        val result = createService().register(request)
+        val result = createService().register(request, device)
 
         assertEquals("access-token", result.accessToken)
         assertEquals("refresh-token", result.refreshToken)
@@ -75,7 +101,7 @@ class AuthServiceTest {
         every { userRepository.existsByEmail(request.email) } returns true
 
         assertThrows<IllegalArgumentException> {
-            createService().register(request)
+            createService().register(request, device)
         }
     }
 
@@ -86,10 +112,10 @@ class AuthServiceTest {
 
         every { userRepository.findByEmail(request.email) } returns Optional.of(user)
         every { passwordEncoder.matches(request.password, user.passwordHash) } returns true
-        every { jwtUtil.generateAccessToken(1, request.email) } returns "access-token"
-        every { jwtUtil.generateRefreshToken(1, request.email) } returns "refresh-token"
+        every { jwtUtil.generateAccessToken(1, request.email, any()) } returns "access-token"
+        every { jwtUtil.generateRefreshToken(1, request.email, any()) } returns "refresh-token"
 
-        val result = createService().login(request)
+        val result = createService().login(request, device)
 
         assertEquals("access-token", result.accessToken)
     }
@@ -102,10 +128,10 @@ class AuthServiceTest {
         every { userRepository.findByEmail(request.email) } returns Optional.empty()
         every { passwordEncoder.encode(request.password) } returns "hashed"
         every { userRepository.save(any()) } returns newUser
-        every { jwtUtil.generateAccessToken(3, request.email) } returns "access-token"
-        every { jwtUtil.generateRefreshToken(3, request.email) } returns "refresh-token"
+        every { jwtUtil.generateAccessToken(3, request.email, any()) } returns "access-token"
+        every { jwtUtil.generateRefreshToken(3, request.email, any()) } returns "refresh-token"
 
-        val result = createService().login(request)
+        val result = createService().login(request, device)
 
         assertEquals("access-token", result.accessToken)
         assertEquals(true, result.isNewUser)
@@ -118,7 +144,7 @@ class AuthServiceTest {
         every { passwordEncoder.matches("wrong", user.passwordHash) } returns false
 
         assertThrows<IllegalArgumentException> {
-            createService().login(LoginRequest(user.email, "wrong"))
+            createService().login(LoginRequest(user.email, "wrong"), device)
         }
     }
 
@@ -128,7 +154,7 @@ class AuthServiceTest {
         every { userRepository.findByEmail(user.email) } returns Optional.of(user)
 
         assertThrows<IllegalArgumentException> {
-            createService().login(LoginRequest(user.email, "any"))
+            createService().login(LoginRequest(user.email, "any"), device)
         }
     }
 
@@ -143,10 +169,10 @@ class AuthServiceTest {
         every { redisTemplate.delete(any<String>()) } returns true
         every { userRepository.findByEmail(request.email) } returns Optional.empty()
         every { userRepository.save(any()) } returns mockUser
-        every { jwtUtil.generateAccessToken(2, request.email) } returns "access-token"
-        every { jwtUtil.generateRefreshToken(2, request.email) } returns "refresh-token"
+        every { jwtUtil.generateAccessToken(2, request.email, any()) } returns "access-token"
+        every { jwtUtil.generateRefreshToken(2, request.email, any()) } returns "refresh-token"
 
-        val result = createService().emailCodeLogin(request)
+        val result = createService().emailCodeLogin(request, device)
 
         assertEquals("access-token", result.accessToken)
     }
@@ -157,7 +183,83 @@ class AuthServiceTest {
         every { valueOps.get("pr:email_code:test@example.com") } returns "999999"
 
         assertThrows<IllegalArgumentException> {
-            createService().emailCodeLogin(EmailLoginRequest("test@example.com", "123456"))
+            createService().emailCodeLogin(EmailLoginRequest("test@example.com", "123456"), device)
         }
+    }
+
+    @Test
+    fun `login should be interrupted by a two-factor challenge when enabled`() {
+        val request = LoginRequest("test@example.com", "password123")
+        val user = User(id = 1, email = request.email, passwordHash = "hashed")
+
+        every { userRepository.findByEmail(request.email) } returns Optional.of(user)
+        every { passwordEncoder.matches(request.password, user.passwordHash) } returns true
+        every { twoFactorService.isEnabled(1) } returns true
+        every { deviceService.isTrusted(1, "test-device") } returns false
+        every { jwtUtil.generateTwoFactorChallengeToken(1, request.email, "test-device") } returns "challenge"
+
+        val result = createService().login(request, device)
+
+        assertEquals(true, result.twoFactorRequired)
+        assertEquals("challenge", result.challengeToken)
+        assertEquals(null, result.accessToken)
+    }
+
+    @Test
+    fun `trusted device should skip the two-factor challenge`() {
+        val request = LoginRequest("test@example.com", "password123")
+        val user = User(id = 1, email = request.email, passwordHash = "hashed")
+
+        every { userRepository.findByEmail(request.email) } returns Optional.of(user)
+        every { passwordEncoder.matches(request.password, user.passwordHash) } returns true
+        every { twoFactorService.isEnabled(1) } returns true
+        every { deviceService.isTrusted(1, "test-device") } returns true
+        every { jwtUtil.generateAccessToken(1, request.email, "test-device") } returns "access-token"
+        every { jwtUtil.generateRefreshToken(1, request.email, "test-device") } returns "refresh-token"
+
+        val result = createService().login(request, device)
+
+        assertEquals("access-token", result.accessToken)
+        assertEquals(false, result.twoFactorRequired)
+    }
+
+    @Test
+    fun `verify two-factor should reject a token that is not a challenge`() {
+        val request = TwoFactorVerifyRequest(challengeToken = "access-token", code = "123456")
+        every { jwtUtil.extractClaims("access-token") } returns io.jsonwebtoken.Jwts.claims().build()
+
+        assertThrows<InvalidCredentialsException> {
+            createService().verifyTwoFactor(request, device)
+        }
+    }
+
+    @Test
+    fun `verify two-factor should issue tokens for a valid recovery code`() {
+        val claims = io.jsonwebtoken.Jwts.claims()
+            .subject("1")
+            .add("email", "test@example.com")
+            .add(JwtUtil.SCOPE_CLAIM, JwtUtil.SCOPE_TWO_FACTOR_CHALLENGE)
+            .add(JwtUtil.DEVICE_CLAIM, "test-device")
+            .build()
+        val user = User(id = 1, email = "test@example.com", passwordHash = "hashed")
+
+        every { jwtUtil.extractClaims("challenge") } returns claims
+        every { userRepository.findById(1) } returns Optional.of(user)
+        every { twoFactorService.requireEnabled(1) } returns
+            org.paperreader.model.UserTwoFactor(userId = 1, secret = "SECRET", enabled = true)
+        every { twoFactorService.verifySecondFactor(1, "SECRET", "654321") } returns true
+        every { deviceService.register(1, "test-device", any(), any(), "127.0.0.1", true) } returns UserDevice(
+            id = 2, userId = 1, deviceKey = "test-device", deviceName = "JUnit", trusted = true,
+        )
+        every { jwtUtil.generateAccessToken(1, user.email, "test-device") } returns "access-token"
+        every { jwtUtil.generateRefreshToken(1, user.email, "test-device") } returns "refresh-token"
+
+        val result = createService().verifyTwoFactor(
+            TwoFactorVerifyRequest(challengeToken = "challenge", code = "654321", trustDevice = true),
+            device,
+        )
+
+        assertEquals("access-token", result.accessToken)
+        assertEquals(false, result.twoFactorRequired)
     }
 }

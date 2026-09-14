@@ -24,6 +24,7 @@ export default function GitHubCallbackPage() {
   const { githubLogin } = useAuthStore()
   const loadProfile = useUserStore((s) => s.loadProfile)
   const [error, setError] = useState<string | null>(null)
+  const [twoFactor, setTwoFactor] = useState(false)
 
   useEffect(() => {
     const code = searchParams.get("code")
@@ -34,6 +35,13 @@ export default function GitHubCallbackPage() {
     const locale = getLocale()
     githubLogin(code)
       .then(async () => {
+        // 账号开了两步验证时，GitHub 授权只是第一步：挑战凭证已存进
+        // sessionStorage，转到登录页继续输入动态码或恢复码。
+        if (useAuthStore.getState().twoFactorChallengeToken) {
+          setTwoFactor(true)
+          window.location.href = `/${locale}/login?twofactor=1`
+          return
+        }
         await loadProfile()
         window.location.href = `/${locale}`
       })
@@ -48,7 +56,11 @@ export default function GitHubCallbackPage() {
         <CardHeader>
           <CardTitle>GitHub Login</CardTitle>
           <CardDescription>
-            {error ? "Authentication failed" : "Completing login..."}
+            {error
+              ? "Authentication failed"
+              : twoFactor
+                ? "Two-factor verification required..."
+                : "Completing login..."}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-4">
