@@ -11,15 +11,15 @@ The repository contains the C-side product and its API. The administration conso
 - Branch: `feature/v0.1.39`
 - Requirement: `REQ-202609-0103` — login page showcase (carousel) position.
 - Scope: inset the left showcase column from the top-left corner of its grid cell so it sits further right and lower against the taller sign-in card. Only the showcase's own padding changes; the sign-in form column keeps its exact position, and the showcase stays hidden below the `lg` breakpoint.
-- Status: implemented and built on the version branch; production deployment and verification recorded in `docs/MAINTENANCE.md`.
+- Status: released — merged into `dev` and `main`, deployed to production, and verified online.
 
 ## Current Release
 
 - Default branch: `main`
 - Integration branch: `dev`
-- Released version branch: `feature/v0.1.38` (released to production)
+- Released version branch: `feature/v0.1.39` (released to production)
 - Client version: `0.1.39`
-- Production version: `0.1.38` (verified 2026-09-08 UTC)
+- Production version: `0.1.39` (verified 2026-09-14 UTC)
 - Default locale: Chinese (`zh`)
 - Supported locales: Chinese (`zh`) and English (`en`)
 - Production client: `https://paper.pilo.eu.cc`
