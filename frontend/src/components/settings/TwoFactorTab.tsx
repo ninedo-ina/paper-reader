@@ -7,7 +7,7 @@ import { useUserStore } from "@/stores/user-store"
 import * as securityApi from "@/lib/api/security"
 import { copyToClipboard } from "@/lib/clipboard"
 import type { TwoFactorSetup, TwoFactorStatus } from "@/lib/api/types"
-import { ThemeAwareQrCode } from "./ThemeAwareQrCode"
+import { QrCodeCard } from "./QrCodeCard"
 import { RecoveryCodesPanel } from "./RecoveryCodesPanel"
 import { OtpInput } from "./OtpInput"
 
@@ -211,7 +211,7 @@ function BindWizard({
       </ol>
 
       <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
-        {setup && <ThemeAwareQrCode value={setup.otpauthUri} />}
+        {setup && <QrCodeCard value={setup.otpauthUri} />}
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs font-medium text-[var(--text-secondary)]">无法扫码？手动输入密钥</p>
