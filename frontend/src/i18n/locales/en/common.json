@@ -222,7 +222,16 @@
         "title": "Turn inspiration into new directions",
         "description": "Follow the connections between papers and make every reading the start of a new discovery."
       }
-    }
+    },
+    "twoFactorTitle": "Two-factor verification",
+    "twoFactorSubtitle": "This account has two-factor authentication on. Enter the 6-digit code from your authenticator app.",
+    "twoFactorCode": "Code / recovery code",
+    "twoFactorCodePlaceholder": "6-digit code or any recovery code",
+    "twoFactorHint": "No authenticator at hand? Use one of the recovery codes you saved when you turned 2FA on.",
+    "twoFactorInvalid": "That code is not valid",
+    "trustDevice": "Trust this device and skip 2FA next time",
+    "verifyAndLogin": "Verify and sign in",
+    "backToLogin": "Back to sign in"
   },
   "notification": {
     "title": "Notifications",

@@ -66,7 +66,7 @@ feature/v主版本.次版本.修订版本
 7. 生产验收通过后再执行 `pm2 save`，并记录提交、构建、部署、健康检查和公网验收结果。
 8. 保留版本分支、合并提交和验证记录，不通过强制推送改写 `main`、`dev` 或历史版本分支。
 
-当前已发布基线为 `feature/v0.1.38`，生产已核验为 `0.1.38`；后续新需求从最新发布基线创建下一个版本分支。v0.1.33 之后本项目实际按普通迭代分支（`feature/v0.1.39`）递进，不再追加 `-fix`；历史 `-fix` 分支仅用于 v0.1.32 及更早版本。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。
+当前已发布基线为 `feature/v0.1.39`，生产已核验为 `0.1.39`；后续新需求从最新发布基线创建下一个版本分支。v0.1.33 之后本项目实际按普通迭代分支（`feature/v0.1.40`）递进，不再追加 `-fix`；历史 `-fix` 分支仅用于 v0.1.32 及更早版本。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。
 
 ## 4. 每次代码迭代的标准流程
 
@@ -643,3 +643,15 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - 本轮不涉及数据库迁移、后端接口或用户数据；后端只跟着升版本号并同步重建 JAR。
 - 版本链：`da3f4a6`（`feature/v0.1.39`）→ `cee0ee9`（并入 `dev`）→ `ebe9381`（并入 `main`）。生产机 `/root/paper-reader` 上前端 `pnpm run build`、后端 `./gradlew clean test bootJar`（BUILD SUCCESSFUL）产出 `paper-reader-backend-0.1.39.jar`；后端带 `backend/.env` 重新 `pm2 start`，前端 `pm2 restart --update-env`，随后 `pm2 save`。
 - 线上验收（2026-09-14 UTC）：`https://paper.pilo.eu.cc/api/health` 返回 `version=0.1.39`；`/zh/login` 返回 200，favicon 为 `paperhelper-favicon-light.svg?v=0.1.39`，页脚显示 `v0.1.39`；1440×900 与 1024×900 截图确认展示区相对 v0.1.38 右移下移、右侧登录卡片位置不变。
+
+### v0.1.40 个人中心两步验证功能完善（2026-09-14 UTC）
+
+- 需求（`REQ-202609-0104`）：把个人中心的两步验证从「功能即将推出」补成完整闭环 —— 未开启时可扫码绑定；**每次**开启（首次开启、关闭后再次开启）除密码校验外都要下发恢复码，保证账号之后能用恢复码找回；恢复码仅在两步验证开启期间有效，关闭后失效；恢复码共 9 个、每个 6 位；只提供一键复制与下载 **txt 文本文件**两种保存方式（不支持 PDF）；二维码配色跟随当前系统主题（白天/夜间）以免影响扫码；个人中心新增与「两步验证」同级的「信任设备」菜单（4 个变 5 个）；信任设备页列出所有登录过的设备，可手动勾选删除，删除后该设备不能再用已签发的登录 token，必须重新登录；信任设备的意义是两步验证开启后，被信任的设备只需密码、邮箱验证码或 GitHub 授权即可登录。
+- 数据库迁移（**本轮有迁移**）：`V14__two_factor_and_trusted_devices.sql` 新建三张表 —— `pr_user_two_factor`（`user_id` 主键、`secret`、`enabled`、`confirmed_at`）、`pr_user_recovery_codes`（`BIGSERIAL` 主键、`user_id`、`code_hash`、`used_at`）、`pr_user_devices`（`BIGSERIAL` 主键、`user_id`、`device_key`、`device_name`、`user_agent`、`ip_address`、`trusted`、`trusted_until`、`last_login_at`，`(user_id, device_key)` 唯一）。全部沿用 V6/V13 的建表约定（`BIGINT ... REFERENCES pr_users(id) ON DELETE CASCADE`、`TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()`）。
+- TOTP 实现：`security/Totp.kt` 为自研 RFC 6238（HMAC-SHA1、6 位、30 秒步长、±1 步容差），**未引入任何新 Gradle 依赖**，避免供应商链风险。`TotpTest` 用 RFC 官方向量锁定正确性：`287082`@59、`081804`@1111111109、`050471`@1111111111、`005924`@1234567890、`279037`@2000000000（官方为 8 位，10^6 整除 10^8，故 6 位等于 8 位的后 6 位）；另覆盖 Base32 往返、漂移边界与畸形输入。
+- 登录挑战模型：密码、邮箱验证码、GitHub 三种登录方式统一汇入 `AuthService.completeLogin`，两步验证的判定只存在这一处。命中条件为「该用户已开启两步验证」且「当前设备未被信任」，此时返回 `twoFactorRequired=true` 与一次性 `challengeToken`（scope 声明 `2fa_challenge`，5 分钟有效），`POST /api/auth/two-factor/verify` 用动态码或恢复码换取正式 token。设备 key 存在挑战 token 里，重放挑战不能冒用他人的信任设备。
+- 恢复码：9 个、每个 6 位、BCrypt 哈希存储、一次性（命中即写 `used_at`）。因为动态码与恢复码都是 6 位数字，校验顺序为**先 TOTP、后恢复码**。`disable()` 直接删除该用户的恢复码记录，使「关闭后恢复码立即失效」成为结构性保证，而不是使用时的 `enabled` 判断。
+- 信任设备与 token 吊销：access/refresh token 增加 `did` 声明；`JwtAuthFilter` 与 refresh 接口都会调用 `DeviceService.isDeviceActive(userId, did)`，因此删除设备行会让该设备的 access 与 refresh token 同时失效。没有 `did` 的历史 token 视为有效，避免上线即全站登出。
+- 前端：`ThemeAwareQrCode.tsx` 生成主题自适应二维码（浅色主题深色码点 + 白底，深色主题反相 `#e8eef5`/`#101823`，两种配色都保持高对比度，二倍图避免高分屏发虚）；`RecoveryCodesPanel.tsx` 提供 9 码网格与一键复制 / 下载 TXT 两个按钮（`Blob` + `<a download>`，不做 PDF）；`TwoFactorTab.tsx` 覆盖扫码绑定向导、关闭（密码 + 动态码/恢复码）、重新生成恢复码；`TrustedDevicesTab.tsx` 列出设备并支持多选删除。`ProfileDialog.tsx` 菜单由 4 个变 5 个，新增「信任设备」，原来的本地 `TwoFactorTab` 占位函数已删除，改为从 `./TwoFactorTab` 导入。
+- GitHub 回调登录是整页跳转，2FA 挑战 token 暂存在 `sessionStorage`（`pr_2fa_challenge`），`/callback` 跳回 `/{locale}/login?twofactor=1` 后由 `hydrateChallenge()` 恢复挑战态。
+- 本轮不涉及后台管理项目、共享 PostgreSQL/Redis/GROBID 配置或 `backend/uploads`。

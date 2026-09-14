@@ -222,7 +222,16 @@
         "title": "把灵感连接成新的研究方向",
         "description": "追踪论文之间的关联，让每一次阅读都成为下一次发现的起点。"
       }
-    }
+    },
+    "twoFactorTitle": "两步验证",
+    "twoFactorSubtitle": "该账号已开启两步验证，请输入身份验证器中的 6 位动态码完成登录",
+    "twoFactorCode": "动态码 / 恢复码",
+    "twoFactorCodePlaceholder": "6 位动态码或任一恢复码",
+    "twoFactorHint": "找不到身份验证器？可以输入开启两步验证时保存的恢复码。",
+    "twoFactorInvalid": "动态码或恢复码不正确",
+    "trustDevice": "信任此设备，下次登录免二次验证",
+    "verifyAndLogin": "验证并登录",
+    "backToLogin": "返回重新登录"
   },
   "notification": {
     "title": "通知",

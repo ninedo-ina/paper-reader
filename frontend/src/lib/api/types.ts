@@ -20,15 +20,20 @@ export interface PageResponse<T> {
 // --- 认证 ---
 
 export interface TokenResponse {
-  accessToken: string
-  refreshToken: string
+  // 需要二次验证时 accessToken / refreshToken 为空，改由 challengeToken 走验证接口
+  accessToken: string | null
+  refreshToken: string | null
   expiresIn: number // 毫秒
   isNewUser: boolean // 首次登录（新创建用户）时为 true
+  twoFactorRequired?: boolean
+  challengeToken?: string | null
 }
 
 export interface LoginRequest {
   email: string
   password: string
+  deviceId?: string
+  deviceName?: string
 }
 
 export interface SendCodeRequest {
@@ -38,10 +43,68 @@ export interface SendCodeRequest {
 export interface EmailLoginRequest {
   email: string
   code: string
+  deviceId?: string
+  deviceName?: string
 }
 
 export interface GitHubAuthRequest {
   code: string
+  deviceId?: string
+  deviceName?: string
+}
+
+// --- 两步验证 / 信任设备 ---
+
+export interface TwoFactorStatus {
+  enabled: boolean
+  recoveryCodesRemaining: number
+  recoveryCodesTotal: number
+}
+
+export interface TwoFactorSetup {
+  secret: string
+  otpauthUri: string
+  digits: number
+  period: number
+}
+
+export interface TwoFactorEnableRequest {
+  password: string
+  code: string
+}
+
+export interface TwoFactorDisableRequest {
+  password: string
+  code: string
+}
+
+export interface RecoveryCodeRegenerateRequest {
+  password: string
+}
+
+export interface TwoFactorEnableResponse {
+  /** 9 个 6 位恢复码，仅在开启/重置的那一刻返回一次 */
+  recoveryCodes: string[]
+}
+
+export interface TwoFactorVerifyRequest {
+  challengeToken: string
+  code: string
+  trustDevice?: boolean
+  deviceId?: string
+  deviceName?: string
+}
+
+export interface TrustedDevice {
+  id: number
+  deviceKey: string
+  deviceName: string
+  userAgent: string | null
+  ipAddress: string | null
+  trusted: boolean
+  trustedUntil: string | null
+  lastLoginAt: string
+  current: boolean
 }
 
 export interface RefreshTokenRequest {

@@ -40,6 +40,9 @@ class SecurityConfig(
                         "/api/auth/email-login",
                         "/api/auth/github",
                         "/api/auth/refresh",
+                        // Called while the login is still pending, so it
+                        // carries a challenge token rather than a session.
+                        "/api/auth/two-factor/verify",
                     ).permitAll()
                     .requestMatchers("/api/health").permitAll()
                     .requestMatchers("/ws/**").permitAll()
