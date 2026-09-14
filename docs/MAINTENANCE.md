@@ -66,7 +66,7 @@ feature/v主版本.次版本.修订版本
 7. 生产验收通过后再执行 `pm2 save`，并记录提交、构建、部署、健康检查和公网验收结果。
 8. 保留版本分支、合并提交和验证记录，不通过强制推送改写 `main`、`dev` 或历史版本分支。
 
-当前已发布基线为 `feature/v0.1.42`，生产已核验为 `0.1.42`；后续新需求从最新发布基线创建下一个版本分支。v0.1.33 之后本项目实际按普通迭代分支（`feature/v0.1.40`、`feature/v0.1.41`、`feature/v0.1.42`）递进，不再追加 `-fix`，即使本轮只是补丁也照常开下一个修订号分支；历史 `-fix` 分支仅用于 v0.1.32 及更早版本。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。
+当前已发布基线为 `feature/v0.1.43`，生产已核验为 `0.1.43`；后续新需求从最新发布基线创建下一个版本分支。v0.1.33 之后本项目实际按普通迭代分支（`feature/v0.1.40`、`feature/v0.1.41`、`feature/v0.1.42`、`feature/v0.1.43`）递进，不再追加 `-fix`，即使本轮只是补丁也照常开下一个修订号分支；历史 `-fix` 分支仅用于 v0.1.32 及更早版本。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。
 
 ## 4. 每次代码迭代的标准流程
 
@@ -684,3 +684,13 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - 构建与部署：前后端 VERSION、`package.json`、`build.gradle.kts`、favicon `?v=` 统一升到 `0.1.42`；生产机重新 `./gradlew clean test bootJar`（`BUILD SUCCESSFUL`，产出 `paper-reader-backend-0.1.42.jar`）与 `pnpm run build`（退出码 0），按 `DEPLOY.md` 同一 shell 内 `. ./.env` → `pm2 delete paper-reader-backend` → 用新 JAR 绝对路径 `pm2 start` 重建后端（**id 由 4 变 5**）、`pm2 restart paper-reader-frontend --update-env` 后 `pm2 save`。
 - 线上验收（2026-09-14 UTC）：`https://paper.pilo.eu.cc/api/health` 与本机 `127.0.0.1:8080/api/health` 均返回 `version=0.1.42`；`/zh/login` 200 且 favicon 为 `paperhelper-favicon-light.svg?v=0.1.42`；`/api/security/two-factor` 无 token 仍 401；`.next/static/chunks` 中已能搜到「密钥已复制到剪贴板」与 `one-time-code`，确认新版组件确实进了生产产物。
 - 本轮无数据库迁移、无接口/请求体变化（提交仍是 `enableTwoFactor({password, code})`）、无新依赖。
+
+### v0.1.43 扫码绑定二维码去深底（2026-09-14 UTC）
+
+- 需求：用户反馈开启两步验证时那块二维码「很别扭、很严肃、很突兀」，要求去掉强制加的黑底，改成圆角方形，看着有亲和力。
+- 改动（纯前端 UI，后端 Kotlin 与接口零改动）：`ThemeAwareQrCode.tsx` → `QrCodeCard.tsx`，配色固定为深色码点 `#1f2933` + 白底 `#ffffff`，**不再读 `useTheme`**，`PALETTE.dark`（`#e8eef5` / `#101823`）整体删除——浅色静默区本来就是验证器 App 识别的依赖，浅底比深底更稳妥。柔和观感改由外层卡片承担：`rounded-2xl` + `border-[var(--border-subtle)]` + `bg-white` + `shadow-sm` + `p-3`；`margin` 由 2 降到 1，多余的留白交给内边距。内层浅色方块**不加圆角、不加 `overflow-hidden`**，避免圆角切掉码点四周的静默区影响识别。`TwoFactorTab.tsx` 只换了导入与 JSX 标签名。
+- 测试：新增 `qr-code-card.test.tsx` 3 项（mock `qrcode`，断言交给库的 `color` 恒为 `{dark:"#1f2933", light:"#ffffff"}`、卡片带 `rounded-2xl`/`bg-white`/边框、内层方块无圆角无裁切、生成失败时回退到手动密钥提示）；`two-factor-tab.test.tsx` 的 mock 路径同步改名。前端 15 个文件 89 项测试全过，`tsc --noEmit`、`next lint`、`next build` 均退出码 0；后端 55 项测试全绿、`bootJar` 产出 `paper-reader-backend-0.1.43.jar`。
+- 版本链：`db70e41`（`feature/v0.1.43`）→ `496adae`（并入 `dev`）→ `8c0832a`（并入 `main`）。同样因为 `main` 被生产目录 `/root/paper-reader` 检出，`dev -> main` 的合并提交在 `/root/paper-reader` 内完成（只合并与推送，不改代码）。
+- 构建与部署：前后端 VERSION、`package.json`、`build.gradle.kts`、favicon `?v=` 统一升到 `0.1.43`；生产机重新 `./gradlew clean test bootJar`（`BUILD SUCCESSFUL`）与 `pnpm run build`（退出码 0），按 `DEPLOY.md` 同一 shell 内 `. ./.env` → `pm2 delete paper-reader-backend` → 用新 JAR 绝对路径 `pm2 start` 重建后端（**id 由 5 变 6**）、`pm2 restart paper-reader-frontend --update-env` 后 `pm2 save`。
+- 线上验收（2026-09-14 UTC）：`https://paper.pilo.eu.cc/api/health` 与本机 `127.0.0.1:8080/api/health` 均返回 `version=0.1.43`；`/zh/login` 200 且 favicon 为 `paperhelper-favicon-light.svg?v=0.1.43`；`/api/security/two-factor` 无 token 仍 401；生产 `.next/static/chunks` 里已搜不到 `#101823` / `#e8eef5`（深底配色彻底移除），仍能搜到「二维码生成失败」兜底文案，确认新版组件确实进了线上产物。
+- 本轮无数据库迁移、无接口/请求体变化、无新依赖。
