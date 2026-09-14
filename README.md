@@ -6,19 +6,26 @@ The repository contains the C-side product and its API. The administration conso
 
 > **Maintainer start here:** read the [documentation index](docs/README.md), then the [new maintainer guide](docs/NEW_MAINTAINER_GUIDE.md) and [complete project status](docs/PROJECT_STATUS.md). They record the real production topology, configuration rules, known risks, and release workflow without requiring previous chat context.
 
-## Current Iteration: v0.1.42
+## Current Iteration: v0.1.43
+
+- Branch: `feature/v0.1.43`
+- Requirement: `REQ-202609-0104` — the QR code shown while enabling two-factor authentication looked harsh.
+- Scope: the bind wizard's QR no longer inverts to a dark plate in the dark theme. It is always drawn dark-on-white (what authenticator apps scan best), and it now sits inside a rounded white card with a hairline border, a soft shadow and a little padding, so it reads as a deliberate card rather than a bare black square. `ThemeAwareQrCode.tsx` became `QrCodeCard.tsx` because it is no longer theme-aware.
+- No behaviour change: same requests, same payloads, no database migration, no new dependency.
+- Status: implemented, tested and built on the version branch; deployment and verification recorded in `docs/MAINTENANCE.md`.
+
+## Previous Iteration: v0.1.42
 
 - Branch: `feature/v0.1.42`
 - Requirement: `REQ-202609-0104` — polish the two-factor authentication form in the personal center.
 - Scope: a UI-only pass over the personal-center two-factor tab. The six-digit code field is now a row of six separate cells (auto-advance, paste and one-time-code autofill spread across cells, backspace steps back, arrow keys move) instead of one narrow monospace box. The manually typed secret key gets a copy button of its own. The 「当前密码」 and 「6 位动态码」 labels sit to the left of their inputs with a real gap in between, and the same left/right arrangement is applied to the regenerate-recovery-codes and disable-two-factor forms.
 - No behaviour change: the same requests go out with the same payloads, no database migration, no new dependency.
-- Status: implemented, tested and built on the version branch; deployment and verification recorded in `docs/MAINTENANCE.md`.
 
-## Previous Iteration: v0.1.41
+## Earlier Iteration: v0.1.41
 
 - Branch: `feature/v0.1.41`
 - Requirement: `REQ-202609-0104` — complete the two-factor authentication feature in the personal center.
-- Scope: an end-to-end TOTP (RFC 6238) two-factor flow: API, database tables, login challenge, and personal-center UI. First-time enabling is a QR scan-and-bind wizard; re-enabling after a disable runs the same wizard. Every enable issues nine 6-digit single-use recovery codes, saved by either one-click copy or a plain `.txt` download (no PDF), and they stop working the moment two-factor is disabled. The QR image follows the active light/dark theme so it stays scannable in both. A new 「信任设备」 menu sits alongside 「两步验证」 (four menus become five); it lists every device that has logged in, supports manual multi-select deletion, and a deleted device's already-issued login token stops working immediately.
+- Scope: an end-to-end TOTP (RFC 6238) two-factor flow: API, database tables, login challenge, and personal-center UI. First-time enabling is a QR scan-and-bind wizard; re-enabling after a disable runs the same wizard. Every enable issues nine 6-digit single-use recovery codes, saved by either one-click copy or a plain `.txt` download (no PDF), and they stop working the moment two-factor is disabled. The QR image is drawn dark-on-white in a rounded card so it stays scannable in every theme (v0.1.43 dropped the earlier theme-inverting dark plate). A new 「信任设备」 menu sits alongside 「两步验证」 (four menus become five); it lists every device that has logged in, supports manual multi-select deletion, and a deleted device's already-issued login token stops working immediately.
 - Patch in v0.1.41: an expired or unparseable two-factor challenge token now answers with 「登录凭证已失效，请重新登录」 instead of a generic 500, so a login paused longer than the five-minute challenge window returns to the password step instead of showing an internal error.
 
 ## Current Release
