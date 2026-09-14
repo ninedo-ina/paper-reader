@@ -66,7 +66,7 @@ feature/v主版本.次版本.修订版本
 7. 生产验收通过后再执行 `pm2 save`，并记录提交、构建、部署、健康检查和公网验收结果。
 8. 保留版本分支、合并提交和验证记录，不通过强制推送改写 `main`、`dev` 或历史版本分支。
 
-当前已发布基线为 `feature/v0.1.41`，生产已核验为 `0.1.41`；后续新需求从最新发布基线创建下一个版本分支。v0.1.33 之后本项目实际按普通迭代分支（`feature/v0.1.40`、`feature/v0.1.41`）递进，不再追加 `-fix`，即使本轮只是补丁也照常开下一个修订号分支；历史 `-fix` 分支仅用于 v0.1.32 及更早版本。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。
+当前已发布基线为 `feature/v0.1.42`，生产已核验为 `0.1.42`；后续新需求从最新发布基线创建下一个版本分支。v0.1.33 之后本项目实际按普通迭代分支（`feature/v0.1.40`、`feature/v0.1.41`、`feature/v0.1.42`）递进，不再追加 `-fix`，即使本轮只是补丁也照常开下一个修订号分支；历史 `-fix` 分支仅用于 v0.1.32 及更早版本。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。
 
 ## 4. 每次代码迭代的标准流程
 
@@ -674,3 +674,13 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - 构建与部署：前后端 VERSION、`package.json`、`build.gradle.kts`、favicon `?v=` 统一升到 `0.1.41`；生产机重新 `./gradlew clean test bootJar`（55 项测试通过）与 `pnpm run build`，按 `DEPLOY.md` 用新 JAR 重建后端 PM2（id 变 4）、`pm2 restart paper-reader-frontend --update-env`。启动日志 `Successfully validated 14 migrations` / `Schema "public" is up to date. No migration necessary.` / `Tomcat started on port 8080` / `Started PaperReaderApplicationKt in 8.305 seconds`，无配置缺失。
 - 线上验收（2026-09-14 UTC）：`https://paper.pilo.eu.cc/api/health` 返回 `version=0.1.41`；`/zh/login` 200 且 favicon 为 `paperhelper-favicon-light.svg?v=0.1.41`；用生产 `JWT_SECRET` 自签一个已过期的 `2fa_challenge` token 请求 `/api/auth/two-factor/verify`，返回 `{"code":1006,"message":"登录凭证已失效，请重新登录"}`（HTTP 400），传 `"not-a-jwt"` 同样返回 1006 —— 不再出现 500；`/api/security/**` 无 token 仍 401。已 `pm2 save`。
 - 本轮无数据库迁移、无前端业务逻辑改动、无新依赖。
+
+### v0.1.42 两步验证表单排版（2026-09-14 UTC）
+
+- 需求：个人中心两步验证的开启向导排版粗糙 —— 6 位动态码挤在一个 `w-40 tracking-[0.3em]` 的单框里；手动密钥只能肉眼抄写、无法复制；「当前密码」等标签与输入框上下紧贴，看不出对应关系。
+- 改动（纯前端 UI，后端 Kotlin 与接口零改动）：新增 `frontend/src/components/settings/OtpInput.tsx`，6 个独立格子替代单框，支持自动跳格、整串粘贴按位铺开、退格回退、左右方向键、聚焦全选替换；新增 `frontend/src/lib/clipboard.ts` 收敛复制逻辑（`navigator.clipboard` + `execCommand` 兜底），密钥行加「复制」按钮，`RecoveryCodesPanel` 的一键复制改为复用同一 helper（原本地 `fallbackCopy` 删除）；`TwoFactorTab.tsx` 新增局部 `FieldRow` 组件（`sm:flex-row sm:gap-6`、标签 `sm:w-24 sm:text-right`、控件 `sm:flex-1`），开启向导的「当前密码 / 6 位动态码」、重新生成恢复码的「当前密码」、关闭两步验证的「当前密码 / 动态码」全部改用同一排版，避免一页三种对齐；`variant="inset"` 让 `surface-2` 面板内的格子改用 `surface-1` 底色。窄屏（< 640px）仍按标签在上、控件在下堆叠。
+- 测试：`OtpInput` 新增 `otp-input.test.tsx` 6 项（格子属性、自动跳格、整串粘贴、单格替换保留其余位、退格回退、方向键移动），`TwoFactorTab` 新增 `two-factor-tab.test.tsx` 3 项（复制按钮写入剪贴板、`FieldRow` 为左右两列且标签是第一个子节点、填码后提交 `enableTwoFactor({password, code:"123456"})`）。前端 14 个文件 86 项测试全过；`tsc --noEmit`、`next lint` 与 `next build` 均退出码 0（仅剩既有的 `no-img-element` 告警）；后端 55 项测试全绿。
+- 版本链：`e193d92`（`feature/v0.1.42`）→ `24ee181`（并入 `dev`）→ `0324199`（并入 `main`）。同样因为 `main` 被生产目录 `/root/paper-reader` 检出，`dev -> main` 的合并提交在 `/root/paper-reader` 内完成（只合并与推送，不改代码）。
+- 构建与部署：前后端 VERSION、`package.json`、`build.gradle.kts`、favicon `?v=` 统一升到 `0.1.42`；生产机重新 `./gradlew clean test bootJar`（`BUILD SUCCESSFUL`，产出 `paper-reader-backend-0.1.42.jar`）与 `pnpm run build`（退出码 0），按 `DEPLOY.md` 同一 shell 内 `. ./.env` → `pm2 delete paper-reader-backend` → 用新 JAR 绝对路径 `pm2 start` 重建后端（**id 由 4 变 5**）、`pm2 restart paper-reader-frontend --update-env` 后 `pm2 save`。
+- 线上验收（2026-09-14 UTC）：`https://paper.pilo.eu.cc/api/health` 与本机 `127.0.0.1:8080/api/health` 均返回 `version=0.1.42`；`/zh/login` 200 且 favicon 为 `paperhelper-favicon-light.svg?v=0.1.42`；`/api/security/two-factor` 无 token 仍 401；`.next/static/chunks` 中已能搜到「密钥已复制到剪贴板」与 `one-time-code`，确认新版组件确实进了生产产物。
+- 本轮无数据库迁移、无接口/请求体变化（提交仍是 `enableTwoFactor({password, code})`）、无新依赖。
