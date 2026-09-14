@@ -640,4 +640,6 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - `LoginExperience.tsx`：只给 `<section>` 增加内边距 `lg:pl-10 lg:pt-10`、`xl:pl-16 xl:pt-14`。展示区右移 40/64px、下移 40/56px；底部标语（`mt-auto`）跟着右移但不跟着下移。
 - 右侧登录列完全未改：栅格列宽由 `fr` 与 `gap` 决定，给左侧 item 加 padding 不会影响其他列，登录卡片位置与 v0.1.38 一致。
 - 断点安全：内边距按 `lg` 最窄列宽（约 556px）核算，正文 `max-w-md`（448px）+ 64px 内边距仍在列内，标题不会换行或溢出；`lg` 以下展示区本就 `hidden`，窄屏行为不变。
-- 本轮不涉及数据库迁移、后端接口或用户数据；后端只跟着升版本号，无需重建 JAR。
+- 本轮不涉及数据库迁移、后端接口或用户数据；后端只跟着升版本号并同步重建 JAR。
+- 版本链：`da3f4a6`（`feature/v0.1.39`）→ `cee0ee9`（并入 `dev`）→ `ebe9381`（并入 `main`）。生产机 `/root/paper-reader` 上前端 `pnpm run build`、后端 `./gradlew clean test bootJar`（BUILD SUCCESSFUL）产出 `paper-reader-backend-0.1.39.jar`；后端带 `backend/.env` 重新 `pm2 start`，前端 `pm2 restart --update-env`，随后 `pm2 save`。
+- 线上验收（2026-09-14 UTC）：`https://paper.pilo.eu.cc/api/health` 返回 `version=0.1.39`；`/zh/login` 返回 200，favicon 为 `paperhelper-favicon-light.svg?v=0.1.39`，页脚显示 `v0.1.39`；1440×900 与 1024×900 截图确认展示区相对 v0.1.38 右移下移、右侧登录卡片位置不变。
