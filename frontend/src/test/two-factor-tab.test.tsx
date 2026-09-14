@@ -5,7 +5,7 @@ import * as securityApi from "@/lib/api/security"
 import type { TwoFactorSetup, TwoFactorStatus } from "@/lib/api/types"
 
 // 二维码走 canvas，测不了也不该拖慢用例；这里只关心密钥和表单本身。
-vi.mock("@/components/settings/ThemeAwareQrCode", () => ({ ThemeAwareQrCode: () => null }))
+vi.mock("@/components/settings/QrCodeCard", () => ({ QrCodeCard: () => null }))
 vi.mock("@/lib/api/security", () => ({
   getTwoFactorStatus: vi.fn(),
   setupTwoFactor: vi.fn(),
