@@ -6,19 +6,19 @@ The repository contains the C-side product and its API. The administration conso
 
 > **Maintainer start here:** read the [documentation index](docs/README.md), then the [new maintainer guide](docs/NEW_MAINTAINER_GUIDE.md) and [complete project status](docs/PROJECT_STATUS.md). They record the real production topology, configuration rules, known risks, and release workflow without requiring previous chat context.
 
-## Current Iteration: v0.1.39
+## Current Iteration: v0.1.40
 
-- Branch: `feature/v0.1.39`
-- Requirement: `REQ-202609-0103` — login page showcase (carousel) position.
-- Scope: inset the left showcase column from the top-left corner of its grid cell so it sits further right and lower against the taller sign-in card. Only the showcase's own padding changes; the sign-in form column keeps its exact position, and the showcase stays hidden below the `lg` breakpoint.
-- Status: released — merged into `dev` and `main`, deployed to production, and verified online.
+- Branch: `feature/v0.1.40`
+- Requirement: `REQ-202609-0104` — complete the two-factor authentication feature in the personal center.
+- Scope: an end-to-end TOTP (RFC 6238) two-factor flow: API, database tables, login challenge, and personal-center UI. First-time enabling is a QR scan-and-bind wizard; re-enabling after a disable runs the same wizard. Every enable issues nine 6-digit single-use recovery codes, saved by either one-click copy or a plain `.txt` download (no PDF), and they stop working the moment two-factor is disabled. The QR image follows the active light/dark theme so it stays scannable in both. A new 「信任设备」 menu sits alongside 「两步验证」 (four menus become five); it lists every device that has logged in, supports manual multi-select deletion, and a deleted device's already-issued login token stops working immediately.
+- Status: implemented and built on the version branch; production deployment and verification recorded in `docs/MAINTENANCE.md`.
 
 ## Current Release
 
 - Default branch: `main`
 - Integration branch: `dev`
 - Released version branch: `feature/v0.1.39` (released to production)
-- Client version: `0.1.39`
+- Client version: `0.1.40`
 - Production version: `0.1.39` (verified 2026-09-14 UTC)
 - Default locale: Chinese (`zh`)
 - Supported locales: Chinese (`zh`) and English (`en`)

@@ -2,6 +2,7 @@ package org.paperreader.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.paperreader.dto.*
+import org.paperreader.exception.InvalidCredentialsException
 import org.paperreader.model.User
 import org.paperreader.repository.UserRepository
 import org.paperreader.security.JwtUtil
@@ -25,6 +26,8 @@ class AuthService(
     private val restTemplate: RestTemplate,
     private val objectMapper: ObjectMapper,
     private val auditLogService: AuditLogService,
+    private val twoFactorService: TwoFactorService,
+    private val deviceService: DeviceService,
     @Value("\${app.github.client-id}") private val githubClientId: String,
     @Value("\${app.github.client-secret}") private val githubClientSecret: String,
     @Value("\${app.mail.from}") private val mailFrom: String,
@@ -32,7 +35,18 @@ class AuthService(
     private val logger = LoggerFactory.getLogger(AuthService::class.java)
     private val random = SecureRandom()
 
-    fun register(request: RegisterRequest): TokenResponse {
+    /**
+     * Everything the backend knows about the browser asking to sign in. Used
+     * both to recognise a trusted device and to populate the trusted-device list.
+     */
+    data class DeviceContext(
+        val deviceKey: String?,
+        val deviceName: String?,
+        val userAgent: String?,
+        val ipAddress: String?,
+    )
+
+    fun register(request: RegisterRequest, ctx: DeviceContext): TokenResponse {
         require(!userRepository.existsByEmail(request.email)) { "Email already registered" }
 
         val user = userRepository.save(
@@ -43,12 +57,10 @@ class AuthService(
                 authProvider = "local",
             )
         )
-        val tokens = generateTokens(user, isNewUser = true)
-        auditLogService.log(user.id, "登录", user.email)
-        return tokens
+        return finishLogin(user, isNewUser = true, ctx = ctx, trust = false)
     }
 
-    fun login(request: LoginRequest): TokenResponse {
+    fun login(request: LoginRequest, ctx: DeviceContext): TokenResponse {
         val existing = userRepository.findByEmail(request.email)
         val (user, isNew) = if (existing.isPresent) {
             val u = existing.get()
@@ -69,9 +81,7 @@ class AuthService(
                 )
             ) to true
         }
-        val tokens = generateTokens(user, isNewUser = isNew)
-        auditLogService.log(user.id, "登录", user.email)
-        return tokens
+        return completeLogin(user, isNewUser = isNew, ctx = ctx)
     }
 
     fun sendEmailCode(request: SendCodeRequest) {
@@ -86,7 +96,7 @@ class AuthService(
         // For now, the code is logged — in production, send it via email
     }
 
-    fun emailCodeLogin(request: EmailLoginRequest): TokenResponse {
+    fun emailCodeLogin(request: EmailLoginRequest, ctx: DeviceContext): TokenResponse {
         val email = request.email.trim().lowercase()
         val code = request.code.trim()
 
@@ -108,21 +118,17 @@ class AuthService(
                 )
             ) to true
         }
-        val tokens = generateTokens(user, isNewUser = isNew)
-        auditLogService.log(user.id, "登录", user.email)
-        return tokens
+        return completeLogin(user, isNewUser = isNew, ctx = ctx)
     }
 
-    fun githubLogin(request: GitHubAuthRequest): TokenResponse {
+    fun githubLogin(request: GitHubAuthRequest, ctx: DeviceContext): TokenResponse {
         val accessToken = exchangeGithubToken(request.code)
         val githubUser = fetchGithubUser(accessToken)
 
         val byGithubId = userRepository.findByGithubId(githubUser.id)
         if (byGithubId.isPresent) {
             val u = byGithubId.get()
-            val tokens = generateTokens(u, isNewUser = false)
-            auditLogService.log(u.id, "登录", u.email)
-            return tokens
+            return completeLogin(u, isNewUser = false, ctx = ctx)
         }
 
         val email = githubUser.email ?: "${githubUser.login}@github.user"
@@ -130,9 +136,7 @@ class AuthService(
         if (byEmail.isPresent) {
             val linked = byEmail.get().copy(githubId = githubUser.id, avatarUrl = githubUser.avatarUrl)
                 .let { userRepository.save(it) }
-            val tokens = generateTokens(linked, isNewUser = false)
-            auditLogService.log(linked.id, "登录", linked.email)
-            return tokens
+            return completeLogin(linked, isNewUser = false, ctx = ctx)
         }
 
         val newUser = userRepository.save(
@@ -144,9 +148,72 @@ class AuthService(
                 authProvider = "github",
             )
         )
-        val tokens = generateTokens(newUser, isNewUser = true)
-        auditLogService.log(newUser.id, "登录", newUser.email)
-        return tokens
+        return completeLogin(newUser, isNewUser = true, ctx = ctx)
+    }
+
+    /**
+     * Shared tail of every login path: passwords, email codes and GitHub
+     * authorisation all land here, so two-factor enforcement lives in exactly
+     * one place. A trusted device skips the second factor entirely.
+     */
+    private fun completeLogin(user: User, isNewUser: Boolean, ctx: DeviceContext): TokenResponse {
+        val needsSecondFactor = twoFactorService.isEnabled(user.id) &&
+            !deviceService.isTrusted(user.id, ctx.deviceKey)
+        if (needsSecondFactor) {
+            return TokenResponse(
+                twoFactorRequired = true,
+                challengeToken = jwtUtil.generateTwoFactorChallengeToken(user.id, user.email, ctx.deviceKey),
+                isNewUser = isNewUser,
+            )
+        }
+        return finishLogin(user, isNewUser, ctx, trust = false)
+    }
+
+    /** Records the device and issues the real token pair. */
+    private fun finishLogin(user: User, isNewUser: Boolean, ctx: DeviceContext, trust: Boolean): TokenResponse {
+        val device = deviceService.register(
+            userId = user.id,
+            deviceKey = ctx.deviceKey,
+            deviceName = ctx.deviceName,
+            userAgent = ctx.userAgent,
+            ipAddress = ctx.ipAddress,
+            trust = trust,
+        )
+        auditLogService.log(user.id, "登录", user.email)
+        return TokenResponse(
+            accessToken = jwtUtil.generateAccessToken(user.id, user.email, device.deviceKey),
+            refreshToken = jwtUtil.generateRefreshToken(user.id, user.email, device.deviceKey),
+            expiresIn = 3600000,
+            isNewUser = isNewUser,
+        )
+    }
+
+    /** Second step of a challenged login: checks the code, then logs the user in. */
+    fun verifyTwoFactor(request: TwoFactorVerifyRequest, ctx: DeviceContext): TokenResponse {
+        val claims = jwtUtil.extractClaims(request.challengeToken)
+        if (claims[JwtUtil.SCOPE_CLAIM] != JwtUtil.SCOPE_TWO_FACTOR_CHALLENGE) {
+            throw InvalidCredentialsException("登录凭证已失效，请重新登录")
+        }
+        val userId = claims.subject.toLong()
+        val email = claims["email"] as? String ?: throw InvalidCredentialsException("登录凭证已失效，请重新登录")
+        val user = userRepository.findById(userId).orElseThrow {
+            InvalidCredentialsException("登录凭证已失效，请重新登录")
+        }
+        val row = twoFactorService.requireEnabled(userId)
+        if (!twoFactorService.verifySecondFactor(userId, row.secret, request.code)) {
+            throw InvalidCredentialsException("验证码或恢复码不正确")
+        }
+        // The device key travels inside the challenge token, so an attacker
+        // cannot claim someone else's trusted device by replaying a code.
+        val deviceKey = request.deviceId?.takeIf { it.isNotBlank() }
+            ?: (claims[JwtUtil.DEVICE_CLAIM] as? String)
+            ?: ctx.deviceKey
+        return finishLogin(
+            user = user,
+            isNewUser = false,
+            ctx = ctx.copy(deviceKey = deviceKey, deviceName = request.deviceName ?: ctx.deviceName),
+            trust = request.trustDevice,
+        )
     }
 
     private fun exchangeGithubToken(code: String): String {
@@ -222,17 +289,6 @@ class AuthService(
         }
         userRepository.save(user.copy(passwordHash = passwordEncoder.encode(request.newPassword)))
         auditLogService.log(userId, "修改密码", user.email)
-    }
-
-    private fun generateTokens(user: User, isNewUser: Boolean = false): TokenResponse {
-        val accessToken = jwtUtil.generateAccessToken(user.id, user.email)
-        val refreshToken = jwtUtil.generateRefreshToken(user.id, user.email)
-        return TokenResponse(
-            accessToken = accessToken,
-            refreshToken = refreshToken,
-            expiresIn = 3600000,
-            isNewUser = isNewUser,
-        )
     }
 
     private data class GithubUser(

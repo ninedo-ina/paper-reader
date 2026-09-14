@@ -1,18 +1,21 @@
 "use client"
 
 import { useState, useRef, useCallback, useEffect } from "react"
-import { X, User, Lock, Shield, Clock, Loader2, Camera, Upload, Link } from "lucide-react"
+import { X, User, Lock, Shield, Clock, MonitorSmartphone, Loader2, Camera, Upload, Link } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUserStore } from "@/stores/user-store"
 import { useToastStore } from "@/stores/toast-store"
 import * as authApi from "@/lib/api/auth"
+import { TwoFactorTab } from "./TwoFactorTab"
+import { TrustedDevicesTab } from "./TrustedDevicesTab"
 
-type ProfileTab = "info" | "password" | "2fa" | "audit"
+type ProfileTab = "info" | "password" | "2fa" | "devices" | "audit"
 
 const TABS: { key: ProfileTab; label: string; icon: React.ReactNode }[] = [
   { key: "info", label: "基本信息", icon: <User className="size-4" /> },
   { key: "password", label: "密码安全", icon: <Lock className="size-4" /> },
   { key: "2fa", label: "两步验证", icon: <Shield className="size-4" /> },
+  { key: "devices", label: "信任设备", icon: <MonitorSmartphone className="size-4" /> },
   { key: "audit", label: "审计日志", icon: <Clock className="size-4" /> },
 ]
 
@@ -73,6 +76,7 @@ export function ProfileDialog({ open, onClose }: ProfileDialogProps) {
             {activeTab === "info" && <BasicInfoTab profile={profile} onUpdate={loadProfile} />}
             {activeTab === "password" && <PasswordTab />}
             {activeTab === "2fa" && <TwoFactorTab />}
+            {activeTab === "devices" && <TrustedDevicesTab />}
             {activeTab === "audit" && <AuditLogTab />}
           </div>
         </div>
@@ -332,18 +336,6 @@ function PasswordTab() {
       >
         {saving ? "修改中..." : "修改密码"}
       </button>
-    </div>
-  )
-}
-
-function TwoFactorTab() {
-  return (
-    <div className="flex flex-col items-center justify-center pt-16 text-center">
-      <Shield className="size-12 text-[var(--text-tertiary)] mb-4" />
-      <h3 className="text-sm font-medium text-[var(--text-primary)] mb-2">两步验证</h3>
-      <p className="text-xs text-[var(--text-tertiary)] max-w-[260px]">
-        两步验证功能即将推出。
-      </p>
     </div>
   )
 }

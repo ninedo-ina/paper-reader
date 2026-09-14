@@ -17,19 +17,36 @@ type LoginMode = "password" | "code"
 export function LoginForm() {
   const t = useTranslations("auth")
   const router = useRouter()
-  const { login, emailCodeLogin, isLoading, error, clearError } = useAuthStore()
+  const {
+    login,
+    emailCodeLogin,
+    verifyTwoFactor,
+    cancelTwoFactor,
+    twoFactorChallengeToken,
+    hydrateChallenge,
+    isLoading,
+    error,
+    clearError,
+  } = useAuthStore()
   const [mode, setMode] = useState<LoginMode>("password")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [code, setCode] = useState("")
   const [countdown, setCountdown] = useState(0)
   const [sendingCode, setSendingCode] = useState(false)
+  const [twoFactorCode, setTwoFactorCode] = useState("")
+  const [trustDevice, setTrustDevice] = useState(true)
 
   useEffect(() => {
     if (countdown <= 0) return
     const timer = setInterval(() => setCountdown((c) => c - 1), 1000)
     return () => clearInterval(timer)
   }, [countdown])
+
+  // GitHub 回调等整页跳转场景，挑战凭证留在 sessionStorage 里
+  useEffect(() => {
+    hydrateChallenge()
+  }, [hydrateChallenge])
 
   const handleSendCode = async () => {
     if (!email || countdown > 0) return
@@ -53,6 +70,8 @@ export function LoginForm() {
       } else {
         await emailCodeLogin({ email, code })
       }
+      // 需要二次验证时先不跳转，页面上会切成挑战步骤
+      if (useAuthStore.getState().twoFactorChallengeToken) return
       router.push("/")
     } catch {
       // error is set in store
@@ -64,6 +83,81 @@ export function LoginForm() {
     setMode(mode === "password" ? "code" : "password")
     setPassword("")
     setCode("")
+  }
+
+  const handleTwoFactorSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    clearError()
+    try {
+      await verifyTwoFactor(twoFactorCode.trim(), trustDevice)
+      router.push("/")
+    } catch {
+      setTwoFactorCode("")
+    }
+  }
+
+  const backToLogin = () => {
+    cancelTwoFactor()
+    setTwoFactorCode("")
+  }
+
+  // 账号开了两步验证时，密码/验证码/GitHub 三种方式都会先落到这里
+  if (twoFactorChallengeToken) {
+    return (
+      <Card
+        variant="default"
+        className="w-full max-w-md shadow-[0_24px_70px_rgba(34,71,96,0.12)] backdrop-blur-xl"
+      >
+        <form onSubmit={handleTwoFactorSubmit}>
+          <CardHeader className="px-8 pt-8 pb-5">
+            <CardTitle className="text-2xl tracking-tight">{t("twoFactorTitle")}</CardTitle>
+            <CardDescription className="mt-2">{t("twoFactorSubtitle")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5 px-8 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="two-factor-code">{t("twoFactorCode")}</Label>
+              <Input
+                id="two-factor-code"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder={t("twoFactorCodePlaceholder")}
+                value={twoFactorCode}
+                onChange={(e) => setTwoFactorCode(e.target.value.replace(/\s/g, ""))}
+                maxLength={6}
+                required
+                autoFocus
+              />
+              <p className="text-xs leading-5 text-[var(--text-tertiary)]">{t("twoFactorHint")}</p>
+            </div>
+
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-[var(--text-secondary)]">
+              <input
+                type="checkbox"
+                checked={trustDevice}
+                onChange={(e) => setTrustDevice(e.target.checked)}
+                className="size-4 accent-[var(--accent)]"
+              />
+              {t("trustDevice")}
+            </label>
+
+            {error && <p className="text-sm text-red-500">{error}</p>}
+          </CardContent>
+          <CardFooter className="flex-col gap-3 px-8 pb-8 pt-5">
+            <Button type="submit" className="w-full" disabled={isLoading || !twoFactorCode}>
+              {isLoading ? t("loggingIn") : t("verifyAndLogin")}
+            </Button>
+            <button
+              type="button"
+              onClick={backToLogin}
+              className="text-sm font-medium text-[var(--accent)] hover:underline"
+            >
+              {t("backToLogin")}
+            </button>
+          </CardFooter>
+        </form>
+      </Card>
+    )
   }
 
   return (

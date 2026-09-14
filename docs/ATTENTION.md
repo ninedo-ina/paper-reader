@@ -1,3 +1,17 @@
+## v0.1.40 个人中心两步验证功能完善
+
+- 本轮需求编号为 `REQ-202609-0104`，使用普通迭代分支 `feature/v0.1.40`（与 v0.1.33 之后的迭代命名保持一致）。
+- **本轮有数据库迁移**：`V14__two_factor_and_trusted_devices.sql` 新建 `pr_user_two_factor`、`pr_user_recovery_codes`、`pr_user_devices` 三张表。后端 `ddl-auto: validate`，部署时 Flyway 必须先跑通，否则整个服务起不来。
+- 后端 TOTP 是自研实现（`security/Totp.kt`，javax.crypto HMAC-SHA1），**没有引入任何新的 Gradle 依赖**，不要为了「抄个库」去加 `commons-codec`、`googleauth` 之类依赖；`TotpTest` 已用 RFC 6238 官方向量（`287082`/`081804`/`050471`/`005924`/`279037`）锁住正确性。
+- RFC 向量的断言方式：官方给的是 8 位值，本项目输出 6 位；因为 10^6 整除 10^8，6 位等于 8 位的后 6 位。改断言前先想清楚这一点，别把 `code()` 换成自己的输出再比。
+- 恢复码的设计是「关闭即删除」：`disable()` 里 `recoveryCodeRepository.deleteByUserId()`，这样「恢复码只在两步验证开启期间有效」是结构性保证，不要图省事改成使用时再判断 `enabled`。
+- 恢复码只允许两种保存方式：一键复制、下载成 **txt 文本文件**。用户明确说过「我们不支持 pdf」，不要自作主张加 PDF 导出。
+- 二维码配色跟随主题（`ThemeAwareQrCode.tsx`）：浅色主题深色码点 + 白底，深色主题反相。两种配色都刻意保持高对比度，不要为了「好看」调低对比度或给小尺寸二维码加圆角/渐变。
+- 设备吊销复用 JWT 的 `did` 声明：`JwtAuthFilter` 与 refresh 接口都会调用 `DeviceService.isDeviceActive`。没有 `did` 的历史 token 视为有效（避免上线即全站登出），这是有意为之。
+- 个人中心菜单由 4 个变 5 个，新增「信任设备」与「两步验证」同级；`ProfileDialog.tsx` 里的 `TwoFactorTab` 已改为从 `./TwoFactorTab` 导入，**不要再在 `ProfileDialog.tsx` 内定义同名本地函数**（会与 import 冲突）。
+- GitHub 回调登录会整页跳转，因此 2FA 挑战 token 暂存在 `sessionStorage`（`pr_2fa_challenge`）并由 `loadPendingChallenge()`/`hydrateChallenge()` 恢复；改登录跳转逻辑时不要把这个兜底删掉。
+- 本轮不涉及后台管理项目、共享 PostgreSQL/Redis/GROBID 配置或 `backend/uploads`。
+
 ## v0.1.39 登录页展示区位置微调
 
 - 本轮需求编号为 `REQ-202609-0103`，使用普通迭代分支 `feature/v0.1.39`（不是 `-fix`，与 v0.1.33 之后的迭代命名保持一致）。
