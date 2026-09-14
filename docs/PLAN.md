@@ -4,9 +4,9 @@
 
 两步验证的挑战 token 只有 5 分钟有效期，而登录页停在这一步更久（切去 Authenticator 复制验证码、GitHub 回调整页跳转后返回）是常见情形。此前 `verifyTwoFactor` 直接调用 `jwtUtil.extractClaims()`，`ExpiredJwtException` 会一路冒到 `GlobalExceptionHandler` 的兜底分支，前端拿到的是 `{"code":9999,"message":"Internal server error"}`——用户看不出该重新登录还是该重输验证码。
 
-本轮把该调用包进 `try/catch (io.jsonwebtoken.JwtException)`，统一转成 `InvalidCredentialsException("登录凭证已失效，请重新登录")`（`code=1002`），前端两步验证步骤会直接把这句话显示出来。改动只覆盖「挑战 token 本身无法解析」这一种情况：解析成功但 scope 不对、验证码错误等既有分支行为不变。`/api/auth/login`、`/api/auth/refresh` 等既有接口对垃圾 token 仍沿用项目原有的 500 约定，即 `GlobalExceptionHandler` 只把 `BusinessException`/`IllegalArgumentException` 翻译成业务码，本轮不扩散改动面。
+本轮把该调用包进 `try/catch (io.jsonwebtoken.JwtException)`，统一转成 `InvalidCredentialsException("登录凭证已失效，请重新登录")`（`code=1006`），前端两步验证步骤会直接把这句话显示出来。改动只覆盖「挑战 token 本身无法解析」这一种情况：解析成功但 scope 不对、验证码错误等既有分支行为不变。`/api/auth/login`、`/api/auth/refresh` 等既有接口对垃圾 token 仍沿用项目原有的 500 约定，即 `GlobalExceptionHandler` 只把 `BusinessException`/`IllegalArgumentException` 翻译成业务码，本轮不扩散改动面。
 
-验收标准：挑战 token 过期或被篡改时，`POST /api/auth/two-factor/verify` 返回 `code=1002` 与「登录凭证已失效，请重新登录」，且不再进入验证码校验与用户查询；`AuthServiceTest` 新增用例锁住该行为；后端测试与 `bootJar` 通过；按 `feature/v0.1.41 -> dev -> main` 发布并完成生产验收。
+验收标准：挑战 token 过期或被篡改时，`POST /api/auth/two-factor/verify` 返回 `code=1006` 与「登录凭证已失效，请重新登录」，且不再进入验证码校验与用户查询；`AuthServiceTest` 新增用例锁住该行为；后端测试与 `bootJar` 通过；按 `feature/v0.1.41 -> dev -> main` 发布并完成生产验收。
 
 本轮不涉及数据库迁移、前端业务逻辑、后台管理项目或共享基础设施。
 
