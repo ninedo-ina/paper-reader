@@ -32,9 +32,9 @@ The repository contains the C-side product and its API. The administration conso
 
 - Default branch: `main`
 - Integration branch: `dev`
-- Released version branch: `feature/v0.1.42` (released to production)
-- Client version: `0.1.42`
-- Production version: `0.1.42` (verified 2026-09-14 UTC)
+- Released version branch: `feature/v0.1.43` (released to production)
+- Client version: `0.1.43`
+- Production version: `0.1.43` (verified 2026-09-14 UTC)
 - Default locale: Chinese (`zh`)
 - Supported locales: Chinese (`zh`) and English (`en`)
 - Production client: `https://paper.pilo.eu.cc`
