@@ -127,3 +127,13 @@ PaperHelper 侧对通知中心的调用**失败不影响主流程**：验证码�
 - PaperHelper 站内通知中心（前端 `notification-store` 那套，只存在浏览器本地），本轮不接通知中心 WS。
 - 注册欢迎邮件、论文解析完成通知、周报等其它邮件场景。
 - 通知中心后台的模板可视化编辑器。
+
+## 8. 实现状态（2026-09-15 UTC 已闭环）
+
+通知中心侧（仓库 `yokeay/bendywork-notify-center`）已按本文档实现并发布：
+
+- `v0.1.13`（提交 `c14cc23`）：新增 `src/templates.ts` 模板注册表与 `src/email_body.ts`，三个模板名与本文件第 4 节完全一致，`template` / `template_data` 作为可选字段加在 `POST /api/notify` 上，不落库、不加 D1 schema。
+- `v0.1.14`（提交 `6337e7b`）：修字体栈问题 —— 常量插进 `style="..."` 时用双引号包字体名会提前闭合属性，AgentMail 重新序列化 HTML 时丢掉后半截，等宽字体在真实邮件里消失。改用单引号并补回归测试。
+- 验证：对生产 `POST https://paper.pilo.eu.cc/api/auth/send-code`，1 秒后信箱收到 `multipart/alternative` 邮件，主题「笨迪论文助手登录验证码」，HTML 两条 `font-family` 完整、无游离双引号、配色全在灰阶色板内。
+
+后续改模板变量或版式，两侧要同步改：本文档是需求侧契约，`bendywork-notify-center` 的 `maintain.md` 是实现侧记录。
