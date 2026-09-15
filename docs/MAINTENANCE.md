@@ -66,7 +66,7 @@ feature/v主版本.次版本.修订版本
 7. 生产验收通过后再执行 `pm2 save`，并记录提交、构建、部署、健康检查和公网验收结果。
 8. 保留版本分支、合并提交和验证记录，不通过强制推送改写 `main`、`dev` 或历史版本分支。
 
-当前开发分支为 `feature/v0.1.44`（在已发布基线 `v0.1.43` 上开发，生产已核验为 `0.1.43`）；后续新需求从最新发布基线创建下一个版本分支。v0.1.33 之后本项目实际按普通迭代分支（`feature/v0.1.40`、`feature/v0.1.41`、`feature/v0.1.42`、`feature/v0.1.43`、`feature/v0.1.44`）递进，不再追加 `-fix`，即使本轮只是补丁也照常开下一个修订号分支；历史 `-fix` 分支仅用于 v0.1.32 及更早版本。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。
+当前已发布版本为 `0.1.44`（分支 `feature/v0.1.44`，提交 `6327bfe`，2026-09-15 UTC 已合入 `dev` / `main` 并完成生产部署与线上验收）；后续新需求从该基线创建 `feature/v0.1.45`。v0.1.33 之后本项目实际按普通迭代分支（`feature/v0.1.40`、`feature/v0.1.41`、`feature/v0.1.42`、`feature/v0.1.43`、`feature/v0.1.44`）递进，不再追加 `-fix`，即使本轮只是补丁也照常开下一个修订号分支；历史 `-fix` 分支仅用于 v0.1.32 及更早版本。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。
 
 ## 4. 每次代码迭代的标准流程
 
@@ -702,3 +702,7 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - 契约：邮件模板由通知中心侧实现，本项目按 `docs/NOTIFICATION_TEMPLATES.md` 传 `template`（`paperhelper-login-code` / `paperhelper-message` / `paperhelper-circle`）与 `template_data`。登录码同时写进 `body`，保证模板未上线时纯文本回退仍可用；`title` 不含验证码。`target_user_ids` 用真实用户 id / 未注册邮箱用 `guest`，**不用 `0` / `-1`**（那会被通知中心当作广播给所有在线连接）。
 - 测试：新增 `NotifyCenterClientTest.kt`（`MockRestServiceServer` 校验 token 请求、Bearer 头、四类通知的请求体字段、200 字符截断且不切坏代理对、token 复用、投递失败与取 token 失败都被吞掉、未配置/关闭时静默、`isConfigured` 判定）；`AuthServiceTest.kt` 新增「验证码写 Redis 并交给通知中心」与「冷却期内跳过」两项。后端 `./gradlew test` 全绿（69 项，含 `@SpringBootTest` 启动用例，覆盖双 RestTemplate Bean 的装配）。
 - 本轮无数据库迁移、无前端业务改动、无新依赖、无接口/请求体变化；版本号统一升到 `0.1.44`。
+- 版本链：`feature/v0.1.44` 提交 `6327bfe`（2026-09-15 UTC），已快进合入 `dev` 与 `main`，非强推、非改写历史。
+- 部署：后端 `./gradlew clean test bootJar` 产出 `backend/build/libs/paper-reader-backend-0.1.44.jar`，PM2 进程 `paper-reader-backend`（id 7）先 `delete` 再用新 JAR 的绝对路径 `start` —— **必须同一条 shell 里执行**，否则 PM2 会沿用旧的 0.1.43 JAR 路径（历史踩过）；启动前在同一 shell `set -a; . ./backend/.env; set +a`，`.env` 是 gitignore 的、不随仓库走。前端 `next build` 后重启 `paper-reader-frontend`，最后 `pm2 save`。
+- 线上验收：`https://paper.pilo.eu.cc/api/health` 返回 `{"status":"ok","version":"0.1.44"}`；站点首页 200 且 favicon 带 `?v=0.1.44`。
+- 邮件端到端验收（真链路，不是打通知中心 API）：对生产 `POST /api/auth/send-code`（`{"email":"paperhelper@agentmail.to"}`）→ 后端日志 `01:29:26.168Z` 生成验证码 `096001` → 1 秒后信箱收到 `multipart/alternative` 邮件（4640 字节），主题「笨迪论文助手登录验证码」，正文与 HTML 里的验证码与日志一致，收件人 `paperhelper@agentmail.to`。通知中心侧当时为 `v0.1.13`（`c14cc23`），随后升到 `v0.1.14`（`6337e7b`，修字体栈被双引号截断）并重复同一验收，HTML 里两条 `font-family` 均已完整。

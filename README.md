@@ -12,7 +12,7 @@ The repository contains the C-side product and its API. The administration conso
 - Requirement: `REQ-202609-0107` — connect PaperHelper to the Bendywork notification center so it can actually deliver mail.
 - Scope: this product has no sign-up, only email-code login, but it had no way to send mail of its own — verification codes only reached the backend log. A new `NotifyCenterClient` exchanges an AKSK for a bearer token and calls the notification center's `POST /api/notify` for four events: login verification codes, private messages, group (research circle) messages, and comments on your post. Every send happens on a dedicated `notifyExecutor` thread pool with its own 5-second-timeout `RestTemplate`, so a notification-center outage is a WARN log line and never a failed login or a lost message. A 60-second per-email Redis cooldown guards code requests and a per-(group, member) 10-minute window guards group mail. The email HTML itself is owned by the notification center; this repository sends `template` and `template_data` per the contract in [docs/NOTIFICATION_TEMPLATES.md](docs/NOTIFICATION_TEMPLATES.md), and the verification code also rides along in `body` so the plain-text fallback stays usable before the templates ship.
 - No database migration, no new dependency, no client-side behaviour change; the client only moves to version `0.1.44`.
-- Status: implemented, tested and built on the version branch; deployment and verification recorded in `docs/MAINTENANCE.md`.
+- Status: released. Commit `6327bfe` on `feature/v0.1.44`, merged to `dev` and `main` on 2026-09-15 UTC, deployed and verified in production (`/api/health` reports `0.1.44`); deployment detail and the end-to-end mail check are recorded in `docs/MAINTENANCE.md`.
 
 ## Previous Iteration: v0.1.43
 
@@ -39,9 +39,9 @@ The repository contains the C-side product and its API. The administration conso
 
 - Default branch: `main`
 - Integration branch: `dev`
-- Released version branch: `feature/v0.1.43` (released to production)
-- Client version: `0.1.43`
-- Production version: `0.1.43` (verified 2026-09-14 UTC)
+- Released version branch: `feature/v0.1.44` (released to production)
+- Client version: `0.1.44`
+- Production version: `0.1.44` (verified 2026-09-15 UTC, commit `6327bfe`)
 - Default locale: Chinese (`zh`)
 - Supported locales: Chinese (`zh`) and English (`en`)
 - Production client: `https://paper.pilo.eu.cc`
