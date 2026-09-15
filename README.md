@@ -6,7 +6,16 @@ The repository contains the C-side product and its API. The administration conso
 
 > **Maintainer start here:** read the [documentation index](docs/README.md), then the [new maintainer guide](docs/NEW_MAINTAINER_GUIDE.md) and [complete project status](docs/PROJECT_STATUS.md). They record the real production topology, configuration rules, known risks, and release workflow without requiring previous chat context.
 
-## Current Iteration: v0.1.45
+## Current Iteration: v0.1.47
+
+- Branch: `feature/v0.1.47`
+- Requirement: `REQ-202609-0110` — a freshly logged-in account showed no username, no email and a "?" avatar; give it a default avatar and a system-generated name, show the email in the personal center, and close the avatar menu when blank space is clicked.
+- Scope: the empty profile was not a personal-center bug but a login-path bug — the session loader only runs on a full page load, so the client-side route change after signing in left the user store empty until the next refresh. `applyTokens` now loads the profile the moment the tokens land, and `loadProfile` de-duplicates concurrent calls so that load and the session loader's share a single `/auth/me` request. A new `frontend/src/lib/user-display.ts` derives the identity: `defaultAvatar` takes the first character of the email address (ASCII letters upper-cased, digits and CJK used as they are), picks a background from a fixed palette by hashing the address, and chooses a white or dark-ink foreground by WCAG relative luminance — the contrast ratio is at least 4.5, so the character never blends into its plate. `defaultDisplayName` prefers the name the user set, then `用户{id}`, then the local part of the email; the personal center, the top-bar menu and the chat bubbles all use it, and the personal center now shows both that name and the email instead of an empty field. The avatar menu (upload image / network image) closes on a click outside it and on Escape, with the menu itself and the trigger button exempted so that opening it does not immediately close it again. GitHub sign-in requested `scope=user:email` but never read `/user/emails`, so an account whose address is private was stored under an unreachable `@github.user` placeholder; the login flow now falls back to the primary address and backfills an existing placeholder account on its next sign-in, keeping the placeholder and logging a WARN when the real address already belongs to someone else.
+- Migration `V15__widen_user_avatar.sql`: `pr_users.avatar_url` was `VARCHAR(500)` while "upload from this device" stores a base64 data URL — an image of a few dozen kilobytes is tens of thousands of characters, so uploads could never succeed. The column is widened to `VARCHAR(1000000)` (the varchar type is kept on purpose, `ddl-auto=validate` would refuse to start otherwise), and the client caps a data URL at 900,000 characters with a readable error.
+- Tests: `user-display.test.ts` (8) covers the initial, the contrast rule and the name fallback chain; `profile-dialog.test.tsx` (6) covers the email field, the default name and the close-on-blank-click; `AuthServiceTest` gains 4 GitHub-email cases.
+- Status: released. Merged to `dev` and `main` on 2026-09-15 UTC, deployed and verified in production (`/api/health` reports `0.1.47`); deployment detail is recorded in `docs/MAINTENANCE.md`.
+
+## Previous Iteration: v0.1.45
 
 - Branch: `feature/v0.1.45`
 - Requirement: `REQ-202609-0106` — centre the sign-in page vertically on large monitors.
@@ -14,7 +23,7 @@ The repository contains the C-side product and its API. The administration conso
 - No database migration, no API change, no new dependency; a single layout file plus one regression test, and the version moves to `0.1.45`.
 - Status: released. Commit `f1fa061` on `feature/v0.1.45`, merged to `dev` and `main` on 2026-09-15 UTC, deployed and verified in production (`/api/health` reports `0.1.45`, the sign-in block measures centred at 1440×820, 2560×1440 and 1920×1600); deployment detail is recorded in `docs/MAINTENANCE.md`.
 
-## Previous Iteration: v0.1.44
+## Earlier Iteration: v0.1.44
 
 - Branch: `feature/v0.1.44`
 - Requirement: `REQ-202609-0107` — connect PaperHelper to the Bendywork notification center so it can actually deliver mail.

@@ -1,4 +1,18 @@
-## 当前迭代：v0.1.45
+## 当前迭代：v0.1.47
+
+发布分支：`feature/v0.1.47`；类型：缺陷修复 + UI（登录后的默认身份）；需求编号：`REQ-202609-0110`。
+
+用户反馈：登录进去个人中心里用户名是空的、邮箱是空的、头像是「?」。这不是个人中心渲染错了，是**登录后根本没拉资料**：根布局的 `SessionLoader` 只在整页加载时跑一次，而登录成功走的是客户端路由跳转，根布局不会重挂载，`useUserStore.profile` 一直停在 `null`。登录接口本身只返回 token，不含用户信息，所以顶栏和个人中心一起空着。
+
+- `stores/auth-store.ts` 的 `applyTokens` 在写入 token 后立刻 `loadProfile()`；`stores/user-store.ts` 用 `inflight` 对并发调用去重，避免和 `SessionLoader` 重复请求 `/auth/me`。三条登录路径（邮箱验证码、密码、GitHub）都汇合在 `applyTokens`，一处改动全部覆盖。
+- 新增 `frontend/src/lib/user-display.ts` 统一身份展示：`defaultAvatar` 取邮箱首字母（英文大写 / 数字原样 / 中文原样），底色按邮箱哈希取自固定调色板，前景色按 WCAG 相对亮度在白色与 `#1f2933` 之间择优，保证对比度 ≥ 4.5；`defaultDisplayName` 依次取用户昵称 → `用户{id}` → 邮箱前缀 → `用户`。个人中心、顶栏、聊天气泡共用。
+- 头像设置菜单（上传图片 / 网络图片）改为监听 `document` 的 `mousedown` 与 `Escape` 关闭，菜单与触发按钮豁免。
+- GitHub 登录此前申请了 `scope=user:email` 却从不读 `/user/emails`，邮箱私密时只能落 `{login}@github.user` 占位。现在兜底取主邮箱，并在下次登录时回填历史占位账号（真实邮箱已属于他人则保留占位 + WARN）。
+- 迁移 `V15__widen_user_avatar.sql` 把 `pr_users.avatar_url` 从 `VARCHAR(500)` 放宽到 `VARCHAR(1000000)`：「从本地上传」存的是 base64 data URL，`VARCHAR(500)` 存不下，该功能此前必然报错。前端同步加 900000 字符上限。
+
+验收标准：`user-display.test.ts`（首字母 / 对比度 ≥ 4.5 / 前景≠底色 / 默认用户名链路）、`profile-dialog.test.tsx`（个人中心显示邮箱与 `用户{id}`、点空白关闭菜单、Escape 关闭、点菜单内不关闭）全绿；后端 `AuthServiceTest` 新增 4 条 GitHub 邮箱用例；`tsc --noEmit`、`vitest run`、`next build`、`./gradlew clean test bootJar` 通过；按 `feature/v0.1.47 -> dev -> main` 发布并线上核对 `/api/health` 与个人中心。
+
+## 上一迭代：v0.1.45（已发布）
 
 发布分支：`feature/v0.1.45`；类型：UI 打磨迭代（登录页垂直居中）；需求编号：`REQ-202609-0106`。
 
@@ -12,7 +26,7 @@
 
 本轮无数据库迁移、无接口改动、无新依赖：只改一个布局文件与一条测试，版本号（前后端 VERSION、`package.json`、`build.gradle.kts`、favicon `?v=`）统一升到 `0.1.45`，后端仅随版本号重新构建与重启，Kotlin 代码未改。
 
-## 上一迭代：v0.1.44（已发布）
+## 迭代：v0.1.44（已发布）
 
 发布分支：`feature/v0.1.44`；类型：功能迭代（接入通知中心）；需求编号：`REQ-202609-0107`。
 

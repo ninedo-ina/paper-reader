@@ -1,3 +1,13 @@
+## v0.1.47 登录后的默认身份与个人中心邮箱
+
+- 本轮需求编号 `REQ-202609-0110`，从已发布的 v0.1.46 基线开 `feature/v0.1.47`。核心症状是「登录之后个人中心用户名、邮箱、头像全是空的」，**根因在登录链路、不在个人中心组件**：根布局的 `SessionLoader` 只在整页加载时跑一次，登录成功走的是客户端路由跳转，不会重挂载根布局，于是 `useUserStore.profile` 一直是 `null`。修法是在 `stores/auth-store.ts` 的 `applyTokens` 成功后立刻 `loadProfile()`，**不要再把这个调用搬到 `LoginForm` / `SessionLoader` 里**，那两个文件正被 i18n 迭代改着，而且 `applyTokens` 是邮箱验证码、密码、GitHub 三条登录路径的唯一汇合点，放这里一次覆盖三条。`loadProfile` 内部用 `inflight` 对并发调用去重，重复调不会多打一次 `/auth/me`。
+- **`frontend/src/lib/user-display.ts` 是身份展示的唯一来源**：个人中心、顶栏 `UserMenu`、聊天 `ChatPanel` 都从它取，不要各自再写一遍取首字母的逻辑。`defaultAvatar` 按需求取**邮箱首字母**（英文大写、数字原样、中文原样），底色由邮箱哈希从固定调色板选，前景色按 WCAG 相对亮度在白色和深墨 `#1f2933` 之间择优，对比度恒 ≥ 4.5——**不要改成固定白色或固定深色**，浅底色配白字就是需求里说的「颜色对不上、看不清」。取不到邮箱时显示 `?` 只应发生在 profile 真的没加载出来的时候。
+- `defaultDisplayName` 的优先级是：用户自己设的昵称 → `用户{id}` → 邮箱前缀 → `用户`。**不要再退回「用邮箱前缀当默认用户名」**，本轮就是因为个人中心直接显示 ID / 空字符串才被提的需求。个人中心的昵称输入框用默认名做 `placeholder`（不是 value），用户没填过时看到的是系统名，一填就覆盖。
+- 头像菜单（上传图片 / 网络图片）的关闭逻辑在 `ProfileDialog.tsx` 的 `AvatarSection`，监听 `document` 的 `mousedown` + `keydown(Escape)`；**菜单自身 `menuRef` 和触发按钮 `avatarRef` 都在豁免范围内，不要删这两个判断**，否则点相机按钮会「开了立刻关」。用 `mousedown` 而不是 `click` 是为了和已有的 hover 展开行为一致。
+- **后端 `AuthService.githubLogin` 的占位邮箱不能当成真实邮箱用**：GitHub 的 `/user` 在邮箱设为私密时不返回 `email`，历史数据里存的是 `{login}@github.user`。现在会兜底读 `/user/emails` 取主邮箱，并在下次登录时回填老账号；**回填前必须查重**，真实邮箱已属于别的账号时保留占位并打 WARN，绝不能把两个用户指向同一个邮箱（`email` 有唯一约束，硬改会直接 500）。
+- `V15__widen_user_avatar.sql` 把 `pr_users.avatar_url` 从 `VARCHAR(500)` 放宽到 `VARCHAR(1000000)`。**类型必须保持 varchar**：`User.kt` 上是 `@Column(length = ...)`，生产 `ddl-auto=validate`，改成 `TEXT` 会导致启动校验失败、整个后端起不来。前端 `MAX_AVATAR_DATA_URL_LENGTH = 900000` 是配套的客户端上限，改小可以、改大之前先确认列宽和请求体大小限制。
+- 本轮**有数据库迁移（V15）、无接口出入参变化、无新依赖**。部署时后端必须带 `backend/.env` 启动（同 shell `set -a; . ./backend/.env; set +a` 后再 `pm2 delete` + `pm2 start`），V15 会在启动时由 Flyway 执行。
+
 ## v0.1.45 登录页垂直居中
 
 - 本轮需求编号 `REQ-202609-0106`，从已发布的 v0.1.44 基线开 `feature/v0.1.45`。改动**只有一个文件**：`frontend/src/app/[locale]/(auth)/layout.tsx`。
