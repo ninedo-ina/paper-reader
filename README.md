@@ -6,13 +6,20 @@ The repository contains the C-side product and its API. The administration conso
 
 > **Maintainer start here:** read the [documentation index](docs/README.md), then the [new maintainer guide](docs/NEW_MAINTAINER_GUIDE.md) and [complete project status](docs/PROJECT_STATUS.md). They record the real production topology, configuration rules, known risks, and release workflow without requiring previous chat context.
 
-## Current Iteration: v0.1.43
+## Current Iteration: v0.1.44
+
+- Branch: `feature/v0.1.44`
+- Requirement: `REQ-202609-0107` — connect PaperHelper to the Bendywork notification center so it can actually deliver mail.
+- Scope: this product has no sign-up, only email-code login, but it had no way to send mail of its own — verification codes only reached the backend log. A new `NotifyCenterClient` exchanges an AKSK for a bearer token and calls the notification center's `POST /api/notify` for four events: login verification codes, private messages, group (research circle) messages, and comments on your post. Every send happens on a dedicated `notifyExecutor` thread pool with its own 5-second-timeout `RestTemplate`, so a notification-center outage is a WARN log line and never a failed login or a lost message. A 60-second per-email Redis cooldown guards code requests and a per-(group, member) 10-minute window guards group mail. The email HTML itself is owned by the notification center; this repository sends `template` and `template_data` per the contract in [docs/NOTIFICATION_TEMPLATES.md](docs/NOTIFICATION_TEMPLATES.md), and the verification code also rides along in `body` so the plain-text fallback stays usable before the templates ship.
+- No database migration, no new dependency, no client-side behaviour change; the client only moves to version `0.1.44`.
+- Status: implemented, tested and built on the version branch; deployment and verification recorded in `docs/MAINTENANCE.md`.
+
+## Previous Iteration: v0.1.43
 
 - Branch: `feature/v0.1.43`
 - Requirement: `REQ-202609-0104` — the QR code shown while enabling two-factor authentication looked harsh.
 - Scope: the bind wizard's QR no longer inverts to a dark plate in the dark theme. It is always drawn dark-on-white (what authenticator apps scan best), and it now sits inside a rounded white card with a hairline border, a soft shadow and a little padding, so it reads as a deliberate card rather than a bare black square. `ThemeAwareQrCode.tsx` became `QrCodeCard.tsx` because it is no longer theme-aware.
 - No behaviour change: same requests, same payloads, no database migration, no new dependency.
-- Status: implemented, tested and built on the version branch; deployment and verification recorded in `docs/MAINTENANCE.md`.
 
 ## Previous Iteration: v0.1.42
 
@@ -393,7 +400,7 @@ The project uses a release-style branch and client version for every code iterat
 - Bug-fix iterations append `-fix` to the repaired version, for example `0.1.12-fix`, with a matching branch such as `feature/v0.1.12-fix`.
 - A minor release (`0.1.x` → `0.2.0`) or major release (`0.x.y` → `1.0.0`) is created only when the product owner explicitly requests it.
 - Keep every version branch after merging; it is part of the release and rollback history.
-- Keep the current release branch (`feature/v0.1.32`), `frontend/package.json`, `frontend/VERSION`, `backend/VERSION`, README release line, favicon cache-busting value, and visible UI version aligned. Production is `0.1.32`; future work starts from the latest `dev`.
+- Keep the current release branch (see the release line above), `frontend/package.json`, `frontend/VERSION`, `backend/VERSION`, README release line, favicon cache-busting value, and visible UI version aligned. Future work starts from the latest `dev`.
 - Every code iteration must be built, tested, deployed to the PM2 process, verified through the public domain, committed, and pushed to the matching remote branch.
 
 The documentation map is in [docs/README.md](docs/README.md). New maintainers should start with [docs/NEW_MAINTAINER_GUIDE.md](docs/NEW_MAINTAINER_GUIDE.md) and [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md). Detailed operating rules are in [docs/MAINTENANCE.md](docs/MAINTENANCE.md), the roadmap is in [docs/PLAN.md](docs/PLAN.md), cautions are in [docs/ATTENTION.md](docs/ATTENTION.md), and AI design is in [docs/AI_CHAT_TECHNICAL_SOLUTION.md](docs/AI_CHAT_TECHNICAL_SOLUTION.md).

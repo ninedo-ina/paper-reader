@@ -1,3 +1,17 @@
+## v0.1.44 接入通知中心
+
+- 本轮需求编号 `REQ-202609-0107`，从已发布的 v0.1.43 基线开 `feature/v0.1.44`。发信**不在本仓库**：所有邮件都由本机通知中心（`bendywork-notify-center`）渲染和投递，本项目只负责请求。
+- 唯一的对接点是 `backend/src/main/kotlin/org/paperreader/service/NotifyCenterClient.kt`。要加新的通知类型就在里面加一个 `@Async("notifyExecutor")` 方法 + 一个 `Template` 枚举值，**不要在业务 Service 里直接拼 HTTP 请求或注入 RestTemplate**——超时、鉴权、token 缓存、异常吞掉这几件事只在这一个类里做。
+- **`target_user_ids` 绝对不能用 `"0"` 或 `"-1"`**。通知中心的 `parseTargetUsers` 把这两个值解释成「所有在线连接」，登录验证码一旦这么传就等于给每个在线 WebSocket 客户端广播别人的验证码。登录码用真实用户 id，邮箱还没注册就用字面量 `"guest"`。
+- **登录验证码必须同时放进 `body`**，不能只放 `template_data`。通知中心对未知模板会回退成纯文本发送，模板还没上线（或灰度中）时用户只有靠 `body` 里的码才登得进去。反过来 `title` 是固定文案、**不要把验证码写进标题**：标题会随通知记录持久化，写进去等于把码存进库。
+- 发送失败是**静默**的：`send()` 里 try/catch 只记 WARN，`@Async` 又跑在独立线程池上，所以通知中心挂掉不会让登录/发消息报错。这是有意的，不要改成抛异常往上冒。
+- 线程池是 `notifyExecutor`（core 1 / max 2、队列 200，随应用关闭等 5 秒）。它故意开得很小：通知是旁路，不能跟 GROBID 抢资源；队列满了会丢通知，可以接受。
+- HTTP 客户端是专用的 `notifyRestTemplate`（连接/读取各 5 秒，`app.notify.timeout-ms`），**不要改回用 GROBID 那个 60 秒的 `restTemplate`**，否则通知中心一卡就会占住线程 60 秒。原 `restTemplate` 已标 `@Primary`、注入点用 `@Qualifier("notifyRestTemplate")` 显式指定，加新的 RestTemplate Bean 时注意别把歧义又引回来。
+- 防刷的两把锁都是 Redis：`pr:email_code_cooldown:<email>`（60 秒，与前端倒计时同值）和 `pr:group_notify:<groupId>:<userId>`（10 分钟）。节流键是**先占后发**，发送失败会白丢一个窗口——为了让配额可控，这个取舍是有意的。通知中心侧每家 provider 每月 3000 封，别把节流关掉。
+- 配置项在 `application.yml` 的 `app.notify.*`，环境变量是 `NOTIFY_CENTER_*`。**真实 AKSK 只写进 `/root/paper-reader/backend/.env`（gitignore，不要提交）**，仓库里只留 `backend/.env.example`。`NOTIFY_CENTER_BASE_URL` 等留空时 `isConfigured` 为 false，客户端直接跳过并记日志，本地开发不需要配。
+- 模板字段与验收标准见 `docs/NOTIFICATION_TEMPLATES.md`，那份文档是给通知中心团队的契约。**改字段名要两边一起改**：本项目按约定的 key 组装 `template_data`，通知中心按同一个 key 渲染。
+- 本轮**不改通知中心的 D1 schema**（`template` / `template_data` 只在内存里透传）。账号级 D1 行读配额一旦打满，带建表探测的版本会把整个 Worker 拖挂，历史上有过教训，所以模板功能刻意不落库。
+
 ## v0.1.42 两步验证表单排版
 
 - 本轮仍是 `REQ-202609-0104`，在已发布的 v0.1.41 上开的 UI 打磨迭代 `feature/v0.1.42`。

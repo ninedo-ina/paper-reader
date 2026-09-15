@@ -28,12 +28,21 @@ class AuthService(
     private val auditLogService: AuditLogService,
     private val twoFactorService: TwoFactorService,
     private val deviceService: DeviceService,
+    private val notifyCenterClient: NotifyCenterClient,
     @Value("\${app.github.client-id}") private val githubClientId: String,
     @Value("\${app.github.client-secret}") private val githubClientSecret: String,
     @Value("\${app.mail.from}") private val mailFrom: String,
 ) {
     private val logger = LoggerFactory.getLogger(AuthService::class.java)
     private val random = SecureRandom()
+
+    private companion object {
+        /** 验证码有效期 / how long a login code stays valid. */
+        val CODE_TTL: Duration = Duration.ofMinutes(5)
+
+        /** 同一邮箱两次发送之间的最小间隔，与前端倒计时一致。 */
+        val CODE_COOLDOWN: Duration = Duration.ofSeconds(60)
+    }
 
     /**
      * Everything the backend knows about the browser asking to sign in. Used
@@ -86,14 +95,29 @@ class AuthService(
 
     fun sendEmailCode(request: SendCodeRequest) {
         val email = request.email.trim().lowercase()
+
+        // 前端有 60 秒倒计时，这里再挡一道：接口是公开的，不能让人用一封封邮件
+        // 把通知中心的邮件额度刷光。冷却期内直接返回，之前那封码仍然有效。
+        val cooldownKey = "pr:email_code_cooldown:$email"
+        if (redisTemplate.opsForValue().setIfAbsent(cooldownKey, "1", CODE_COOLDOWN) != true) {
+            logger.info("Verification code for {} requested within cooldown, skipped", email)
+            return
+        }
+
         val code = String.format("%06d", random.nextInt(1_000_000))
         val key = "pr:email_code:$email"
 
-        redisTemplate.opsForValue().set(key, code, Duration.ofMinutes(5))
+        redisTemplate.opsForValue().set(key, code, CODE_TTL)
         logger.info("Email verification code for {}: {}", email, code)
 
-        // TODO: integrate with real mail service (SMTP/SendGrid/etc.)
-        // For now, the code is logged — in production, send it via email
+        // 邮件统一交给通知中心投递：失败只记 WARN，不影响「验证码已发送」的返回，
+        // 用户在倒计时结束后可以重发。
+        notifyCenterClient.notifyLoginCode(
+            email = email,
+            code = code,
+            expiresMinutes = CODE_TTL.toMinutes(),
+            userId = userRepository.findByEmail(email).map { it.id }.orElse(null),
+        )
     }
 
     fun emailCodeLogin(request: EmailLoginRequest, ctx: DeviceContext): TokenResponse {

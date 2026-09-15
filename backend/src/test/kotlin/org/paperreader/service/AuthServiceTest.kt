@@ -19,6 +19,7 @@ import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.core.ValueOperations
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.web.client.RestTemplate
+import java.time.Duration
 import java.util.*
 import org.junit.jupiter.api.Assertions.assertEquals
 
@@ -52,6 +53,9 @@ class AuthServiceTest {
     @MockK(relaxed = true)
     private lateinit var deviceService: DeviceService
 
+    @MockK(relaxed = true)
+    private lateinit var notifyCenterClient: NotifyCenterClient
+
     private val objectMapper = ObjectMapper()
 
     private val device = AuthService.DeviceContext(
@@ -74,7 +78,7 @@ class AuthServiceTest {
     private fun createService() = AuthService(
         userRepository, passwordEncoder, jwtUtil,
         redisTemplate, restTemplate, objectMapper,
-        auditLogService, twoFactorService, deviceService,
+        auditLogService, twoFactorService, deviceService, notifyCenterClient,
         "test-client-id", "test-client-secret", "test@test.local",
     )
 
@@ -176,6 +180,45 @@ class AuthServiceTest {
         val result = createService().emailCodeLogin(request, device)
 
         assertEquals("access-token", result.accessToken)
+    }
+
+    @Test
+    fun `send code should store the code and hand it to the notify center`() {
+        val email = "member@example.com"
+        val user = User(id = 7, email = email, authProvider = "email")
+        var storedCode: String? = null
+
+        every { redisTemplate.opsForValue() } returns valueOps
+        every { valueOps.setIfAbsent("pr:email_code_cooldown:$email", "1", any<Duration>()) } returns true
+        every { valueOps.set("pr:email_code:$email", any<String>(), any<Duration>()) } answers {
+            storedCode = secondArg<String>()
+        }
+        every { userRepository.findByEmail(email) } returns Optional.of(user)
+
+        createService().sendEmailCode(SendCodeRequest(email))
+
+        val code = storedCode ?: error("verification code was not written to Redis")
+        assertEquals(6, code.length)
+        verify {
+            notifyCenterClient.notifyLoginCode(
+                email = email,
+                code = code,
+                expiresMinutes = 5,
+                userId = 7,
+            )
+        }
+    }
+
+    @Test
+    fun `send code should skip while the cooldown is active`() {
+        val email = "spam@example.com"
+        every { redisTemplate.opsForValue() } returns valueOps
+        every { valueOps.setIfAbsent("pr:email_code_cooldown:$email", "1", any<Duration>()) } returns false
+
+        createService().sendEmailCode(SendCodeRequest(email))
+
+        verify(exactly = 0) { valueOps.set(any<String>(), any<String>(), any<Duration>()) }
+        verify(exactly = 0) { notifyCenterClient.notifyLoginCode(any(), any(), any(), any()) }
     }
 
     @Test

@@ -5,8 +5,10 @@ import org.paperreader.exception.ResourceNotFoundException
 import org.paperreader.model.*
 import org.paperreader.repository.*
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
@@ -18,6 +20,8 @@ class ChatService(
     private val groupMemberRepository: GroupMemberRepository,
     private val groupMessageRepository: GroupMessageRepository,
     private val userRepository: UserRepository,
+    private val notifyCenterClient: NotifyCenterClient,
+    private val redisTemplate: RedisTemplate<String, String>,
 ) {
     fun listFriends(userId: Long): List<ContactDto> {
         val mutualIds = followRepository.findMutualFollowIds(userId)
@@ -66,7 +70,7 @@ class ChatService(
     fun sendMessage(senderId: Long, receiverId: Long, content: String): MessageDto {
         require(content.isNotBlank()) { "Content is required" }
         val sender = userRepository.findById(senderId).orElseThrow { ResourceNotFoundException("User", senderId) }
-        userRepository.findById(receiverId).orElseThrow { ResourceNotFoundException("User", receiverId) }
+        val receiver = userRepository.findById(receiverId).orElseThrow { ResourceNotFoundException("User", receiverId) }
         val msg = messageRepository.save(
             Message(
                 senderId = senderId,
@@ -74,6 +78,15 @@ class ChatService(
                 content = content,
             )
         )
+        if (receiver.id != sender.id) {
+            notifyCenterClient.notifyDirectMessage(
+                recipientId = receiver.id,
+                recipientEmail = receiver.email,
+                senderName = sender.displayName ?: sender.email,
+                content = content,
+                sentAt = msg.createdAt,
+            )
+        }
         return msg.toDto(sender.displayName ?: sender.email, sender.avatarUrl)
     }
 
@@ -152,7 +165,37 @@ class ChatService(
                 content = content,
             )
         )
+        groupRepository.findById(groupId).orElse(null)?.let { group ->
+            notifyGroupMembers(group, sender, content, msg.createdAt)
+        }
         return msg.toDto()
+    }
+
+    /**
+     * 群消息只做邮件提醒，且同一个群对同一个人 10 分钟内最多一封：
+     * 群里聊天是连续的，一封提醒就够，也免得一条消息把邮件额度吃光。
+     */
+    private fun notifyGroupMembers(group: Group, sender: User, content: String, sentAt: Instant) {
+        val recipientIds = groupMemberRepository.findByGroupId(group.id)
+            .map { it.userId }
+            .filter { it != sender.id }
+        if (recipientIds.isEmpty()) return
+        val senderName = sender.displayName ?: sender.email
+        userRepository.findAllById(recipientIds).forEach { recipient ->
+            val key = "pr:group_notify:${group.id}:${recipient.id}"
+            val claimed = redisTemplate.opsForValue()
+                .setIfAbsent(key, "1", GROUP_NOTIFY_WINDOW)
+            if (claimed == true) {
+                notifyCenterClient.notifyGroupMessage(
+                    recipientId = recipient.id,
+                    recipientEmail = recipient.email,
+                    senderName = senderName,
+                    groupName = group.name,
+                    content = content,
+                    sentAt = sentAt,
+                )
+            }
+        }
     }
 
     @Transactional
@@ -213,4 +256,9 @@ class ChatService(
         val content: String, val createdAt: String,
     )
     data class MemberDto(val userId: Long, val username: String, val avatarUrl: String?)
+
+    private companion object {
+        /** 同一个群对同一个人的邮件提醒间隔 / per-(group, member) email throttle window. */
+        val GROUP_NOTIFY_WINDOW: Duration = Duration.ofMinutes(10)
+    }
 }

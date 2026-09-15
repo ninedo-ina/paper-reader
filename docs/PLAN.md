@@ -1,4 +1,21 @@
-## 当前迭代：v0.1.43
+## 当前迭代：v0.1.44
+
+发布分支：`feature/v0.1.44`；类型：功能迭代（接入通知中心）；需求编号：`REQ-202609-0107`。
+
+PaperHelper 是「无注册、只有登录」的产品，登录靠邮箱验证码。但本项目本地并没有真实发信能力（`spring.mail.*` 在生产是空配置），验证码实际上只落在后端日志里，用户根本收不到。本机已经有一套通知中心（`bendywork-notify-center`），本次把 PaperHelper 接进去，由它来发登录验证码和消息通知邮件。
+
+- 新增 `service/NotifyCenterClient.kt`：AKSK 换 Bearer token（`POST /api/auth/token`，缓存到 `expires_in - 60`）后调 `POST /api/notify`。四个业务方法——登录验证码、私信、群组消息、圈子评论——都是 `@Async("notifyExecutor")`，通知中心挂了也只记 WARN 日志，绝不影响登录与发消息主流程。
+- 新增专用 `notifyRestTemplate`（连接/读取各 5 秒）与 `notifyExecutor`（1~2 线程、队列 200）；原有 GROBID 用的 `restTemplate` 标 `@Primary`，避免 Bean 歧义。
+- 邮件模板不在本轮定义 HTML，只按约定传 `template` / `template_data` 两个新字段（`paperhelper-login-code` / `paperhelper-message` / `paperhelper-circle`），模板样式由通知中心侧实现。字段与验收标准写在 `docs/NOTIFICATION_TEMPLATES.md`，交通知中心团队对照实现。
+- **登录验证码的 `body` 里带码**：通知中心的模板渲染对未知模板会回退成纯文本，把码放进 `body` 能保证「模板还没上线」时用户照样登得进去；`title` 是固定文案、不含验证码（标题会进通知记录被持久化）。`target_user_ids` 用真实用户 id，未注册邮箱用字面量 `guest`——**绝不能用 `0` / `-1`**，通知中心把它们当作「推给所有在线连接」。
+- 防刷：`sendEmailCode` 加 60 秒/邮箱的 Redis 冷却（与前端倒计时一致）；群消息按「群 × 成员」10 分钟节流，保护通知中心每月 3000 封的额度。
+- 配置走 `app.notify.*`（`NOTIFY_CENTER_BASE_URL` / `_ACCESS_KEY` / `_ACCESS_SECRET` 等），生产值写在 gitignore 的 `backend/.env`，不进仓库。
+
+验收标准：后端单测覆盖「登录码写入 Redis 并交给通知中心」「冷却期内不再发信」「四类通知的请求体字段」「超长内容截断不切坏 emoji」「token 只取一次并复用」「通知中心 5xx/取 token 失败都只记日志不影响主流程」；`./gradlew clean test bootJar` 与前端 `tsc --noEmit`、`vitest run`、`next build` 全绿；按 `feature/v0.1.44 -> dev -> main` 发布，通知中心侧模板上线后在线上实测收到验证码邮件。
+
+本轮**无数据库迁移**（只加配置项）、**无前端业务改动**（仅版本号与 favicon 缓存参数）；对通知中心**不动 D1 schema**，`template` / `template_data` 只在内存里透传，避免触发账号级 D1 行读配额问题。
+
+## 上一迭代：v0.1.43（已发布）
 
 发布分支：`feature/v0.1.43`；类型：UI 打磨迭代（扫码绑定二维码）；需求编号：`REQ-202609-0104`。
 

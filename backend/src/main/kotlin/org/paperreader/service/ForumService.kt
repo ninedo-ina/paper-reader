@@ -17,6 +17,7 @@ class ForumService(
     private val likeRepository: ForumLikeRepository,
     private val favoriteRepository: ForumFavoriteRepository,
     private val userRepository: UserRepository,
+    private val notifyCenterClient: NotifyCenterClient,
 ) {
     fun listDisciplines(): List<DisciplineDto> {
         return disciplineRepository.findAll()
@@ -100,6 +101,20 @@ class ForumService(
             )
         )
         postRepository.save(post.copy(commentCount = post.commentCount + 1))
+
+        // 自评自帖不提醒；提醒对象是帖子作者，不是被回复的那一层。
+        if (post.userId != user.id) {
+            userRepository.findById(post.userId).orElse(null)?.let { author ->
+                notifyCenterClient.notifyCircleComment(
+                    authorId = author.id,
+                    authorEmail = author.email,
+                    actorName = user.displayName ?: user.email,
+                    postTitle = post.title,
+                    content = content,
+                    sentAt = comment.createdAt,
+                )
+            }
+        }
         return comment.toDto()
     }
 

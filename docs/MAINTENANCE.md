@@ -66,7 +66,7 @@ feature/v主版本.次版本.修订版本
 7. 生产验收通过后再执行 `pm2 save`，并记录提交、构建、部署、健康检查和公网验收结果。
 8. 保留版本分支、合并提交和验证记录，不通过强制推送改写 `main`、`dev` 或历史版本分支。
 
-当前已发布基线为 `feature/v0.1.43`，生产已核验为 `0.1.43`；后续新需求从最新发布基线创建下一个版本分支。v0.1.33 之后本项目实际按普通迭代分支（`feature/v0.1.40`、`feature/v0.1.41`、`feature/v0.1.42`、`feature/v0.1.43`）递进，不再追加 `-fix`，即使本轮只是补丁也照常开下一个修订号分支；历史 `-fix` 分支仅用于 v0.1.32 及更早版本。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。
+当前开发分支为 `feature/v0.1.44`（在已发布基线 `v0.1.43` 上开发，生产已核验为 `0.1.43`）；后续新需求从最新发布基线创建下一个版本分支。v0.1.33 之后本项目实际按普通迭代分支（`feature/v0.1.40`、`feature/v0.1.41`、`feature/v0.1.42`、`feature/v0.1.43`、`feature/v0.1.44`）递进，不再追加 `-fix`，即使本轮只是补丁也照常开下一个修订号分支；历史 `-fix` 分支仅用于 v0.1.32 及更早版本。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。
 
 ## 4. 每次代码迭代的标准流程
 
@@ -694,3 +694,11 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - 构建与部署：前后端 VERSION、`package.json`、`build.gradle.kts`、favicon `?v=` 统一升到 `0.1.43`；生产机重新 `./gradlew clean test bootJar`（`BUILD SUCCESSFUL`）与 `pnpm run build`（退出码 0），按 `DEPLOY.md` 同一 shell 内 `. ./.env` → `pm2 delete paper-reader-backend` → 用新 JAR 绝对路径 `pm2 start` 重建后端（**id 由 5 变 6**）、`pm2 restart paper-reader-frontend --update-env` 后 `pm2 save`。
 - 线上验收（2026-09-14 UTC）：`https://paper.pilo.eu.cc/api/health` 与本机 `127.0.0.1:8080/api/health` 均返回 `version=0.1.43`；`/zh/login` 200 且 favicon 为 `paperhelper-favicon-light.svg?v=0.1.43`；`/api/security/two-factor` 无 token 仍 401；生产 `.next/static/chunks` 里已搜不到 `#101823` / `#e8eef5`（深底配色彻底移除），仍能搜到「二维码生成失败」兜底文案，确认新版组件确实进了线上产物。
 - 本轮无数据库迁移、无接口/请求体变化、无新依赖。
+
+### v0.1.44 接入通知中心（2026-09-15 UTC）
+
+- 需求（`REQ-202609-0107`）：PaperHelper 无注册、只有邮箱验证码登录，但本机项目本身没有真实发信能力，验证码此前只写进后端日志。本轮接入本机通知中心 `bendywork-notify-center`，由它渲染模板并投递登录验证码与消息通知邮件。
+- 改动（后端为主，前端零业务改动）：新增 `service/NotifyCenterClient.kt`（AKSK → `POST /api/auth/token` 取 Bearer token 并缓存至 `expires_in - 60`，再 `POST /api/notify`；四类通知 `notifyLoginCode` / `notifyDirectMessage` / `notifyGroupMessage` / `notifyCircleComment` 全部 `@Async("notifyExecutor")`，异常只记 WARN）；`AppConfig.kt` 新增 `notifyRestTemplate`（连接/读取各 5 秒）与 `notifyExecutor`（core 1 / max 2、队列 200）两个 Bean，原 GROBID 用 `restTemplate` 标 `@Primary`；`AuthService.sendEmailCode` 增加 60 秒/邮箱 Redis 冷却并调用通知中心；`ChatService.sendMessage` / `sendGroupMessage`（按「群 × 成员」10 分钟节流）与 `ForumService.createComment` 分别接私信、群消息、圈子评论通知；`application.yml` 增加 `app.notify.*`，`backend/.env.example` 增加对应 `NOTIFY_CENTER_*` 变量说明。
+- 契约：邮件模板由通知中心侧实现，本项目按 `docs/NOTIFICATION_TEMPLATES.md` 传 `template`（`paperhelper-login-code` / `paperhelper-message` / `paperhelper-circle`）与 `template_data`。登录码同时写进 `body`，保证模板未上线时纯文本回退仍可用；`title` 不含验证码。`target_user_ids` 用真实用户 id / 未注册邮箱用 `guest`，**不用 `0` / `-1`**（那会被通知中心当作广播给所有在线连接）。
+- 测试：新增 `NotifyCenterClientTest.kt`（`MockRestServiceServer` 校验 token 请求、Bearer 头、四类通知的请求体字段、200 字符截断且不切坏代理对、token 复用、投递失败与取 token 失败都被吞掉、未配置/关闭时静默、`isConfigured` 判定）；`AuthServiceTest.kt` 新增「验证码写 Redis 并交给通知中心」与「冷却期内跳过」两项。后端 `./gradlew test` 全绿（69 项，含 `@SpringBootTest` 启动用例，覆盖双 RestTemplate Bean 的装配）。
+- 本轮无数据库迁移、无前端业务改动、无新依赖、无接口/请求体变化；版本号统一升到 `0.1.44`。

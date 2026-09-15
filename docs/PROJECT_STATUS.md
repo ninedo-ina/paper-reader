@@ -1,6 +1,6 @@
 # PaperHelper 项目完整现状
 
-> 当前发布版本：`0.1.32`；发布分支：`feature/v0.1.32`；当前生产版本：`0.1.32`（2026-09-07 UTC 已核验）；核对日期：2026-09-07（UTC）；生产域名：`https://paper.pilo.eu.cc`
+> 当前发布版本：`0.1.44`；发布分支：`feature/v0.1.44`；当前生产版本：`0.1.43`（2026-09-14 UTC 已核验，`0.1.44` 发布流程进行中）；核对日期：2026-09-15（UTC）；生产域名：`https://paper.pilo.eu.cc`
 
 本文描述 `/root/paper-reader` 的代码与生产现状，是新维护者判断“已经有什么、实际怎么运行、哪些还不能承诺”的首要依据。动态状态在发布后可能变化，操作线上前仍需重新执行本文的只读检查。
 
@@ -21,12 +21,12 @@ PaperHelper 是面向用户的论文阅读工作台，本仓库同时包含 C �
 
 - GitHub 默认分支和生产主分支：`main`。
 - 集成分支：`dev`。
-- 当前发布分支：`feature/v0.1.32`，已按 `dev -> main` 流程合并；生产当前运行 `0.1.32`。
-- 上一发布分支：`feature/v0.1.31`，已按发布流程合并到 `main`；生产已由 `0.1.32` 替换。
+- 当前开发分支：`feature/v0.1.44`（接入通知中心，`REQ-202609-0107`），在已发布基线 `v0.1.43` 上开发。
+- 上一发布分支：`feature/v0.1.43`（扫码绑定二维码去深底），已按 `dev -> main` 流程合并；生产当前运行 `0.1.43`。
+- `0.1.34` ~ `0.1.43` 为一串连续的小版本迭代（阅读器交互、两步验证、信任设备、UI 打磨等），均已按 `feature/vX.Y.Z -> dev -> main` 发布，逐条记录见 `docs/MAINTENANCE.md`。本节此前停留在 `0.1.32`，属交接文档未随发布更新，已于 2026-09-15 校正。
 - 版本分支永久保留，标准流向为 `feature/vX.Y.Z -> dev -> main`。
 - 普通需求或维护增加 patch 版本；纯 Bug 修复使用同版本的 `-fix` 后缀。中版本和大版本只能由产品负责人明确提出。
-- `0.1.22` 是上一版交接、安全配置模板和文档整理版本，已于 2026-08-25（UTC）完成合并、生产重启和公网验证；随后已由 `0.1.23` 替换。
-- `0.1.23` 是当前论文元数据补全发布版本；已合并到 `main`，生产部署和 V13 迁移均已完成。
+- `0.1.22` 是交接、安全配置模板和文档整理版本，已于 2026-08-25（UTC）完成合并、生产重启和公网验证；`0.1.23` 为论文元数据补全版本。两者均已被后续版本替换，保留于此仅作历史参考。
 
 版本号必须同时更新：
 
@@ -105,7 +105,10 @@ Spring Boot
   -> 127.0.0.1:6379  infra-redis
   -> 127.0.0.1:8070  paper-reader-grobid
   -> /root/paper-reader/backend/uploads 本地文件存储
+  -> https://<通知中心域名>/api  bendywork-notify-center（Cloudflare Worker，仅出站调用）
 ```
+
+自 v0.1.44 起，登录验证码与消息通知邮件不再由本项目投递，而是由 Spring Boot 出站调用本机通知中心 `bendywork-notify-center`（Cloudflare Worker + D1 + Durable Objects）渲染模板并发送。本项目只持有 AKSK（写在 gitignore 的 `backend/.env`），不持有任何邮件服务商密钥；通知中心不可用时只记 WARN 日志，不影响登录与消息主流程。模板字段契约见 `docs/NOTIFICATION_TEMPLATES.md`。
 
 Cloudflare 不是构建平台，项目也不是 Cloudflare Pages。Push 源码不会让域名自动更新；必须在服务器构建并重启 PM2。
 
@@ -136,6 +139,7 @@ Cloudflare 不是构建平台，项目也不是 Cloudflare Pages。Push 源码�
 - 本地文件目录：`/root/paper-reader/backend/uploads`。
 - 后端当前绑定 loopback，并使用 `SPRING_PROFILES_ACTIVE=development`。后者是已知运维风险，不能在文档迭代中擅自切换；应先审计日志级别、CORS、配置差异和回滚方案，再单独改为 `production`。
 - Apache SSL vhost 在仓库外：`/etc/apache2/sites-available/paper.pilo.eu.cc-ssl.conf`。
+- 通知中心（v0.1.44 起）：`NOTIFY_CENTER_ENABLED` / `NOTIFY_CENTER_BASE_URL` / `NOTIFY_CENTER_ACCESS_KEY` / `NOTIFY_CENTER_ACCESS_SECRET` / `NOTIFY_CENTER_TARGET_PACKAGE` / `NOTIFY_CENTER_TARGET_APP_ID` / `NOTIFY_CENTER_TIMEOUT_MS`，只写在 `/root/paper-reader/backend/.env`（不进仓库，仓库只保留 `backend/.env.example` 的变量名与说明）。任一项为空即视为未配置，客户端跳过发送，本地开发无需配置。
 
 ## 6. 功能完成度与真实边界
 
