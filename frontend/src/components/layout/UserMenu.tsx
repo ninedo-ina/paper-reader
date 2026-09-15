@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAuthStore } from "@/stores/auth-store"
 import { useUserStore } from "@/stores/user-store"
+import { defaultAvatar, defaultDisplayName } from "@/lib/user-display"
 import { LogOut, Settings, User } from "lucide-react"
 
 interface UserMenuProps {
@@ -38,22 +39,22 @@ export function UserMenu({ onProfile, onPreferences }: UserMenuProps) {
     router.push("/login")
   }
 
-  const displayName = profile?.displayName || profile?.email?.split("@")[0] || "?"
+  const displayName = defaultDisplayName(profile)
   const avatarUrl = profile?.avatarUrl
-  const initial = displayName.charAt(0).toUpperCase()
+  const avatar = defaultAvatar(profile?.email, displayName)
 
   return (
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
         className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold overflow-hidden"
-        style={{ background: "var(--text-primary)", color: "var(--bg-root, #eeeff2)" }}
+        style={{ background: avatar.background, color: avatar.foreground }}
         title={displayName}
       >
         {avatarUrl ? (
           <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
         ) : (
-          initial
+          avatar.initial
         )}
       </button>
 

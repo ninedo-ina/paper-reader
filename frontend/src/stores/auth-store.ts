@@ -6,6 +6,7 @@ import { create } from "zustand"
 import * as authApi from "@/lib/api/auth"
 import type { TokenResponse, LoginRequest, EmailLoginRequest } from "@/lib/api/types"
 import { setTokens, clearTokens } from "@/lib/api/client"
+import { useUserStore } from "@/stores/user-store"
 
 interface AuthState {
   // 状态
@@ -165,6 +166,10 @@ function applyTokens(tokens: TokenResponse, set: SetState) {
     isLoading: false,
     error: null,
   })
+  // 登录成功后立刻拉一次资料。客户端路由跳转不会重挂载根布局，SessionLoader
+  // 那一次只在整页加载时跑；不补这一步，个人中心和顶栏会一直空着（用户名、
+  // 邮箱、头像全都取不到）。loadProfile 内部对并发调用做了去重。
+  void useUserStore.getState().loadProfile()
 }
 
 // --- localStorage 持久化 ---

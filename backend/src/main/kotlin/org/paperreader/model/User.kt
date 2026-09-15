@@ -25,7 +25,9 @@ data class User(
     @Column(name = "display_name", length = 100)
     val displayName: String? = null,
 
-    @Column(name = "avatar_url", length = 500)
+    // 从本地上传的头像存的是 data URL（base64），几百字符的列存不下，
+    // 长度要和 V15 迁移保持一致
+    @Column(name = "avatar_url", length = 1_000_000)
     val avatarUrl: String? = null,
 
     @Column(name = "created_at", nullable = false)

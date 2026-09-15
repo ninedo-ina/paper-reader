@@ -17,6 +17,8 @@ import org.paperreader.repository.UserRepository
 import org.paperreader.security.JwtUtil
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.core.ValueOperations
+import org.springframework.http.HttpEntity
+import org.springframework.http.HttpMethod
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.web.client.RestTemplate
 import java.time.Duration
@@ -320,5 +322,133 @@ class AuthServiceTest {
 
         assertEquals("access-token", result.accessToken)
         assertEquals(false, result.twoFactorRequired)
+    }
+
+    // --- REQ-202609-0110：GitHub 登录必须拿到真实邮箱，不能只写占位地址 ---
+
+    private fun stubGithubProfile(
+        profileEmail: String?,
+        emails: List<Map<String, Any>> = emptyList(),
+    ) {
+        every {
+            restTemplate.postForEntity(any<String>(), any<HttpEntity<*>>(), any<Class<*>>())
+        } returns org.springframework.http.ResponseEntity.ok(mapOf("access_token" to "gh-token"))
+
+        val profile = mutableMapOf<String, Any>(
+            "id" to 42,
+            "login" to "octocat",
+            "avatar_url" to "https://avatars.example/u/42",
+        )
+        profileEmail?.let { profile["email"] = it }
+        every {
+            restTemplate.exchange(
+                "https://api.github.com/user",
+                HttpMethod.GET,
+                any<HttpEntity<*>>(),
+                any<Class<*>>(),
+            )
+        } returns org.springframework.http.ResponseEntity.ok(profile)
+
+        every {
+            restTemplate.exchange(
+                "https://api.github.com/user/emails",
+                HttpMethod.GET,
+                any<HttpEntity<*>>(),
+                any<org.springframework.core.ParameterizedTypeReference<*>>(),
+            )
+        } returns org.springframework.http.ResponseEntity.ok(emails)
+    }
+
+    private fun stubTokensFor(id: Long, email: String) {
+        every { jwtUtil.generateAccessToken(id, email, any()) } returns "access-token"
+        every { jwtUtil.generateRefreshToken(id, email, any()) } returns "refresh-token"
+    }
+
+    @Test
+    fun `github login should fall back to the verified email when the profile hides it`() {
+        val saved = mutableListOf<User>()
+        stubGithubProfile(
+            profileEmail = null,
+            emails = listOf(
+                mapOf("email" to "octocat@example.com", "primary" to true, "verified" to true),
+            ),
+        )
+        every { userRepository.findByGithubId(42) } returns Optional.empty()
+        every { userRepository.findByEmail("octocat@example.com") } returns Optional.empty()
+        every { userRepository.save(any()) } answers {
+            firstArg<User>().copy(id = 1).also { saved += it }
+        }
+        stubTokensFor(1, "octocat@example.com")
+
+        createService().githubLogin(GitHubAuthRequest(code = "code"), device)
+
+        val created = saved.single()
+        assertEquals("octocat@example.com", created.email)
+        // 没填昵称时不拿账号名当用户名，交给前端兜底成「用户{id}」
+        assertEquals(null, created.displayName)
+    }
+
+    @Test
+    fun `github login should upgrade a placeholder email to the real one`() {
+        val legacy = User(id = 9, email = "octocat@github.user", githubId = 42, authProvider = "github")
+        val saved = mutableListOf<User>()
+        stubGithubProfile(
+            profileEmail = null,
+            emails = listOf(
+                mapOf("email" to "unverified@example.com", "primary" to false, "verified" to false),
+                mapOf("email" to "octocat@example.com", "primary" to true, "verified" to true),
+            ),
+        )
+        every { userRepository.findByGithubId(42) } returns Optional.of(legacy)
+        every { userRepository.findByEmail("octocat@example.com") } returns Optional.empty()
+        every { userRepository.save(any()) } answers {
+            firstArg<User>().also { saved += it }
+        }
+        stubTokensFor(9, "octocat@example.com")
+
+        createService().githubLogin(GitHubAuthRequest(code = "code"), device)
+
+        assertEquals("octocat@example.com", saved.single().email)
+    }
+
+    @Test
+    fun `github login should keep the placeholder when the real email belongs to someone else`() {
+        val legacy = User(id = 9, email = "octocat@github.user", githubId = 42, authProvider = "github")
+        val owner = User(id = 10, email = "octocat@example.com", authProvider = "local")
+        stubGithubProfile(
+            profileEmail = null,
+            emails = listOf(
+                mapOf("email" to "octocat@example.com", "primary" to true, "verified" to true),
+            ),
+        )
+        every { userRepository.findByGithubId(42) } returns Optional.of(legacy)
+        every { userRepository.findByEmail("octocat@example.com") } returns Optional.of(owner)
+        stubTokensFor(9, "octocat@github.user")
+
+        createService().githubLogin(GitHubAuthRequest(code = "code"), device)
+
+        // 邮箱归别人所有，不能抢；账号保持原样，登录照常完成
+        verify(exactly = 0) { userRepository.save(any()) }
+    }
+
+    @Test
+    fun `github login should keep the profile email when github publishes it`() {
+        stubGithubProfile(profileEmail = "public@example.com")
+        every { userRepository.findByGithubId(42) } returns Optional.empty()
+        every { userRepository.findByEmail("public@example.com") } returns Optional.empty()
+        every { userRepository.save(any()) } answers { firstArg<User>().copy(id = 1) }
+        stubTokensFor(1, "public@example.com")
+
+        createService().githubLogin(GitHubAuthRequest(code = "code"), device)
+
+        // 资料里就有邮箱，不必再打 /user/emails
+        verify(exactly = 0) {
+            restTemplate.exchange(
+                "https://api.github.com/user/emails",
+                HttpMethod.GET,
+                any<HttpEntity<*>>(),
+                any<org.springframework.core.ParameterizedTypeReference<*>>(),
+            )
+        }
     }
 }

@@ -21,6 +21,7 @@ import { useUserStore } from "@/stores/user-store"
 import { getPaperContext } from "@/lib/api/papers"
 import { useReaderStore, type PendingPaperQuestion } from "@/stores/reader-store"
 import { MarkdownContent } from "@/components/reader/MarkdownContent"
+import { defaultAvatar, defaultDisplayName } from "@/lib/user-display"
 import { cn } from "@/lib/utils"
 
 interface ChatPanelProps {
@@ -155,8 +156,9 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
     () => [...directChats].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt)),
     [directChats],
   )
-  const displayName = profile?.displayName?.trim() || profile?.email?.split("@")[0] || "我"
-  const userInitial = displayName.charAt(0).toUpperCase()
+  const displayName = defaultDisplayName(profile) || "我"
+  const avatar = defaultAvatar(profile?.email, displayName)
+  const userInitial = avatar.initial
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -578,7 +580,8 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
             </div>
             {message.role === "user" && (
               <div
-                className="mt-0.5 flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-2)] text-[10px] font-semibold text-[var(--text-secondary)]"
+                className="mt-0.5 flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full text-[10px] font-semibold"
+                style={{ background: avatar.background, color: avatar.foreground }}
                 title={displayName}
               >
                 {profile?.avatarUrl ? (

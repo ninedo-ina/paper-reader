@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.http.*
+import org.springframework.core.ParameterizedTypeReference
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.util.LinkedMultiValueMap
@@ -42,6 +43,12 @@ class AuthService(
 
         /** 同一邮箱两次发送之间的最小间隔，与前端倒计时一致。 */
         val CODE_COOLDOWN: Duration = Duration.ofSeconds(60)
+
+        /**
+         * 读不到 GitHub 邮箱时用的占位域名。这类地址收不到信，只是为了让
+         * email 这一列的非空/唯一约束过得去；登录时一旦拿到真实邮箱就会被替换。
+         */
+        const val GITHUB_PLACEHOLDER_DOMAIN = "@github.user"
     }
 
     /**
@@ -85,7 +92,8 @@ class AuthService(
                 User(
                     email = request.email.trim().lowercase(),
                     passwordHash = passwordEncoder.encode(request.password),
-                    displayName = request.email.trim().lowercase().substringBefore('@'),
+                    // 不再拿邮箱前缀当用户名：界面上显示的名字由前端统一兜底成「用户{id}」
+                    displayName = null,
                     authProvider = "local",
                 )
             ) to true
@@ -137,7 +145,7 @@ class AuthService(
             userRepository.save(
                 User(
                     email = email,
-                    displayName = email.substringBefore('@'),
+                    displayName = null,
                     authProvider = "email",
                 )
             ) to true
@@ -151,11 +159,12 @@ class AuthService(
 
         val byGithubId = userRepository.findByGithubId(githubUser.id)
         if (byGithubId.isPresent) {
-            val u = byGithubId.get()
+            // 老账号可能存着 {login}@github.user 的占位邮箱，这次读到真实邮箱就补上
+            val u = backfillGithubEmail(byGithubId.get(), githubUser)
             return completeLogin(u, isNewUser = false, ctx = ctx)
         }
 
-        val email = githubUser.email ?: "${githubUser.login}@github.user"
+        val email = githubUser.email ?: "${githubUser.login}$GITHUB_PLACEHOLDER_DOMAIN"
         val byEmail = userRepository.findByEmail(email)
         if (byEmail.isPresent) {
             val linked = byEmail.get().copy(githubId = githubUser.id, avatarUrl = githubUser.avatarUrl)
@@ -167,12 +176,35 @@ class AuthService(
             User(
                 email = email,
                 githubId = githubUser.id,
-                displayName = githubUser.name ?: githubUser.login,
+                // 只认 GitHub 上自己填的昵称；没填就让前端兜底成「用户{id}」，
+                // 不要把 login（那是账号名）直接当用户名展示
+                displayName = githubUser.name?.trim()?.takeIf { it.isNotEmpty() },
                 avatarUrl = githubUser.avatarUrl,
                 authProvider = "github",
             )
         )
         return completeLogin(newUser, isNewUser = true, ctx = ctx)
+    }
+
+    /**
+     * 把早年拿不到邮箱、被写成 {login}@github.user 的账号升级成真实邮箱。
+     * 这类地址收不到任何邮件（登录验证码也发不过去），属于必须修掉的历史数据。
+     * 真实邮箱若已被别的账号占用，保持原样并记 WARN，交给人工处理。
+     */
+    private fun backfillGithubEmail(user: User, githubUser: GithubUser): User {
+        val real = githubUser.email?.trim()?.lowercase()?.takeIf { it.isNotEmpty() } ?: return user
+        if (real == user.email || !user.email.endsWith(GITHUB_PLACEHOLDER_DOMAIN)) return user
+
+        val owner = userRepository.findByEmail(real)
+        if (owner.isPresent && owner.get().id != user.id) {
+            logger.warn(
+                "GitHub email {} already belongs to user {}, keeping placeholder for user {}",
+                real, owner.get().id, user.id,
+            )
+            return user
+        }
+        logger.info("Upgraded GitHub placeholder email of user {} to {}", user.id, real)
+        return userRepository.save(user.copy(email = real))
     }
 
     /**
@@ -284,9 +316,35 @@ class AuthService(
             id = (body["id"] as Number).toLong(),
             login = body["login"] as? String ?: "",
             name = body["name"] as? String,
-            email = body["email"] as? String,
+            // /user 只在用户把邮箱设为公开时才返回 email；没返回就再问一次
+            // /user/emails，否则会退化成 xxx@github.user 这种收不到信的假地址
+            email = ((body["email"] as? String) ?: fetchGithubPrimaryEmail(headers))
+                ?.trim()?.lowercase()?.takeIf { it.isNotEmpty() },
             avatarUrl = body["avatar_url"] as? String,
         )
+    }
+
+    /**
+     * 取 GitHub 账号的邮箱：优先 primary + verified，其次任意 verified，
+     * 最后才退回列表里的第一个。授权时带了 user:email scope，这个接口才读得到。
+     */
+    private fun fetchGithubPrimaryEmail(headers: HttpHeaders): String? {
+        return try {
+            val resp = restTemplate.exchange(
+                "https://api.github.com/user/emails",
+                HttpMethod.GET,
+                HttpEntity<String>(headers),
+                object : ParameterizedTypeReference<List<Map<String, Any>>>() {},
+            )
+            val emails = resp.body.orEmpty()
+            val pick = emails.firstOrNull { it["primary"] == true && it["verified"] == true }
+                ?: emails.firstOrNull { it["verified"] == true }
+                ?: emails.firstOrNull()
+            pick?.get("email") as? String
+        } catch (e: Exception) {
+            logger.warn("Failed to read GitHub email list: {}", e.message)
+            null
+        }
     }
 
     fun updateProfile(userId: Long, request: UpdateProfileRequest): UserProfile {

@@ -5,11 +5,15 @@ import { X, User, Lock, Shield, Clock, MonitorSmartphone, Loader2, Camera, Uploa
 import { cn } from "@/lib/utils"
 import { useUserStore } from "@/stores/user-store"
 import { useToastStore } from "@/stores/toast-store"
+import { defaultAvatar, defaultDisplayName } from "@/lib/user-display"
 import * as authApi from "@/lib/api/auth"
 import { TwoFactorTab } from "./TwoFactorTab"
 import { TrustedDevicesTab } from "./TrustedDevicesTab"
 
 type ProfileTab = "info" | "password" | "2fa" | "devices" | "audit"
+
+/** 后端 pr_users.avatar_url 放宽到 VARCHAR(1000000)，留点余量给 JSON 转义 */
+const MAX_AVATAR_DATA_URL_LENGTH = 900_000
 
 const TABS: { key: ProfileTab; label: string; icon: React.ReactNode }[] = [
   { key: "info", label: "基本信息", icon: <User className="size-4" /> },
@@ -91,10 +95,38 @@ function AvatarSection({ profile, onUpdate }: { profile: ReturnType<typeof useUs
   const [urlInput, setUrlInput] = useState("")
   const [showUrlInput, setShowUrlInput] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const avatarRef = useRef<HTMLDivElement>(null)
 
   const avatarUrl = profile?.avatarUrl
-  const displayName = profile?.displayName || profile?.email?.split("@")[0] || "?"
-  const initial = displayName.charAt(0).toUpperCase()
+  const displayName = defaultDisplayName(profile)
+  // 没上传头像时给一个稳定的默认头像：邮箱首字符 + 纯色底，而不是问号
+  const avatar = defaultAvatar(profile?.email, displayName)
+
+  // 点击弹窗外的空白区域要收起上传菜单（点「从本地上传」弹出的文件框不算）
+  useEffect(() => {
+    if (!menuOpen) return
+    function handlePointerDown(e: MouseEvent) {
+      const target = e.target as Node
+      if (menuRef.current?.contains(target)) return
+      // 触发按钮在 menuRef 之外，点它交给 onClick 自己切换，避免开了立刻又关
+      if (avatarRef.current?.contains(target)) return
+      setMenuOpen(false)
+      setShowUrlInput(false)
+    }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setMenuOpen(false)
+        setShowUrlInput(false)
+      }
+    }
+    document.addEventListener("mousedown", handlePointerDown)
+    document.addEventListener("keydown", handleKeyDown)
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown)
+      document.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [menuOpen])
 
   const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -102,8 +134,15 @@ function AvatarSection({ profile, onUpdate }: { profile: ReturnType<typeof useUs
     // Convert to base64 data URL (simple local avatar approach)
     const reader = new FileReader()
     reader.onload = async () => {
+      const dataUrl = reader.result as string
+      // base64 会把图片撑大约三分之一，后端头像列放不下就别发了，
+      // 给个明确的提示，好过让用户看到一句「头像更新失败」
+      if (dataUrl.length > MAX_AVATAR_DATA_URL_LENGTH) {
+        useToastStore.getState().addToast({ message: "图片太大，请换一张 700KB 以内的图片", type: "error" })
+        return
+      }
       try {
-        await authApi.updateProfile({ avatarUrl: reader.result as string })
+        await authApi.updateProfile({ avatarUrl: dataUrl })
         useToastStore.getState().addToast({ message: "头像已更新", type: "success" })
         onUpdate()
       } catch {
@@ -133,17 +172,19 @@ function AvatarSection({ profile, onUpdate }: { profile: ReturnType<typeof useUs
       <div className="flex flex-col items-center gap-3">
         {/* Avatar */}
         <div
+          ref={avatarRef}
+          data-testid="profile-avatar"
           className="relative"
           onMouseEnter={() => setShowOverlay(true)}
           onMouseLeave={() => setShowOverlay(false)}
         >
           <div className="w-20 h-20 rounded-full overflow-hidden flex items-center justify-center"
-            style={{ background: "var(--accent)", color: "var(--surface-1)" }}
+            style={{ background: avatar.background, color: avatar.foreground }}
           >
             {avatarUrl ? (
               <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
             ) : (
-              <span className="text-2xl font-bold">{initial}</span>
+              <span className="text-2xl font-bold">{avatar.initial}</span>
             )}
           </div>
 
@@ -151,6 +192,7 @@ function AvatarSection({ profile, onUpdate }: { profile: ReturnType<typeof useUs
           {showOverlay && (
             <button
               className="absolute inset-0 rounded-full flex items-center justify-center bg-black/40 transition-all"
+              aria-label="更换头像"
               onClick={() => setMenuOpen(!menuOpen)}
             >
               <Camera className="size-5 text-white" />
@@ -159,7 +201,7 @@ function AvatarSection({ profile, onUpdate }: { profile: ReturnType<typeof useUs
 
           {/* Upload menu */}
           {menuOpen && (
-            <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-40 rounded-xl shadow-lg border border-[var(--border-subtle)] glass-surface-strong py-1 z-[80]">
+            <div ref={menuRef} className="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-40 rounded-xl shadow-lg border border-[var(--border-subtle)] glass-surface-strong py-1 z-[80]">
               {showUrlInput ? (
                 <div className="px-2 py-1.5">
                   <input
@@ -216,6 +258,8 @@ function BasicInfoTab({
 }) {
   const [displayName, setDisplayName] = useState(profile?.displayName || "")
   const [saving, setSaving] = useState(false)
+  // 没自定义名字时，界面上显示的就是系统生成的「用户{id}」，把它作为占位提示
+  const fallbackName = defaultDisplayName(profile)
 
   const handleSave = useCallback(async () => {
     setSaving(true)
@@ -237,6 +281,7 @@ function BasicInfoTab({
         <input
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
+          placeholder={fallbackName}
           className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
         />
       </div>
@@ -246,7 +291,8 @@ function BasicInfoTab({
         <input
           readOnly
           value={profile?.email || ""}
-          className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-1)] px-3 py-2 text-sm text-[var(--text-tertiary)] cursor-not-allowed"
+          placeholder="未绑定邮箱"
+          className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-1)] px-3 py-2 text-sm text-[var(--text-tertiary)] cursor-not-allowed placeholder:text-[var(--text-placeholder)]"
         />
       </div>
 
