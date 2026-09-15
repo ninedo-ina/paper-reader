@@ -66,7 +66,7 @@ feature/v主版本.次版本.修订版本
 7. 生产验收通过后再执行 `pm2 save`，并记录提交、构建、部署、健康检查和公网验收结果。
 8. 保留版本分支、合并提交和验证记录，不通过强制推送改写 `main`、`dev` 或历史版本分支。
 
-当前已发布版本为 `0.1.44`（分支 `feature/v0.1.44`，提交 `6327bfe`，2026-09-15 UTC 已合入 `dev` / `main` 并完成生产部署与线上验收）；后续新需求从该基线创建 `feature/v0.1.45`。v0.1.33 之后本项目实际按普通迭代分支（`feature/v0.1.40`、`feature/v0.1.41`、`feature/v0.1.42`、`feature/v0.1.43`、`feature/v0.1.44`）递进，不再追加 `-fix`，即使本轮只是补丁也照常开下一个修订号分支；历史 `-fix` 分支仅用于 v0.1.32 及更早版本。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。
+当前已发布版本为 `0.1.45`（分支 `feature/v0.1.45`，2026-09-15 UTC 已合入 `dev` / `main` 并完成生产部署与线上验收）；后续新需求从该基线创建 `feature/v0.1.46`。v0.1.33 之后本项目实际按普通迭代分支（`feature/v0.1.40`、`feature/v0.1.41`、`feature/v0.1.42`、`feature/v0.1.43`、`feature/v0.1.44`、`feature/v0.1.45`）递进，不再追加 `-fix`，即使本轮只是补丁也照常开下一个修订号分支；历史 `-fix` 分支仅用于 v0.1.32 及更早版本。历史版本分支全部保留，不以早期初始化基线替代当前 `dev`。
 
 ## 4. 每次代码迭代的标准流程
 
@@ -706,3 +706,16 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 - 部署：后端 `./gradlew clean test bootJar` 产出 `backend/build/libs/paper-reader-backend-0.1.44.jar`，PM2 进程 `paper-reader-backend`（id 7）先 `delete` 再用新 JAR 的绝对路径 `start` —— **必须同一条 shell 里执行**，否则 PM2 会沿用旧的 0.1.43 JAR 路径（历史踩过）；启动前在同一 shell `set -a; . ./backend/.env; set +a`，`.env` 是 gitignore 的、不随仓库走。前端 `next build` 后重启 `paper-reader-frontend`，最后 `pm2 save`。
 - 线上验收：`https://paper.pilo.eu.cc/api/health` 返回 `{"status":"ok","version":"0.1.44"}`；站点首页 200 且 favicon 带 `?v=0.1.44`。
 - 邮件端到端验收（真链路，不是打通知中心 API）：对生产 `POST /api/auth/send-code`（`{"email":"paperhelper@agentmail.to"}`）→ 后端日志 `01:29:26.168Z` 生成验证码 `096001` → 1 秒后信箱收到 `multipart/alternative` 邮件（4640 字节），主题「笨迪论文助手登录验证码」，正文与 HTML 里的验证码与日志一致，收件人 `paperhelper@agentmail.to`。通知中心侧当时为 `v0.1.13`（`c14cc23`），随后升到 `v0.1.14`（`6337e7b`，修字体栈被双引号截断）并重复同一验收，HTML 里两条 `font-family` 均已完整。
+
+### v0.1.45 登录页内容区垂直居中（2026-09-15 UTC）
+
+- 需求（`REQ-202609-0106`）：用户反馈登录页在小屏（苹果笔记本）上看正常，换到大显示器时中间那块内容（左轮播 + 右登录表单）「有点太靠顶部」，要求垂直 + 水平居中、既不靠顶也不靠底。
+- 根因：`frontend/src/app/[locale]/(auth)/layout.tsx` 是 `main.flex.min-h-screen.flex-col` 三段（顶栏 / 内容区 / 页脚），但中间那行只按内容高排（`mx-auto grid ... py-6`），页脚的 `mt-auto` 把 `min-h-screen` 撑出来的富余空间**全部**吸走。视口越高富余越多，内容块越贴着顶栏——矮屏幕看不出来，高屏幕就明显。`(auth)` 路由组下只有 `login` 一个页面，所以本次改动只影响登录页。
+- 改动（纯前端，后端 Kotlin 与接口零改动）：中间那行加 `flex-1 items-center`，变成吃掉剩余高度的 flex 行、栅格在其中垂直居中；顶栏与页脚各占各的高度。**栅格上的 `items-stretch` 刻意保留**：左栏 `LoginExperience` 内部有 `mt-auto` 的说明文案，靠列拉伸才能与右侧更高的登录卡片底部齐平；把栅格改成 `items-center` 会缩掉左栏高度、把文案往上拽。水平方向本来就对（`mx-auto max-w-7xl`），`py-6` 保留为矮视口下的最小间距；flex 项默认 `min-height: auto`，内容超出视口时照常滚动不裁切。
+- 测试：新增 `frontend/src/test/auth-layout.test.tsx` 2 项，从表单往上走到 `main` 收集容器（不按下标取子节点，避免拿到顶栏），断言内容行同时带 `flex-1` 与 `items-center`、栅格带 `mx-auto` / `max-w-7xl` / 原有 `lg:grid-cols-[minmax(0,1.2fr)_minmax(380px,.8fr)]`、页脚带 `mt-auto` 且不带 `flex-1`。**已验证该用例是真回归测试**：把 `flex-1 items-center` 去掉后该用例立刻失败，改回即通过。测试里 mock 了 `next/navigation`（`LangToggle` 要 app router），并给 `HTMLCanvasElement.prototype.getContext` 打桩返回 `null`，挡掉 jsdom 的 “Not implemented” 噪音（`ParticleField` 本来就在 context 为空时直接 return）。
+- 前端 16 个文件 91 项测试全过；`tsc --noEmit`、`npm run lint`（退出码 0，仅剩既有告警）、`next build` 均通过；后端 69 项测试全绿、`bootJar` 产出 `paper-reader-backend-0.1.45.jar`。
+- 版本链：`f1fa061`（`feature/v0.1.45`）→ 快进合入 `dev` 与 `main`（`97f6424..f1fa061`），非强推、非改写历史。同样因为 `main` 被生产目录 `/root/paper-reader` 检出，`dev -> main` 在 `/root/paper-reader` 内以 `merge --ff-only` 完成。
+- 构建与部署：前后端 VERSION、`package.json`、`build.gradle.kts`、favicon `?v=` 统一升到 `0.1.45`；生产机 `/root/paper-reader` 重新 `./gradlew clean test bootJar`（`BUILD SUCCESSFUL`，产出 `paper-reader-backend-0.1.45.jar`）与 `npm run build`（退出码 0），按 `DEPLOY.md` 同一 shell 内 `set -a; . ./.env; set +a` → `pm2 delete paper-reader-backend` → 用新 JAR 绝对路径 `pm2 start` 重建后端（**id 由 7 变 8**）、`pm2 restart paper-reader-frontend --update-env`（重启计数 7）后 `pm2 save`。启动日志 `Successfully validated 14 migrations` / `Schema "public" is up to date. No migration necessary.` / `Tomcat started on port 8080` / `Started PaperReaderApplicationKt in 8.484 seconds`。
+- 线上验收（2026-09-15 UTC，`https://paper.pilo.eu.cc`）：`/api/health` 返回 `{"status":"ok","version":"0.1.45"}`；`/zh/login` 与 `/en/login` 均 200，服务端 HTML 里 favicon 为 `paperhelper-favicon-light.svg?v=0.1.45`、页脚显示 `v0.1.45`、内容行的 class 已是 `relative z-10 flex w-full flex-1 items-center py-6`（旧的无 `flex-1` 写法在产物里已搜不到）。`/zh/register`、`/zh/forgot-password` 仍是 302 跳 `/zh/login?redirect=...`，这是本项目「无注册」的既有行为（`(auth)` 路由组下只有 `login`），与本次改动无关。
+- **垂直居中的真机测量**（Playwright + 真实生产页面，量栅格相对视口的位置）：1440×820 → 上 133 / 下 161；2560×1440 → 上 443 / 下 471；1920×1600 → 上 523 / 下 551。三种尺寸下上下留白都只差 28px（页脚比顶栏高的部分），块高恒为 526，水平偏移 0，页面不产生滚动条——即「既不靠顶也不靠底」。
+- 本轮无数据库迁移、无接口/请求体变化、无新依赖。
