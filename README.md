@@ -6,7 +6,15 @@ The repository contains the C-side product and its API. The administration conso
 
 > **Maintainer start here:** read the [documentation index](docs/README.md), then the [new maintainer guide](docs/NEW_MAINTAINER_GUIDE.md) and [complete project status](docs/PROJECT_STATUS.md). They record the real production topology, configuration rules, known risks, and release workflow without requiring previous chat context.
 
-## Current Iteration: v0.1.44
+## Current Iteration: v0.1.45
+
+- Branch: `feature/v0.1.45`
+- Requirement: `REQ-202609-0106` — centre the sign-in page vertically on large monitors.
+- Scope: the login layout is a three-row `min-h-screen` column: header, the showcase-plus-form row, and the footer. The middle row was sized to its content and the footer's `mt-auto` swallowed every spare pixel, so the card sat directly under the header and the slack piled up above the footer. On a laptop this is invisible; on a tall monitor the taller the viewport, the further the content drifted up. The middle row now takes the leftover height (`flex-1`) and centres the grid inside it (`items-center`), so the block sits halfway down whatever space the header and footer leave. The grid keeps `items-stretch` on purpose — the left column's tagline is bottom-aligned against the taller sign-in card, and centring the grid itself would shorten that column and drag the tagline up. Horizontal centring (`mx-auto max-w-7xl`) is unchanged, `py-6` keeps a minimum gap on short viewports, and flex's default `min-height: auto` keeps the page scrollable instead of clipping when the content outgrows the viewport.
+- No database migration, no API change, no new dependency; a single layout file plus one regression test, and the version moves to `0.1.45`.
+- Status: released. Merged to `dev` and `main` on 2026-09-15 UTC, deployed and verified in production (`/api/health` reports `0.1.45`); deployment detail is recorded in `docs/MAINTENANCE.md`.
+
+## Previous Iteration: v0.1.44
 
 - Branch: `feature/v0.1.44`
 - Requirement: `REQ-202609-0107` — connect PaperHelper to the Bendywork notification center so it can actually deliver mail.
@@ -14,7 +22,7 @@ The repository contains the C-side product and its API. The administration conso
 - No database migration, no new dependency, no client-side behaviour change; the client only moves to version `0.1.44`.
 - Status: released. Commit `6327bfe` on `feature/v0.1.44`, merged to `dev` and `main` on 2026-09-15 UTC, deployed and verified in production (`/api/health` reports `0.1.44`); deployment detail and the end-to-end mail check are recorded in `docs/MAINTENANCE.md`.
 
-## Previous Iteration: v0.1.43
+## Earlier Iteration: v0.1.43
 
 - Branch: `feature/v0.1.43`
 - Requirement: `REQ-202609-0104` — the QR code shown while enabling two-factor authentication looked harsh.
@@ -39,9 +47,9 @@ The repository contains the C-side product and its API. The administration conso
 
 - Default branch: `main`
 - Integration branch: `dev`
-- Released version branch: `feature/v0.1.44` (released to production)
-- Client version: `0.1.44`
-- Production version: `0.1.44` (verified 2026-09-15 UTC, commit `6327bfe`)
+- Released version branch: `feature/v0.1.45` (released to production)
+- Client version: `0.1.45`
+- Production version: `0.1.45` (verified 2026-09-15 UTC)
 - Default locale: Chinese (`zh`)
 - Supported locales: Chinese (`zh`) and English (`en`)
 - Production client: `https://paper.pilo.eu.cc`

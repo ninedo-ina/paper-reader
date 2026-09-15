@@ -22,9 +22,15 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <ThemeToggle />
         </div>
       </div>
-      <div className="relative z-10 mx-auto grid w-full max-w-7xl items-stretch gap-6 py-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(380px,.8fr)]">
-        <LoginExperience />
-        <div className="flex w-full items-center justify-center">{children}</div>
+      {/* The header and footer keep their own heights; the sign-in row takes whatever is
+          left and centres the showcase + form inside it. Before this the row sat directly
+          under the header with all the slack pushed to the footer, so on a tall monitor
+          the card hugged the top and the page looked bottom-heavy. */}
+      <div className="relative z-10 flex w-full flex-1 items-center py-6">
+        <div className="mx-auto grid w-full max-w-7xl items-stretch gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(380px,.8fr)]">
+          <LoginExperience />
+          <div className="flex w-full items-center justify-center">{children}</div>
+        </div>
       </div>
       <div className="relative z-10 mt-auto"><AuthFooter /></div>
     </main>

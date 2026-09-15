@@ -1,3 +1,12 @@
+## v0.1.45 登录页垂直居中
+
+- 本轮需求编号 `REQ-202609-0106`，从已发布的 v0.1.44 基线开 `feature/v0.1.45`。改动**只有一个文件**：`frontend/src/app/[locale]/(auth)/layout.tsx`。
+- 登录页骨架是 `main.flex.min-h-screen.flex-col` 三段（顶栏 / 内容区 / 页脚）。中间那行现在带 `flex-1 items-center`，**这两个类不能删任何一个**：删 `flex-1` 富余空间又会被页脚的 `mt-auto` 全部吸走、内容重新贴顶（这正是本次要修的 bug）；删 `items-center` 只是白占空间不居中。`auth-layout.test.tsx` 就是锁这两个类，去掉后该用例必须失败。
+- **栅格上的 `items-stretch` 也不要顺手改成 `items-center`**。左栏 `LoginExperience` 内部有一条 `mt-auto` 的说明文案，靠列拉伸才能和右侧更高的登录卡片底部对齐；改成 `items-center` 会缩掉左栏高度、把文案往上拽，视觉上反而更乱。本次只挪整块的垂直位置，不动内部构图。
+- 页面高度靠的是 `min-h-screen` + 平分的三段，**不要改成 `justify-center` 或绝对定位**：矮视口下 `justify-center` 会让内容上下两端同时被裁掉且无法滚到。现在 flex 项保持默认 `min-height: auto`，内容超出视口时照常滚动。
+- 右栏外面那层 `<div className="flex w-full items-center justify-center">` 负责把表单在列内居中，与本次的整行居中无关，别一起删。
+- 本轮**无接口改动、无数据库迁移、无新依赖**，后端 Kotlin 代码未改，只随版本号重新构建与重启。
+
 ## v0.1.44 接入通知中心
 
 - 本轮需求编号 `REQ-202609-0107`，从已发布的 v0.1.43 基线开 `feature/v0.1.44`。发信**不在本仓库**：所有邮件都由本机通知中心（`bendywork-notify-center`）渲染和投递，本项目只负责请求。

@@ -1,4 +1,18 @@
-## 当前迭代：v0.1.44
+## 当前迭代：v0.1.45
+
+发布分支：`feature/v0.1.45`；类型：UI 打磨迭代（登录页垂直居中）；需求编号：`REQ-202609-0106`。
+
+登录页的骨架是 `main.flex.min-h-screen.flex-col` 三段：顶栏、中间内容区（左轮播 + 右登录表单的栅格）、页脚。中间那行原来是按内容高排的（`mx-auto grid ... py-6`），页脚带 `mt-auto` 把**所有**富余空间吸走。结果就是：`min-h-screen` 保证了整页铺满，但富余的空间全落在页脚上边，内容块紧贴顶栏——笔记本那种矮屏幕看不出来，换到大显示器上，视口越高内容越往顶部挤，用户反馈「有点太靠顶部了、看着别扭」。
+
+- 中间那行加 `flex-1 items-center`，变成一个吃掉剩余高度的 flex 行，栅格在里面垂直居中：顶栏和页脚各自占自己的高度，中间块拿到的是「视口高 − 顶栏 − 页脚」，无论窗口多高都停在正中间。
+- **不动栅格自己的 `items-stretch`**：左栏 `LoginExperience` 内部有一条 `mt-auto` 的说明文案，靠拉伸才能和右侧更高的登录卡片底部对齐；把栅格改成 `items-center` 会缩掉左栏高度、把那条文案拽上来。这次只挪整块的垂直位置，内部构图保持不变。
+- 水平方向本来就对：栅格 `mx-auto max-w-7xl`。保留 `py-6`，保证矮窗口下内容贴到顶栏/页脚时仍有最小间距；flex 项默认 `min-height: auto`，内容超出视口时页面照常滚动，不会裁切。
+
+验收标准：`auth-layout.test.tsx` 锁住结构（内容行 `flex-1` + `items-center`、栅格 `mx-auto max-w-7xl` + 原有 `lg:grid-cols-[...]`、页脚 `mt-auto` 且不带 `flex-1`），把 `flex-1 items-center` 去掉该用例必须失败；`tsc --noEmit`、`vitest run`、`npm run lint`、`next build` 与后端 `./gradlew clean test bootJar` 全绿；按 `feature/v0.1.45 -> dev -> main` 发布并在线上核对登录页。
+
+本轮无数据库迁移、无接口改动、无新依赖：只改一个布局文件与一条测试，版本号（前后端 VERSION、`package.json`、`build.gradle.kts`、favicon `?v=`）统一升到 `0.1.45`，后端仅随版本号重新构建与重启，Kotlin 代码未改。
+
+## 上一迭代：v0.1.44（已发布）
 
 发布分支：`feature/v0.1.44`；类型：功能迭代（接入通知中心）；需求编号：`REQ-202609-0107`。
 
@@ -17,7 +31,7 @@ PaperHelper 是「无注册、只有登录」的产品，登录靠邮箱验证�
 
 发布结果（2026-09-15 UTC）：`feature/v0.1.44` 提交 `6327bfe` 已合入 `dev` / `main` 并完成生产部署，`/api/health` 返回 `0.1.44`；对生产 `POST /api/auth/send-code` 实测，1 秒后信箱收到带验证码的 HTML 邮件，验收通过。通知中心侧模板随后上线（`v0.1.13`，字体栈修复 `v0.1.14`），细节见 `docs/MAINTENANCE.md`。
 
-## 上一迭代：v0.1.43（已发布）
+## 迭代：v0.1.43（已发布）
 
 发布分支：`feature/v0.1.43`；类型：UI 打磨迭代（扫码绑定二维码）；需求编号：`REQ-202609-0104`。
 
