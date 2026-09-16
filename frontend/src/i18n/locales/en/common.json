@@ -466,6 +466,9 @@
     "tabAudit": "Audit log",
     "avatarUpdated": "Avatar updated",
     "avatarUpdateFailed": "Failed to update the avatar",
+    "avatarTooLarge": "That image is too large — please pick one under 700 KB",
+    "changeAvatar": "Change avatar",
+    "emailUnbound": "No email bound",
     "imageUrlPlaceholder": "Image URL...",
     "uploadLocal": "Upload from this device",
     "imageUrl": "From a URL",
@@ -492,6 +495,10 @@
     "auditTime": "Time",
     "loadingMore": "Loading...",
     "loadMore": "Load more"
+  },
+  "userDisplay": {
+    "defaultName": "User {id}",
+    "anonymous": "User"
   },
   "preferences": {
     "tabs": {

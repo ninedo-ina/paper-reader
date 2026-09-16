@@ -466,6 +466,9 @@
     "tabAudit": "审计日志",
     "avatarUpdated": "头像已更新",
     "avatarUpdateFailed": "头像更新失败",
+    "avatarTooLarge": "图片太大，请换一张 700KB 以内的图片",
+    "changeAvatar": "更换头像",
+    "emailUnbound": "未绑定邮箱",
     "imageUrlPlaceholder": "图片 URL...",
     "uploadLocal": "从本地上传",
     "imageUrl": "网络图片",
@@ -492,6 +495,10 @@
     "auditTime": "时间",
     "loadingMore": "加载中...",
     "loadMore": "加载更多"
+  },
+  "userDisplay": {
+    "defaultName": "用户{id}",
+    "anonymous": "用户"
   },
   "preferences": {
     "tabs": {

@@ -161,7 +161,7 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
     () => [...directChats].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt)),
     [directChats],
   )
-  const displayName = defaultDisplayName(profile) || t("me")
+  const displayName = profile ? defaultDisplayName(profile) : t("me")
   const avatar = defaultAvatar(profile?.email, displayName)
   const userInitial = avatar.initial
 

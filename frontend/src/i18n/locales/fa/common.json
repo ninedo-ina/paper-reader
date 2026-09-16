@@ -466,6 +466,9 @@
     "tabAudit": "گزارش حسابرسی",
     "avatarUpdated": "تصویر پروفایل به‌روزرسانی شد",
     "avatarUpdateFailed": "به‌روزرسانی تصویر پروفایل ناموفق بود",
+    "avatarTooLarge": "تصویر خیلی بزرگ است؛ لطفاً تصویری زیر ۷۰۰ کیلوبایت انتخاب کنید",
+    "changeAvatar": "تغییر آواتار",
+    "emailUnbound": "ایمیل متصل نشده",
     "imageUrlPlaceholder": "URL تصویر...",
     "uploadLocal": "بارگذاری از دستگاه",
     "imageUrl": "تصویر اینترنتی",
@@ -492,6 +495,10 @@
     "auditTime": "زمان",
     "loadingMore": "در حال بارگذاری...",
     "loadMore": "بارگذاری بیشتر"
+  },
+  "userDisplay": {
+    "defaultName": "کاربر {id}",
+    "anonymous": "کاربر"
   },
   "preferences": {
     "tabs": {

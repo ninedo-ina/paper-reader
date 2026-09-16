@@ -466,6 +466,9 @@
     "tabAudit": "Nhật ký kiểm toán",
     "avatarUpdated": "Đã cập nhật ảnh đại diện",
     "avatarUpdateFailed": "Cập nhật ảnh đại diện thất bại",
+    "avatarTooLarge": "Ảnh quá lớn, vui lòng chọn ảnh không quá 700KB",
+    "changeAvatar": "Đổi ảnh đại diện",
+    "emailUnbound": "Chưa liên kết email",
     "imageUrlPlaceholder": "URL hình ảnh...",
     "uploadLocal": "Tải lên từ máy",
     "imageUrl": "Hình ảnh từ mạng",
@@ -492,6 +495,10 @@
     "auditTime": "Thời gian",
     "loadingMore": "Đang tải...",
     "loadMore": "Tải thêm"
+  },
+  "userDisplay": {
+    "defaultName": "Người dùng {id}",
+    "anonymous": "Người dùng"
   },
   "preferences": {
     "tabs": {

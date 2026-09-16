@@ -466,6 +466,9 @@
     "tabAudit": "監査ログ",
     "avatarUpdated": "アバターを更新しました",
     "avatarUpdateFailed": "アバターの更新に失敗しました",
+    "avatarTooLarge": "画像が大きすぎます。700KB 以内の画像に変更してください",
+    "changeAvatar": "アバターを変更",
+    "emailUnbound": "メールアドレス未連携",
     "imageUrlPlaceholder": "画像 URL...",
     "uploadLocal": "ローカルからアップロード",
     "imageUrl": "オンライン画像",
@@ -492,6 +495,10 @@
     "auditTime": "日時",
     "loadingMore": "読み込み中...",
     "loadMore": "さらに読み込む"
+  },
+  "userDisplay": {
+    "defaultName": "ユーザー{id}",
+    "anonymous": "ユーザー"
   },
   "preferences": {
     "tabs": {
@@ -1043,7 +1050,7 @@
           "label": "担当教員"
         },
         "university": {
-          "label": "学校"
+          "label": "大学"
         },
         "semester": {
           "label": "学期",

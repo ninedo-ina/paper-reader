@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ProfileDialog } from "@/components/settings/ProfileDialog"
+import { withIntl } from "@/test/intl"
 import { useUserStore } from "@/stores/user-store"
 import type { UserProfile } from "@/lib/api/types"
 
@@ -22,7 +23,7 @@ function profile(overrides: Partial<UserProfile> = {}): UserProfile {
 
 function renderDialog(overrides: Partial<UserProfile> = {}) {
   useUserStore.setState({ profile: profile(overrides), isLoading: false })
-  return render(<ProfileDialog open onClose={() => {}} />)
+  return render(withIntl(<ProfileDialog open onClose={() => {}} />))
 }
 
 /** 悬停才能看到「更换头像」按钮，点了才展开上传菜单 */

@@ -141,7 +141,7 @@ function AvatarSection({ profile, onUpdate }: { profile: ReturnType<typeof useUs
       // base64 会把图片撑大约三分之一，后端头像列放不下就别发了，
       // 给个明确的提示，好过让用户看到一句「头像更新失败」
       if (dataUrl.length > MAX_AVATAR_DATA_URL_LENGTH) {
-        useToastStore.getState().addToast({ message: "图片太大，请换一张 700KB 以内的图片", type: "error" })
+        useToastStore.getState().addToast({ message: t("avatarTooLarge"), type: "error" })
         return
       }
       try {
@@ -195,7 +195,7 @@ function AvatarSection({ profile, onUpdate }: { profile: ReturnType<typeof useUs
           {showOverlay && (
             <button
               className="absolute inset-0 rounded-full flex items-center justify-center bg-black/40 transition-all"
-              aria-label="更换头像"
+              aria-label={t("changeAvatar")}
               onClick={() => setMenuOpen(!menuOpen)}
             >
               <Camera className="size-5 text-white" />
@@ -296,7 +296,7 @@ function BasicInfoTab({
         <input
           readOnly
           value={profile?.email || ""}
-          placeholder="未绑定邮箱"
+          placeholder={t("emailUnbound")}
           className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-1)] px-3 py-2 text-sm text-[var(--text-tertiary)] cursor-not-allowed placeholder:text-[var(--text-placeholder)]"
         />
       </div>

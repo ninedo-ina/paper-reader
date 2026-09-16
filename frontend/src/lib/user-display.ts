@@ -8,6 +8,8 @@
 //   2. 默认用户名：ID 不再展示在界面上，于是用「用户{id}」补一个稳定的名字。
 // =============================================================================
 
+import { runtimeTranslator } from "@/i18n/runtime"
+
 export interface DefaultAvatar {
   /** 头像上显示的字符 */
   initial: string
@@ -110,6 +112,9 @@ interface DisplayNameSource {
 export function defaultDisplayName(profile?: DisplayNameSource | null): string {
   const name = profile?.displayName?.trim()
   if (name) return name
-  if (profile?.id) return `用户${profile.id}`
-  return profile?.email?.split("@")[0]?.trim() || "用户"
+  // 系统生成的名字要跟着界面语言走，取文案必须写在函数体里：
+  // 模块顶层求值时还没有消息表（见 src/i18n/runtime.ts）
+  const t = runtimeTranslator("userDisplay")
+  if (profile?.id) return t("defaultName", { id: profile.id })
+  return profile?.email?.split("@")[0]?.trim() || t("anonymous")
 }

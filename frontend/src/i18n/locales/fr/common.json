@@ -466,6 +466,9 @@
     "tabAudit": "Journal d’audit",
     "avatarUpdated": "Photo de profil mise à jour",
     "avatarUpdateFailed": "Échec de la mise à jour de la photo de profil",
+    "avatarTooLarge": "Image trop volumineuse, veuillez en choisir une de moins de 700 Ko",
+    "changeAvatar": "Changer d'avatar",
+    "emailUnbound": "Adresse e-mail non liée",
     "imageUrlPlaceholder": "URL de l’image...",
     "uploadLocal": "Téléverser depuis l’appareil",
     "imageUrl": "Image en ligne",
@@ -492,6 +495,10 @@
     "auditTime": "Date",
     "loadingMore": "Chargement...",
     "loadMore": "Charger plus"
+  },
+  "userDisplay": {
+    "defaultName": "Utilisateur {id}",
+    "anonymous": "Utilisateur"
   },
   "preferences": {
     "tabs": {

@@ -56,9 +56,9 @@ The repository contains the C-side product and its API. The administration conso
 
 - Default branch: `main`
 - Integration branch: `dev`
-- Released version branch: `feature/v0.1.46` (in development)
-- Client version: `0.1.46`
-- Production version: `0.1.45` (verified 2026-09-15 UTC)
+- Released version branch: `feature/v0.1.48` (in development)
+- Client version: `0.1.48`
+- Production version: `0.1.47` (verified 2026-09-15 UTC)
 - Default locale: Simplified Chinese (`zh`)
 - Supported locales: Simplified Chinese (`zh`), Traditional Chinese (`zh-Hant`), English (`en`), Tibetan (`bo`), Uyghur (`ug`), German (`de`), Arabic (`ar`), Korean (`ko`), Japanese (`ja`), French (`fr`), Vietnamese (`vi`), Spanish (`es`), Italian (`it`) and Persian (`fa`) — Arabic, Persian and Uyghur render right-to-left
 - Production client: `https://paper.pilo.eu.cc`

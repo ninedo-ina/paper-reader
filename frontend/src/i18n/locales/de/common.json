@@ -466,6 +466,9 @@
     "tabAudit": "Audit-Protokoll",
     "avatarUpdated": "Profilbild aktualisiert",
     "avatarUpdateFailed": "Profilbild-Aktualisierung fehlgeschlagen",
+    "avatarTooLarge": "Bild zu groß. Bitte wählen Sie ein Bild unter 700 KB.",
+    "changeAvatar": "Avatar ändern",
+    "emailUnbound": "E-Mail nicht verknüpft",
     "imageUrlPlaceholder": "Bild-URL...",
     "uploadLocal": "Lokal hochladen",
     "imageUrl": "Bild aus dem Web",
@@ -492,6 +495,10 @@
     "auditTime": "Zeit",
     "loadingMore": "Wird geladen...",
     "loadMore": "Mehr laden"
+  },
+  "userDisplay": {
+    "defaultName": "Benutzer {id}",
+    "anonymous": "Benutzer"
   },
   "preferences": {
     "tabs": {

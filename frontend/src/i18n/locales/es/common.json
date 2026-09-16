@@ -466,6 +466,9 @@
     "tabAudit": "Registro de auditoría",
     "avatarUpdated": "Avatar actualizado",
     "avatarUpdateFailed": "No se pudo actualizar el avatar",
+    "avatarTooLarge": "La imagen es demasiado grande; elige otra de menos de 700 KB",
+    "changeAvatar": "Cambiar avatar",
+    "emailUnbound": "Correo no vinculado",
     "imageUrlPlaceholder": "URL de imagen...",
     "uploadLocal": "Subir desde el dispositivo",
     "imageUrl": "Imagen web",
@@ -492,6 +495,10 @@
     "auditTime": "Fecha",
     "loadingMore": "Cargando...",
     "loadMore": "Cargar más"
+  },
+  "userDisplay": {
+    "defaultName": "Usuario {id}",
+    "anonymous": "Usuario"
   },
   "preferences": {
     "tabs": {

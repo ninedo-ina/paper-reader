@@ -466,6 +466,9 @@
     "tabAudit": "سجل التدقيق",
     "avatarUpdated": "تم تحديث الصورة الرمزية",
     "avatarUpdateFailed": "فشل تحديث الصورة الرمزية",
+    "avatarTooLarge": "الصورة كبيرة جدًا، يرجى اختيار صورة بحجم 700KB أو أقل",
+    "changeAvatar": "تغيير الصورة الرمزية",
+    "emailUnbound": "البريد الإلكتروني غير مرتبط",
     "imageUrlPlaceholder": "رابط الصورة...",
     "uploadLocal": "رفع من الجهاز",
     "imageUrl": "صورة من الإنترنت",
@@ -492,6 +495,10 @@
     "auditTime": "الوقت",
     "loadingMore": "جارٍ التحميل...",
     "loadMore": "تحميل المزيد"
+  },
+  "userDisplay": {
+    "defaultName": "المستخدم {id}",
+    "anonymous": "مستخدم"
   },
   "preferences": {
     "tabs": {

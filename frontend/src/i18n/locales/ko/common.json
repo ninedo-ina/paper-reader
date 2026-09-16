@@ -466,6 +466,9 @@
     "tabAudit": "감사 로그",
     "avatarUpdated": "프로필 사진이 업데이트되었습니다",
     "avatarUpdateFailed": "프로필 사진 업데이트 실패",
+    "avatarTooLarge": "이미지가 너무 큽니다. 700KB 이하의 이미지를 선택해 주세요",
+    "changeAvatar": "프로필 사진 변경",
+    "emailUnbound": "이메일 미연결",
     "imageUrlPlaceholder": "이미지 URL...",
     "uploadLocal": "로컬에서 업로드",
     "imageUrl": "웹 이미지",
@@ -492,6 +495,10 @@
     "auditTime": "시간",
     "loadingMore": "불러오는 중...",
     "loadMore": "더 불러오기"
+  },
+  "userDisplay": {
+    "defaultName": "사용자 {id}",
+    "anonymous": "사용자"
   },
   "preferences": {
     "tabs": {

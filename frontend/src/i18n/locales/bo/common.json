@@ -466,6 +466,9 @@
     "tabAudit": "རྩིས་ཞིབ་དེབ་ཐོ།",
     "avatarUpdated": "མགོ་པར་གསར་སྒྱུར་བྱས་ཟིན།",
     "avatarUpdateFailed": "མགོ་པར་གསར་སྒྱུར་མ་བྱུང་།",
+    "avatarTooLarge": "པར་ཆེ་དྲགས་པས། 700KB མན་གྱི་པར་ཞིག་བརྗེ་རོགས།",
+    "changeAvatar": "མགོ་པར་བརྗེ་བ།",
+    "emailUnbound": "གློག་འཕྲིན་ཁ་བྱང་མ་མཐུད་པ།",
     "imageUrlPlaceholder": "པར་གྱི་ URL...",
     "uploadLocal": "ས་གནས་ནས་སྤར་འཇུག",
     "imageUrl": "དྲ་བའི་པར།",
@@ -492,6 +495,10 @@
     "auditTime": "དུས་ཚོད།",
     "loadingMore": "འདྲེན་བཞིན་པ...",
     "loadMore": "མང་དུ་འདྲེན་པ"
+  },
+  "userDisplay": {
+    "defaultName": "བེད་སྤྱོད་པ་{id}",
+    "anonymous": "བེད་སྤྱོད་པ།"
   },
   "preferences": {
     "tabs": {

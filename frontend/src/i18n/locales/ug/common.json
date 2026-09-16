@@ -466,6 +466,9 @@
     "tabAudit": "تەكشۈرۈش خاتىرىسى",
     "avatarUpdated": "باش سۈرەت يېڭىلاندى",
     "avatarUpdateFailed": "باش سۈرەتنى يېڭىلاش مەغلۇب بولدى",
+    "avatarTooLarge": "رەسىم بەك چوڭ، 700KB ئىچىدىكى رەسىمگە ئالماشتۇرۇڭ",
+    "changeAvatar": "باش سۈرەتنى ئالماشتۇرۇش",
+    "emailUnbound": "ئېلخەت باغلانمىغان",
     "imageUrlPlaceholder": "رەسىم URL...",
     "uploadLocal": "يەرلىكتىن يۈكلەش",
     "imageUrl": "تور رەسىمى",
@@ -492,6 +495,10 @@
     "auditTime": "ۋاقىت",
     "loadingMore": "يۈكلىنىۋاتىدۇ...",
     "loadMore": "تېخىمۇ كۆپ يۈكلەش"
+  },
+  "userDisplay": {
+    "defaultName": "ئىشلەتكۈچى {id}",
+    "anonymous": "ئىشلەتكۈچى"
   },
   "preferences": {
     "tabs": {

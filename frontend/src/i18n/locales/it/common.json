@@ -466,6 +466,9 @@
     "tabAudit": "Registro di controllo",
     "avatarUpdated": "Avatar aggiornato",
     "avatarUpdateFailed": "Aggiornamento avatar non riuscito",
+    "avatarTooLarge": "Immagine troppo grande, scegline un'altra entro 700 KB",
+    "changeAvatar": "Cambia avatar",
+    "emailUnbound": "Nessuna email associata",
     "imageUrlPlaceholder": "URL immagine...",
     "uploadLocal": "Carica dal dispositivo",
     "imageUrl": "Immagine da URL",
@@ -492,6 +495,10 @@
     "auditTime": "Data/ora",
     "loadingMore": "Caricamento...",
     "loadMore": "Carica altro"
+  },
+  "userDisplay": {
+    "defaultName": "Utente {id}",
+    "anonymous": "Utente"
   },
   "preferences": {
     "tabs": {
