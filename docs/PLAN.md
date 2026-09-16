@@ -1,4 +1,24 @@
-## 迭代：v0.1.48（已发布）
+## 迭代：v0.1.49（已发布）
+
+发布分支：`feature/v0.1.49`；类型：UI 修复；需求编号：`REQ-202609-0111` 收尾；状态：2026-09-16 UTC 已合并 `dev` / `main` 并部署验收（发布记录见 `docs/MAINTENANCE.md`）。
+
+用户反馈：登录页点语言图标弹出的面板上有一条滚动条，「很丑，影响整体 UI」，要求**去掉滚动条但保留滚动**，并顺带检查其它语言选择面板是不是也这样。
+
+面板会有滚动条是结构决定的，不是样式写错了：`LanguageSwitcher` 的下拉是 `max-h-80`、`LanguagePicker`（设置页与偏好设置共用）是 `max-h-72`，14 种语言一定装不下，所以 `overflow-y-auto` 不能去掉；而 `globals.css` 里有一条全局的 `::-webkit-scrollbar { width: 6px }`，`--text-tertiary` 的颜色，只要真的溢出就会贴着面板右边缘切进圆角里。**两个面板都有这个问题**，只是设置页那个平时看不到（要登录才进得去）。
+
+做法是新增一个工具类 `.scrollbar-hidden`，两处面板挂上它：
+
+- `scrollbar-width: none`（Firefox，以及 Chrome 121+ 也认这条标准属性）
+- `-ms-overflow-style: none`（旧 Edge）
+- `.scrollbar-hidden::-webkit-scrollbar { width: 0; height: 0; display: none }`（Chromium / Safari）
+
+**三条缺一不可**，少一条就会有浏览器照样把滚动条画出来；`overflow-y-auto` 原样保留，滚轮、触屏、键盘滚动都不受影响。`LanguagePicker` 原来为了给滚动条让位写了 `pe-1`，滚动条没了之后那条留白只会让两列网格整体偏左，一并去掉。
+
+验收标准：新增 `language-panel-scrollbar.test.tsx` —— 两个面板都要「有 `scrollbar-hidden` 且仍有 `overflow-y-auto`」，并直接读 `globals.css` 锁住那三条声明（jsdom 不加载样式表，只断言类名证明不了类真的有定义）；`tsc --noEmit`、`vitest run`、`npm run lint`、`next build` 与后端 `./gradlew clean test bootJar` 全绿；按 `feature/v0.1.49 -> dev -> main` 发布，线上核对 `/api/health` 版本号、服务端样式表与本地构建逐字节一致且含该工具类，并在公网登录页实测：展开的面板 `scrollbar-width` 计算值为 `none`、`::-webkit-scrollbar` 宽 0px，同时 `scrollTop` 仍能从 0 滚到 418px（同页对照组的 `::-webkit-scrollbar` 是 6px / `display: inline`，即用户看到的那条）。
+
+本轮**无数据库迁移、无接口改动、无新依赖、后端零代码改动**（版本号仍按规范统一到 `0.1.49`）。
+
+## 上一迭代：v0.1.48（已发布）
 
 发布分支：`feature/v0.1.48`；类型：功能迭代（国际化语言切换）；需求编号：`REQ-202609-0111`；状态：2026-09-16 UTC 已合并 `dev` / `main` 并部署验收（发布记录见 `docs/MAINTENANCE.md`）。
 

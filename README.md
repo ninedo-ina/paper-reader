@@ -6,7 +6,16 @@ The repository contains the C-side product and its API. The administration conso
 
 > **Maintainer start here:** read the [documentation index](docs/README.md), then the [new maintainer guide](docs/NEW_MAINTAINER_GUIDE.md) and [complete project status](docs/PROJECT_STATUS.md). They record the real production topology, configuration rules, known risks, and release workflow without requiring previous chat context.
 
-## Current Iteration: v0.1.48
+## Current Iteration: v0.1.49
+
+- Branch: `feature/v0.1.49`
+- Requirement: `REQ-202609-0111` follow-up — the language panel's scrollbar was ugly.
+- Scope: the sign-in page's language dropdown holds fourteen entries under `max-h-80`, so it scrolls — and with `globals.css` setting a global `::-webkit-scrollbar` of 6px in `--text-tertiary`, a grey strip was cutting into the panel's rounded right edge (the settings → 偏好设置 language grid, `max-h-72`, had the same problem). Both panels now carry a new `.scrollbar-hidden` utility: `scrollbar-width: none` for Firefox and Chrome 121+, `-ms-overflow-style: none` for legacy Edge, and `.scrollbar-hidden::-webkit-scrollbar { width: 0; height: 0; display: none }` for Chromium and Safari — **all three are required, dropping any one leaves a browser showing the bar**. Scrolling itself is untouched: `overflow-y-auto` stays, so wheel, touch and keyboard still move the list, and the `pe-1` the picker used to reserve for the bar is gone so the grid is no longer off-centre.
+- Tests: `frontend/src/test/language-panel-scrollbar.test.tsx` asserts both panels are `scrollbar-hidden` *and* still `overflow-y-auto`, and reads `globals.css` directly to lock the three declarations (jsdom loads no stylesheets, so a class-name assertion alone would not prove the class is defined). The client is now at 21 test files and 124 tests, all green; `tsc --noEmit`, `next lint` and `next build` exit 0.
+- No database migration, no API change, no new dependency: the version moves to `0.1.49`.
+- Status: released. Commits `dc6b9c6` (the hidden-scrollbar utility and the two panels) and `6df5bd5` (version bump) on `feature/v0.1.49`, merged to `dev` and `main` on 2026-09-16 UTC, deployed and verified in production (`/api/health` reports `0.1.49`, the served stylesheet is byte-identical to the local build and carries the utility, and on the live sign-in page the open panel computes `scrollbar-width: none` with a 0px `::-webkit-scrollbar` while still scrolling 0 → 418px); deployment detail is recorded in `docs/MAINTENANCE.md`.
+
+## Previous Iteration: v0.1.48
 
 - Branch: `feature/v0.1.48`
 - Requirement: `REQ-202609-0111` — internationalization, and the language switcher on the sign-in page that had stopped responding.
@@ -59,9 +68,9 @@ The repository contains the C-side product and its API. The administration conso
 
 - Default branch: `main`
 - Integration branch: `dev`
-- Released version branch: `feature/v0.1.48`
-- Client version: `0.1.48`
-- Production version: `0.1.48` (verified 2026-09-16 UTC)
+- Released version branch: `feature/v0.1.49`
+- Client version: `0.1.49`
+- Production version: `0.1.49` (verified 2026-09-16 UTC)
 - Default locale: Simplified Chinese (`zh`)
 - Supported locales: Simplified Chinese (`zh`), Traditional Chinese (`zh-Hant`), English (`en`), Tibetan (`bo`), Uyghur (`ug`), German (`de`), Arabic (`ar`), Korean (`ko`), Japanese (`ja`), French (`fr`), Vietnamese (`vi`), Spanish (`es`), Italian (`it`) and Persian (`fa`) — Arabic, Persian and Uyghur render right-to-left
 - Production client: `https://paper.pilo.eu.cc`

@@ -240,6 +240,7 @@
 - 新增入口要同时检查明亮/暗色主题、窄宽度、键盘操作和 hover/focus 状态。
 - “新对话”按钮只使用图标，但必须提供 `title` 和 `aria-label`。
 - Provider 警告不能只依赖颜色，应同时有感叹号图标和文本。
+- 带圆角的弹出面板（语言下拉、偏好设置的语言网格等）不要露出原生滚动条：`globals.css` 里有一条全局 `::-webkit-scrollbar`（6px、`--text-tertiary`），面板 `overflow-y-auto` 一旦真的溢出，滚动条就会贴着右边缘切进圆角里。这类面板统一挂 `.scrollbar-hidden`（`scrollbar-width` + `-ms-overflow-style` + `::-webkit-scrollbar` 三条声明，覆盖 Firefox / 旧 Edge / Chromium+Safari，少一条就有浏览器露出来），**滚动能力保留**；给滚动条让位的 `pe-1` 之类留白要一并去掉。`frontend/src/test/language-panel-scrollbar.test.tsx` 锁住这条不变量。
 
 ## v0.1.31 PaperHelper 菜单文案调整（已部署）
 
