@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { Loader2, MonitorSmartphone, ShieldCheck, Trash2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { useToastStore } from "@/stores/toast-store"
 import * as securityApi from "@/lib/api/security"
@@ -13,6 +14,7 @@ import type { TrustedDevice } from "@/lib/api/types"
  * 删除后该设备已签发的登录 token 立即失效（后端鉴权会校验设备是否还在），必须重新登录。
  */
 export function TrustedDevicesTab() {
+  const t = useTranslations("settings")
   const [devices, setDevices] = useState<TrustedDevice[]>([])
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [loading, setLoading] = useState(true)
@@ -24,11 +26,11 @@ export function TrustedDevicesTab() {
       setDevices(res)
       setSelected(new Set())
     } catch (e) {
-      useToastStore.getState().addToast({ message: (e as Error).message || "加载设备列表失败", type: "error" })
+      useToastStore.getState().addToast({ message: (e as Error).message || t("deviceLoadFailed"), type: "error" })
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     load()
@@ -50,16 +52,16 @@ export function TrustedDevicesTab() {
     try {
       const res = await securityApi.deleteTrustedDevices(ids)
       useToastStore.getState().addToast({
-        message: `已删除 ${res?.removed ?? ids.length} 台设备，该设备需重新登录`,
+        message: t("deviceRemoved", { count: res?.removed ?? ids.length }),
         type: "success",
       })
       await load()
     } catch (e) {
-      useToastStore.getState().addToast({ message: (e as Error).message || "删除设备失败", type: "error" })
+      useToastStore.getState().addToast({ message: (e as Error).message || t("deviceRemoveFailed"), type: "error" })
     } finally {
       setDeleting(false)
     }
-  }, [selected, load])
+  }, [selected, load, t])
 
   if (loading) {
     return (
@@ -73,9 +75,9 @@ export function TrustedDevicesTab() {
     return (
       <div className="flex flex-col items-center justify-center pt-16 text-center">
         <MonitorSmartphone className="mb-4 size-12 text-[var(--text-tertiary)]" />
-        <h3 className="mb-2 text-sm font-medium text-[var(--text-primary)]">信任设备</h3>
+        <h3 className="mb-2 text-sm font-medium text-[var(--text-primary)]">{t("deviceTitle")}</h3>
         <p className="max-w-[280px] text-xs leading-5 text-[var(--text-tertiary)]">
-          暂无登录过的设备。开启两步验证后，被信任的设备再次登录时可只输入密码，无需动态码。
+          {t("deviceEmpty")}
         </p>
       </div>
     )
@@ -84,7 +86,7 @@ export function TrustedDevicesTab() {
   return (
     <div className="space-y-4">
       <p className="text-xs leading-5 text-[var(--text-tertiary)]">
-        以下是登录过并保存的设备。被信任的设备在两步验证开启后可免动态码登录；删除后该设备已签发的登录凭证立即失效，需要重新登录。
+        {t("deviceIntro")}
       </p>
 
       <div className="overflow-hidden rounded-xl border border-[var(--border-subtle)]">
@@ -111,26 +113,26 @@ export function TrustedDevicesTab() {
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="truncate text-sm font-medium text-[var(--text-primary)]">
-                    {device.deviceName || "未知设备"}
+                    {device.deviceName || t("deviceUnknown")}
                   </span>
                   {device.current && (
                     <span className="rounded-full bg-[var(--accent)]/12 px-2 py-0.5 text-[10px] font-medium text-[var(--accent)]">
-                      当前设备
+                      {t("deviceCurrent")}
                     </span>
                   )}
                   {device.trusted && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-[var(--surface-2)] px-2 py-0.5 text-[10px] text-[var(--text-secondary)]">
                       <ShieldCheck className="size-3" />
-                      已信任
+                      {t("deviceTrusted")}
                     </span>
                   )}
                 </div>
                 <p className="mt-1 truncate text-xs text-[var(--text-tertiary)]">
-                  {device.userAgent || "未知客户端"}
+                  {device.userAgent || t("deviceUnknownClient")}
                 </p>
                 <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">
-                  IP {device.ipAddress || "未知"} · 最近登录 {formatTime(device.lastLoginAt)}
-                  {device.trustedUntil ? ` · 信任至 ${formatTime(device.trustedUntil)}` : ""}
+                  {t("deviceLoginInfo", { ip: device.ipAddress || t("deviceUnknownIp"), time: formatTime(device.lastLoginAt) })}
+                  {device.trustedUntil ? t("deviceTrustedUntil", { time: formatTime(device.trustedUntil) }) : ""}
                 </p>
               </div>
             </button>
@@ -146,7 +148,7 @@ export function TrustedDevicesTab() {
           className="inline-flex items-center gap-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition-colors disabled:cursor-not-allowed disabled:opacity-50 hover:bg-[var(--bg-hover)]"
         >
           {deleting ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
-          {deleting ? "删除中..." : `删除所选${selected.size > 0 ? ` (${selected.size})` : ""}`}
+          {deleting ? t("deviceDeleting") : selected.size > 0 ? t("deviceDeleteSelectedCount", { count: selected.size }) : t("deviceDeleteSelected")}
         </button>
         {selected.size > 0 && (
           <button
@@ -154,7 +156,7 @@ export function TrustedDevicesTab() {
             onClick={() => setSelected(new Set())}
             className="text-xs text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-secondary)]"
           >
-            取消选择
+            {t("deviceClearSelection")}
           </button>
         )}
       </div>

@@ -16,18 +16,20 @@ interface CreatePaperDialogProps {
 }
 
 const STEPS = [
-  { key: "basic", label: "基本信息", labelEn: "Basic Info" },
-  { key: "fields", label: "分类字段", labelEn: "Category Fields" },
-  { key: "storage", label: "存储配置", labelEn: "Storage" },
+  { key: "basic", labelKey: "createStepBasic" },
+  { key: "fields", labelKey: "createStepFields" },
+  { key: "storage", labelKey: "createStepStorage" },
 ]
 
-function renderField(field: CategoryField, value: string, onChange: (v: string) => void) {
+type FieldTranslator = (key: string) => string
+
+function renderField(tc: FieldTranslator, field: CategoryField, value: string, onChange: (v: string) => void) {
   switch (field.type) {
     case "textarea":
       return (
         <textarea
           rows={3}
-          placeholder={field.placeholder}
+          placeholder={field.placeholderKey ? tc(field.placeholderKey) : undefined}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--surface-0)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]/40 resize-none"
@@ -42,7 +44,7 @@ function renderField(field: CategoryField, value: string, onChange: (v: string) 
         >
           <option value="">--</option>
           {field.options?.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
+            <option key={opt.value} value={opt.value}>{tc(opt.labelKey)}</option>
           ))}
         </select>
       )
@@ -58,7 +60,7 @@ function renderField(field: CategoryField, value: string, onChange: (v: string) 
       return (
         <Input
           type="text"
-          placeholder={field.placeholder}
+          placeholder={field.placeholderKey ? tc(field.placeholderKey) : undefined}
           value={value}
           onChange={(e) => onChange(e.target.value)}
         />
@@ -69,6 +71,7 @@ function renderField(field: CategoryField, value: string, onChange: (v: string) 
 export function CreatePaperDialog({ open, onClose }: CreatePaperDialogProps) {
   const t = useTranslations("reader")
   const c = useTranslations("common")
+  const tcat = useTranslations("categories")
   const { createPaper, error } = usePaperStore()
   const { configs, loadConfigs } = useStorageStore()
 
@@ -174,7 +177,7 @@ export function CreatePaperDialog({ open, onClose }: CreatePaperDialogProps) {
                 {i + 1}
               </div>
               <span className={`text-xs ${i <= step ? "text-[var(--text-primary)]" : "text-[var(--text-tertiary)]"}`}>
-                {s.label}
+                {t(s.labelKey)}
               </span>
               {i < STEPS.length - 1 && <div className="flex-1 h-px bg-[var(--border-color)]" />}
             </div>
@@ -212,7 +215,7 @@ export function CreatePaperDialog({ open, onClose }: CreatePaperDialogProps) {
 
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-[var(--text-secondary)]">
-                {t("paperCategory") || "分类"} <span className="text-red-400">*</span>
+                {t("paperCategory")} <span className="text-red-400">*</span>
               </label>
               <select
                 value={category}
@@ -223,7 +226,7 @@ export function CreatePaperDialog({ open, onClose }: CreatePaperDialogProps) {
                 className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--surface-0)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]/40"
               >
                 {CATEGORIES.map((cat) => (
-                  <option key={cat.value} value={cat.value}>{cat.label}</option>
+                  <option key={cat.value} value={cat.value}>{tcat(cat.labelKey)}</option>
                 ))}
               </select>
             </div>
@@ -246,14 +249,14 @@ export function CreatePaperDialog({ open, onClose }: CreatePaperDialogProps) {
         {/* Step 1: Category-specific fields */}
         {step === 1 && (
           <div className="space-y-4 max-h-72 overflow-y-auto">
-            <p className="text-sm text-[var(--text-tertiary)]">{catDef.label} — 特有字段</p>
+            <p className="text-sm text-[var(--text-tertiary)]">{tcat(catDef.labelKey)} {t("extraFieldsSuffix")}</p>
             {catDef.fields.map((field) => (
               <div key={field.key} className="space-y-1.5">
                 <label className="text-sm font-medium text-[var(--text-secondary)]">
-                  {field.label}
+                  {tcat(field.labelKey)}
                   {field.required && <span className="text-red-400"> *</span>}
                 </label>
-                {renderField(field, extraFields[field.key] || "", (v) => handleFieldChange(field.key, v))}
+                {renderField(tcat, field, extraFields[field.key] || "", (v) => handleFieldChange(field.key, v))}
               </div>
             ))}
           </div>
@@ -263,23 +266,23 @@ export function CreatePaperDialog({ open, onClose }: CreatePaperDialogProps) {
         {step === 2 && (
           <div className="space-y-4">
             <p className="text-sm text-[var(--text-tertiary)]">
-              选择论文存储位置（可选）
+              {t("storageLocationHint")}
             </p>
             {configs.length === 0 ? (
               <p className="text-sm text-[var(--text-tertiary)] text-center py-4">
-                暂无存储配置，可在设置中创建
+                {t("noStorageConfigHint")}
               </p>
             ) : (
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-[var(--text-secondary)]">
-                  存储配置
+                  {t("storageConfig")}
                 </label>
                 <select
                   value={storageConfigId ?? ""}
                   onChange={(e) => setStorageConfigId(e.target.value ? Number(e.target.value) : null)}
                   className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--surface-0)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]/40"
                 >
-                  <option value="">不使用存储</option>
+                  <option value="">{t("noStorage")}</option>
                   {configs.map((cfg) => (
                     <option key={cfg.id} value={cfg.id}>
                       {cfg.name} ({cfg.storageType})
@@ -297,14 +300,14 @@ export function CreatePaperDialog({ open, onClose }: CreatePaperDialogProps) {
             {step > 0 && (
               <Button type="button" variant="secondary" onClick={() => setStep(step - 1)} disabled={isCreating}>
                 <ChevronLeft className="size-4 mr-1" />
-                {c("cancel") || "返回"}
+                {c("back")}
               </Button>
             )}
           </div>
           <div className="flex gap-2">
             {step < STEPS.length - 1 ? (
               <Button type="button" onClick={() => setStep(step + 1)} disabled={!canNext}>
-                {c("confirm") || "下一步"}
+                {c("next")}
                 <ChevronRight className="size-4 ml-1" />
               </Button>
             ) : (

@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
+import { runtimeTranslator } from "@/i18n/runtime"
 
 export interface NotificationItem {
   id: string
@@ -67,8 +68,8 @@ export const useNotificationStore = create<NotificationState>()(
           get().addNotification({
             id: "version-info",
             type: "system",
-            title: "系统功能介绍",
-            message: "欢迎使用 PaperHelper！点击查看当前版本功能特性",
+            title: runtimeTranslator("notifications")("welcomeTitle"),
+            message: runtimeTranslator("notifications")("welcomeMessage"),
             actionKey: "version",
           })
         }

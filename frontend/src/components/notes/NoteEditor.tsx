@@ -52,7 +52,7 @@ export function NoteEditor({ paperId, note, onSave, onCancel }: NoteEditorProps)
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Note title..."
+          placeholder={t("titlePlaceholder")}
           className="flex-1 bg-transparent text-sm font-medium text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none"
         />
         <Button variant="ghost" size="sm" onClick={() => setPreview(!preview)}>
@@ -77,7 +77,7 @@ export function NoteEditor({ paperId, note, onSave, onCancel }: NoteEditorProps)
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Write your note in markdown..."
+            placeholder={t("contentPlaceholder")}
             className="w-full h-full min-h-[200px] bg-transparent text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none resize-none"
           />
         )}

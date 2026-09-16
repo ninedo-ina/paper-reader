@@ -2,6 +2,8 @@
 // API 类型定义 — 镜像后端 DTO 结构
 // =============================================================================
 
+import type { AppLocale } from "@/i18n/locales"
+
 // --- 通用响应封装 ---
 
 export interface ApiResponse<T> {
@@ -479,13 +481,14 @@ export interface ChatRequest {
 
 export interface UserSettingsDto {
   theme: "light" | "dark"
-  language: "zh" | "en"
+  /** 与 src/i18n/locales.ts 的 AppLocale 保持一致（后端按字符串存储，列宽 10） */
+  language: AppLocale
   defaultAiModel?: string
 }
 
 export interface UpdateUserSettingsRequest {
   theme?: "light" | "dark"
-  language?: "zh" | "en"
+  language?: AppLocale
   defaultAiModel?: string
 }
 

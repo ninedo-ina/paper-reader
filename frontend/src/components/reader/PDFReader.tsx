@@ -11,6 +11,7 @@ import { cn, copyToClipboard } from "@/lib/utils"
 import type { PaperDetailDto } from "@/lib/api/types"
 import { getDownloadUrl } from "@/lib/api/papers"
 import { getAccessToken } from "@/lib/api/client"
+import { useTranslations } from "next-intl"
 import { useToastStore } from "@/stores/toast-store"
 import { useReaderStore } from "@/stores/reader-store"
 import { createAnnotation } from "@/lib/api/annotations"
@@ -28,12 +29,12 @@ interface PDFReaderProps {
 
 type PdfLayout = 1 | 2 | 3 | 4 | 6
 
-const PDF_LAYOUTS: Record<PdfLayout, { columns: number; step: number; label: string }> = {
-  1: { columns: 1, step: 1, label: "单页" },
-  2: { columns: 2, step: 2, label: "两栏" },
-  3: { columns: 3, step: 3, label: "三栏" },
-  4: { columns: 2, step: 4, label: "四栏" },
-  6: { columns: 3, step: 6, label: "六栏" },
+const PDF_LAYOUTS: Record<PdfLayout, { columns: number; step: number; labelKey: string }> = {
+  1: { columns: 1, step: 1, labelKey: "layoutSingle" },
+  2: { columns: 2, step: 2, labelKey: "layoutTwo" },
+  3: { columns: 3, step: 3, labelKey: "layoutThree" },
+  4: { columns: 2, step: 4, labelKey: "layoutFour" },
+  6: { columns: 3, step: 6, labelKey: "layoutSix" },
 }
 
 export function PDFReader({ paper }: PDFReaderProps) {
@@ -54,6 +55,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const scrollbarTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const panRef = useRef({ active: false, x: 0, y: 0, left: 0, top: 0 })
+  const t = useTranslations("reader")
   const addToast = useToastStore((s) => s.addToast)
   const {
     annotations, notes,
@@ -161,7 +163,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
           })
         } catch {
           removeAnnotation(tempId)
-          addToast({ message: "创建批注失败", type: "error" })
+          addToast({ message: t("createAnnotationFailed"), type: "error" })
         }
       } else {
         addNote({
@@ -202,11 +204,11 @@ export function PDFReader({ paper }: PDFReaderProps) {
           })
         } catch {
           removeNote(tempId)
-          addToast({ message: "创建笔记失败", type: "error" })
+          addToast({ message: t("createNoteFailed"), type: "error" })
         }
       }
     },
-    [dialogMode, dialogText, dialogPosition, dialogPositions, dialogPage, dialogStartOffset, dialogEndOffset, paper.id, addAnnotation, removeAnnotation, addNote, removeNote, addToast],
+    [dialogMode, dialogText, dialogPosition, dialogPositions, dialogPage, dialogStartOffset, dialogEndOffset, paper.id, addAnnotation, removeAnnotation, addNote, removeNote, addToast, t],
   )
 
   // Build anchors from store annotations & notes for underline rendering
@@ -260,7 +262,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
   const handleCopyTitle = () => {
     const title = paper.title || ""
     copyToClipboard(title).then(() => {
-      addToast({ message: "复制论文标题成功", type: "success" })
+      addToast({ message: t("copyTitleSuccess"), type: "success" })
     })
   }
 
@@ -459,7 +461,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
         <h1
           className="text-sm font-medium text-[var(--text-primary)] truncate flex-1 cursor-pointer"
           onClick={handleCopyTitle}
-          title="点击复制论文标题"
+          title={t("copyTitleHint")}
         >
           {paper.title || "Untitled"}
           {paper.authors && (
@@ -521,23 +523,23 @@ export function PDFReader({ paper }: PDFReaderProps) {
           </Button>
         </div>
         {isFullscreen && (
-          <Button variant="ghost" size="sm" onClick={() => setTheme(readerTheme === "light" ? "dark" : "light")} title={readerTheme === "light" ? "切换夜间模式" : "切换白天模式"}>
+          <Button variant="ghost" size="sm" onClick={() => setTheme(readerTheme === "light" ? "dark" : "light")} title={readerTheme === "light" ? t("switchToDark") : t("switchToLight")}>
             {readerTheme === "light" ? <Moon className="size-4" /> : <Sun className="size-4" />}
           </Button>
         )}
         <div className="relative">
-          <Button variant="ghost" size="sm" onClick={() => { setLayoutOpen((open) => !open); revealChrome() }} title="分页布局" aria-label="分页布局">
+          <Button variant="ghost" size="sm" onClick={() => { setLayoutOpen((open) => !open); revealChrome() }} title={t("pageLayout")} aria-label={t("pageLayout")}>
             <LayoutGrid className="size-4" />
           </Button>
           {layoutOpen && <div className="absolute right-0 top-full z-50 mt-1 flex gap-1 rounded-lg border border-[var(--border-color)] bg-[var(--surface-0)] p-1 shadow-xl">
             {([1, 2, 3, 4, 6] as PdfLayout[]).map((value) => (
               <button key={value} type="button" onClick={() => { setLayout(value); setLayoutOpen(false); revealChrome() }} className={cn("rounded px-2 py-1 text-xs whitespace-nowrap hover:bg-[var(--bg-hover)]", layout === value && "bg-[var(--accent)] text-[var(--surface-0)]")}>
-                {PDF_LAYOUTS[value].label}
+                {t(PDF_LAYOUTS[value].labelKey)}
               </button>
             ))}
           </div>}
         </div>
-        <Button variant="ghost" size="sm" onClick={() => void toggleFullscreen()} title={isFullscreen ? "退出全屏" : "全屏阅读"}>
+        <Button variant="ghost" size="sm" onClick={() => void toggleFullscreen()} title={isFullscreen ? t("exitFullscreen") : t("enterFullscreen")}>
           {isFullscreen ? <Minimize className="size-4" /> : <Maximize className="size-4" />}
         </Button>
       </div>

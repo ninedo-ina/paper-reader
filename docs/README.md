@@ -22,6 +22,7 @@
 | 论文创建 | [CREATE_PAPER_FEATURE.md](CREATE_PAPER_FEATURE.md) | 手动创建、字段模型和编辑器 |
 | 元数据补全 | [EXTERNAL_METADATA_ENRICHMENT.md](EXTERNAL_METADATA_ENRICHMENT.md) | arXiv/DOI 标识、外部 Provider、字段来源、冲突、已实现边界与后续计划 |
 | 通知邮件 | [NOTIFICATION_TEMPLATES.md](NOTIFICATION_TEMPLATES.md) | 通知中心对接契约、`template`/`template_data` 字段、灰度模板要求与验收标准 |
+| 国际化 | [I18N.md](I18N.md) | 支持的语言、语言注册表、切换链路、新增语言的步骤、RTL 与文案来源 |
 | 历史问题 | [BUGFIX_TAB_SHARE_TOAST.md](BUGFIX_TAB_SHARE_TOAST.md) | Tab、分享弹窗和 Toast 的历史修复 |
 
 ## 文档维护规则
@@ -37,6 +38,7 @@
 
 - 当前发布版本：`0.1.47`（登录后的默认身份与个人中心邮箱，`REQ-202609-0110`，2026-09-15 UTC 已发布）
 - 当前发布版本分支：`feature/v0.1.47`；生产当前运行 `0.1.47`（2026-09-15 UTC 已核验）
+- 开发中版本：`0.1.48`（国际化语言切换，`REQ-202609-0111`，分支 `feature/v0.1.48`，尚未发布）
 - 长期分支：`dev`（集成）、`main`（默认/生产）
 - 生产域名：`https://paper.pilo.eu.cc`
 - 文档核对日期：2026-09-15（UTC）

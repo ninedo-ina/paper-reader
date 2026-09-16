@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { useTranslations } from "next-intl"
+import { useRouter, usePathname } from "next/navigation"
+import { useLocale, useTranslations } from "next-intl"
 import { useAuthStore } from "@/stores/auth-store"
 import * as authApi from "@/lib/api/auth"
 import { Button } from "@/components/ui/Button"
@@ -10,12 +10,15 @@ import { Input } from "@/components/ui/Input"
 import { Label } from "@/components/ui/Label"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/Card"
 import { GitHubLoginButton } from "@/components/auth/GitHubLoginButton"
+import { settleLocaleAfterLogin } from "@/i18n/locale-preference"
 import NextLink from "next/link"
 
 type LoginMode = "password" | "code"
 
 export function LoginForm() {
   const t = useTranslations("auth")
+  const locale = useLocale()
+  const pathname = usePathname()
   const router = useRouter()
   const {
     login,
@@ -48,8 +51,14 @@ export function LoginForm() {
     hydrateChallenge()
   }, [hydrateChallenge])
 
-  const handleSendCode = async () => {
-    if (!email || countdown > 0) return
+  // 登录页选的语言就是这次登录后的语言：Cookie 管当前设备（中间件读它），
+  // 账号偏好管跨设备（换设备登录时由 settleLocaleAfterLogin 跟随）。
+  const finishLogin = async () => {
+    const redirected = await settleLocaleAfterLogin(locale, pathname)
+    if (!redirected) router.push("/")
+  }
+
+  const handleSendCode = async () => {    if (!email || countdown > 0) return
     setSendingCode(true)
     try {
       await authApi.sendEmailCode({ email })
@@ -72,7 +81,7 @@ export function LoginForm() {
       }
       // 需要二次验证时先不跳转，页面上会切成挑战步骤
       if (useAuthStore.getState().twoFactorChallengeToken) return
-      router.push("/")
+      finishLogin()
     } catch {
       // error is set in store
     }
@@ -90,7 +99,7 @@ export function LoginForm() {
     clearError()
     try {
       await verifyTwoFactor(twoFactorCode.trim(), trustDevice)
-      router.push("/")
+      finishLogin()
     } catch {
       setTwoFactorCode("")
     }

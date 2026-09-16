@@ -165,7 +165,9 @@ describe("direct chat response lifecycle", () => {
 
     await useChatStore.getState().sendDirect("请解释这篇论文", "test-model", provider)
 
-    expect(useChatStore.getState().directChats[0]?.title).toBe("新对话")
+    // 占位标题不再写死中文：未生成标题时 title 为空，由界面按当前语言兜底显示
+    expect(useChatStore.getState().directChats[0]?.title).toBe("")
+    expect(useChatStore.getState().directChats[0]?.isUntitled).toBe(true)
     expect(useChatStore.getState().directChats[0]?.messages.at(-1)).toMatchObject({
       content: "正常回复",
       status: "complete",

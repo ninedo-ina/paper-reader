@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
+import { withIntl } from "@/test/intl"
 import { QrCodeCard } from "@/components/settings/QrCodeCard"
 
 // 二维码本体由 canvas 绘制，jsdom 里跑不了，这里只锁住「交给 qrcode 的配色」
@@ -18,7 +19,7 @@ describe("qr code card", () => {
 
   it("asks for dark modules on a white background, whatever the theme", async () => {
     toDataURL.mockResolvedValue("data:image/png;base64,AAAA")
-    render(<QrCodeCard value="otpauth://totp/demo?secret=ABC" />)
+    render(withIntl(<QrCodeCard value="otpauth://totp/demo?secret=ABC" />))
 
     expect(await screen.findByAltText("两步验证二维码")).toBeTruthy()
     expect(toDataURL).toHaveBeenCalledTimes(1)
@@ -33,7 +34,7 @@ describe("qr code card", () => {
 
   it("wraps the code in a rounded white card instead of a bare dark block", async () => {
     toDataURL.mockResolvedValue("data:image/png;base64,AAAA")
-    const { container } = render(<QrCodeCard value="otpauth://totp/demo?secret=ABC" />)
+    const { container } = render(withIntl(<QrCodeCard value="otpauth://totp/demo?secret=ABC" />))
     await screen.findByAltText("两步验证二维码")
 
     const card = container.firstElementChild as HTMLElement
@@ -50,7 +51,7 @@ describe("qr code card", () => {
 
   it("points at the manual key when the code cannot be generated", async () => {
     toDataURL.mockRejectedValue(new Error("boom"))
-    render(<QrCodeCard value="otpauth://totp/demo?secret=ABC" />)
+    render(withIntl(<QrCodeCard value="otpauth://totp/demo?secret=ABC" />))
 
     expect(await screen.findByText(/二维码生成失败/)).toBeTruthy()
     expect(screen.queryByAltText("两步验证二维码")).toBeNull()

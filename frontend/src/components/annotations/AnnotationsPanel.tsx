@@ -111,12 +111,12 @@ export function AnnotationsPanel({ activeAnnotationId, onSelect, onClose, onNavi
             <div className="flex items-center gap-2 mt-1">
               {tab === "all" && (
                 <span className="text-[10px] text-[var(--text-tertiary)]">
-                  Paper #{ann.paperId} · 第{ann.pageNumber}页
+                  {t("annotation.paperPageRef", { id: ann.paperId, page: ann.pageNumber })}
                 </span>
               )}
               {tab === "current" && ann.pageNumber != null && (
                 <span className="text-[10px] text-[var(--text-tertiary)]">
-                  第{ann.pageNumber}页
+                  {t("annotation.pageRef", { page: ann.pageNumber })}
                 </span>
               )}
               <span className="text-[10px] text-[var(--text-tertiary)]">
@@ -140,7 +140,7 @@ export function AnnotationsPanel({ activeAnnotationId, onSelect, onClose, onNavi
       <div className="px-4 py-3 border-b border-[var(--border-subtle)]">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-[var(--text-primary)]">
-            {t("nav.annotations") || "Annotations"}
+            {t("nav.annotations")}
           </h2>
           {onClose && (
             <button onClick={onClose}
@@ -162,7 +162,7 @@ export function AnnotationsPanel({ activeAnnotationId, onSelect, onClose, onNavi
                   : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]",
               )}
             >
-              {tt === "current" ? "当前论文批注" : "全部批注"}
+              {tt === "current" ? t("annotation.currentPaperAnnotations") : t("annotation.allAnnotations")}
             </button>
           ))}
         </div>

@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import { addComment, listComments, deleteComment } from "@/lib/api/annotations"
 import type { AnnotationCommentDto } from "@/lib/api/types"
 import { useToastStore } from "@/stores/toast-store"
+import { useTranslations } from "next-intl"
 
 interface CommentThreadProps {
   annotationId: number
@@ -18,6 +19,7 @@ export function CommentThread({ annotationId }: CommentThreadProps) {
   const [replyTo, setReplyTo] = useState<number | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const addToast = useToastStore((s) => s.addToast)
+  const t = useTranslations("annotation")
 
   useEffect(() => {
     setLoading(true)
@@ -39,11 +41,11 @@ export function CommentThread({ annotationId }: CommentThreadProps) {
       setInput("")
       setReplyTo(null)
     } catch {
-      addToast({ message: "评论失败", type: "error" })
+      addToast({ message: t("commentFailed"), type: "error" })
     } finally {
       setSubmitting(false)
     }
-  }, [annotationId, input, replyTo, addToast])
+  }, [annotationId, input, replyTo, addToast, t])
 
   // Build a tree: top-level comments and their replies
   const topLevel = comments.filter((c) => !c.parentId)
@@ -60,7 +62,7 @@ export function CommentThread({ annotationId }: CommentThreadProps) {
   return (
     <div className="space-y-3">
       {topLevel.length === 0 && (
-        <p className="text-[11px] text-[var(--text-tertiary)] text-center py-2">暂无评论</p>
+        <p className="text-[11px] text-[var(--text-tertiary)] text-center py-2">{t("noComments")}</p>
       )}
       {topLevel.map((c) => (
         <div key={c.id} className="space-y-2">
@@ -75,7 +77,7 @@ export function CommentThread({ annotationId }: CommentThreadProps) {
               onClick={() => setReplyTo(replyTo === c.id ? null : c.id)}
               className="text-[10px] text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors"
             >
-              回复
+              {t("reply")}
             </button>
           </div>
           {/* Replies */}
@@ -97,7 +99,7 @@ export function CommentThread({ annotationId }: CommentThreadProps) {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") handleSubmit() }}
-                placeholder="回复..."
+                placeholder={t("replyPlaceholder")}
                 className="flex-1 text-[11.5px] px-2 py-1 rounded-md border border-[var(--border-subtle)] bg-[var(--surface-0)] text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]/30"
               />
               <button
@@ -118,7 +120,7 @@ export function CommentThread({ annotationId }: CommentThreadProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") handleSubmit() }}
-            placeholder="写评论..."
+            placeholder={t("commentPlaceholder")}
             className="flex-1 text-[11.5px] px-2.5 py-1.5 rounded-md border border-[var(--border-subtle)] bg-[var(--surface-0)] text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]/30"
           />
           <button

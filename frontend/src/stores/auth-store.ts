@@ -7,6 +7,7 @@ import * as authApi from "@/lib/api/auth"
 import type { TokenResponse, LoginRequest, EmailLoginRequest } from "@/lib/api/types"
 import { setTokens, clearTokens } from "@/lib/api/client"
 import { useUserStore } from "@/stores/user-store"
+import { runtimeTranslator } from "@/i18n/runtime"
 
 interface AuthState {
   // 状态
@@ -83,7 +84,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   verifyTwoFactor: async (code, trustDevice) => {
     const challengeToken = get().twoFactorChallengeToken
-    if (!challengeToken) throw new Error("两步验证会话已过期，请重新登录")
+    if (!challengeToken) throw new Error(runtimeTranslator("errors")("twoFactorExpired"))
     set({ isLoading: true, error: null })
     try {
       const tokens = await authApi.verifyTwoFactor({ challengeToken, code, trustDevice })

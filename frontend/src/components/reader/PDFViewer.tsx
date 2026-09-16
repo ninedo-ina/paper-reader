@@ -43,7 +43,7 @@ export function PDFViewer({ paper, onUploadClick }: PDFViewerProps) {
           {t("uploadPdf")}
         </button>
         <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
-          支持 PDF 直链 | 本地上传
+          {t("uploadHint")}
         </p>
       </div>
     </div>

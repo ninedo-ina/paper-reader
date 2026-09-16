@@ -1,7 +1,7 @@
 "use client";
 
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { LangToggle } from "@/components/ui/LangToggle";
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { NotificationDropdown } from "@/components/layout/NotificationDropdown";
 import { SearchDialog } from "@/components/layout/SearchDialog";
 import { UserMenu } from "@/components/layout/UserMenu";
@@ -18,7 +18,7 @@ export function Topbar({ onProfile, onPreferences }: TopbarProps) {
       <div className="flex-1" />
       <div className="flex items-center gap-1 ml-3">
         <SearchDialog />
-        <LangToggle />
+        <LanguageSwitcher />
         <NotificationDropdown />
         <ThemeToggle />
         <div className="ml-1">

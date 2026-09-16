@@ -52,6 +52,8 @@ const STORAGE_FIELDS: Record<StorageType, { key: string; label: string; required
 }
 
 export function StorageConfigDialog({ open, onClose }: StorageConfigDialogProps) {
+  const t = useTranslations("settings")
+  const tc = useTranslations("common")
   const { configs, isLoading, error: storeError, loadConfigs, createConfig, updateConfig, deleteConfig } = useStorageStore()
   const [editingId, setEditingId] = useState<number | null>(null)
   const [name, setName] = useState("")
@@ -113,9 +115,9 @@ export function StorageConfigDialog({ open, onClose }: StorageConfigDialogProps)
   }, [name, storageType, config, isDefault, editingId, createConfig, updateConfig, resetForm])
 
   const handleDelete = useCallback(async (id: number) => {
-    if (!confirm("确定删除此配置？已关联的论文将失去存储目标。")) return
+    if (!confirm(t("storageDeleteConfirm"))) return
     await deleteConfig(id)
-  }, [deleteConfig])
+  }, [deleteConfig, t])
 
   if (!open) return null
 
@@ -127,7 +129,7 @@ export function StorageConfigDialog({ open, onClose }: StorageConfigDialogProps)
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative glass-surface-strong rounded-xl border border-white/10 w-full max-w-lg mx-4 max-h-[80vh] flex flex-col shadow-2xl">
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-subtle)] shrink-0">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">存储配置</h2>
+          <h2 className="text-lg font-semibold text-[var(--text-primary)]">{t("storageTitle")}</h2>
           <button
             type="button"
             onClick={onClose}
@@ -161,7 +163,7 @@ export function StorageConfigDialog({ open, onClose }: StorageConfigDialogProps)
                       </span>
                       {cfg.isDefault && (
                         <span className="text-[10px] ml-1.5 px-1.5 py-0.5 rounded-full bg-[var(--accent)]/10 text-[var(--accent)]">
-                          默认
+                          {t("storageDefault")}
                         </span>
                       )}
                     </div>
@@ -184,14 +186,14 @@ export function StorageConfigDialog({ open, onClose }: StorageConfigDialogProps)
               ))}
 
               {configs.length === 0 && !isEditing && (
-                <p className="text-sm text-[var(--text-tertiary)] text-center py-4">暂无存储配置</p>
+                <p className="text-sm text-[var(--text-tertiary)] text-center py-4">{t("storageEmpty")}</p>
               )}
 
               {/* Edit/create form */}
               {isEditing ? (
                 <div className="rounded-lg border border-[var(--accent)]/30 bg-[var(--surface-0)] p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-[var(--text-primary)]">编辑配置</h3>
+                    <h3 className="text-sm font-semibold text-[var(--text-primary)]">{t("storageEditTitle")}</h3>
                     <button
                       onClick={resetForm}
                       className="p-0.5 rounded text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
@@ -201,13 +203,13 @@ export function StorageConfigDialog({ open, onClose }: StorageConfigDialogProps)
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-[var(--text-secondary)]">名称 *</label>
+                    <label className="text-xs font-medium text-[var(--text-secondary)]">{t("storageName")}</label>
                     <Input type="text" value={name} onChange={(e) => setName(e.target.value)} />
                   </div>
 
                   {!isEditing && (
                     <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-[var(--text-secondary)]">存储类型</label>
+                      <label className="text-xs font-medium text-[var(--text-secondary)]">{t("storageTypeLabel")}</label>
                       <select
                         value={storageType}
                         onChange={(e) => {
@@ -230,11 +232,11 @@ export function StorageConfigDialog({ open, onClose }: StorageConfigDialogProps)
                       onChange={(e) => setIsDefault(e.target.checked)}
                       className="rounded accent-[var(--accent)]"
                     />
-                    设为默认
+                    {t("storageSetDefault")}
                   </label>
 
                   <div className="border-t border-[var(--border-subtle)] pt-3 space-y-3">
-                    <p className="text-xs text-[var(--text-tertiary)] font-medium">{storageType} 配置</p>
+                    <p className="text-xs text-[var(--text-tertiary)] font-medium">{t("storageTypeConfig", { type: storageType })}</p>
                     {currentFields.map((field) => (
                       <div key={field.key} className="space-y-1">
                         <label className="text-xs text-[var(--text-tertiary)]">
@@ -251,10 +253,10 @@ export function StorageConfigDialog({ open, onClose }: StorageConfigDialogProps)
                   </div>
 
                   <div className="flex justify-end gap-2 pt-2">
-                    <Button variant="secondary" size="sm" onClick={resetForm}>取消</Button>
+                    <Button variant="secondary" size="sm" onClick={resetForm}>{tc("cancel")}</Button>
                     <Button size="sm" onClick={handleSave} disabled={isSaving || !name.trim()}>
                       {isSaving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4 mr-1" />}
-                      保存
+                      {tc("save")}
                     </Button>
                   </div>
                 </div>
@@ -265,7 +267,7 @@ export function StorageConfigDialog({ open, onClose }: StorageConfigDialogProps)
                   onClick={() => setEditingId(-1)}
                 >
                   <Plus className="size-4 mr-1.5" />
-                  添加新配置
+                  {t("storageAddNew")}
                 </Button>
               )}
             </>

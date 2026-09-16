@@ -1,3 +1,19 @@
+## v0.1.48 国际化语言切换
+
+- 本轮需求编号 `REQ-202609-0111`，从已发布的 v0.1.45 基线开 `feature/v0.1.46`。**加语言只改两处**：`frontend/src/i18n/locales.ts` 的 `LOCALES` / `LOCALE_META`，以及新增 `frontend/src/i18n/locales/<code>/common.json`。切换器、设置页、`<html lang/dir>`、浏览器语言协商都是从注册表读的，不要去组件里硬编码语言列表。
+- **切换语言必须走 `applyLocale()`（`src/i18n/switch-locale.ts`），它做整页跳转 `window.location.assign`，不能改成 `router.push`。** 根布局 `app/layout.tsx` 在 `app/[locale]/` **之上**，客户端软导航不会重渲染它——`<html lang>`、`<html dir>` 和 `NextIntlClientProvider` 的文案都会停在旧语言。登录页「语言切换点了没反应」就是这么来的，改回软导航会立刻复现。
+- **判断「用户选过语言」只能看 localStorage 的 `paperhelper.locale-chosen`，不能看 `NEXT_LOCALE` Cookie。** next-intl 中间件每次请求都会按协商结果把 Cookie 写上，Cookie 有值不代表用户选过；用 Cookie 判断会让「新设备登录跟随账号偏好」这条路径永远走不到。
+- Cookie 名是 `NEXT_LOCALE`，注册在 `src/i18n/routing.ts` 的 `localeCookie`，有效期一年。写 Cookie 的地方只有 `switch-locale.ts`，别在组件里另写一份 `document.cookie`。
+- `src/i18n/request.ts` 里那段 **Cookie 兜底不能删**：`/callback` 被 `src/middleware.ts` 刻意绕开了 intl 中间件，拿不到 locale 头，next-intl 自己也不读 Cookie（`getRequestLocale` 只认中间件头），删掉之后 GitHub 回调页会永远停在简体中文。同一文件里的 **`zh` 兜底合并也不能删**：任何一种语言缺键时靠它显示中文，而不是显示 key 名。
+- 组件外的文案（`src/lib/api/client.ts`、`src/lib/ai-provider.ts`、`src/lib/ai-chat-response.ts`、`src/lib/device.ts`、各 Zustand store）走 `runtimeTranslator()`（`src/i18n/runtime.ts`），消息表由根布局的 `RuntimeLocaleBridge` 在**渲染期**登记。**取文案要写在调用的函数里，不能提到模块顶层做常量**，否则语言切换后常量还是旧语言；`RuntimeLocaleBridge` 里那次赋值也别挪进 `useEffect`，否则首屏之后立刻发出的请求取不到消息表。
+- RTL（`ar` / `fa` / `ug`）靠两件事：根布局按 `LOCALE_META[locale].dir` 写 `<html dir>`，布局代码用 Tailwind 逻辑方向工具类（`ms-`/`me-`/`ps-`/`pe-`/`start-`/`end-`/`text-start`/`border-e`）。**新写布局时不要用 `ml-`/`pr-`/`left-`/`text-left`**，否则这三种语言下元素会钉死在左边。
+- `en` 是**兼容项**：需求给的 13 种语言里没有英文，但线上已有用户把偏好设成 `en`、`/en/*` 老链接也在用，所以保留在 `LOCALES` 末尾。**不要因为「需求没写」把它删掉**，删了这批用户和老链接一起失效。
+- 文案源是 `locales/zh/common.json`（828 条）。**任何语言包都必须与 zh 等键**，缺键会退回中文显示。批量翻译脚本在 `/tmp`（不入库），走的是外部代理、有 429 限流，翻译完必须抽查。
+- 后端 `UserSettings.language`（默认 `zh`）与 `GET/PUT /api/settings` 早就在，**本轮后端零改动**，只是前端开始真正读写它；偏好里的语言值前端用 `isAppLocale` 兜底，写进库的非法值只会被忽略、不会报错。
+- 本轮**无接口改动、无数据库迁移、无新依赖**，后端 Kotlin 代码未改，只随版本号重新构建与重启。
+- 本轮的收尾要把 v0.1.47 新增的几处中文并进 i18n：`ProfileDialog.tsx` 的「图片太大，请换一张 700KB 以内的图片」、`aria-label="更换头像"`、`placeholder="未绑定邮箱"` 都走 `t()`；`frontend/src/test/profile-dialog.test.tsx` 用 `src/test/intl.tsx` 的 `withIntl` 包一层。头像菜单的默认头像 / 点击外部收起逻辑原样保留，只是文案改为取消息表。
+- 本轮从 v0.1.47（`V15__widen_user_avatar.sql` 已在生产执行）之上展开，**分支里必须带着这个迁移文件**，否则 Flyway 会以 `Detected applied migration not resolved locally` 拒绝启动。
+
 ## v0.1.47 登录后的默认身份与个人中心邮箱
 
 - 本轮需求编号 `REQ-202609-0110`，分支 `feature/v0.1.47`，从 `f5c8838`（= 已发布的 v0.1.45 基线 = 当时的 `main`）快进展开。**并行需求 `REQ-202609-0111`（多语言，分支 `feature/v0.1.46`，worktree `/root/paper-reader.wt-req-202609-0111`）到本轮合并时仍全部未提交**，所以没有形成合并冲突；那条分支之后 rebase 时请把版本号往上走（不要退回 `0.1.46`），并把 `frontend/src/components/settings/ProfileDialog.tsx` 的默认头像 / 点击外部收起逻辑串进它已有的 i18n 结构、给 `frontend/src/test/profile-dialog.test.tsx` 包一层 `src/test/intl.tsx` 的 `withIntl`。**最要紧的一条：`V15__widen_user_avatar.sql` 已在生产执行，任何之后要部署的分支都必须包含这个文件**，否则 Flyway 会以 `Detected applied migration not resolved locally` 拒绝启动、整个后端起不来。核心症状是「登录之后个人中心用户名、邮箱、头像全是空的」，**根因在登录链路、不在个人中心组件**：根布局的 `SessionLoader` 只在整页加载时跑一次，登录成功走的是客户端路由跳转，不会重挂载根布局，于是 `useUserStore.profile` 一直是 `null`。修法是在 `stores/auth-store.ts` 的 `applyTokens` 成功后立刻 `loadProfile()`，**不要再把这个调用搬到 `LoginForm` / `SessionLoader` 里**，那两个文件正被 i18n 迭代改着，而且 `applyTokens` 是邮箱验证码、密码、GitHub 三条登录路径的唯一汇合点，放这里一次覆盖三条。`loadProfile` 内部用 `inflight` 对并发调用去重，重复调不会多打一次 `/auth/me`。

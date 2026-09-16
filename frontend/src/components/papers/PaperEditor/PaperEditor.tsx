@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import Placeholder from "@tiptap/extension-placeholder"
@@ -14,6 +15,8 @@ export interface PaperEditorProps {
 }
 
 export function PaperEditor({ paper, onSave }: PaperEditorProps) {
+  const t = useTranslations("papers")
+  const tc = useTranslations("common")
   const [isSaving, setIsSaving] = useState(false)
 
   const editor = useEditor({
@@ -22,7 +25,7 @@ export function PaperEditor({ paper, onSave }: PaperEditorProps) {
         heading: { levels: [1, 2, 3] },
       }),
       Placeholder.configure({
-        placeholder: "Start writing your paper...",
+        placeholder: t("editorPlaceholder"),
       }),
     ],
     content: paper.abstractText || "",
@@ -58,7 +61,7 @@ export function PaperEditor({ paper, onSave }: PaperEditorProps) {
             ) : (
               <Save className="size-4" />
             )}
-            <span className="ml-1.5">Save</span>
+            <span className="ml-1.5">{tc("save")}</span>
           </Button>
         )}
       </div>

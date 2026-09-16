@@ -1,112 +1,113 @@
 import type { Category } from "@/lib/api/types"
 
+export interface CategoryOption {
+  /** Translation key inside the `categories` namespace. */
+  labelKey: string
+  value: string
+}
+
 export interface CategoryField {
   key: string
-  label: string
-  labelEn: string
+  /** Translation key inside the `categories` namespace. */
+  labelKey: string
   type: "text" | "select" | "date" | "textarea"
   required?: boolean
-  options?: { label: string; value: string }[]
-  placeholder?: string
+  options?: CategoryOption[]
+  /** Translation key inside the `categories` namespace. */
+  placeholderKey?: string
 }
 
 export interface CategoryDef {
   value: Category
-  label: string
-  labelEn: string
+  /** Translation key inside the `categories` namespace. */
+  labelKey: string
   fields: CategoryField[]
 }
 
 export const CATEGORIES: CategoryDef[] = [
   {
     value: "THESIS",
-    label: "学位论文",
-    labelEn: "Thesis / Dissertation",
+    labelKey: "thesis.label",
     fields: [
-      { key: "degreeType", label: "学位类型", labelEn: "Degree Type", type: "select", required: true, options: [
-        { label: "博士", value: "doctor" },
-        { label: "硕士", value: "master" },
-        { label: "学士", value: "bachelor" },
+      { key: "degreeType", labelKey: "thesis.fields.degreeType.label", type: "select", required: true, options: [
+        { labelKey: "thesis.fields.degreeType.options.doctor", value: "doctor" },
+        { labelKey: "thesis.fields.degreeType.options.master", value: "master" },
+        { labelKey: "thesis.fields.degreeType.options.bachelor", value: "bachelor" },
       ]},
-      { key: "advisor", label: "导师", labelEn: "Advisor", type: "text", required: true },
-      { key: "university", label: "学校/机构", labelEn: "University", type: "text", required: true },
-      { key: "major", label: "专业", labelEn: "Major", type: "text" },
+      { key: "advisor", labelKey: "thesis.fields.advisor.label", type: "text", required: true },
+      { key: "university", labelKey: "thesis.fields.university.label", type: "text", required: true },
+      { key: "major", labelKey: "thesis.fields.major.label", type: "text" },
     ],
   },
   {
     value: "JOURNAL",
-    label: "期刊会议论文",
-    labelEn: "Journal / Conference",
+    labelKey: "journal.label",
     fields: [
-      { key: "journalName", label: "期刊/会议名称", labelEn: "Journal / Conference Name", type: "text", required: true },
-      { key: "volume", label: "卷号", labelEn: "Volume", type: "text" },
-      { key: "issue", label: "期号", labelEn: "Issue", type: "text" },
-      { key: "pages", label: "页码", labelEn: "Pages", type: "text" },
-      { key: "issnIsbn", label: "ISSN/ISBN", labelEn: "ISSN/ISBN", type: "text" },
-      { key: "indexing", label: "收录情况", labelEn: "Indexing", type: "select", options: [
-        { label: "SCI", value: "SCI" },
-        { label: "EI", value: "EI" },
-        { label: "SSCI", value: "SSCI" },
-        { label: "北大核心", value: "PKU_CORE" },
-        { label: "CSSCI", value: "CSSCI" },
-        { label: "其他", value: "OTHER" },
+      { key: "journalName", labelKey: "journal.fields.journalName.label", type: "text", required: true },
+      { key: "volume", labelKey: "journal.fields.volume.label", type: "text" },
+      { key: "issue", labelKey: "journal.fields.issue.label", type: "text" },
+      { key: "pages", labelKey: "journal.fields.pages.label", type: "text" },
+      { key: "issnIsbn", labelKey: "journal.fields.issnIsbn.label", type: "text" },
+      { key: "indexing", labelKey: "journal.fields.indexing.label", type: "select", options: [
+        { labelKey: "journal.fields.indexing.options.SCI", value: "SCI" },
+        { labelKey: "journal.fields.indexing.options.EI", value: "EI" },
+        { labelKey: "journal.fields.indexing.options.SSCI", value: "SSCI" },
+        { labelKey: "journal.fields.indexing.options.PKU_CORE", value: "PKU_CORE" },
+        { labelKey: "journal.fields.indexing.options.CSSCI", value: "CSSCI" },
+        { labelKey: "journal.fields.indexing.options.OTHER", value: "OTHER" },
       ]},
     ],
   },
   {
     value: "PREPRINT",
-    label: "预印本",
-    labelEn: "Preprint",
+    labelKey: "preprint.label",
     fields: [
-      { key: "platform", label: "预印本平台", labelEn: "Platform", type: "select", required: true, options: [
-        { label: "arXiv", value: "arxiv" },
-        { label: "bioRxiv", value: "biorxiv" },
-        { label: "SSRN", value: "ssrn" },
-        { label: "ResearchGate", value: "researchgate" },
-        { label: "其他", value: "other" },
+      { key: "platform", labelKey: "preprint.fields.platform.label", type: "select", required: true, options: [
+        { labelKey: "preprint.fields.platform.options.arxiv", value: "arxiv" },
+        { labelKey: "preprint.fields.platform.options.biorxiv", value: "biorxiv" },
+        { labelKey: "preprint.fields.platform.options.ssrn", value: "ssrn" },
+        { labelKey: "preprint.fields.platform.options.researchgate", value: "researchgate" },
+        { labelKey: "preprint.fields.platform.options.other", value: "other" },
       ]},
-      { key: "versionNumber", label: "版本号", labelEn: "Version Number", type: "text" },
-      { key: "doiStatus", label: "DOI 状态", labelEn: "DOI Status", type: "select", options: [
-        { label: "有 DOI", value: "has_doi" },
-        { label: "暂无 DOI", value: "no_doi" },
+      { key: "versionNumber", labelKey: "preprint.fields.versionNumber.label", type: "text" },
+      { key: "doiStatus", labelKey: "preprint.fields.doiStatus.label", type: "select", options: [
+        { labelKey: "preprint.fields.doiStatus.options.has_doi", value: "has_doi" },
+        { labelKey: "preprint.fields.doiStatus.options.no_doi", value: "no_doi" },
       ]},
     ],
   },
   {
     value: "COURSE",
-    label: "课程论文",
-    labelEn: "Course Paper",
+    labelKey: "course.label",
     fields: [
-      { key: "courseName", label: "课程名称", labelEn: "Course Name", type: "text", required: true },
-      { key: "instructor", label: "授课教师", labelEn: "Instructor", type: "text" },
-      { key: "university", label: "学校", labelEn: "University", type: "text" },
-      { key: "semester", label: "学期", labelEn: "Semester", type: "text", placeholder: "例: 2024-2025 秋季学期" },
+      { key: "courseName", labelKey: "course.fields.courseName.label", type: "text", required: true },
+      { key: "instructor", labelKey: "course.fields.instructor.label", type: "text" },
+      { key: "university", labelKey: "course.fields.university.label", type: "text" },
+      { key: "semester", labelKey: "course.fields.semester.label", type: "text", placeholderKey: "course.fields.semester.placeholder" },
     ],
   },
   {
     value: "TECH_REPORT",
-    label: "研究报告",
-    labelEn: "Technical Report",
+    labelKey: "tech_report.label",
     fields: [
-      { key: "institution", label: "研究机构", labelEn: "Institution", type: "text", required: true },
-      { key: "reportNumber", label: "报告编号", labelEn: "Report Number", type: "text" },
-      { key: "projectName", label: "项目名称", labelEn: "Project Name", type: "text" },
+      { key: "institution", labelKey: "tech_report.fields.institution.label", type: "text", required: true },
+      { key: "reportNumber", labelKey: "tech_report.fields.reportNumber.label", type: "text" },
+      { key: "projectName", labelKey: "tech_report.fields.projectName.label", type: "text" },
     ],
   },
   {
     value: "PATENT",
-    label: "专利文献",
-    labelEn: "Patent",
+    labelKey: "patent.label",
     fields: [
-      { key: "patentNumber", label: "专利号", labelEn: "Patent Number", type: "text", required: true },
-      { key: "patentType", label: "专利类型", labelEn: "Patent Type", type: "select", required: true, options: [
-        { label: "发明专利", value: "invention" },
-        { label: "实用新型", value: "utility_model" },
-        { label: "外观设计", value: "design" },
+      { key: "patentNumber", labelKey: "patent.fields.patentNumber.label", type: "text", required: true },
+      { key: "patentType", labelKey: "patent.fields.patentType.label", type: "select", required: true, options: [
+        { labelKey: "patent.fields.patentType.options.invention", value: "invention" },
+        { labelKey: "patent.fields.patentType.options.utility_model", value: "utility_model" },
+        { labelKey: "patent.fields.patentType.options.design", value: "design" },
       ]},
-      { key: "applicationDate", label: "申请日期", labelEn: "Application Date", type: "date" },
-      { key: "grantDate", label: "授权日期", labelEn: "Grant Date", type: "date" },
-      { key: "patentHolder", label: "专利权人", labelEn: "Patent Holder", type: "text" },
+      { key: "applicationDate", labelKey: "patent.fields.applicationDate.label", type: "date" },
+      { key: "grantDate", labelKey: "patent.fields.grantDate.label", type: "date" },
+      { key: "patentHolder", labelKey: "patent.fields.patentHolder.label", type: "text" },
     ],
   },
 ]

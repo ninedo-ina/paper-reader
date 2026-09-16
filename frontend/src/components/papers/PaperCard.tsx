@@ -31,6 +31,7 @@ interface PaperCardProps {
 
 export function PaperCard({ paper, isActive, onClick, onDelete, onTag, onShare }: PaperCardProps) {
   const t = useTranslations("papers")
+  const tcat = useTranslations("categories")
   const menuRef = useRef<HTMLButtonElement>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const { toggleFavorite } = usePaperStore()
@@ -116,7 +117,7 @@ export function PaperCard({ paper, isActive, onClick, onDelete, onTag, onShare }
             <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0"
               style={{ background: `${accentColor}15`, color: accentColor }}
             >
-              {catDef?.label ?? paper.category}
+              {catDef ? tcat(catDef.labelKey) : paper.category}
             </span>
             <button
               ref={menuRef}

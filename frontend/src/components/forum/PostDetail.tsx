@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
+import { formatRelativeTime } from "@/lib/relative-time"
 import { ArrowLeft, ThumbsUp, Star, MessageCircle, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUserStore } from "@/stores/user-store"
@@ -18,6 +19,7 @@ interface Props {
 export function PostDetailView({ post, onBack, onUpdate }: Props) {
   const tf = useTranslations("forum")
   const tc = useTranslations("common")
+  const locale = useLocale()
   const profile = useUserStore((s) => s.profile)
   const addToast = useToastStore((s) => s.addToast)
   const [replyContent, setReplyContent] = useState("")
@@ -115,7 +117,7 @@ export function PostDetailView({ post, onBack, onUpdate }: Props) {
               <h1 className="text-[17px] font-semibold text-[var(--text-primary)]">{post.title}</h1>
               <div className="flex items-center gap-2 mt-1 text-[12px] text-[var(--text-tertiary)]">
                 <span>{post.username}</span>
-                <span>{formatTime(post.createdAt)}</span>
+                <span>{formatRelativeTime(post.createdAt, tc, locale)}</span>
                 {isOwner && (
                   <button
                     onClick={handleDelete}
@@ -167,7 +169,7 @@ export function PostDetailView({ post, onBack, onUpdate }: Props) {
         {/* Comments section */}
         <div className="border-t border-[var(--border-subtle)]">
           <div className="px-4 py-3 text-[13px] font-semibold text-[var(--text-secondary)]">
-            {post.comments.length > 0 ? `${post.comments.length} 条评论` : tf("noComments")}
+            {post.comments.length > 0 ? tf("commentCount", { count: post.comments.length }) : tf("noComments")}
           </div>
 
           {/* New reply input */}
@@ -213,6 +215,8 @@ export function PostDetailView({ post, onBack, onUpdate }: Props) {
 }
 
 function CommentItem({ comment, replies }: { comment: Comment; replies: Comment[] }) {
+  const tc = useTranslations("common")
+  const locale = useLocale()
   return (
     <div className="flex items-start gap-2.5">
       <div className="w-7 h-7 rounded-full bg-[var(--accent)]/10 flex items-center justify-center shrink-0 text-[11px] font-semibold text-[var(--accent)]">
@@ -221,7 +225,7 @@ function CommentItem({ comment, replies }: { comment: Comment; replies: Comment[
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-[12px] font-medium text-[var(--text-secondary)]">{comment.username}</span>
-          <span className="text-[11px] text-[var(--text-tertiary)]">{formatTime(comment.createdAt)}</span>
+          <span className="text-[11px] text-[var(--text-tertiary)]">{formatRelativeTime(comment.createdAt, tc, locale)}</span>
         </div>
         <div className="mt-0.5 text-[13px] text-[var(--text-primary)]">{comment.content}</div>
         {replies.length > 0 && (
@@ -236,16 +240,3 @@ function CommentItem({ comment, replies }: { comment: Comment; replies: Comment[
   )
 }
 
-function formatTime(iso: string): string {
-  const d = new Date(iso)
-  const now = new Date()
-  const diff = now.getTime() - d.getTime()
-  const minutes = Math.floor(diff / 60000)
-  if (minutes < 1) return "刚刚"
-  if (minutes < 60) return `${minutes}分钟前`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}小时前`
-  const days = Math.floor(hours / 24)
-  if (days < 30) return `${days}天前`
-  return d.toLocaleDateString("zh-CN")
-}

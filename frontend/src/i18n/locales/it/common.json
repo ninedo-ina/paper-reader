@@ -1,0 +1,1138 @@
+{
+  "app": {
+    "name": "PaperHelper",
+    "tagline": "Piattaforma di lettura online di articoli accademici",
+    "description": "Piattaforma basata su GROBID per la lettura online, l'annotazione, le note e la lettura assistita dall'IA di articoli accademici"
+  },
+  "nav": {
+    "library": "La mia libreria",
+    "upload": "Carica articolo",
+    "history": "Cronologia letture",
+    "notes": "Le mie note",
+    "annotations": "Annotazioni articoli",
+    "created": "I miei articoli",
+    "tags": "Tag",
+    "settings": "Preferenze",
+    "circle": "Comunità scientifica",
+    "chats": "Chat di gruppo e messaggi privati",
+    "sectionLibrary": "Libreria",
+    "sectionDiscover": "Scopri",
+    "sectionCommunication": "Comunicazione"
+  },
+  "reader": {
+    "uploadPdf": "Carica PDF",
+    "openUrl": "Apri link",
+    "dragOrClick": "Trascina qui un file PDF o fai clic per caricarlo",
+    "page": "Pagina",
+    "zoom": "Zoom",
+    "search": "Cerca nel testo",
+    "noPaperSelected": "Carica un articolo dal pannello a sinistra o seleziona un articolo già caricato per iniziare a leggere",
+    "createPaper": "Crea articolo",
+    "paperTitle": "Titolo dell'articolo",
+    "paperTitlePlaceholder": "Inserisci il titolo dell'articolo",
+    "paperAuthors": "Autori",
+    "paperAuthorsPlaceholder": "Nomi degli autori",
+    "paperParticipants": "Partecipanti",
+    "paperParticipantsPlaceholder": "Nomi dei partecipanti",
+    "paperAbstract": "Riassunto",
+    "paperAbstractPlaceholder": "Inserisci o incolla il riassunto...",
+    "creating": "Creazione in corso...",
+    "readingSessions": "Sessioni di lettura recenti",
+    "paperCategory": "Categoria",
+    "extraFieldsSuffix": "— Campi specifici",
+    "storageLocationHint": "Seleziona la posizione di archiviazione dell'articolo (opzionale)",
+    "noStorageConfigHint": "Nessuna configurazione di archiviazione disponibile, puoi crearne una nelle impostazioni",
+    "storageConfig": "Configurazione di archiviazione",
+    "noStorage": "Non utilizzare archiviazione",
+    "createStepBasic": "Informazioni di base",
+    "createStepFields": "Campi di classificazione",
+    "createStepStorage": "Configurazione di archiviazione",
+    "layoutSingle": "Pagina singola",
+    "layoutTwo": "Due colonne",
+    "layoutThree": "Tre colonne",
+    "layoutFour": "Quattro colonne",
+    "layoutSix": "Sei colonne",
+    "createAnnotationFailed": "Creazione dell'annotazione non riuscita",
+    "createNoteFailed": "Creazione della nota non riuscita",
+    "copyTitleSuccess": "Titolo dell'articolo copiato",
+    "copyTitleHint": "Fai clic per copiare il titolo dell'articolo",
+    "switchToDark": "Passa alla modalità scura",
+    "switchToLight": "Passa alla modalità chiara",
+    "pageLayout": "Layout di pagina",
+    "exitFullscreen": "Esci da schermo intero",
+    "enterFullscreen": "Lettura a schermo intero",
+    "uploadHint": "Supporta link diretto PDF | Caricamento locale",
+    "urlTitleOptional": "Titolo (opzionale)"
+  },
+  "paper": {
+    "basicInfo": "Informazioni di base",
+    "versionHistory": "Cronologia versioni",
+    "storageInfo": "Informazioni di archiviazione",
+    "publish": "Pubblica",
+    "publishVersion": "Pubblica versione",
+    "versionNumber": "Numero versione",
+    "versionRemark": "Nota",
+    "publishNewVersion": "Pubblica nuova versione",
+    "noVersions": "Nessuna versione registrata",
+    "createFirstVersion": "Fai clic su «Pubblica» per creare la prima versione",
+    "storageConfig": "Configurazione di archiviazione",
+    "storageType": "Tipo di archiviazione",
+    "noStorage": "Nessuna configurazione di archiviazione associata",
+    "noStorageHint": "Quando si pubblica una versione, non è necessario inviarla a una piattaforma di archiviazione",
+    "details": "Dettagli",
+    "downloadPdf": "Scarica PDF",
+    "default": "Predefinito",
+    "yes": "Sì",
+    "no": "No",
+    "pushStatus": "Stato push",
+    "viewDetails": "Visualizza dettagli",
+    "category": "Categoria",
+    "publishing": "Pubblicazione in corso...",
+    "selectStorage": "Seleziona la posizione di archiviazione dell'articolo (opzionale)",
+    "noStorageConfig": "Nessuna configurazione di archiviazione; puoi crearne una nelle impostazioni",
+    "back": "Indietro",
+    "tabInfo": "Informazioni di base",
+    "tabVersions": "Versioni precedenti",
+    "tabStorage": "Informazioni di archiviazione",
+    "detailSuffix": "— Dettagli",
+    "abstract": "Abstract",
+    "versionNumberPlaceholder": "Es.: 1.0, v2, 2024-01-draft",
+    "versionRemarkPlaceholder": "Descrizione versione (opzionale)"
+  },
+  "panel": {
+    "metadata": "Informazioni articolo",
+    "annotations": "Annotazioni",
+    "notes": "Note",
+    "aiChat": "Chat AI",
+    "annotationDeleted": "Annotazione eliminata",
+    "annotationDeleteFailed": "Eliminazione dell'annotazione non riuscita",
+    "noteDeleted": "Nota eliminata",
+    "noteDeleteFailed": "Eliminazione della nota non riuscita",
+    "annotationUpdated": "Annotazione aggiornata",
+    "annotationUpdateFailed": "Aggiornamento dell'annotazione non riuscito",
+    "noteUpdated": "Nota aggiornata",
+    "noteUpdateFailed": "Aggiornamento della nota non riuscito",
+    "emptyAnnotations": "Nessuna annotazione",
+    "emptyNotes": "Nessuna nota",
+    "editAnnotation": "Modifica annotazione",
+    "deleteAnnotation": "Elimina annotazione",
+    "editNote": "Modifica nota",
+    "deleteNote": "Elimina nota",
+    "quotedText": "Testo originale citato · Pagina {page}",
+    "comments": "Commenti",
+    "commentCount": "{count} commenti",
+    "expand": "Espandi pannello",
+    "collapse": "Comprimi pannello"
+  },
+  "metadata": {
+    "title": "Titolo",
+    "authors": "Autori",
+    "year": "Anno",
+    "journal": "Rivista",
+    "doi": "DOI",
+    "abstract": "Abstract",
+    "participants": "Partecipanti",
+    "category": "Categoria",
+    "extraFields": "Campi aggiuntivi",
+    "sourceType": "Tipo di fonte",
+    "sourceUrl": "URL di origine",
+    "pageCount": "Numero di pagine",
+    "fileSize": "Dimensione file",
+    "id": "ID",
+    "createdAt": "Data di creazione",
+    "updatedAt": "Data di aggiornamento",
+    "publicationInfo": "Informazioni di pubblicazione",
+    "fileInfo": "Informazioni file",
+    "systemInfo": "Informazioni di sistema",
+    "grobidResult": "Analisi GROBID",
+    "edit": "Modifica",
+    "editing": "In modifica",
+    "noAbstract": "Nessun abstract disponibile",
+    "noExtraFields": "Nessun campo aggiuntivo",
+    "enrichMetadata": "Arricchisci/Aggiorna metadati",
+    "identifierPlaceholder": "ID arXiv o DOI (opzionale)",
+    "metadataPreview": "Anteprima arricchimento metadati",
+    "metadataPreviewHint": "Per impostazione predefinita seleziona solo i campi vuoti; conferma i valori in conflitto prima di applicare",
+    "applyMetadata": "Applica i campi selezionati",
+    "noMetadataCandidates": "Nessun campo candidato applicabile in sicurezza",
+    "noExactIdentifier": "Nessun identificatore esatto riconosciuto",
+    "closeMetadataPreview": "Chiudi anteprima",
+    "dismissMetadataError": "Chiudi avviso di errore",
+    "selectPaper": "Seleziona un articolo",
+    "metadataLookupFailed": "Ricerca dei metadati non riuscita",
+    "metadataApplyFailed": "Applicazione dei metadati non riuscita",
+    "metadataApplied": "Completati {count} campi",
+    "arxivId": "ID arXiv",
+    "arxivVersion": "Versione arXiv",
+    "arxivCategories": "Categorie arXiv",
+    "arxivPrimaryCategory": "Categoria principale",
+    "arxivComment": "Commento arXiv",
+    "submittedAt": "Prima presentazione",
+    "lastRevised": "Ultima revisione",
+    "repositoryDoi": "DOI del repository",
+    "publicationType": "Tipo di pubblicazione",
+    "publicationDate": "Data di pubblicazione",
+    "volume": "Volume",
+    "issue": "Numero",
+    "publicationPages": "Pagine di pubblicazione",
+    "articleNumber": "Numero articolo",
+    "publisher": "Editore",
+    "issn": "ISSN",
+    "isbn": "ISBN",
+    "licenseUrl": "Licenza",
+    "dblpKey": "Chiave DBLP",
+    "externalMetadata": "Metadati esterni",
+    "conflict": "Conflitto",
+    "currentValue": "Valore attuale: {value}",
+    "source": "Fonte",
+    "parseStatus": "Analisi full-text",
+    "parsePending": "In attesa di analisi",
+    "parseProcessing": "Analisi in corso",
+    "parseReady": "Completato",
+    "parseFailed": "Non riuscito: {error}",
+    "warning": {
+      "ARXIV_LOOKUP_FAILED": "Ricerca arXiv non riuscita; campi non applicati",
+      "REPOSITORY_DOI_UNVERIFIED": "DOI del repository arXiv non ancora confermato da DataCite",
+      "FORMAL_PUBLICATION_CANDIDATE": "Trovato un candidato alla pubblicazione formale; confermare volume e pagine prima di applicare",
+      "DOI_LOOKUP_FAILED": "Informazioni di registrazione DOI temporaneamente non disponibili",
+      "DBLP_PUBLICATION_CANDIDATE": "DBLP ha restituito un candidato alla pubblicazione formale; confermare prima di applicare",
+      "IDENTIFIER_METADATA_MISMATCH": "Identificativo esatto risolto, ma il titolo restituito differisce dall'articolo corrente; i campi interessati richiedono conferma manuale",
+      "NO_EXACT_IDENTIFIER": "Nessun ID arXiv o DOI esatto riconosciuto; i risultati della ricerca per titolo non verranno applicati automaticamente",
+      "NO_METADATA_CANDIDATES": "Nessuna fonte autorevole ha restituito campi da completare"
+    }
+  },
+  "annotation": {
+    "highlight": "Evidenzia",
+    "underline": "Sottolinea",
+    "strikethrough": "Barrato",
+    "note": "Nota",
+    "color": "Colore",
+    "addComment": "Aggiungi commento",
+    "delete": "Elimina",
+    "copySuccess": "Copiato",
+    "createAnnotation": "Crea annotazione",
+    "createNote": "Crea nota",
+    "askAi": "Chiedi all'IA",
+    "copyText": "Copia testo",
+    "editAnnotation": "Modifica annotazione",
+    "editNote": "Modifica nota",
+    "quotedText": "Testo citato",
+    "noteTitlePlaceholder": "Titolo della nota (facoltativo)",
+    "annotationPlaceholder": "Inserisci il contenuto dell'annotazione (formato Markdown supportato)...",
+    "notePlaceholder": "Inserisci il contenuto della nota (formato Markdown supportato)...",
+    "insertImage": "Inserisci immagine",
+    "paperPageRef": "Articolo #{id} · Pagina {page}",
+    "pageRef": "Pagina {page}",
+    "currentPaperAnnotations": "Annotazioni dell'articolo corrente",
+    "allAnnotations": "Tutte le annotazioni",
+    "commentFailed": "Commento non riuscito",
+    "reply": "Rispondi",
+    "replyPlaceholder": "Rispondi...",
+    "commentPlaceholder": "Scrivi la tua annotazione..."
+  },
+  "notes": {
+    "newNote": "Nuova nota",
+    "save": "Salva",
+    "exportPdf": "Esporta PDF",
+    "tags": "Tag",
+    "edit": "Modifica",
+    "preview": "Anteprima",
+    "noNotes": "Nessuna nota",
+    "totalNotes": "note",
+    "currentPaperNotes": "Note dell'articolo corrente",
+    "allNotes": "Tutte le note",
+    "paperPageRef": "Articolo #{id} · Pagina {page}",
+    "titlePlaceholder": "Titolo della nota...",
+    "contentPlaceholder": "Scrivi la tua nota in Markdown..."
+  },
+  "ai": {
+    "selectModel": "Seleziona modello",
+    "send": "Invia",
+    "placeholder": "Scrivi la tua domanda...",
+    "summarize": "Riassumi questo articolo",
+    "explain": "Spiega il contenuto selezionato",
+    "translate": "Traduci in cinese",
+    "emptyChat": "Inizia a chattare con l'IA per discutere il contenuto dell'articolo"
+  },
+  "auth": {
+    "login": "Accedi",
+    "loginUnifiedTitle": "Accedi / Crea un account",
+    "loginUnifiedSubtitle": "Accedendo ti registri: inizia subito il tuo viaggio nella lettura di articoli.",
+    "logout": "Esci",
+    "profile": "Profilo",
+    "email": "Email",
+    "password": "Password",
+    "code": "Codice di verifica",
+    "sendCode": "Invia codice",
+    "verifyCode": "Verifica e accedi",
+    "switchToCode": "Accedi con codice",
+    "switchToPassword": "Accedi con password",
+    "githubLogin": "Accedi con GitHub",
+    "emailPlaceholder": "Inserisci l'indirizzo email",
+    "passwordPlaceholder": "Inserisci la password",
+    "codePlaceholder": "Inserisci il codice di verifica",
+    "loggingIn": "Accesso in corso...",
+    "sendingCode": "Invio in corso...",
+    "codeSentCountdown": "Reinvia tra {seconds} secondi",
+    "error": "Accesso non riuscito",
+    "loginEyebrow": "Ogni lettura ti avvicina di più alle intuizioni",
+    "loginTagline": "Collega articoli, idee e ricerca futura",
+    "agreementPrefix": "Accedendo, accetti i",
+    "termsLink": "Termini di utilizzo",
+    "privacyLink": "l'Informativa sulla privacy di PaperHelper",
+    "and": "e",
+    "copyright": "© {year} PaperHelper. Tutti i diritti riservati.",
+    "previousSlide": "Slide precedente",
+    "nextSlide": "Slide successiva",
+    "slideNumber": "Slide introduttiva {number}",
+    "loginSlides": {
+      "discover": {
+        "title": "Scopri indizi chiave in una vasta mole di articoli",
+        "description": "Individua rapidamente gli studi che meritano una lettura approfondita, così le idee importanti non verranno sommerse dal fiume di informazioni."
+      },
+      "understand": {
+        "title": "Rendi chiari e leggibili i contenuti complessi",
+        "description": "Organizza riassunti, annotazioni e note in uno spazio di lettura dedicato e costruisci la tua rete di conoscenza."
+      },
+      "connect": {
+        "title": "Connetti le intuizioni in nuove direzioni di ricerca",
+        "description": "Segui le connessioni tra gli articoli e rendi ogni lettura il punto di partenza per la prossima scoperta."
+      }
+    },
+    "twoFactorTitle": "Autenticazione a due fattori",
+    "twoFactorSubtitle": "Questo account ha l'autenticazione a due fattori attiva. Inserisci il codice temporaneo a 6 cifre dall'app di autenticazione per completare l'accesso",
+    "twoFactorCode": "Codice temporaneo / codice di recupero",
+    "twoFactorCodePlaceholder": "Codice temporaneo a 6 cifre o un codice di recupero",
+    "twoFactorHint": "Non trovi l'app di autenticazione? Puoi inserire il codice di recupero salvato quando hai attivato l'autenticazione a due fattori.",
+    "twoFactorInvalid": "Codice temporaneo o codice di recupero non valido",
+    "trustDevice": "Considera attendibile questo dispositivo per saltare la verifica al prossimo accesso",
+    "verifyAndLogin": "Verifica e accedi",
+    "backToLogin": "Torna al login",
+    "callbackMissingCode": "Codice di autorizzazione mancante",
+    "callbackFailed": "Autenticazione non riuscita",
+    "callbackTwoFactor": "È richiesta la verifica in due passaggi...",
+    "callbackCompleting": "Completamento dell'accesso..."
+  },
+  "notification": {
+    "title": "Notifiche",
+    "systemTab": "Notifiche di sistema",
+    "appTab": "Notifiche dell'app",
+    "notifications": "notifiche",
+    "markAllRead": "Segna tutte come lette",
+    "viewVersion": "Scopri le funzionalità della versione",
+    "empty": "Nessuna notifica"
+  },
+  "version": {
+    "title": "Benvenuto in PaperHelper",
+    "subtitle": "La piattaforma tutto-in-uno per leggere e gestire articoli accademici",
+    "gotIt": "Ho capito",
+    "features": {
+      "upload": {
+        "title": "Caricamento e gestione degli articoli",
+        "desc": "Supporta il caricamento di PDF, l'importazione da URL e la creazione manuale degli articoli"
+      },
+      "annotate": {
+        "title": "Annotazioni di lettura",
+        "desc": "Evidenziazioni, sottolineature, note adesive e altri strumenti di annotazione"
+      },
+      "aiChat": {
+        "title": "Lettura assistita dall'AI",
+        "desc": "Dialoga con l'AI per riassumere, spiegare e tradurre il contenuto degli articoli"
+      },
+      "notify": {
+        "title": "Centro notifiche",
+        "desc": "Gestione separata di notifiche di sistema e notifiche dell'app"
+      },
+      "github": {
+        "title": "Più opzioni di accesso",
+        "desc": "Supporta l'accesso con email e password, codice di verifica e autorizzazione GitHub"
+      }
+    }
+  },
+  "theme": {
+    "light": "Modalità chiara",
+    "dark": "Modalità scura"
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "preferences": "Preferenze",
+    "theme": "Tema",
+    "language": "Lingua",
+    "languageHint": "Dopo la selezione, la lingua dell'interfaccia viene applicata subito e salvata nelle preferenze del tuo account",
+    "defaultModel": "Modello AI predefinito",
+    "saved": "Salvato",
+    "saveFailed": "Salvataggio non riuscito. Riprova più tardi.",
+    "back": "Indietro",
+    "qrFailed": "Generazione del codice QR non riuscita. Aggiorna la pagina e riprova.",
+    "qrAlt": "Codice QR per la verifica in due passaggi",
+    "copyAll": "Copia tutto",
+    "downloadTxt": "Scarica file TXT",
+    "recoveryCopied": "Codici di recupero copiati negli appunti",
+    "recoveryCopyFailed": "Copia non riuscita. Seleziona manualmente e copia.",
+    "recoveryDownloaded": "Codici di recupero scaricati come file txt",
+    "recoveryFileTitle": "PaperHelper · Codici di recupero per la verifica in due passaggi",
+    "recoveryFileAccount": "Account: {email}",
+    "recoveryFileGeneratedAt": "Data di generazione: {time}",
+    "recoveryFileNotice1": "Ogni codice di recupero può essere utilizzato una sola volta. Conservalo con cura.",
+    "recoveryFileNotice2": "Dopo aver disattivato la verifica in due passaggi, questi codici di recupero saranno immediatamente invalidati.",
+    "recoveryFileName": "PaperHelper-Codici-di-recupero-per-la-verifica-in-due-passaggi.txt",
+    "recoverySummary": "In totale {count} codici di recupero, ciascuno composto da 6 cifre e utilizzabile una sola volta. Usali per recuperare l'account se non riesci ad accedere quando la verifica in due passaggi non è abilitata.",
+    "recoverySaved": "Li ho salvati correttamente",
+    "otpLabel": "Codice OTP",
+    "otpDigitLabel": "{label} cifra {index}",
+    "otpOrRecoveryCode": "Codice OTP o codice di recupero",
+    "deviceLoadFailed": "Impossibile caricare l'elenco dei dispositivi",
+    "deviceRemoveFailed": "Impossibile rimuovere il dispositivo",
+    "deviceRemoved": "Rimossi {count} dispositivi; il dispositivo dovrà accedere di nuovo",
+    "deviceTitle": "Dispositivi attendibili",
+    "deviceEmpty": "Nessun dispositivo ha ancora eseguito l'accesso. Dopo aver attivato la verifica in due passaggi, i dispositivi attendibili potranno accedere di nuovo inserendo solo la password, senza codice dinamico.",
+    "deviceIntro": "Di seguito sono elencati i dispositivi che hanno eseguito l'accesso e sono stati salvati. Con la verifica in due passaggi attiva, i dispositivi attendibili possono accedere senza codice dinamico; dopo la rimozione, le credenziali di accesso già emesse per quel dispositivo diventano immediatamente non valide e sarà necessario accedere di nuovo.",
+    "deviceUnknown": "Dispositivo sconosciuto",
+    "deviceCurrent": "Dispositivo corrente",
+    "deviceTrusted": "Attendibile",
+    "deviceUnknownClient": "Client sconosciuto",
+    "deviceUnknownIp": "Sconosciuto",
+    "deviceLoginInfo": "IP {ip} · Ultimo accesso {time}",
+    "deviceTrustedUntil": " · Attendibile fino a {time}",
+    "deviceDeleting": "Rimozione in corso...",
+    "deviceDeleteSelected": "Rimuovi selezionati",
+    "deviceDeleteSelectedCount": "Rimuovi selezionati ({count})",
+    "deviceClearSelection": "Deseleziona",
+    "storageTitle": "Configurazione di archiviazione",
+    "storageDefault": "Predefinito",
+    "storageEmpty": "Nessuna configurazione di archiviazione",
+    "storageEditTitle": "Modifica configurazione",
+    "storageName": "Nome *",
+    "storageTypeLabel": "Tipo di archiviazione",
+    "storageSetDefault": "Imposta come predefinito",
+    "storageTypeConfig": "Configurazione {type}",
+    "storageAddNew": "Aggiungi nuova configurazione",
+    "storageDeleteConfirm": "Eliminare questa configurazione? I paper associati perderanno la destinazione di archiviazione.",
+    "aiConnectFailed": "Connessione non riuscita: {message}",
+    "aiActive": "Attivo",
+    "aiTestConnection": "Testa connessione",
+    "aiModelCount": "{count} modelli",
+    "aiNoModel": "Nessun modello",
+    "aiActivate": "Attiva questo Provider",
+    "aiAddProvider": "Aggiungi Provider",
+    "aiEditProvider": "Modifica Provider",
+    "aiName": "Nome",
+    "aiNamePlaceholder": "es. OpenAI, DeepSeek",
+    "aiBaseUrl": "Indirizzo richiesta (Base URL)",
+    "aiApiKey": "Chiave (API Key)",
+    "aiModels": "Elenco modelli (separati da virgola; se vuoto verranno recuperati con un test)",
+    "aiEmpty": "Nessun Provider configurato",
+    "aiEmptyHint": "Clicca sul pulsante sopra per aggiungere un Provider API compatibile con OpenAI",
+    "tfLoadFailed": "Impossibile caricare lo stato della verifica in due passaggi",
+    "tfEnabled": "Verifica in due passaggi attiva",
+    "tfDisabled": "Verifica in due passaggi non attiva",
+    "tfEnabledHint": "All'accesso è necessario inserire anche il codice dinamico di 6 cifre dell'autenticatore; i dispositivi attendibili possono saltare questo passaggio. Codici di recupero ancora disponibili: {remaining} / {total}.",
+    "tfDisabledHint": "Dopo l'attivazione, all'accesso occorrerà inserire, oltre alla password, il codice dinamico di 6 cifre dell'autenticatore; verranno inoltre forniti 9 codici di recupero per ripristinare l'account.",
+    "tfStart": "Associa e attiva scansionando il codice QR",
+    "tfSecretFailed": "Generazione della chiave non riuscita",
+    "tfNeedPassword": "Inserisci la password attuale",
+    "tfNeedCode": "Inserisci il codice dinamico a 6 cifre dall'app di autenticazione",
+    "tfEnabledToast": "Autenticazione a due fattori attivata",
+    "tfEnableFailed": "Attivazione non riuscita",
+    "tfSecretCopied": "Chiave copiata negli appunti",
+    "tfCopyFailed": "Copia non riuscita, seleziona e copia manualmente",
+    "tfStep1": "1. Scarica una qualsiasi app di autenticazione sul telefono (ad es. Google Authenticator, Microsoft Authenticator).",
+    "tfStep2": "2. Scansiona il codice QR sottostante oppure inserisci manualmente la chiave.",
+    "tfStep3": "3. Inserisci il codice dinamico a 6 cifre mostrato nell'app e la password attuale per completare l'associazione.",
+    "tfManualSecret": "Non riesci a scansionare? Inserisci manualmente la chiave",
+    "tfCopy": "Copia",
+    "tfAlgorithm": "Algoritmo SHA1 · {digits} cifre · aggiornamento ogni {period} secondi",
+    "tfCurrentPassword": "Password attuale",
+    "tfSixDigitCode": "Codice dinamico a 6 cifre",
+    "tfVerifying": "Verifica in corso...",
+    "tfConfirmEnable": "Conferma attivazione",
+    "tfRegenerate": "Rigenera i codici di recupero",
+    "tfRegenerateHint": "Inserisci la password attuale per rigenerare 9 codici di recupero",
+    "tfRegenerateFailed": "Generazione non riuscita",
+    "tfRegeneratedToast": "Codici di recupero rigenerati; i vecchi codici non saranno più validi",
+    "tfGenerating": "Generazione in corso...",
+    "tfConfirmGenerate": "Conferma generazione",
+    "tfDisable": "Disattiva l'autenticazione a due fattori",
+    "tfDisableHint": "Dopo la disattivazione, per accedere non servirà più il codice dinamico e i codici di recupero già emessi non saranno più validi. Conferma con password + codice dinamico; al posto del codice dinamico puoi usare un codice di recupero.",
+    "tfNeedPasswordAndCode": "Inserisci la password attuale e il codice dinamico",
+    "tfDisabledToast": "Autenticazione a due fattori disattivata; tutti i codici di recupero non sono più validi",
+    "tfDisableFailed": "Disattivazione non riuscita",
+    "tfProcessing": "Elaborazione in corso...",
+    "tfConfirmDisable": "Conferma disattivazione",
+    "tabInfo": "Informazioni di base",
+    "tabPassword": "Sicurezza password",
+    "tabTwoFactor": "Autenticazione a due fattori",
+    "tabDevices": "Dispositivi attendibili",
+    "tabAudit": "Registro di controllo",
+    "avatarUpdated": "Avatar aggiornato",
+    "avatarUpdateFailed": "Aggiornamento avatar non riuscito",
+    "imageUrlPlaceholder": "URL immagine...",
+    "uploadLocal": "Carica dal dispositivo",
+    "imageUrl": "Immagine da URL",
+    "profileUpdated": "Profilo aggiornato",
+    "updateFailed": "Aggiornamento non riuscito",
+    "displayName": "Nome visualizzato",
+    "email": "Email",
+    "saving": "Salvataggio in corso...",
+    "passwordAllFields": "Compila tutti i campi password",
+    "passwordTooShort": "La nuova password deve contenere almeno 6 caratteri",
+    "passwordMismatch": "Le nuove password non coincidono",
+    "passwordChanged": "Password modificata",
+    "passwordChangeFailed": "Modifica della password non riuscita",
+    "currentPassword": "Password attuale",
+    "newPassword": "Nuova password",
+    "confirmNewPassword": "Conferma nuova password",
+    "changing": "Modifica in corso...",
+    "changePassword": "Modifica password",
+    "auditTitle": "Registro di audit",
+    "auditEmpty": "Nessun log di audit. I log verranno mostrati qui dopo operazioni come l'accesso o la modifica della password.",
+    "auditIndex": "Numero",
+    "auditEvent": "Evento",
+    "auditOperator": "Operatore",
+    "auditTime": "Data/ora",
+    "loadingMore": "Caricamento...",
+    "loadMore": "Carica altro"
+  },
+  "preferences": {
+    "tabs": {
+      "ui": "Impostazioni interfaccia",
+      "ai": "Configurazione AI"
+    },
+    "searchPlaceholder": "Cerca impostazioni...",
+    "noMatch": "Nessuna corrispondenza",
+    "close": "Chiudi",
+    "language": "Lingua",
+    "languageHint": "Dopo la selezione, la lingua dell'interfaccia cambia subito e viene salvata nelle preferenze del tuo account",
+    "fontSize": "Dimensione carattere",
+    "fontSizeHint": "Impostazioni come la scalatura del carattere del lettore PDF (supportate in versioni future)"
+  },
+  "papers": {
+    "favorite": "Aggiungi ai preferiti",
+    "unfavorite": "Rimuovi dai preferiti",
+    "tags": "Tag",
+    "share": "Condividi",
+    "download": "Scarica",
+    "delete": "Elimina",
+    "moreActions": "Altre azioni",
+    "deleteTitle": "Elimina articolo",
+    "deleteConfirm": "Confermi di voler eliminare «{title}»?",
+    "deleteDescription": "Dopo l'eliminazione, il record dell'articolo e le relative annotazioni, note, cronologia di lettura e contenuti analizzati non potranno essere recuperati.",
+    "deleteOriginalFile": "Elimina anche il file originale",
+    "deleteOriginalFileHint": "Se selezionato, il server non conserverà una copia di questo file.",
+    "deleteRecordOnlyHint": "Se non selezionato, verrà eliminato solo il record in PaperHelper; il file originale sul server verrà conservato.",
+    "noOriginalFile": "Questo articolo non ha un file originale caricato: verranno eliminati solo il record dell'articolo in PaperHelper e i dati associati.",
+    "deleting": "Eliminazione in corso...",
+    "deleteSuccess": "Articolo eliminato",
+    "deleteFailed": "Eliminazione dell'articolo non riuscita",
+    "addTag": "Aggiungi tag",
+    "tagPlaceholder": "Inserisci il nome del tag",
+    "noTags": "Nessun tag",
+    "shareDescription": "Descrizione condivisione",
+    "shareDescriptionPlaceholder": "Aggiungi una descrizione...",
+    "shareHint": "Aggiungi una descrizione alla condivisione; dopo la conferma verrà copiata negli appunti",
+    "shareSuccess": "Copiato negli appunti: invialo subito ai tuoi amici su WeChat!",
+    "shareConfirm": "Conferma condivisione",
+    "paperInfo": "Informazioni articolo",
+    "pdfView": "Lettura PDF",
+    "allTab": "Tutti",
+    "createTab": "Creati",
+    "importTab": "Importati",
+    "favoriteTab": "Preferiti",
+    "saved": "Salvato",
+    "participants": "Partecipanti",
+    "noPaperSelected": "Carica un articolo dalla sinistra o seleziona un articolo già caricato per iniziare a leggere",
+    "createPaper": "Crea articolo",
+    "importPaper": "Importa articolo",
+    "refresh": "Aggiorna",
+    "close": "Chiudi",
+    "editorPlaceholder": "Inizia a scrivere il tuo articolo..."
+  },
+  "forum": {
+    "disciplines": "Discipline",
+    "selectDiscipline": "Seleziona una disciplina",
+    "selectTopic": "Seleziona un argomento",
+    "createPost": "Crea post",
+    "postTitle": "Titolo del post",
+    "postTitlePlaceholder": "Inserisci un titolo",
+    "postContent": "Contenuto",
+    "postContentPlaceholder": "Condividi i tuoi pensieri...",
+    "publish": "Pubblica",
+    "publishing": "Pubblicazione...",
+    "reply": "Rispondi",
+    "replyPlaceholder": "Scrivi la tua risposta...",
+    "submitReply": "Pubblica risposta",
+    "noPosts": "Nessun post",
+    "noComments": "Nessun commento",
+    "deletePost": "Elimina",
+    "deleteConfirm": "Sei sicuro di voler eliminare questo post?",
+    "loadMore": "Carica altro",
+    "back": "Torna al forum",
+    "like": "Mi piace",
+    "favorite": "Salva"
+  },
+  "chat": {
+    "privateMessages": "Messaggi privati",
+    "groupChats": "Chat di gruppo",
+    "recent": "Recenti",
+    "friends": "Amici",
+    "createGroup": "Crea gruppo",
+    "groupName": "Nome del gruppo",
+    "groupNamePlaceholder": "Inserisci il nome del gruppo",
+    "selectMembers": "Seleziona membri",
+    "searchMembers": "Cerca utenti",
+    "creating": "Creazione...",
+    "noContacts": "Nessun contatto",
+    "noMessages": "Nessun messaggio",
+    "noGroups": "Nessun gruppo",
+    "messagePlaceholder": "Scrivi un messaggio...",
+    "send": "Invia",
+    "selectChat": "Seleziona una conversazione per iniziare a chattare",
+    "followBack": "Segui anche tu",
+    "following": "Seguito"
+  },
+  "common": {
+    "loading": "Caricamento...",
+    "save": "Salva",
+    "cancel": "Annulla",
+    "delete": "Elimina",
+    "confirm": "Conferma",
+    "search": "Cerca",
+    "noData": "Nessun dato",
+    "myPapers": "La mia libreria",
+    "papers": "Articoli",
+    "error": "Errore",
+    "switchLanguage": "Cambia lingua",
+    "language": "Lingua",
+    "languageChanged": "La lingua dell'interfaccia è stata cambiata in {language}",
+    "edit": "Modifica",
+    "next": "Avanti",
+    "back": "Indietro",
+    "noComments": "Nessun commento",
+    "browser": "Browser",
+    "loadingEditor": "Caricamento editor..."
+  },
+  "legal": {
+    "back": "Torna all'accesso",
+    "terms": {
+      "title": "Termini di utilizzo",
+      "updatedAt": "Ultimo aggiornamento: settembre 2026",
+      "sections": [
+        {
+          "heading": "Accettazione e ambito dell'accordo",
+          "body": "Benvenuto su PaperHelper (di seguito “la Piattaforma” o “noi”). I presenti Termini di utilizzo (di seguito “i Termini”) costituiscono un accordo vincolante tra lei e il gestore di PaperHelper in merito all’uso dei servizi di lettura, gestione, annotazione e presa di appunti di articoli accademici, lettura assistita da AI, discussioni di ricerca, messaggi privati e altri servizi correlati offerti tramite la Piattaforma (di seguito “il Servizio”). Prima di registrare un account, effettuare l’accesso, visitare o utilizzare in qualsiasi modo il Servizio, la invitiamo a leggere con attenzione e comprendere appieno tutte le disposizioni dei presenti Termini, in particolare quelle evidenziate in grassetto che escludono o limitano la nostra responsabilità, limitano i suoi diritti, nonché le disposizioni sulla risoluzione delle controversie e sulla legge applicabile, poiché incidono in modo significativo sui diritti e sugli obblighi reciproci. Una volta completata la registrazione, cliccato il pulsante di accettazione, selezionata l’apposita opzione o accettato il Servizio mediante un’effettiva condotta d’uso, si considera che lei abbia letto, compreso e accettato di essere vincolato da tutte le disposizioni dei presenti Termini. Se non è d’accordo con qualsiasi contenuto dei presenti Termini, la invitiamo a interrompere immediatamente la registrazione o l’uso del Servizio. I presenti Termini si applicano ai servizi forniti tramite il sito web della Piattaforma e a eventuali future forme di servizio, quali client, mini-programmi, interfacce API e altre modalità."
+        },
+        {
+          "heading": "Definizioni",
+          "body": "Per agevolare la comprensione, nei presenti Termini i termini pertinenti sono definiti come segue: 1) “Utente” o “lei” indica la persona fisica o l’organizzazione che utilizza il Servizio tramite registrazione, accesso o altro metodo legale; 2) “Account” indica le credenziali ottenute registrandosi sulla Piattaforma per identificarla, incluse, a titolo esemplificativo, le credenziali di accesso tramite email e password e gli identificativi associati all’accesso single sign-on di terze parti o all’autorizzazione OAuth; 3) “Contenuto dell’Utente” indica qualsiasi contenuto caricato, importato, creato, modificato, annotato o altrimenti inviato dall’utente durante l’uso del Servizio, inclusi, a titolo esemplificativo, file di articoli accademici, documenti PDF, note, annotazioni, evidenziazioni, etichette, interventi nelle discussioni, messaggi privati, dati personali e altri materiali; 4) “Contenuto della Piattaforma” indica i contenuti creati, posseduti o concessi in licenza da noi o dai nostri licenzianti in relazione al Servizio, inclusi, a titolo esemplificativo, codice software, design dell’interfaccia, icone, marchi, testi, tutorial e database; 5) “Funzionalità assistite da AI” indica le funzionalità della Piattaforma basate su tecnologie di intelligenza artificiale, come riepiloghi, traduzioni, domande e risposte, interpretazioni e raccomandazioni correlate. Le definizioni di cui sopra servono unicamente a interpretare i presenti Termini e non pregiudicano il significato proprio dei termini giuridici pertinenti."
+        },
+        {
+          "heading": "Contenuto del Servizio",
+          "body": "Il Servizio è destinato principalmente a ricercatori, studenti e altri utenti che necessitano di leggere articoli accademici e collaborare alla ricerca, e offre funzionalità che includono, a titolo esemplificativo: caricamento e gestione di articoli e riferimenti bibliografici, lettura e annotazione di PDF, gestione di note ed etichette, ricerca e organizzazione di riferimenti basate sui metadati, riepiloghi e domande e risposte assistiti da AI, collegamento tra opere e costruzione di reti di conoscenza, discussioni in gruppi di ricerca, messaggi privati interni, centro notifiche e altro. Miglioriamo continuamente il Servizio e possiamo aggiungere, ottimizzare o disattivare alcune funzionalità senza preavviso. Lei comprende e accetta che funzionalità specifiche, interfaccia e modalità di interazione del Servizio possano essere modificate con gli aggiornamenti di versione e che, purché non incidano sui suoi diritti fondamentali, non siamo tenuti a informarla separatamente di ogni modifica. Per le funzionalità esplicitamente contrassegnate come “versione di test”, “Beta” o “sperimentali”, lei è consapevole che possono presentare problemi di stabilità o accuratezza limitata; deve usarle con cautela e valutare autonomamente i rischi derivanti."
+        },
+        {
+          "heading": "Registrazione e accesso all'account",
+          "body": "Può registrare un account sulla Piattaforma tramite email e password oppure, ove sussistano le condizioni, accedere tramite autorizzazione con account di terze parti supportati (come GitHub o altri sistemi di hosting di codice o di autenticazione unificata). Lei si impegna a fornire, in fase di registrazione e durante l’uso, informazioni veritiere, accurate e complete, aggiornandole tempestivamente in caso di modifiche. È suo obbligo custodire adeguatamente l’account, la password e le credenziali di accesso quali le credenziali API, e non può prestarle, noleggiarle, trasferirle, venderle o metterle a disposizione di terzi in alcun modo. Tutte le operazioni effettuate tramite il suo account si considerano compiute da lei, e lei si assume ogni responsabilità derivante. Se rileva uso non autorizzato dell’account, fuga di credenziali o altre anomalie, deve informarci immediatamente tramite i recapiti indicati nei presenti Termini; ci adopereremo per assisterla con misure di blocco, reimpostazione e protezione, ma non saremo responsabili, salvo quanto espressamente previsto dalla legge, per i danni già verificatisi prima della ricezione della notifica. Ci riserviamo il diritto di adottare misure quali avvisi, limitazione delle funzionalità, sospensione o cessazione del Servizio qualora rileviamo rischi per la sicurezza dell’account o violazioni dei presenti Termini o delle leggi e dei regolamenti."
+        },
+        {
+          "heading": "Accesso e autorizzazione tramite terze parti",
+          "body": "Quando sceglie di accedere alla Piattaforma utilizzando un account di terze parti (inclusi, a titolo esemplificativo, l’accesso OAuth con GitHub), acconsente che otteniamo le informazioni identificative necessarie secondo il meccanismo di autorizzazione della piattaforma terza (ad esempio identificativo univoco, nome utente, email; l’ambito effettivo è quello mostrato nella pagina di autorizzazione). Lei deve rispettare autonomamente i termini di servizio e le politiche sulla privacy della piattaforma terza e comprende che il comportamento della piattaforma terza non è sotto il nostro controllo. Se revoca l’autorizzazione alla terza parte, la piattaforma terza interrompe il servizio o modifica le interfacce, potrebbe non essere più in grado di accedere con tale modalità; potrà comunque accedere al suo account tramite metodi alternativi come email e password. Non siamo responsabili per fallimenti di accesso, informazioni inesatte o anomalie nella sincronizzazione dei dati causati dalla piattaforma terza, ma faremo del nostro meglio per assisterla nella risoluzione."
+        },
+        {
+          "heading": "Regole di condotta dell'utente",
+          "body": "Durante l’uso del Servizio, lei deve rispettare le leggi e i regolamenti della Repubblica Popolare Cinese e del Paese o della regione in cui si trova, rispettare l’ordine pubblico e il buon costume e non utilizzare il Servizio per attività illecite o contrarie alla legge. Lei si impegna a non porre in essere le seguenti condotte: 1) caricare, memorizzare o diffondere contenuti vietati da leggi e regolamenti, quali contenuti che mettono in pericolo la sicurezza nazionale, ledono la stabilità sociale, incitano alla violenza o al terrorismo, sono osceni o pornografici, riguardano gioco d’azzardo, droghe, discriminazione razziale, diffamazione o insulto verso altri; 2) violare diritti di proprietà intellettuale, segreti commerciali, diritti alla privacy, diritti di immagine, onore o altri diritti legittimi di terzi, incluso caricare senza autorizzazione articoli, libri o altre opere protette da diritto d’autore di cui non detiene i diritti legittimi; 3) effettuare reverse engineering, decompilare o tentare di ottenere il codice sorgente di qualsiasi parte del Servizio, oppure creare o diffondere programmi esterni, crack, script automatizzati di massa relativi al Servizio; 4) interferire con il normale funzionamento del Servizio, dei server o della rete con qualsiasi mezzo tecnico, inclusi, a titolo esemplificativo, scraping malevolo, attacchi di traffico, individuazione e sfruttamento di vulnerabilità, abuso di risorse; 5) registrare account in massa, comprare o vendere account, usurpare l’identità altrui; 6) utilizzare le funzionalità assistite da AI per generare o diffondere contenuti contrari a leggi, regolamenti o al buon costume; 7) ogni altra condotta in violazione di leggi, regolamenti, dei presenti Termini o delle nostre ragionevoli regole operative. In caso di violazione delle suddette regole, abbiamo il diritto, a seconda della gravità, di adottare misure quali rimozione dei contenuti, limitazione delle funzionalità, blocco dell’account e di conservare i relativi registri e segnalarli alle autorità competenti in conformità alla legge; se ciò causa danni a noi o a terzi, lei dovrà risarcirli."
+        },
+        {
+          "heading": "Diritti e autorizzazioni sui contenuti dell'utente",
+          "body": "Lei conserva tutti i diritti legittimi sui contenuti utente che carica e crea. Per fornirle il servizio, ci concede una licenza gratuita, non esclusiva e utilizzabile per tutta la durata del servizio, che ci consente di archiviare, sottoporre a backup, convertire il formato, indicizzare, memorizzare nella cache, mostrare i contenuti utente (solo a lei e ai collaboratori da lei espressamente autorizzati) ed eseguire i trattamenti necessari a fornire le funzioni assistite dall'IA. Salvo quanto necessario per fornire, mantenere e migliorare il servizio, o per fornirli alle autorità competenti in conformità alla legge, non utilizzeremo i suoi contenuti utente per altri scopi, non li venderemo a terzi né li useremo per sviluppi commerciali estranei al servizio. Lei è responsabile della legalità e veridicità dei contenuti utente; qualsiasi controversia o responsabilità derivante dai contenuti utente è a suo carico. Quando elimina contenuti utente o cancella l'account, elimineremo o renderemo anonimi i dati corrispondenti secondo quanto previsto dai presenti termini e dall'Informativa sulla privacy, salvo i dati che la legge impone di conservare o che siano già entrati nel ciclo di backup e non ancora scaduti."
+        },
+        {
+          "heading": "Proprietà intellettuale della piattaforma",
+          "body": "La piattaforma nel suo complesso, inclusi software, codice, design delle pagine, marchi, loghi, testi, immagini, struttura del database e contenuti della piattaforma, è di nostra proprietà o dei rispettivi titolari dei diritti ed è protetta dalle leggi sul diritto d'autore, sui marchi, sui brevetti e dalle altre norme in materia di proprietà intellettuale. Senza nostra autorizzazione scritta, nessuno può copiare, riprodurre, diffondere, eseguire il mirroring, vendere qualsiasi parte della piattaforma o utilizzarla per scopi commerciali. Tutti i diritti non espressamente concessi dai presenti termini sono riservati da noi. Qualsiasi uso dei nostri marchi o loghi durante l'utilizzo del servizio (salvo il caso in cui sia necessario citare il nome della piattaforma per una descrizione ragionevole) deve ottenere il nostro consenso scritto preventivo. Per gli articoli accademici caricati dagli utenti, rispettiamo i diritti legittimi degli autori originali e degli editori; quando carica documenti, deve assicurarsi di avere diritti legittimi sui file corrispondenti o di aver ottenuto le autorizzazioni necessarie; l'uso accademico ragionevole non deve superare i limiti consentiti dalla legge."
+        },
+        {
+          "heading": "Disposizioni speciali sulle funzioni assistite dall'IA",
+          "body": "Le funzioni di lettura assistita dall'IA offerte dalla piattaforma (incluse, a titolo esemplificativo, generazione di riassunti, domande e risposte sui contenuti, traduzione, interpretazione e raccomandazione) si basano su tecnologie di intelligenza artificiale e apprendimento automatico. Lei comprende e accetta che: 1) i risultati generati dall'IA sono prodotti automaticamente da algoritmi e possono contenere errori, omissioni, imprecisioni o informazioni obsolete; sono forniti solo a scopo informativo e non costituiscono in alcun modo consulenza professionale (incluse, a titolo esemplificativo, conclusioni accademiche, pareri legali, consigli medici o consigli di investimento), e non deve usarli come unico fondamento delle proprie decisioni; 2) le prestazioni delle funzioni IA dipendono dalla qualità dei contenuti da lei inseriti, dalle capacità del modello e dalle risorse computazionali; non forniamo alcuna garanzia esplicita o implicita sull'accuratezza, completezza o adeguatezza dei risultati; 3) lei è responsabile del giudizio finale e dell'uso dei contenuti generati dall'IA che cita o adotta, e deve rispettare le norme pertinenti sull'uso degli strumenti di IA della sua istituzione accademica, rivista o editore; 4) i contenuti da lei inseriti nelle funzioni IA possono essere trattati per quanto necessario a realizzare le finalità delle funzioni; le modalità specifiche di trattamento sono descritte nell'Informativa sulla privacy; 5) se le funzioni IA dipendono da modelli o servizi di terze parti, la disponibilità delle relative capacità è influenzata dallo stato dei servizi di terze parti; adotteremo misure entro limiti ragionevoli per ridurre l'impatto."
+        },
+        {
+          "heading": "Servizi di terze parti e link esterni",
+          "body": "Il servizio può includere siti web, risorse o componenti di servizio forniti da terze parti (ad esempio servizi di accesso, motori di analisi dei documenti, servizi di modelli IA, infrastrutture cloud, ecc.). La gestione e l'operatività di tali servizi di terze parti non sono sotto il nostro controllo e non garantiamo la veridicità, legalità o accuratezza dei loro contenuti. Qualsiasi rischio o perdita derivante dall'accesso o dall'uso di servizi di terze parti è a suo carico. Se i termini o le politiche dei servizi di terze parti cambiano o il servizio viene interrotto, le funzionalità corrispondenti del nostro servizio potrebbero risultare limitate o non disponibili; in tal caso adotteremo soluzioni alternative, adegueremo le funzionalità o pubblicheremo un avviso tempestivo in base alla situazione. Le informazioni che lei invia a terze parti tramite il servizio devono inoltre rispettare l'informativa sulla privacy e i termini di servizio di tali terze parti."
+        },
+        {
+          "heading": "Modifiche, sospensione e cessazione del servizio",
+          "body": "Ci impegniamo a garantire la continuità e la stabilità del servizio, ma lei comprende che, a causa di manutenzione del sistema, aggiornamenti, guasti, anomalie di dipendenze di terze parti, forza maggiore (incluse, a titolo esemplificativo, calamità naturali, attacchi informatici, modifiche normative, guasti degli operatori di telecomunicazioni, ecc.) o altre ragioni ragionevoli, il servizio può subire interruzioni, ritardi, errori nei dati o limitazioni delle funzionalità. Per la manutenzione programmata, cercheremo di dare avviso anticipato; per i guasti improvvisi, interverremo il prima possibile. Ci riserviamo il diritto di modificare, sospendere o cessare in tutto o in parte il servizio in base a esigenze di sviluppo del business; per modifiche significative, la informeremo in anticipo con mezzi ragionevoli, come notifiche in-app, e tuteleremo secondo la legge il suo diritto ragionevole di esportare, migrare o eliminare i dati personali. Se lei viola i presenti termini o le leggi pertinenti, abbiamo il diritto di limitare o cessare in qualsiasi momento la fornitura del servizio, senza incorrere in responsabilità per inadempimento nei suoi confronti. Può inoltre cessare in qualsiasi momento l'uso del servizio e richiedere la cancellazione dell'account."
+        },
+        {
+          "heading": "Conservazione, backup ed eliminazione dei dati",
+          "body": "I file delle pubblicazioni, le note e le annotazioni e altri contenuti utente da lei caricati saranno conservati sui nostri server o su servizi di archiviazione cloud da noi incaricati. Adotteremo misure tecniche e organizzative conformi agli standard di settore per garantire la sicurezza dei dati ed eseguiremo backup con periodicità ragionevole. Tuttavia, lei comprende che nessun meccanismo di conservazione e backup può escludere completamente il rischio di perdita o danneggiamento dei dati; le consigliamo di eseguire autonomamente backup separati dei materiali importanti. Dopo che lei elimina volontariamente un contenuto utente, tale contenuto diventerà non direttamente accessibile e sarà cancellato definitivamente dai backup al termine del ciclo di backup; dopo la cancellazione dell'account, tratteremo i suoi dati personali secondo quanto previsto dall'Informativa sulla privacy. Per gli account dormienti che superano la quota di archiviazione (se prevista) o che sono rimasti inattivi a lungo, potremmo adottare misure quali limitazioni, pulizia o eliminazione previa notifica."
+        },
+        {
+          "heading": "Esclusione di garanzie e limitazione di responsabilità",
+          "body": "Nella massima misura consentita dalla legge: 1) il servizio è fornito \"così com'è\" e \"come disponibile\"; non garantiamo che il servizio sia ininterrotto, privo di errori o assolutamente sicuro, né forniamo garanzie implicite di commerciabilità o idoneità a uno scopo particolare; 2) non siamo responsabili per perdite indirette, consequenziali o punitive, quali perdita di reddito, perdita di profitti, perdita di dati, danno alla reputazione o ritardi nei progressi della ricerca, derivanti dall'uso o dall'impossibilità di usare il servizio, anche se ci fosse stata comunicata la possibilità di tali perdite; 3) la nostra responsabilità complessiva nei suoi confronti (se presente) è limitata all'importo effettivamente pagato da lei per l'uso del servizio nei dodici mesi precedenti l'insorgenza del reclamo (se non ha pagato, il limite è di cento yuan); 4) per i danni causati da forza maggiore, ragioni di terze parti o sua colpa, non siamo responsabili ai sensi di legge. Le esclusioni di garanzia e le limitazioni di responsabilità previste dai presenti termini non si applicano alle responsabilità che la legge vieta di escludere o limitare, ad esempio i danni alla persona causati con dolo o colpa grave e gli obblighi imperativi previsti dalla legge."
+        },
+        {
+          "heading": "Indennizzo",
+          "body": "Se, per violazione dei presenti termini o di leggi, o perché i contenuti utente da lei forniti violano diritti legittimi di terze parti, noi o le nostre affiliate, dipendenti o agenti riceviamo reclami, contestazioni, sanzioni amministrative o azioni legali da terzi, o subiamo perdite (incluse ragionevoli spese legali e spese di indagine e raccolta prove), lei dovrà risolvere la questione e tenerci indenni. Se ciò ci causa perdite, abbiamo il diritto di rivalerci su di lei."
+        },
+        {
+          "heading": "Modifiche ai termini e notifiche",
+          "body": "Abbiamo il diritto di modificare i presenti termini in base a cambiamenti normativi o esigenze operative. I termini modificati saranno pubblicati con mezzi ragionevoli, come avvisi sulla piattaforma, messaggi interni o email. Se lei continua a usare il servizio dopo l'entrata in vigore delle modifiche, si considera che accetti i termini modificati; se non è d'accordo con le modifiche, deve cessare di usare il servizio e può richiedere la cancellazione dell'account. Per le modifiche importanti dei presenti termini (soprattutto quelle che riguardano suoi diritti rilevanti), la avviseremo in modo più evidente. Qualsiasi comunicazione tra lei e noi può essere inviata ai recapiti indicati nei presenti termini; le comunicazioni che le inviamo si considerano ricevute quando sono inviate alla sua email di registrazione o pubblicate tramite messaggio interno."
+        },
+        {
+          "heading": "Legge applicabile e risoluzione delle controversie",
+          "body": "La conclusione, l'efficacia, l'interpretazione, l'esecuzione e la risoluzione delle controversie relative alle presenti Condizioni sono disciplinate dalla legge della Repubblica Popolare Cinese (escluse le leggi di Hong Kong, Macao e Taiwan e le norme sul conflitto di leggi). Qualsiasi controversia derivante dalle presenti Condizioni o dal Servizio sarà innanzitutto oggetto di bonario componimento tra le parti; qualora non si raggiunga un accordo, ciascuna parte potrà promuovere un procedimento dinanzi al tribunale competente del luogo di residenza del convenuto. L'eventuale invalidità o ineseguibilità di alcune disposizioni delle presenti Condizioni non pregiudica l'efficacia delle altre. In caso di contrasto tra le presenti Condizioni e norme di legge imperative, prevalgono le disposizioni di legge. L'omesso o ritardato esercizio di un diritto non costituisce rinuncia allo stesso."
+        },
+        {
+          "heading": "Disposizioni finali e contatti",
+          "body": "Le presenti Condizioni costituiscono l'accordo completo tra Lei e noi in relazione al Servizio e sostituiscono qualsiasi precedente intesa orale o scritta sul medesimo oggetto. I titoli delle presenti Condizioni hanno mero scopo di comodità di lettura e non incidono sull'interpretazione delle clausole. L'inerzia o il ritardato esercizio dei nostri diritti ai sensi delle presenti Condizioni non costituisce rinuncia. In caso di domande, osservazioni o suggerimenti sulle presenti Condizioni o sul Servizio, o qualora rilevi comportamenti illeciti o in violazione delle regole, può contattarci tramite i canali di feedback presenti nella piattaforma o l'indirizzo e-mail pubblicato dal gestore; provvederemo entro un termine ragionevole. Fa fede la versione in lingua cinese delle presenti Condizioni; qualora utilizzi una versione in un'altra lingua e sussistano ambiguità, prevale la versione in lingua cinese."
+        },
+        {
+          "heading": "Single sign-on e sistema degli account",
+          "body": "Per migliorare l'esperienza d'uso, la piattaforma può instaurare un sistema di account unificato o di single sign-on (SSO) con altri prodotti dello stesso gestore (inclusi, a titolo esemplificativo, applicazioni di lettura per consumatori, sistemi di autenticazione identitaria unificata, ecc.). Quando accede alla piattaforma con un account unificato, il suo identificativo di identità può essere condiviso tra i prodotti correlati, al fine di consentire un accesso senza interruzioni e la sincronizzazione delle informazioni di base. Lei comprende e accetta che: 1) le informazioni trasmesse tramite il single sign-on sono limitate all'identificativo e ai dati di base necessari per realizzare l'accesso congiunto; l'ambito specifico è quello mostrato nella pagina di conferma dell'autorizzazione; 2) le modifiche alle informazioni dell'account effettuate in uno qualsiasi dei prodotti collegati (ad esempio nickname, e-mail) possono riflettersi anche sulla piattaforma; 3) se desidera scollegare l'account da altri prodotti, può procedere tramite le impostazioni dell'account o contattando il gestore; dopo lo scollegamento potrà comunque accedere al suo account tramite le modalità di accesso proprie della piattaforma. In caso di malfunzionamento del servizio di autenticazione identitaria unificata, l'accesso alla piattaforma potrebbe risultare limitato; ci adopereremo per ripristinarlo al più presto, ma non saremo responsabili per inadempimento in relazione a interruzioni temporanee causate da tale infrastruttura di identità condivisa."
+        },
+        {
+          "heading": "Collaborazione, gruppi di ricerca e visibilità dei contenuti",
+          "body": "Il Servizio può offrire funzioni come gruppi di ricerca, condivisione di documenti e annotazione collaborativa, che le consentono di discutere con altri intorno allo stesso documento. Lei deve decidere autonomamente e con prudenza l'ambito e i destinatari della condivisione: i destinatari dei contenuti condivisi possono avere la capacità di salvarli, inoltrarli o diffonderli ulteriormente, e noi non possiamo controllare pienamente tali comportamenti. Per contenuti che riguardano risultati di ricerca non pubblicati, dati riservati o privacy personale, le consigliamo di condividerli solo con persone di cui si fida pienamente e di rispettare le norme della sua istituzione in materia di gestione dei dati e riservatezza. Il creatore o l'amministratore del gruppo (se presente) può gestire membri e contenuti nei limiti consentiti dalle funzionalità; tali comportamenti di gestione sono sotto la sua responsabilità. Se non è d'accordo con contenuti pubblicati da altri in contesti collaborativi, può segnalarcelo tramite i canali di segnalazione; interverremo in conformità alla legge e alle regole."
+        },
+        {
+          "heading": "Messaggi privati e funzioni di comunicazione sulla piattaforma",
+          "body": "Le funzioni di comunicazione offerte dalla piattaforma, come i messaggi privati e le risposte nelle discussioni, sono destinate esclusivamente a scambi legittimi connessi alla ricerca e allo studio. Lei non deve utilizzare tali funzioni per inviare spam, messaggi molesti, pubblicità commerciale, truffe o altri contenuti non richiesti, né per impersonare altri o associarsi falsamente a istituzioni. Per proteggere la sicurezza degli utenti e gestire i reclami, possiamo, nei limiti consentiti dalla legge e dal contratto e applicando il principio di minimizzazione, sottoporre a revisione manuale o tecnica le informazioni sospettate di violare leggi o regole. Qualsiasi transazione, collaborazione o altro rapporto instaurato da Lei con altri tramite messaggi privati è un'azione indipendente tra Lei e la controparte; non vi partecipiamo e non ne assumiamo la responsabilità di avallo; presti attenzione alle truffe online e non si fidi di richieste di bonifico, ricarica, prestito o simili avanzate da altri in messaggi privati."
+        },
+        {
+          "heading": "Servizi di notifica",
+          "body": "La piattaforma può inviarle notifiche relative al Servizio tramite avvisi sulla piattaforma, e-mail e altri mezzi, incluse avvertenze di sicurezza, aggiornamenti di funzionalità, comunicazioni di sistema, promemoria di interazioni collaborative, ecc. Lei può gestire in parte le preferenze di notifica nelle impostazioni dell'account; tuttavia, per le notifiche relative a questioni importanti come sicurezza dell'account, comunicazioni legali e modifiche al Servizio, anche se disattiva alcune preferenze, potremo comunque inviarle tali notifiche, che costituiscono parte delle notifiche valide ai sensi delle presenti Condizioni. Ci impegniamo a rendere le notifiche tempestive e accurate, ma non ci assumiamo responsabilità per conseguenze derivanti da ritardi di trasmissione, blocco da parte del fornitore di servizi e-mail, mancata consultazione tempestiva da parte sua o altre cause."
+        },
+        {
+          "heading": "Interfacce e uso automatizzato",
+          "body": "Se in alcune versioni la piattaforma le mette a disposizione interfacce di programmazione applicativa (API) o capacità aperte, potrà utilizzarle solo nel rispetto delle presenti Condizioni e della relativa documentazione delle interfacce, e non potrà: 1) effettuare chiamate oltre la frequenza, le quote o le finalità indicate nella documentazione; 2) utilizzare le interfacce per fornire a terzi prodotti in concorrenza con i nostri servizi; 3) aggirare o tentare di aggirare meccanismi di autenticazione, limitazione del traffico o controllo del rischio; 4) usare le interfacce per esportare in blocco contenuti della piattaforma o dati di altri utenti. Abbiamo il diritto di adeguare quote e strategie delle interfacce in base allo stato complessivo del Servizio e di adottare misure come limitazione del traffico e blocco delle credenziali in caso di chiamate anomale. L'uso delle interfacce e dei dati correlati avviene a suo rischio; la disponibilità delle interfacce non costituisce alcun impegno di continuità."
+        },
+        {
+          "heading": "Integrità accademica e uso conforme",
+          "body": "PaperHelper è concepito come strumento di supporto alla lettura e alla ricerca accademica. Lei si impegna a rispettare, nelle attività accademiche, tutte le norme sulla integrità accademica della sua istituzione, delle riviste e degli editori, incluse, a titolo esemplificativo: non utilizzare la piattaforma o le sue funzioni assistite dall'IA per generare risultati accademici che richiedono una dichiarazione di originalità senza darne comunicazione; non utilizzare il Servizio per scrivere tesi al posto di altri, fare compiti al posto di altri o porre in essere altre condotte di cattiva condotta accademica; non scaricare o diffondere in blocco testi integrali di documenti protetti da diritto d'autore. Rispettiamo la tradizione di integrità che la comunità accademica ha sviluppato nel tempo e invitiamo gli utenti a usare il Servizio per finalità legittime di studio e ricerca. Per gli account sospettati di gravi violazioni dell'integrità accademica o di violazioni del diritto d'autore su larga scala, abbiamo il diritto, dopo verifica, di adottare misure limitative e di collaborare con i titolari dei diritti e le autorità competenti in conformità alla legge."
+        },
+        {
+          "heading": "Uso da parte di minori",
+          "body": "Il Servizio è destinato principalmente a utenti adulti con piena capacità di agire. Se lei è un minore di età inferiore ai diciotto anni, deve utilizzare il Servizio con il consenso e sotto la guida del tutore, che dovrà aiutarla a leggere e accettare le presenti Condizioni. Non effettuiamo promozione commerciale rivolta attivamente ai minori. Se lei è il tutore di un minore e rileva che il minore si è registrato o ha utilizzato il Servizio senza il suo consenso, può contattarci; ci adopereremo, in conformità alla legge, per cancellare l'account e i dati personali correlati. Per i dettagli specifici sulla protezione dei dati personali dei minori, si rinvia all'Informativa sulla privacy."
+        },
+        {
+          "heading": "Costi del servizio e accordi commerciali",
+          "body": "Attualmente alcune funzioni del Servizio possono essere offerte gratuitamente; non escludiamo la possibilità di introdurre in futuro versioni a pagamento, funzioni aggiuntive o piani di abbonamento. Qualora vengano introdotti servizi a pagamento, prima di applicare costi pubblicheremo in modo evidente le tariffe, le modalità di calcolo e le regole di rimborso, e tali servizi diventeranno efficaci solo dopo la sua esplicita accettazione e il completamento del pagamento. Gli importi già pagati saranno gestiti per disdetta e rimborso secondo le regole pubblicate di volta in volta. Salvo diversa disposizione di legge o nostro separato impegno, la disponibilità delle funzioni gratuite non costituisce un nostro obbligo contrattuale continuativo; ci impegneremo comunque, secondo quanto previsto dalle presenti Condizioni, a mantenere la stabilità del Servizio per quanto possibile. La piattaforma non mostrerà pubblicità mirate strettamente correlate ai suoi contenuti di ricerca in modo da interferire con l'uso normale senza il suo consenso."
+        },
+        {
+          "heading": "Gestione delle violazioni e reclami",
+          "body": "Se adottiamo misure nei confronti del suo account o dei suoi contenuti ai sensi delle presenti Condizioni, cercheremo di comunicarle il motivo tramite messaggio sulla piattaforma o e-mail (salvo i casi in cui la legge o le regole vietino la divulgazione). Se non è d'accordo con l'esito, può presentarci un reclamo entro un termine ragionevole dalla ricezione della notifica, indicando i fatti e le ragioni e fornendo le prove necessarie. Disporremo una revisione manuale e le comunicheremo l'esito entro un tempo ragionevole. In caso di errore, ripristineremo tempestivamente il suo account o i suoi contenuti. Il meccanismo di reclamo non modifica il nostro diritto di adottare misure temporanee in via preventiva in situazioni urgenti (ad esempio, in presenza di informazioni gravemente illecite o incidenti di sicurezza) per controllare il rischio."
+        },
+        {
+          "heading": "Segnalazione e gestione degli incidenti di sicurezza",
+          "body": "Istituiremo meccanismi di risposta agli incidenti di sicurezza informatica come richiesto dalla legge. Se scopri vulnerabilità di sicurezza, segnali di violazione dei dati o altri problemi di sicurezza sulla piattaforma, ti invitiamo a segnalarceli quanto prima tramite il canale di contatto per la sicurezza. Accogliamo con favore e ringraziamo i ricercatori di sicurezza che, in buona fede e in modo responsabile, segnalano vulnerabilità nel rispetto delle regole. In caso di incidenti di sicurezza dei dati che incidono sui diritti degli utenti, avvieremo la gestione di emergenza entro i termini di legge, informeremo gli utenti interessati e le autorità competenti ai sensi di legge e adotteremo misure correttive per impedire l'aggravarsi del danno. Ti chiediamo di collaborare con i nostri requisiti di sicurezza, ad esempio aggiornando tempestivamente le password, attivando metodi di accesso più sicuri, ecc.; i danni derivanti dal fatto che tu non abbia custodito adeguatamente le credenziali saranno gestiti secondo quanto previsto dalla presente clausola."
+        },
+        {
+          "heading": "Esportazione e migrazione dei dati",
+          "body": "Per garantire il tuo controllo sui tuoi dati, la piattaforma può offrire funzionalità di esportazione di dati come elenchi di articoli, note, annotazioni, ecc.; l'ambito e i formati supportati dipendono dalle funzionalità effettivamente offerte dal prodotto. In caso di cambiamenti sostanziali o cessazione del servizio, ti avviseremo in anticipo ai sensi di legge e ti forniremo un periodo e modalità ragionevoli per esportare o migrare i tuoi dati. L'uso della funzione di esportazione non deve essere impiegato per ottenere in blocco contenuti altrui o per eludere le norme di condotta della presente clausola. Per problemi di usabilità dovuti a differenze nei formati dei dati esportati, compatibilità di terze parti e simili, forniremo assistenza entro limiti ragionevoli ma senza garanzie."
+        },
+        {
+          "heading": "Impostazioni personalizzate e dati delle preferenze",
+          "body": "I dati sulle preferenze generati durante l'uso del servizio, come preferenze di lettura, impostazioni dell'interfaccia, scelta della lingua, modalità del tema, saranno utilizzati per offrirti un'esperienza più in linea con le tue abitudini. Puoi modificare o reimpostare le preferenze in qualsiasi momento nelle impostazioni. La cancellazione della memoria locale del browser, il cambio di dispositivo o l'uso senza accesso possono impedire la persistenza di alcune preferenze. Non prenderemo decisioni sfavorevoli che abbiano un impatto significativo su di te basandoci sui tuoi dati di preferenza; per le regole specifiche di trattamento dei dati, consulta l'Informativa sulla privacy."
+        },
+        {
+          "heading": "Iterazione del prodotto e rilascio graduale",
+          "body": "Per migliorare continuamente la qualità del servizio, possiamo utilizzare strumenti ingegneristici come il rilascio graduale e i test A/B, in modo che alcuni utenti sperimentino in anteprima nuove funzionalità o nuove interfacce. Le funzionalità incluse nel rilascio graduale possono comportarsi diversamente dalla versione pubblica e possono essere adattate o rimosse in qualsiasi momento. I dati di test pertinenti saranno usati solo per valutare le soluzioni di prodotto e migliorare l'esperienza. Se non desideri partecipare ai test di rilascio graduale, puoi comunicarcelo tramite i canali di feedback; valuteremo eventuali adattamenti in base alle capacità del prodotto. Questa disposizione non ci esonera dall'obbligo di fornirti un avviso evidente prima di modifiche significative ai tuoi diritti."
+        },
+        {
+          "heading": "Diritti riservati dall'operatore",
+          "body": "Fatto salvo quanto espressamente concesso dalla presente clausola, ci riserviamo ogni diritto sulla piattaforma e sulle relative tecnologie. Abbiamo il diritto di adeguare ragionevolmente l'ambito dei servizi, le forme funzionali e le quote di risorse contemplati dalla presente clausola in base a leggi e regolamenti, requisiti di vigilanza, rischi per la sicurezza o ragioni operative. Qualsiasi modifica sfavorevole che incida sostanzialmente sui tuoi diritti sarà gestita secondo il principio di un avviso evidente preventivo o di una comunicazione tempestiva successiva accompagnata da rimedi ragionevoli. Il fatto che non ti richiediamo l'adempimento di un obbligo non significa che rinunciamo al diritto di richiederlo in futuro; il fatto che accettiamo di tollerare una tua violazione non costituisce un'autorizzazione generale a tale tipo di comportamento."
+        },
+        {
+          "heading": "Completezza dell'accordo e separabilità",
+          "body": "La presente clausola, l'Informativa sulla privacy, gli avvisi immediati nella pagina di registrazione dell'account e le regole speciali pubblicate sulla piattaforma (se presenti) costituiscono insieme l'accordo completo tra te e noi riguardo al servizio; in caso di conflitto, si applicano in via prioritaria le regole speciali relative a una specifica funzionalità o scenario. Se una qualsiasi disposizione della presente clausola è ritenuta invalida, illegale o non eseguibile da un'autorità competente, tale disposizione sarà interpretata, modificata o separata dalla presente clausola nella misura minima necessaria, senza che ciò pregiudichi l'efficacia delle altre disposizioni. I registri delle nostre rispettive condotte nell'adempimento degli obblighi e i log di sistema (nei limiti del valore probatorio consentito dalla legge) potranno essere usati come materiale probatorio per la risoluzione delle controversie."
+        },
+        {
+          "heading": "Canali di contatto e feedback",
+          "body": "Puoi contattarci nei seguenti modi: «Impostazioni — Feedback» all'interno del sito o l'indirizzo email di supporto indicato nella pagina degli annunci della piattaforma. Di norma risponderemo entro un numero ragionevole di giorni lavorativi dalla ricezione del feedback; per questioni urgenti come sicurezza dell'account e reclami sulla privacy, daremo priorità. I tuoi preziosi suggerimenti potranno essere inclusi nei piani di miglioramento del prodotto; inviando un feedback acconsenti che utilizziamo il contenuto del feedback stesso allo scopo di migliorare il prodotto, ma non i tuoi dati personali non pubblici né i risultati di ricerca non pubblicati. Grazie ancora per la fiducia e il supporto che accordi a PaperHelper; che possa essere un compagno affidabile nel tuo percorso accademico."
+        },
+        {
+          "heading": "Finestre di manutenzione e disponibilità del servizio",
+          "body": "Per garantire la stabilità operativa del sistema nel lungo periodo, possiamo stabilire finestre di manutenzione fisse (ad esempio nelle ore di minor utilizzo) per eseguire aggiornamenti, migrazioni e controlli. La breve indisponibilità durante le finestre di manutenzione sarà indicata negli annunci o negli avvisi di manutenzione. Gestiamo il sistema secondo ragionevoli standard ingegneristici, inclusi distribuzione ridondante, monitoraggio e allarmi, pianificazione della capacità e prove di guasto, ma, salvo quanto previsto da un accordo sul livello di servizio scritto (se esistente), non garantiamo percentuali specifiche di disponibilità. Se il tuo lavoro di ricerca richiede una continuità elevata, ti consigliamo di combinare backup locali e pianificazione dei tempi, evitando di dipendere in modo concentrato da un unico servizio online nei momenti critici. Per interruzioni prolungate al di fuori del nostro ragionevole controllo, ti spiegheremo successivamente le cause e le misure di miglioramento."
+        },
+        {
+          "heading": "Norme di attribuzione e citazione",
+          "body": "Quando, nella scrittura accademica, utilizzi le funzionalità di assistenza AI della piattaforma per organizzare opinioni, rifinire il linguaggio o generare riassunti, devi seguire i requisiti specifici del tuo ente, della rivista o della conferenza di destinazione in materia di dichiarazione e attribuzione degli strumenti di AI, indicare in modo proattivo e veritiero l'uso degli strumenti e assumerti la responsabilità di autore per il contenuto finale. Quando citi la letteratura, devi verificare la fonte originale, evitando di affidarti a voci di citazione generate automaticamente senza convalida. Incoraggiamo l'uso della piattaforma come strumento per migliorare l'efficienza di lettura e ricerca, non come sostituto di una rigorosa formazione accademica e della peer review. Controversie o sanzioni accademiche derivanti dal mancato rispetto delle norme pertinenti di dichiarazione e attribuzione saranno a tuo carico; collaboreremo con le indagini legittime delle autorità competenti nei limiti consentiti dalla legge."
+        },
+        {
+          "heading": "Avvertenze sui rischi ed esempi di scenari tipici",
+          "body": "Per aiutarti a comprendere meglio la presente clausola, forniamo le seguenti illustrazioni di scenari tipici: esempio uno, carichi sulla piattaforma un articolo altrui ottenuto da Internet solo per annotazioni di lettura personale; se tale condotta supera l'ambito autorizzato, la relativa responsabilità per violazione sarà a tuo carico e, ricevuta una notifica qualificata dal titolare dei diritti, agiremo ai sensi di legge; esempio due, ti affidi a una rassegna della letteratura generata dall'AI e la consegni direttamente come compito del corso senza alcuna verifica o dichiarazione, e le conseguenze accademiche che ne derivano dovranno essere affrontate da te; esempio tre, comunichi a un compagno nome utente e password causando la cancellazione accidentale di materiali di ricerca; poiché si tratta di una divulgazione volontaria delle credenziali da parte tua, faremo del nostro meglio per assistere nel ripristino ma non assumeremo responsabilità risarcitoria ai sensi di legge; esempio quattro, a causa di controlli di rete nella tua area o guasti ai collegamenti internazionali non puoi accedere al servizio per un breve periodo; si tratta di circostanze che non possiamo ragionevolmente controllare e le relative perdite non saranno a nostro carico. Gli esempi sopra riportati servono solo ad agevolare la comprensione e non costituiscono un'interpretazione restrittiva dell'ambito della clausola."
+        },
+        {
+          "heading": "Entrata in vigore e registro delle versioni",
+          "body": "La presente clausola entra in vigore dalla data di pubblicazione ufficiale della piattaforma e registra la cronologia delle revisioni tramite numeri di versione con l'evoluzione del prodotto. Ogni revisione sostanziale sarà contrassegnata nella parte superiore della pagina con la data dell'ultimo aggiornamento; puoi anche conoscere le principali differenze rispetto alle versioni storiche richiedendole all'operatore. Ti consigliamo di rileggere la presente clausola ogni volta che viene lanciata una funzionalità importante o ricevi una notifica di revisione, per essere tempestivamente informato dei cambiamenti ai tuoi diritti e obblighi. Il numero di versione della presente clausola è V1.0."
+        }
+      ]
+    },
+    "privacy": {
+      "title": "Informativa sulla privacy",
+      "updatedAt": "Ultimo aggiornamento: settembre 2026",
+      "sections": [
+        {
+          "heading": "Introduzione",
+          "body": "PaperHelper (di seguito «noi») è consapevole dell'importanza dei dati personali per l'utente. In conformità ai requisiti di legge e regolamento, adotteremo adeguate misure di sicurezza e ci impegneremo a proteggere i Suoi dati personali affinché siano sicuri e sotto il Suo controllo. La presente Informativa sulla privacy (di seguito «la presente Informativa») ha lo scopo di aiutarLa a comprendere quali dati raccogliamo, come li utilizziamo, come li proteggiamo e quali diritti Lei ha. La presente Informativa si applica a tutte le forme di servizio fornite da questa piattaforma, incluse l'interfaccia web e le future applicazioni client, i mini programmi, le interfacce API e così via. La invitiamo a leggere attentamente e comprendere appieno la presente Informativa prima di utilizzare il servizio, prestando particolare attenzione ai contenuti evidenziati in grassetto. L'inizio dell'utilizzo del servizio, così come la prosecuzione dell'utilizzo dopo l'aggiornamento della presente Informativa, implica che Lei ha pienamente compreso e accettato la presente Informativa. Se non accetta alcun contenuto della presente Informativa, deve interrompere immediatamente l'utilizzo del servizio. In caso di domande, opinioni o suggerimenti, può contattarci tramite i canali indicati nella presente Informativa."
+        },
+        {
+          "heading": "Come raccogliamo e utilizziamo le Sue informazioni",
+          "body": "Per fornirLe il servizio, raccoglieremo e utilizzeremo i Suoi dati personali secondo i principi di «liceità, correttezza e necessità». Nello specifico, ciò include le seguenti situazioni: 1) Registrazione e accesso all'account: quando si registra con email e password, raccogliamo il Suo indirizzo email e la password (memorizzata in forma di hash irreversibile); quando accede con un account di terze parti (ad esempio GitHub), raccogliamo l'identificativo univoco dell'utente, il nome utente, l'immagine del profilo e l'email restituiti da tale piattaforma (nei limiti confermati nella pagina di autorizzazione); quando accede tramite un sistema di autenticazione unificata (SSO), raccogliamo le credenziali di sessione e le informazioni di base dell'account utilizzate per identificarla. 2) Fornitura delle funzionalità principali: quando carica articoli, crea note o aggiunge annotazioni, raccogliamo il contenuto dei file caricati e i relativi metadati (ad esempio nome del file, dimensione, data di caricamento, numero di pagina, posizione delle annotazioni, ecc.) al fine di archiviarli, recuperarli, visualizzarli e sincronizzarli. 3) Funzionalità assistite dall'IA: quando utilizza funzioni IA come riassunti, domande e risposte, traduzione, inviamo il contenuto testuale da Lei indicato (ad esempio testo selezionato, paragrafi della pagina, le Sue domande) ai componenti di trattamento che ci forniscono le capacità del modello, per generare i risultati. 4) Garanzia della sicurezza e stabilità del servizio: raccogliamo ora di accesso, IP di accesso, informazioni su dispositivo e browser (ad esempio tipo di browser, preferenze linguistiche), log delle operazioni, ecc., per audit di sicurezza, risoluzione dei problemi e analisi statistiche. 5) Notifiche e messaggi: per inviarLe notifiche di sistema, interazioni collaborative e messaggi privati, trattiamo l'identificativo del Suo account e il contenuto dei messaggi."
+        },
+        {
+          "heading": "Regole di utilizzo dei dati personali",
+          "body": "Utilizziamo i Suoi dati personali rigorosamente per le finalità descritte nella presente Informativa e secondo le seguenti regole: 1) Limitazione delle finalità: le informazioni raccolte sono utilizzate solo per realizzare le finalità espressamente indicate nella presente Informativa, salvo Sua nuova autorizzazione o diversa disposizione di legge o regolamento; 2) Minimo necessario: ci impegniamo a limitare l'ambito di raccolta al minimo necessario per realizzare le funzionalità; 3) Aggregazione e de-identificazione: i dati utilizzati per analisi statistiche e miglioramento del prodotto saranno, per quanto possibile, aggregati o de-identificati, in modo che non possano identificarLa direttamente; 4) Divieto di vendita: non venderemo i Suoi dati personali a terzi; 5) Algoritmi e decisioni automatizzate: non adotteremo decisioni automatizzate basate sui Suoi dati personali che abbiano un impatto significativo sui Suoi diritti e interessi personali. Se desidera che interrompiamo l'utilizzo di informazioni specifiche, può presentare richiesta tramite i canali indicati nella presente Informativa."
+        },
+        {
+          "heading": "Cookie e tecnologie simili",
+          "body": "Per garantire il normale funzionamento del servizio, mantenere lo stato di accesso e ricordare le Sue preferenze, possiamo utilizzare Cookie, archiviazione locale (LocalStorage), archiviazione di sessione e tecnologie simili. In particolare: i Cookie di autenticazione servono a mantenere la sessione di accesso durante la Sua visita e sono necessari per erogare il servizio; le memorizzazioni delle preferenze servono a ricordare le impostazioni da Lei scelte, come tema e lingua. Può gestire o eliminare i Cookie tramite le impostazioni del browser, ma dopo aver eliminato i Cookie di autenticazione dovrà accedere nuovamente per utilizzare le funzionalità che richiedono l'identificazione. Non utilizzeremo i Cookie per scopi diversi da quelli descritti nella presente Informativa. Se la piattaforma integra componenti di terze parti (ad esempio un accesso di terze parti), tali terze parti potrebbero impostare Cookie secondo le proprie politiche; Le consigliamo di leggerne le informative."
+        },
+        {
+          "heading": "Come condividiamo, trasferiamo e divulghiamo pubblicamente le Sue informazioni",
+          "body": "Non condivideremo attivamente i Suoi dati personali con terze parti, salvo nei seguenti casi: 1) previo Suo esplicito consenso; 2) quando necessario per erogare il servizio, trasmettere i dati necessari a responsabili del trattamento incaricati che forniscono infrastrutture e supporto tecnico (ad esempio server cloud, archiviazione di oggetti, servizi di database, fornitori di servizi di modelli IA); stipuleremo con loro rigorosi accordi di riservatezza e trattamento dei dati, richiedendo che li trattino solo nell'ambito delle finalità della presente Informativa; 3) in conformità a leggi e regolamenti, alla risoluzione di controversie giudiziarie o a richieste obbligatorie di autorità amministrative o giudiziarie; 4) in caso di fusione, acquisizione, riorganizzazione patrimoniale e simili, qualora sia necessario trasferire dati personali, richiederemo al nuovo titolare di continuare a rispettare la presente Informativa; in caso contrario, gli richiederemo di ottenere nuovamente la Sua autorizzazione. Inoltre, non divulghiamo pubblicamente i Suoi dati personali, salvo nei casi in cui abbiamo ottenuto il Suo esplicito consenso o la legge o il regolamento dispongano diversamente. Salvo i casi seguenti, non condividiamo le Sue informazioni: le azioni di collaborazione e condivisione avviate autonomamente da Lei (ad esempio condividere pubblicazioni con i membri del gruppo di ricerca); l'ambito e il contenuto di tale condivisione sono decisi autonomamente da Lei."
+        },
+        {
+          "heading": "Come conserviamo e proteggiamo le Sue informazioni",
+          "body": "I Suoi dati personali sono conservati su server situati nel territorio della Repubblica Popolare Cinese (in caso di trasferimento transfrontaliero, adempiremo agli obblighi previsti da leggi e regolamenti). Il periodo di conservazione è il tempo minimo necessario per conseguire le finalità descritte nella presente Informativa, salvo diverso obbligo di legge o regolamento; dopo la scadenza, cancelleremo o anonimizzeremo i Suoi dati personali. Adottiamo tecniche di sicurezza comunemente utilizzate nel settore per proteggere le Sue informazioni, tra cui, a titolo esemplificativo: crittografia in transito (HTTPS/TLS), memorizzazione delle password tramite hash, controllo degli accessi e principio del privilegio minimo, audit dei log, backup e meccanismi di disaster recovery. Abbiamo inoltre istituito un sistema completo di gestione della sicurezza delle informazioni e procedure di risposta alle emergenze. Nonostante le misure sopra indicate, La preghiamo di comprendere che nessun mezzo tecnico può garantire in modo assoluto la sicurezza delle informazioni e che l'ambiente Internet presenta rischi intrinseci. In caso di incidente alla sicurezza dei dati personali, avvieremo tempestivamente il piano di emergenza come richiesto da leggi e regolamenti, La informeremo entro i termini previsti in merito all'incidente, ai possibili impatti e alle misure correttive adottate, e riferiremo alle autorità competenti."
+        },
+        {
+          "heading": "I Suoi diritti",
+          "body": "In base alle leggi e ai regolamenti pertinenti, Lei ha i seguenti diritti sui Suoi dati personali: 1) Accesso e copia: può consultare ed esportare in qualsiasi momento sulla piattaforma i Suoi dati di base, l'elenco delle pubblicazioni, le note e le annotazioni, ecc.; 2) Rettifica e integrazione: quando rileva che le informazioni che trattiamo sul Suo conto sono errate, ha il diritto di chiederci di rettificarle o integrarle; può anche modificare personalmente la maggior parte dei dati nelle impostazioni; 3) Cancellazione: nei casi previsti da leggi e regolamenti (ad esempio quando la finalità del trattamento è stata realizzata, quando trattiamo informazioni in violazione di leggi, regolamenti o accordi), ha il diritto di richiedere la cancellazione dei Suoi dati personali; può anche eliminare personalmente le Sue note, annotazioni, pubblicazioni caricate e altri contenuti; 4) Revoca del consenso: può revocare il consenso tramite la cancellazione dell'account, la disattivazione delle relative funzionalità o altri mezzi; la revoca del consenso non pregiudica i trattamenti già effettuati sulla base del consenso; 5) Cancellazione dell'account: può richiedere la cancellazione dell'account tramite la pagina delle impostazioni o contattandoci; entro un termine ragionevole dopo il completamento della verifica dell'identità, elimineremo o anonimizzeremo i Suoi dati personali, salvo quanto richiesto di conservare da leggi e regolamenti; 6) Ottenimento di una copia e portabilità: nell'ambito tecnicamente fattibile e conforme alla legge, La supportiamo nell'ottenere una copia dei Suoi dati personali. Per garantire la sicurezza, prima di rispondere alle richieste di cui sopra potremmo dover verificare la Sua identità. Risponderemo entro quindici giorni lavorativi; per le richieste ragionevoli non addebitiamo costi, ma per richieste ripetute dello stesso utente o che superano limiti ragionevoli potremmo addebitare i costi necessari."
+        },
+        {
+          "heading": "Trattamento dei dati relativi alle funzionalità IA",
+          "body": "Quando utilizzi la funzione di lettura assistita dall'IA, tratteremo i dati pertinenti come segue: 1) Contenuti di input: il testo selezionato, le pagine caricate o le domande inserite verranno trasmessi al processo di elaborazione del modello per generare risultati; seguiamo il principio di minimizzazione e trasmettiamo solo i contenuti necessari all'erogazione della funzione; 2) Modalità di trattamento: il servizio del modello può elaborare automaticamente i tuoi input per generare output; ciò avviene da parte del fornitore che ci mette a disposizione le capacità, in conformità al contratto sul trattamento dei dati che ha stipulato con noi; richiediamo che non utilizzi i tuoi input per addestrare modelli destinati al pubblico o per altre finalità commerciali; 3) Contenuti di output: riepiloghi, risposte e altri risultati generati dall'IA ti saranno mostrati e potranno essere memorizzati nella cache per migliorare le prestazioni; 4) Dati di feedback: i tuoi like, dislike o segnalazioni di correzione sui risultati saranno utilizzati per migliorare la qualità della funzione. Ti invitiamo a non includere negli input dell'IA dati personali di terzi o informazioni altamente sensibili; la responsabilità derivante dai contenuti che inserisci volontariamente sarà gestita secondo quanto previsto dai Termini di utilizzo."
+        },
+        {
+          "heading": "Protezione dei dati personali dei minori",
+          "body": "Attribuiamo grande importanza alla protezione dei dati personali dei minori. Questo servizio è destinato principalmente a utenti maggiorenni; se sei un minore di età inferiore ai diciotto anni, utilizza il servizio con il consenso e sotto la guida di un genitore o tutore, e chiedi al genitore o tutore di aiutarti a leggere e ad accettare la presente informativa. Se veniamo a conoscenza di aver raccolto dati personali di minori senza il previo consenso del genitore o tutore, ci adopereremo per eliminare quanto prima i dati pertinenti. Il genitore o tutore di un minore può contattarci tramite i recapiti indicati nella presente informativa per esercitare i diritti di accesso, rettifica, cancellazione e altri diritti; dopo aver verificato il rapporto di tutela, collaboreremo al trattamento nei limiti consentiti dalla legge."
+        },
+        {
+          "heading": "Aggiornamenti della presente informativa",
+          "body": "Potremo rivedere la presente informativa di volta in volta. Senza il tuo esplicito consenso, non ridurremo i diritti di cui godi ai sensi della presente informativa. In caso di modifiche significative, te le comunicheremo con modalità evidenti, come avvisi sul sito, finestre pop-up o e-mail, e aggiorneremo la data di “Ultimo aggiornamento” all'inizio della pagina. Le modifiche includono, a titolo esemplificativo e non esaustivo: cambiamenti alle nostre informazioni di base, cambiamenti alle finalità/modalità/categorie del trattamento dei dati personali, cambiamenti ai tuoi diritti relativi ai dati personali e alle modalità del loro esercizio. Se continui a utilizzare il servizio dopo l'aggiornamento dell'informativa, si riterrà che tu abbia letto e compreso l'informativa aggiornata; se non sei d'accordo, interrompi l'utilizzo e potrai scegliere di cancellare l'account."
+        },
+        {
+          "heading": "Come contattarci",
+          "body": "Se hai domande, osservazioni o suggerimenti sulla presente informativa o sulla protezione dei dati personali, oppure ritieni che le nostre attività di trattamento violino i tuoi diritti e interessi legittimi, puoi contattarci tramite il canale “Impostazioni — Feedback” all'interno del servizio o l'indirizzo e-mail di supporto pubblicato dall'operatore. Risponderemo entro quindici giorni lavorativi dalla ricezione della tua richiesta. Se non sei soddisfatto della nostra risposta, in particolare se ritieni che il nostro comportamento leda i tuoi diritti e interessi legittimi, puoi inoltre presentare un reclamo o una segnalazione alle autorità competenti in materia di cyberspazio, agli organismi per la protezione dei dati personali o ad altre autorità competenti."
+        },
+        {
+          "heading": "Eccezioni all'obbligo di ottenere il consenso",
+          "body": "Secondo le leggi e i regolamenti applicabili, nei seguenti casi non è necessario ottenere la tua autorizzazione o il tuo consenso per raccogliere e utilizzare i tuoi dati personali: 1) quando è necessario per stipulare o eseguire un contratto di cui sei parte, ad esempio per fornirti le funzioni principali di lettura e annotazione; 2) quando è necessario per adempiere a compiti o obblighi previsti dalla legge, ad esempio per collaborare con indagini delle autorità giudiziarie; 3) quando è necessario per far fronte a emergenze di salute pubblica o, in situazioni di emergenza, per proteggere la tua vita, salute, incolumità e patrimonio; 4) quando trattiamo, entro limiti ragionevoli, dati personali che hai reso pubblici autonomamente o che sono comunque già pubblici in modo lecito; 5) quando trattiamo dati personali, entro limiti ragionevoli, per realizzare attività di informazione giornalistica, controllo dell'opinione pubblica e simili nell'interesse pubblico; 6) altri casi previsti da leggi e regolamenti. Ti chiediamo di comprendere che la valutazione delle suddette eccezioni si basa su quanto previsto da leggi e regolamenti, e le applicheremo entro limiti ragionevoli e necessari."
+        },
+        {
+          "heading": "Protezione dei dati personali sensibili",
+          "body": "Siamo consapevoli che alcune informazioni, se divulgate o utilizzate illegalmente, possono facilmente ledere la tua dignità personale o mettere a rischio la tua incolumità e il tuo patrimonio; tali informazioni costituiscono dati personali sensibili, ad esempio dati biometrici, convinzioni religiose, identità specifiche, salute, conti finanziari, traiettorie di spostamento e simili. In quanto strumento di lettura accademica, questo servizio non raccoglie attivamente, in linea di principio, i suddetti dati personali sensibili. Ti invitiamo a inserire tali informazioni con cautela quando crei note, annotazioni, contenuti di discussione e messaggi privati. Se scegli autonomamente di includere dati personali sensibili nei contenuti utente, adotteremo le stesse misure di protezione previste dalla presente informativa per i dati personali comuni, ma i rischi corrispondenti dovranno essere da te conosciuti e valutati autonomamente. Se scopri che contenuti di altri includono i tuoi dati personali sensibili senza il tuo consenso, puoi segnalarcelo e tratteremo la questione in conformità alla legge."
+        },
+        {
+          "heading": "Modalità specifiche per la cancellazione dell'account",
+          "body": "Quando decidi di cancellare l'account, puoi avviare la richiesta dalla pagina delle impostazioni dell'account di questa piattaforma oppure inviarla tramite i recapiti indicati nella presente informativa. Dopo aver ricevuto la richiesta, procederemo alla verifica dell'identità ed eseguiremo la cancellazione entro un termine ragionevole dal superamento della verifica. Le conseguenze della cancellazione dell'account includono: 1) non potrai più utilizzare i servizi che richiedono l'identità di tale account; gli articoli, le note, le annotazioni, le discussioni e i messaggi privati associati all'account non saranno più accessibili; 2) elimineremo o anonimizzeremo i dati personali associati all'account, ma i registri che le leggi e i regolamenti richiedono di conservare (ad esempio i log di transazioni e sicurezza conservati per obbligo di legge) continueranno a essere conservati per il periodo prescritto e saranno utilizzati solo nella misura necessaria a conseguire la finalità di conservazione; 3) le copie dei dati incluse nel ciclo di backup saranno eliminate automaticamente alla scadenza del backup. Una volta eseguita, la richiesta di cancellazione non è reversibile; se prima della cancellazione hai materiali che desideri conservare, esportali in anticipo."
+        },
+        {
+          "heading": "Scenari tipici di condivisione dei dati e trattamento su incarico",
+          "body": "Per aiutarti a comprendere chiaramente il flusso dei dati, elenchiamo di seguito gli scenari tipici: 1) Infrastruttura cloud: i tuoi dati sono archiviati nei servizi cloud e di database da noi incaricati; il fornitore fornisce solo risorse di archiviazione e calcolo e non utilizzerà i tuoi dati per altre finalità; 2) Analisi dei documenti: quando carichi file di letteratura come PDF, possiamo ricorrere a un servizio di analisi dei documenti per estrarre metadati e contenuto del testo; i dati necessari all'analisi saranno trattati, al termine dell'attività, secondo le modalità concordate; 3) Servizi di modelli di IA: gli input e gli output relativi alle funzioni di IA saranno trattati da fornitori di servizi di modelli che hanno stipulato con noi un contratto sul trattamento dei dati, nei limiti necessari all'erogazione della funzione; 4) Servizi di posta elettronica: quando utilizzi funzioni relative all'e-mail (ad esempio il recupero della password), ti invieremo messaggi tramite un fornitore di servizi di posta elettronica; 5) Statistiche e monitoraggio: per diagnosticare guasti e migliorare le prestazioni, utilizziamo strumenti di log e monitoraggio per trattare dati tecnici de-identificati. I suddetti incaricati sono tutti vincolati da rigorosi obblighi contrattuali e non possono trattare i dati oltre l'ambito dell'incarico."
+        },
+        {
+          "heading": "Trasferimento transfrontaliero dei dati",
+          "body": "Attualmente i nostri server e le principali fasi di trattamento dei dati si trovano nella Repubblica Popolare Cinese. Se, a causa di adeguamenti dell'architettura tecnica o dell'uso di componenti di terze parti esteri (come servizi di accesso esteri o servizi di modelli), i tuoi dati personali dovessero essere trasferiti all'estero, adempiremo, in conformità ai requisiti di leggi e regolamenti, ai necessari procedimenti quali la valutazione di sicurezza, la registrazione di contratti standard o l'ottenimento del tuo consenso separato, e ti indicheremo chiaramente il nome, i recapiti, le finalità e le modalità del trattamento del destinatario estero nonché le categorie di dati personali. Continueremo a monitorare i più recenti requisiti di leggi e regolamenti in materia di trasferimenti transfrontalieri e adegueremo tempestivamente le modalità di trattamento dei dati. Se hai dubbi sui trasferimenti transfrontalieri, puoi consultarci tramite i canali indicati nella presente informativa."
+        },
+        {
+          "heading": "Processo decisionale automatizzato ed esperienza personalizzata",
+          "body": "Il nostro servizio può utilizzare tecnologie automatizzate nei seguenti scenari: 1) Raccomandazioni di letteratura correlata: in base ai metadati dei documenti che leggi o annoti, ti raccomandiamo articoli potenzialmente correlati; 2) Ordinamento dei contenuti: ordiniamo notifiche e discussioni in base a tempo e pertinenza. I suddetti trattamenti servono solo a migliorare l'esperienza di consultazione, non comportano decisioni con un impatto significativo sui tuoi diritti personali e non sono utilizzati per prezzi differenziati. Puoi chiederci in qualsiasi momento, cancellando i dati o contattandoci, di interrompere i trattamenti di personalizzazione a essi correlati. Non utilizzeremo i tuoi dati personali per profiling né per riservarti un trattamento iniquo o irragionevole."
+        },
+        {
+          "heading": "Garanzie organizzative per la sicurezza delle informazioni",
+          "body": "Oltre alle misure tecniche, garantiamo la sicurezza delle informazioni anche a livello organizzativo e istituzionale: 1) identifichiamo il responsabile della sicurezza dei dati e le unità competenti, attuando una gestione classificata e graduata dei dati; 2) offriamo formazione sulla riservatezza e gestione dei permessi ai dipendenti che trattano dati personali, facciamo firmare accordi di riservatezza e assegniamo i permessi secondo il principio del minimo necessario, riesaminandoli periodicamente; 3) istituiamo meccanismi di approvazione degli accessi ai dati e di tracciamento nei log, monitorando e segnalando accessi anomali; 4) predisponiamo piani di emergenza per incidenti relativi alla sicurezza dei dati personali e li testiamo periodicamente; 5) svolgiamo due diligence e imponiamo vincoli contrattuali ai partner esterni, definendo le loro responsabilità in materia di sicurezza. L'attuazione di queste misure sarà soggetta a audit interni e, su richiesta delle autorità di regolamentazione, a verifiche esterne."
+        },
+        {
+          "heading": "Domande frequenti sull'esercizio dei Suoi diritti",
+          "body": "Nella pratica, le domande più frequenti degli utenti includono: 1) Quali contenuti comprendono i dati che esporto? L'ambito offerto dalla funzione di esportazione dipende dalle effettive capacità del prodotto e di norma comprende i Suoi dati di base e l'elenco degli articoli, le note e le annotazioni da Lei creati; 2) Perché dopo la cancellazione alcune informazioni sono ancora ricercabili? La cancellazione rende immediatamente i dati inaccessibili, ma l'aggiornamento dell'indice di ricerca e della cache può subire un breve ritardo; le copie di backup saranno eliminate al termine del ciclo di backup; 3) Qual è la differenza tra chiusura dell'account e cancellazione? La chiusura riguarda l'intero account e tutti i suoi dati, mentre la cancellazione può riguardare un singolo contenuto; 4) Cosa faccio se ho dimenticato l'e-mail di registrazione? Può recuperarla tramite gli altri metodi associati nelle impostazioni dell'account oppure contattarci per una verifica dell'identità e successiva gestione; 5) L'esercizio dei diritti è a pagamento? Non addebitiamo costi per le richieste ragionevoli; per richieste ripetute o oltre i limiti ragionevoli possiamo applicare un costo ragionevole. Per qualsiasi altro dubbio, La invitiamo a contattarci in qualsiasi momento."
+        },
+        {
+          "heading": "Dispositivi multipli e sincronizzazione dei dati",
+          "body": "Quando accede allo stesso account da dispositivi diversi, i Suoi articoli, note e annotazioni vengono sincronizzati sul server per garantire un'esperienza coerente tra i dispositivi. La sincronizzazione avviene tramite trasmissione cifrata e il server conserva solo i dati di versione necessari per realizzarla. Le operazioni di cancellazione effettuate su un dispositivo vengono sincronizzate sugli altri; in caso di conflitti di sincronizzazione (ad esempio, modifiche offline poi unite online), il sistema li gestirà secondo la strategia di unione predefinita, preservando il più possibile i contenuti di entrambe le parti. Se non desidera che alcuni contenuti vengano sincronizzati, può scegliere di utilizzare le funzioni corrispondenti solo in locale (se la piattaforma lo supporta) oppure effettuare le modifiche dopo aver disconnesso l'account. Per sovrascritture o perdite di dati causate dal meccanismo di sincronizzazione, faremo il possibile per aiutarLa a ripristinare i backup, ma non possiamo escludere casi irreversibili; Le consigliamo di esportare periodicamente i contenuti importanti."
+        },
+        {
+          "heading": "Componenti di terze parti e licenze open source",
+          "body": "Durante la realizzazione di questa piattaforma sono stati utilizzati numerosi validi componenti open source e librerie di terze parti. Le informazioni sulle licenze di tali componenti non modificano gli impegni assunti da questa politica nei Suoi confronti: per i dati trattati tramite componenti abbiamo gli stessi obblighi di protezione previsti per il trattamento diretto. Alcuni componenti possono generare log tecnici durante il funzionamento (ad esempio, segnalazioni di errori del framework); chiederemo loro, o configureremo ove tecnicamente possibile, di raccogliere solo informazioni tecniche deidentificate. Il testo integrale delle licenze open source e le dichiarazioni sui diritti fanno riferimento a quanto pubblicato ufficialmente da ciascun componente; se desidera conoscere l'elenco dei principali componenti open source utilizzati da questa piattaforma, può richiederlo all'indirizzo e-mail di supporto."
+        },
+        {
+          "heading": "Vigilanza e audit di conformità",
+          "body": "Collaboreremo attivamente con le autorità competenti per le verifiche ispettive e gli audit di conformità, fornendo, ove richiesto dalla legge, i materiali e le spiegazioni necessari. Nei limiti consentiti da leggi e regolamenti, svolgiamo anche autovalutazioni di conformità, tra cui la valutazione d'impatto sulla protezione dei dati personali (PIA) e verifiche di sicurezza, e miglioriamo continuamente le misure di protezione in base ai risultati. Quando nuove leggi o regolamenti, norme nazionali o standard di settore impongono requisiti più elevati per gli aspetti descritti in questa politica, aggiorneremo prontamente la politica e le procedure interne per garantire il rispetto dei più recenti parametri di conformità."
+        },
+        {
+          "heading": "Spiegazione dei termini",
+          "body": "Per facilitare la comprensione di questa politica, spieghiamo di seguito i principali termini: 1) Dati personali: qualsiasi informazione riguardante una persona fisica identificata o identificabile, registrata in formato elettronico o altro, esclusi i dati sottoposti ad anonimizzazione; 2) Dati personali sensibili: dati personali che, se divulgati o utilizzati illecitamente, possono facilmente ledere la dignità della persona fisica o mettere in pericolo la sua incolumità personale o patrimoniale; 3) Anonimizzazione: il processo mediante il quale i dati personali sono trattati in modo da non poter più identificare un particolare interessato e non essere reversibili; 4) Pseudonimizzazione: il processo mediante il quale i dati personali sono trattati in modo da non poter identificare un particolare interessato senza l'ausilio di ulteriori informazioni; 5) Responsabile del trattamento: l'organizzazione o la persona che tratta dati personali per nostro conto e secondo le nostre istruzioni; 6) Periodo di backup: il periodo di tempo durante il quale vengono conservate copie dei dati per finalità di disaster recovery, al termine del quale le copie vengono eliminate."
+        },
+        {
+          "heading": "Consigli per la sicurezza dell'account",
+          "body": "Proteggere i dati personali non è solo una nostra responsabilità: richiede anche la Sua partecipazione. Le consigliamo di: 1) impostare una password complessa (con una combinazione di lettere, numeri e simboli) ed evitare di riutilizzare la stessa password su altri siti web; 2) non comunicare a nessuno le credenziali dell'account, la password o i token di sessione, neppure a chi si presenta come nostro personale di assistenza: i nostri operatori non Le chiederanno mai la password; 3) disconnettersi tempestivamente dopo l'uso da dispositivi non abituali; 4) controllare periodicamente le attività di accesso e le autorizzazioni dell'account e, in caso di anomalie, cambiare subito la password e contattarci; 5) gestire con prudenza link e allegati di origine sconosciuta per prevenire attacchi di phishing. Se sospetta anomalie nell'account, La preghiamo di contattarci immediatamente tramite i canali indicati in questa politica: La aiuteremo a bloccare l'account, reimpostare la password e analizzare i rischi."
+        },
+        {
+          "heading": "Log e dati di audit",
+          "body": "Per garantire la sicurezza del servizio, diagnosticare guasti e soddisfare i requisiti di conformità, registriamo i log tecnici necessari, tra cui ora della richiesta, indirizzo della richiesta, tipo di operazione, stato del risultato e indirizzo di origine. I dati dei log sono sottoposti a deidentificazione, l'accesso è rigorosamente controllato e il periodo di conservazione di norma non supera il limite massimo previsto da leggi e regolamenti. I log sono utilizzati principalmente per: identificare e bloccare attacchi, analizzare i colli di bottiglia delle prestazioni del sistema, riprodurre e correggere guasti e supportare indagini e acquisizione di prove in caso di incidenti di sicurezza. I log non vengono utilizzati per profilazione commerciale nei Suoi confronti, né condivisi con terzi per finalità di marketing. Se ha dubbi sulle registrazioni che La riguardano nei log, può consultarci: nei limiti consentiti dalla legge, Le forniremo spiegazioni sul trattamento."
+        },
+        {
+          "heading": "Classificazione e livelli dei dati",
+          "body": "Gestiamo i dati applicando una classificazione e livelli basati sulla sensibilità e sull'importanza per il business: 1) le credenziali di identità (come hash delle password e token di sessione) sono protette al massimo livello, archiviate con hashing e cifratura, e l'accesso richiede una doppia autorizzazione; 2) i dati di profilo (come e-mail e nickname) sono soggetti a controlli di accesso rigorosi e visibili solo nelle fasi necessarie all'erogazione delle funzioni; 3) i contenuti dell'utente (come articoli, note e annotazioni) Le appartengono; li archiviamo e trattiamo secondo le Sue istruzioni e non sottoponiamo i contenuti a revisione (salvo quanto richiesto da leggi e regolamenti); 4) i log tecnici (come i registri di accesso) sono conservati in forma deidentificata per finalità operative e di sicurezza. Per i dati di livello diverso applichiamo misure di controllo differenziate nelle fasi di archiviazione, trasmissione, accesso e distruzione; quanto più alto è il livello del dato, tanto più rigorosi sono i controlli."
+        },
+        {
+          "heading": "Dati salvati localmente nel browser",
+          "body": "Per migliorare l'esperienza, alcuni dati vengono salvati localmente nel Suo browser, tra cui: credenziali di sessione di accesso (per evitare accessi ripetuti), preferenze dell'interfaccia (come tema, lingua selezionata e impostazioni del lettore) e cache temporanea delle modifiche (per evitare la perdita di contenuti in caso di chiusura accidentale). Questi dati locali sono conservati solo sul Suo dispositivo; può eliminarli tramite la funzione di cancellazione dei dati del browser oppure attivare la pulizia usando la funzione di disconnessione disponibile nella piattaforma. Tenga presente che, dopo aver cancellato i dati locali, dovrà accedere di nuovo e alcune preferenze torneranno ai valori predefiniti. Quando utilizza dispositivi pubblici o condivisi, Le consigliamo di usare la modalità in incognito e di disconnettere l'account dopo l'uso, per evitare che i Suoi dati personali siano accessibili a chi utilizzerà il dispositivo in seguito."
+        },
+        {
+          "heading": "Disposizioni sui dati in caso di collaborazioni e fusioni",
+          "body": "Se dovessimo essere coinvolti in una fusione, acquisizione, cessione di attività o transazione simile, i Suoi dati personali potrebbero essere trasferiti come parte delle attività cedute. In tali casi, provvederemo a: 1) valutare la capacità di protezione dei dati del cessionario prima della transazione; 2) richiedere al cessionario di continuare ad adempiere agli obblighi previsti dalla presente informativa o di ottenere nuovamente il Suo consenso prima di modificare l'informativa; 3) informarLa, nei modi previsti dalla legge, anche mediante avviso pubblico, del nome e dei recapiti del cessionario. Se dopo la transazione cambia la forma del servizio (ad esempio cambio di denominazione o integrazione di funzionalità), La informeremo entro un termine ragionevole e garantiremo che l'esercizio dei Suoi diritti di accesso, rettifica, cancellazione e chiusura dell'account non sia pregiudicato."
+        },
+        {
+          "heading": "Correzione degli errori e qualità dei dati",
+          "body": "Ci impegniamo a garantire che i dati personali trattati siano accurati, completi e aggiornati tempestivamente. Se rileva che le informazioni che trattiamo sul Suo conto contengono errori (ad esempio, l'email di registrazione errata o il profilo inesatto), può correggerle autonomamente dalla pagina delle impostazioni oppure contattarci per richiedere la rettifica. Per le richieste di rettifica che ci invia, verificheremo prima la Sua identità, completeremo la rettifica entro un termine ragionevole e sincronizzeremo l'esito con i sistemi interessati. Se la rettifica coinvolge terzi (ad esempio una fonte di identità SSO), potremmo dover coordinare la gestione con le parti interessate e Le indicheremo il tempo previsto per il completamento. La qualità dei dati è essenziale per la qualità del servizio; La ringraziamo per aiutarci a mantenere l'accuratezza delle informazioni."
+        },
+        {
+          "heading": "Principi predefiniti di progettazione della privacy",
+          "body": "Nella fase di progettazione dei prodotti e dei servizi, seguiamo i principi di “Privacy by Default” e “Privacy by Design”: 1) prima del lancio di nuove funzionalità, svolgiamo una valutazione d'impatto sulla protezione dei dati personali per identificare e ridurre i rischi per la privacy; 2) la configurazione predefinita adotta la raccolta minima e le autorizzazioni non necessarie sono disattivate per impostazione predefinita; 3) la visualizzazione dei dati segue il principio della visibilità minima: le Sue note e annotazioni sono visibili per impostazione predefinita solo a Lei e la condivisione richiede un Suo intervento attivo; 4) le funzioni di esportazione e cancellazione sono integrate come capacità standard, non come aggiunte successive; 5) le interfacce esterne seguono il principio dei campi minimi per evitare un'esposizione eccessiva dei dati. Questi principi accompagnano l'intero ciclo di vita del prodotto, comprese tutte le fasi di revisione dei requisiti, sviluppo, test e messa in produzione e manutenzione."
+        },
+        {
+          "heading": "Nota sui limiti dell'informativa sulla privacy",
+          "body": "La presente informativa si applica alle attività con cui trattiamo i Suoi dati personali tramite questa piattaforma. Le seguenti situazioni non sono disciplinate dalla presente informativa, ma dalle rispettive informative o dai soggetti competenti: 1) i siti o servizi di terzi che Lei visita (anche se vi accede tramite link presenti su questa piattaforma), le cui attività di trattamento sono soggette alla loro informativa sulla privacy; 2) le operazioni di autorizzazione effettuate tramite piattaforme di account di terzi (ad esempio GitHub), per le quali il trattamento delle informazioni è disciplinato dall'informativa della piattaforma e noi riceviamo solo le informazioni confermate nella pagina di autorizzazione; 3) le versioni private (se presenti) acquistate, implementate o gestite centralmente dalla Sua organizzazione, per le quali il titolare del trattamento e le regole sono stabiliti dall'accordo sottoscritto tra l'organizzazione e il fornitore del servizio. La invitiamo a distinguere i diversi soggetti del trattamento nelle varie situazioni e a leggere attentamente le relative clausole."
+        },
+        {
+          "heading": "Reclami e vigilanza",
+          "body": "Se ritiene che le nostre attività di trattamento dei dati personali ledano i Suoi diritti e interessi legittimi, può tutelare i Suoi diritti nei seguenti modi: 1) inviarci un reclamo, indicando i fatti, le ragioni e le richieste; lo gestiremo e risponderemo entro quindici giorni lavorativi; 2) presentare reclamo o segnalazione alle autorità competenti in materia di cybersicurezza e informatizzazione o ad altre autorità responsabili della protezione dei dati personali; 3) avviare un'azione legale davanti al tribunale competente per le controversie pertinenti. Ci impegniamo a non adottare alcuna forma di limitazione o misura discriminatoria nei confronti del Suo account per il fatto che Lei eserciti i diritti di cui sopra. Per le violazioni accertate, assumeremo le responsabilità previste dalla legge e adotteremo misure correttive, informandola dell'esito del trattamento."
+        },
+        {
+          "heading": "Rapporto con i Termini di utilizzo",
+          "body": "La presente informativa e i Termini di utilizzo costituiscono insieme il documento legale completo su cui si basa l'utilizzo del servizio da parte Sua. In caso di incoerenza tra la presente informativa e i Termini di utilizzo in materia di trattamento dei dati personali, prevarrà la presente informativa; per le questioni non disciplinate dalla presente informativa, si applicheranno i Termini di utilizzo. Quando le leggi e i regolamenti impongono requisiti obbligatori in materia di trattamento dei dati personali, tali requisiti prevarranno indipendentemente da quanto stabilito nella presente informativa. Utilizzando il servizio, Lei dichiara di aver letto e accettato entrambi i documenti summenzionati; il Suo dissenso rispetto a uno di essi implica che Lei debba cessare di utilizzare il servizio."
+        },
+        {
+          "heading": "Esempi illustrativi",
+          "body": "Per aiutarLa a comprendere intuitivamente la presente informativa, forniamo i seguenti esempi: Esempio uno: Lei si registra con un indirizzo email; noi memorizziamo solo l'indirizzo email e l'hash della password e non Le chiediamo il nome reale o il numero di telefono. Esempio due: Lei accede tramite GitHub; otteniamo solo le informazioni di base che Lei conferma nella pagina di autorizzazione di GitHub e non leggiamo il contenuto dei Suoi repository di codice. Esempio tre: Lei utilizza la funzione AI di domanda e risposta per chiedere il significato di un passaggio di un articolo; solo il testo di quel passaggio e la Sua domanda vengono trasmessi alla fase di elaborazione del modello, e le Sue altre note non vengono inviate insieme. Esempio quattro: Lei condivide un documento con il gruppo di ricerca; successivamente i membri del gruppo possono visualizzare i contenuti condivisi di quel documento, ma gli altri documenti che Lei non ha condiviso restano visibili solo a Lei. Esempio cinque: Lei richiede la chiusura dell'account; dopo aver verificato la Sua identità, cancelliamo i Suoi dati personali e le copie nei backup vengono eliminate automaticamente allo scadere del ciclo di backup. Gli esempi sopra servono a illustrare la logica di trattamento; prevalgono l'effettiva implementazione del prodotto e il testo della presente informativa."
+        },
+        {
+          "heading": "Versione ed efficacia",
+          "body": "La versione della presente informativa è V1.0 ed è efficace dalla data di pubblicazione. In questa pagina registreremo il riepilogo di ogni modifica importante e la data di aggiornamento, così che Lei possa ricostruirne la cronologia. Se dopo l'aggiornamento della presente informativa Lei continua a utilizzare il servizio, ciò significa che accetta il contenuto aggiornato; in caso contrario, può cessare di utilizzare il servizio e richiedere la chiusura dell'account. Le consigliamo di consultare periodicamente la presente informativa per sapere come proteggiamo i Suoi dati personali. La ringraziamo per la fiducia accordata a PaperHelper; continueremo a trattare i Suoi dati con attenzione e trasparenza."
+        }
+      ]
+    }
+  },
+  "assistant": {
+    "thinking": "Sto pensando",
+    "processing": "Elaborazione in corso",
+    "organizing": "Organizzazione della risposta",
+    "thinkingAria": "L'IA sta elaborando",
+    "reasoningActive": "Ragionamento in corso",
+    "reasoningTitle": "Processo di pensiero",
+    "me": "Io",
+    "assistantName": "Assistente PR",
+    "providerRequired": "Configura e attiva prima un Provider, quindi seleziona un modello o invia un messaggio.",
+    "providerRequiredShort": "Configura prima un Provider",
+    "providerRequiredQuote": "Configura prima un Provider; la citazione dell'articolo è stata mantenuta nel campo di input.",
+    "contextParsing": "Il testo dell'articolo è ancora in fase di analisi; per ora fai domande usando il testo selezionato; al termine dell'analisi potrai continuare a fare domande.",
+    "contextUnavailable": "Impossibile ottenere temporaneamente il contesto dell'articolo; è stato usato il testo selezionato per continuare a fare domande.",
+    "newChat": "Nuova conversazione",
+    "selectHistory": "Seleziona conversazione precedente",
+    "history": "Conversazioni precedenti",
+    "noHistory": "Nessuna conversazione precedente",
+    "providerDeleted": "Provider eliminato",
+    "replying": "Risposta in corso",
+    "createdAt": "Creato {time}",
+    "lastMessageAt": "Ultima conversazione {time}",
+    "selectChatProvider": "Seleziona Provider per la chat corrente",
+    "selectProvider": "Seleziona Provider",
+    "noProvider": "Provider non configurato",
+    "emptyHint": "Scrivi testo qui sotto per iniziare una conversazione con l'IA",
+    "replyFailed": "Risposta non riuscita, riprova a inviare",
+    "emptyReply": "Nessuna risposta visualizzabile ricevuta",
+    "pageRef": "{title} · pagina {page}",
+    "removeImage": "Rimuovi immagine",
+    "removeQuote": "Rimuovi citazione",
+    "inputPlaceholder": "Scrivi un messaggio, Invio per inviare, Shift+Invio per andare a capo",
+    "inputPlaceholderQuoted": "Scrivi la tua domanda sotto la citazione, Invio per inviare",
+    "inputPlaceholderNoProvider": "Configura prima un Provider per iniziare la conversazione",
+    "configureProvider": "Configura Provider",
+    "provider": "Provider",
+    "selectModel": "Seleziona modello",
+    "sendMessage": "Invia messaggio",
+    "disclaimer": "I contenuti generati dall'IA sono solo indicativi; verifica le informazioni importanti",
+    "replyInterrupted": "La risposta precedente non è stata completata prima della chiusura della pagina; riprova a inviare"
+  },
+  "categories": {
+    "thesis": {
+      "fields": {
+        "degreeType": {
+          "label": "Tipo di titolo",
+          "options": {
+            "doctor": "Dottorato",
+            "master": "Magistrale",
+            "bachelor": "Triennale"
+          }
+        },
+        "advisor": {
+          "label": "Relatore"
+        },
+        "university": {
+          "label": "Università/istituzione"
+        },
+        "major": {
+          "label": "Corso di studi"
+        }
+      },
+      "label": "Tesi di laurea"
+    },
+    "journal": {
+      "fields": {
+        "journalName": {
+          "label": "Nome della rivista/conferenza"
+        },
+        "volume": {
+          "label": "Volume"
+        },
+        "issue": {
+          "label": "Numero"
+        },
+        "pages": {
+          "label": "Pagine"
+        },
+        "issnIsbn": {
+          "label": "ISSN/ISBN"
+        },
+        "indexing": {
+          "label": "Indicizzazione",
+          "options": {
+            "SCI": "SCI",
+            "EI": "EI",
+            "SSCI": "SSCI",
+            "PKU_CORE": "Core PKU",
+            "CSSCI": "CSSCI",
+            "OTHER": "Altro"
+          }
+        }
+      },
+      "label": "Articolo di rivista/conferenza"
+    },
+    "preprint": {
+      "fields": {
+        "platform": {
+          "label": "Piattaforma di preprint",
+          "options": {
+            "arxiv": "arXiv",
+            "biorxiv": "bioRxiv",
+            "ssrn": "SSRN",
+            "researchgate": "ResearchGate",
+            "other": "Altro"
+          }
+        },
+        "versionNumber": {
+          "label": "Numero di versione"
+        },
+        "doiStatus": {
+          "label": "Stato DOI",
+          "options": {
+            "has_doi": "Con DOI",
+            "no_doi": "Nessun DOI"
+          }
+        }
+      },
+      "label": "Preprint"
+    },
+    "course": {
+      "fields": {
+        "courseName": {
+          "label": "Nome del corso"
+        },
+        "instructor": {
+          "label": "Docente"
+        },
+        "university": {
+          "label": "Università"
+        },
+        "semester": {
+          "label": "Semestre",
+          "placeholder": "Es.: semestre autunnale 2024-2025"
+        }
+      },
+      "label": "Elaborato del corso"
+    },
+    "tech_report": {
+      "fields": {
+        "institution": {
+          "label": "Ente di ricerca"
+        },
+        "reportNumber": {
+          "label": "Numero del rapporto"
+        },
+        "projectName": {
+          "label": "Nome del progetto"
+        }
+      },
+      "label": "Rapporto tecnico"
+    },
+    "patent": {
+      "fields": {
+        "patentNumber": {
+          "label": "Numero di brevetto"
+        },
+        "patentType": {
+          "label": "Tipo di brevetto",
+          "options": {
+            "invention": "Brevetto per invenzione",
+            "utility_model": "Modello di utilità",
+            "design": "Disegno industriale"
+          }
+        },
+        "applicationDate": {
+          "label": "Data di deposito"
+        },
+        "grantDate": {
+          "label": "Data di concessione"
+        },
+        "patentHolder": {
+          "label": "Titolare del brevetto"
+        }
+      },
+      "label": "Documento brevettuale"
+    }
+  },
+  "errors": {
+    "loginExpired": "Sessione scaduta, accedi di nuovo",
+    "forbidden": "Permessi insufficienti",
+    "badRequest": "Parametri non validi",
+    "notFound": "Risorsa non trovata",
+    "fileDeleteFailed": "Eliminazione del file originale non riuscita; il record dell'articolo è stato conservato. Riprova più tardi.",
+    "twoFactorExpired": "Sessione di autenticazione a due fattori scaduta, accedi di nuovo",
+    "unknown": "Errore sconosciuto",
+    "unknownNetwork": "Errore di rete sconosciuto",
+    "providerNoDetail": "Il provider non ha restituito dettagli sull'errore",
+    "httpHtmlResponse": "HTTP {status}: il provider ha restituito una pagina HTML invece di una risposta del modello",
+    "providerUnreachable": "Il browser non riesce a raggiungere il provider; controlla Base URL, CORS, certificato TLS e se la pagina HTTPS sta richiedendo un indirizzo HTTP",
+    "providerAborted": "Richiesta annullata o scaduta",
+    "baseUrlScheme": "Base URL supporta solo http:// o https://",
+    "baseUrlMixedContent": "La pagina corrente è HTTPS; il browser bloccherà le richieste a provider HTTP (Mixed Content)",
+    "baseUrlInvalid": "Formato Base URL non valido",
+    "relayUnavailable": "Relay del provider non disponibile",
+    "noDisplayText": "Le risposte in streaming e non in streaming del provider non contengono testo visualizzabile",
+    "modelsUnreadable": "Impossibile leggere la risposta dell'API dei modelli",
+    "modelsHtml": "L'API dei modelli ha restituito una pagina HTML invece dell'elenco dei modelli",
+    "modelsNotJson": "L'API dei modelli non ha restituito JSON valido",
+    "modelsNoId": "La risposta dell'API dei modelli non contiene un ID modello riconoscibile",
+    "modelsNoPath": "L'API dei modelli non ha trovato un percorso API utilizzabile",
+    "modelsEmpty": "Elenco dei modelli vuoto",
+    "providerTestNoModel": "Impossibile determinare il modello di test: {detail}. Inserisci prima manualmente un modello supportato da questo provider",
+    "baseUrlAutofixed": ", il percorso API /v1 della Base URL è stato completato automaticamente",
+    "providerTestOkModel": "Connessione riuscita, il modello {model} è disponibile{correction}",
+    "providerTestOkList": "Connessione riuscita, recuperati {count} modelli e verificato {model}{correction}",
+    "providerTestChatFailed": "Test dell'endpoint di chat non riuscito (modello {model}): {detail}",
+    "emptyResponse": "Il provider ha restituito un esito positivo, ma la risposta non contiene testo visualizzabile",
+    "endpointMismatch": "Il provider ha restituito una pagina HTML invece di una risposta del modello; controlla che Base URL punti alla radice dell'API",
+    "withDiagnostic": "{message}. Diagnostica della risposta: {diagnostic}",
+    "providerBusiness": "Il provider ha restituito un errore di business",
+    "providerBusinessDetail": "Errore di business del provider: {detail}",
+    "providerFailedStatus": "Il provider ha restituito uno stato di errore",
+    "modelRefusal": "Il modello ha rifiutato di generare testo: {refusal}",
+    "noTextFinishReason": "Il provider non ha restituito testo, motivo di conclusione: {reason}",
+    "toolCallOnly": "Il modello ha restituito solo chiamate a strumenti, ma la conversazione corrente non ha strumenti eseguibili"
+  },
+  "notifications": {
+    "welcomeTitle": "Introduzione alle funzionalità",
+    "welcomeMessage": "Benvenuto in PaperHelper! Clicca per visualizzare le funzionalità della versione corrente"
+  }
+}

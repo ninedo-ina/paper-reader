@@ -2,6 +2,8 @@
 // 设备标识 — 保存在本机，用于「信任设备」列表与免二次验证
 // =============================================================================
 
+import { runtimeTranslator } from "@/i18n/runtime"
+
 const DEVICE_KEY_STORAGE = "pr_device_id"
 const DEVICE_NAME_STORAGE = "pr_device_name"
 
@@ -73,6 +75,6 @@ function describeUserAgent(ua: string): string {
           ? "Firefox"
           : /Safari\//.test(ua)
             ? "Safari"
-            : "浏览器"
+            : runtimeTranslator("common")("browser")
   return platform ? `${platform} · ${browser}` : browser
 }

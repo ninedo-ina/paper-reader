@@ -1,7 +1,8 @@
 {
   "app": {
     "name": "PaperHelper",
-    "tagline": "论文在线阅读平台"
+    "tagline": "论文在线阅读平台",
+    "description": "基于 GROBID 的学术论文在线阅读、批注、笔记与 AI 辅助阅读平台"
   },
   "nav": {
     "library": "我的书架",
@@ -37,7 +38,31 @@
     "paperAbstractPlaceholder": "输入或粘贴摘要...",
     "creating": "创建中...",
     "readingSessions": "最近阅读记录",
-    "paperCategory": "分类"
+    "paperCategory": "分类",
+    "extraFieldsSuffix": "— 特有字段",
+    "storageLocationHint": "选择论文存储位置（可选）",
+    "noStorageConfigHint": "暂无存储配置，可在设置中创建",
+    "storageConfig": "存储配置",
+    "noStorage": "不使用存储",
+    "createStepBasic": "基本信息",
+    "createStepFields": "分类字段",
+    "createStepStorage": "存储配置",
+    "layoutSingle": "单页",
+    "layoutTwo": "两栏",
+    "layoutThree": "三栏",
+    "layoutFour": "四栏",
+    "layoutSix": "六栏",
+    "createAnnotationFailed": "创建批注失败",
+    "createNoteFailed": "创建笔记失败",
+    "copyTitleSuccess": "复制论文标题成功",
+    "copyTitleHint": "点击复制论文标题",
+    "switchToDark": "切换夜间模式",
+    "switchToLight": "切换白天模式",
+    "pageLayout": "分页布局",
+    "exitFullscreen": "退出全屏",
+    "enterFullscreen": "全屏阅读",
+    "uploadHint": "支持 PDF 直链 | 本地上传",
+    "urlTitleOptional": "标题（可选）"
   },
   "paper": {
     "basicInfo": "基本信息",
@@ -65,13 +90,39 @@
     "publishing": "发布中...",
     "selectStorage": "选择论文存储位置（可选）",
     "noStorageConfig": "暂无存储配置，可在设置中创建",
-    "back": "返回"
+    "back": "返回",
+    "tabInfo": "基本信息",
+    "tabVersions": "历史版本",
+    "tabStorage": "存储信息",
+    "detailSuffix": "— 详细信息",
+    "abstract": "摘要",
+    "versionNumberPlaceholder": "例: 1.0, v2, 2024-01-draft",
+    "versionRemarkPlaceholder": "版本说明（可选）"
   },
   "panel": {
     "metadata": "论文信息",
     "annotations": "批注",
     "notes": "笔记",
-    "aiChat": "AI 对话"
+    "aiChat": "AI 对话",
+    "annotationDeleted": "批注已删除",
+    "annotationDeleteFailed": "删除批注失败",
+    "noteDeleted": "笔记已删除",
+    "noteDeleteFailed": "删除笔记失败",
+    "annotationUpdated": "批注已更新",
+    "annotationUpdateFailed": "更新批注失败",
+    "noteUpdated": "笔记已更新",
+    "noteUpdateFailed": "更新笔记失败",
+    "emptyAnnotations": "暂无批注",
+    "emptyNotes": "暂无笔记",
+    "editAnnotation": "编辑批注",
+    "deleteAnnotation": "删除批注",
+    "editNote": "编辑笔记",
+    "deleteNote": "删除笔记",
+    "quotedText": "引用原文 · 第{page}页",
+    "comments": "评论",
+    "commentCount": "{count} 条评论",
+    "expand": "展开面板",
+    "collapse": "收起面板"
   },
   "metadata": {
     "title": "标题",
@@ -157,7 +208,27 @@
     "note": "便签",
     "color": "颜色",
     "addComment": "添加批注",
-    "delete": "删除"
+    "delete": "删除",
+    "copySuccess": "复制成功",
+    "createAnnotation": "创建批注",
+    "createNote": "创建笔记",
+    "askAi": "询问AI",
+    "copyText": "复制文本",
+    "editAnnotation": "编辑批注",
+    "editNote": "编辑笔记",
+    "quotedText": "引用原文",
+    "noteTitlePlaceholder": "笔记标题（可选）",
+    "annotationPlaceholder": "输入批注内容（支持Markdown格式）...",
+    "notePlaceholder": "输入笔记内容（支持Markdown格式）...",
+    "insertImage": "插入图片",
+    "paperPageRef": "论文 #{id} · 第 {page} 页",
+    "pageRef": "第 {page} 页",
+    "currentPaperAnnotations": "当前论文批注",
+    "allAnnotations": "全部批注",
+    "commentFailed": "评论失败",
+    "reply": "回复",
+    "replyPlaceholder": "回复...",
+    "commentPlaceholder": "写下你的批注..."
   },
   "notes": {
     "newNote": "新建笔记",
@@ -167,7 +238,12 @@
     "edit": "编辑",
     "preview": "预览",
     "noNotes": "暂无笔记",
-    "totalNotes": "条笔记"
+    "totalNotes": "条笔记",
+    "currentPaperNotes": "当前论文笔记",
+    "allNotes": "全部笔记",
+    "paperPageRef": "论文 #{id} · 第 {page} 页",
+    "titlePlaceholder": "笔记标题...",
+    "contentPlaceholder": "用 Markdown 写下你的笔记..."
   },
   "ai": {
     "selectModel": "选择模型",
@@ -231,7 +307,11 @@
     "twoFactorInvalid": "动态码或恢复码不正确",
     "trustDevice": "信任此设备，下次登录免二次验证",
     "verifyAndLogin": "验证并登录",
-    "backToLogin": "返回重新登录"
+    "backToLogin": "返回登录",
+    "callbackMissingCode": "缺少授权码",
+    "callbackFailed": "认证失败",
+    "callbackTwoFactor": "需要两步验证...",
+    "callbackCompleting": "正在完成登录..."
   },
   "notification": {
     "title": "通知",
@@ -273,6 +353,159 @@
     "light": "浅色模式",
     "dark": "深色模式"
   },
+  "settings": {
+    "title": "设置",
+    "preferences": "偏好设置",
+    "theme": "主题",
+    "language": "语言",
+    "languageHint": "选择后界面语言立即生效，并同步保存到你的账号偏好设置",
+    "defaultModel": "默认 AI 模型",
+    "saved": "已保存",
+    "saveFailed": "保存失败，请稍后重试",
+    "back": "返回",
+    "qrFailed": "二维码生成失败，请刷新页面重试",
+    "qrAlt": "两步验证二维码",
+    "copyAll": "一键复制",
+    "downloadTxt": "下载 TXT 文件",
+    "recoveryCopied": "恢复码已复制到剪贴板",
+    "recoveryCopyFailed": "复制失败，请手动选择后复制",
+    "recoveryDownloaded": "恢复码已下载为 txt 文件",
+    "recoveryFileTitle": "笨迪论文助手 · 两步验证恢复码",
+    "recoveryFileAccount": "账号：{email}",
+    "recoveryFileGeneratedAt": "生成时间：{time}",
+    "recoveryFileNotice1": "每个恢复码只能使用一次，请妥善保存。",
+    "recoveryFileNotice2": "关闭两步验证后，这些恢复码将立即失效。",
+    "recoveryFileName": "笨迪论文助手-两步验证恢复码.txt",
+    "recoverySummary": "共 {count} 个恢复码，每个都是 6 位数字，且只能使用一次。请在不开启两步验证时无法登录的情况下用它找回账号。",
+    "recoverySaved": "我已妥善保存",
+    "otpLabel": "动态码",
+    "otpDigitLabel": "{label}第 {index} 位",
+    "otpOrRecoveryCode": "动态码或恢复码",
+    "deviceLoadFailed": "加载设备列表失败",
+    "deviceRemoveFailed": "删除设备失败",
+    "deviceRemoved": "已删除 {count} 台设备，该设备需重新登录",
+    "deviceTitle": "信任设备",
+    "deviceEmpty": "暂无登录过的设备。开启两步验证后，被信任的设备再次登录时可只输入密码，无需动态码。",
+    "deviceIntro": "以下是登录过并保存的设备。被信任的设备在两步验证开启后可免动态码登录；删除后该设备已签发的登录凭证立即失效，需要重新登录。",
+    "deviceUnknown": "未知设备",
+    "deviceCurrent": "当前设备",
+    "deviceTrusted": "已信任",
+    "deviceUnknownClient": "未知客户端",
+    "deviceUnknownIp": "未知",
+    "deviceLoginInfo": "IP {ip} · 最近登录 {time}",
+    "deviceTrustedUntil": " · 信任至 {time}",
+    "deviceDeleting": "删除中...",
+    "deviceDeleteSelected": "删除所选",
+    "deviceDeleteSelectedCount": "删除所选 ({count})",
+    "deviceClearSelection": "取消选择",
+    "storageTitle": "存储配置",
+    "storageDefault": "默认",
+    "storageEmpty": "暂无存储配置",
+    "storageEditTitle": "编辑配置",
+    "storageName": "名称 *",
+    "storageTypeLabel": "存储类型",
+    "storageSetDefault": "设为默认",
+    "storageTypeConfig": "{type} 配置",
+    "storageAddNew": "添加新配置",
+    "storageDeleteConfirm": "确定删除此配置？已关联的论文将失去存储目标。",
+    "aiConnectFailed": "连接失败：{message}",
+    "aiActive": "已激活",
+    "aiTestConnection": "测试连接",
+    "aiModelCount": "{count} 个模型",
+    "aiNoModel": "无模型",
+    "aiActivate": "激活此 Provider",
+    "aiAddProvider": "添加 Provider",
+    "aiEditProvider": "编辑 Provider",
+    "aiName": "名称",
+    "aiNamePlaceholder": "如 OpenAI, DeepSeek",
+    "aiBaseUrl": "请求地址 (Base URL)",
+    "aiApiKey": "密钥 (API Key)",
+    "aiModels": "模型列表（逗号分隔，留空将以测试获取）",
+    "aiEmpty": "尚未配置任何 Provider",
+    "aiEmptyHint": "点击上方按钮添加 OpenAI 兼容的 API 服务商",
+    "tfLoadFailed": "加载两步验证状态失败",
+    "tfEnabled": "两步验证已开启",
+    "tfDisabled": "两步验证未开启",
+    "tfEnabledHint": "登录时需要额外输入身份验证器上的 6 位动态码；已信任的设备可跳过。剩余可用恢复码 {remaining} / {total} 个。",
+    "tfDisabledHint": "开启后，登录时除密码外还需输入身份验证器上的 6 位动态码，并会下发 9 个恢复码用于找回账号。",
+    "tfStart": "扫码绑定并开启",
+    "tfSecretFailed": "生成密钥失败",
+    "tfNeedPassword": "请输入当前密码",
+    "tfNeedCode": "请输入身份验证器上的 6 位动态码",
+    "tfEnabledToast": "两步验证已开启",
+    "tfEnableFailed": "开启失败",
+    "tfSecretCopied": "密钥已复制到剪贴板",
+    "tfCopyFailed": "复制失败，请手动选择后复制",
+    "tfStep1": "1. 在手机上下载任意身份验证器 App（如 Google Authenticator、Microsoft Authenticator）。",
+    "tfStep2": "2. 扫描下方二维码，或手动输入密钥。",
+    "tfStep3": "3. 输入 App 中显示的 6 位动态码与当前密码，完成绑定。",
+    "tfManualSecret": "无法扫码？手动输入密钥",
+    "tfCopy": "复制",
+    "tfAlgorithm": "算法 SHA1 · {digits} 位 · {period} 秒刷新",
+    "tfCurrentPassword": "当前密码",
+    "tfSixDigitCode": "6 位动态码",
+    "tfVerifying": "校验中...",
+    "tfConfirmEnable": "确认开启",
+    "tfRegenerate": "重新生成恢复码",
+    "tfRegenerateHint": "输入当前密码以重新生成 9 个恢复码",
+    "tfRegenerateFailed": "生成失败",
+    "tfRegeneratedToast": "恢复码已重新生成，旧恢复码立即失效",
+    "tfGenerating": "生成中...",
+    "tfConfirmGenerate": "确认生成",
+    "tfDisable": "关闭两步验证",
+    "tfDisableHint": "关闭后登录不再需要动态码，已下发的恢复码会立即失效。请用密码 + 动态码确认，动态码也可以用恢复码代替。",
+    "tfNeedPasswordAndCode": "请填写当前密码与动态码",
+    "tfDisabledToast": "两步验证已关闭，恢复码已全部失效",
+    "tfDisableFailed": "关闭失败",
+    "tfProcessing": "处理中...",
+    "tfConfirmDisable": "确认关闭",
+    "tabInfo": "基本信息",
+    "tabPassword": "密码安全",
+    "tabTwoFactor": "两步验证",
+    "tabDevices": "信任设备",
+    "tabAudit": "审计日志",
+    "avatarUpdated": "头像已更新",
+    "avatarUpdateFailed": "头像更新失败",
+    "imageUrlPlaceholder": "图片 URL...",
+    "uploadLocal": "从本地上传",
+    "imageUrl": "网络图片",
+    "profileUpdated": "资料已更新",
+    "updateFailed": "更新失败",
+    "displayName": "显示名称",
+    "email": "邮箱",
+    "saving": "保存中...",
+    "passwordAllFields": "请填写所有密码字段",
+    "passwordTooShort": "新密码至少 6 个字符",
+    "passwordMismatch": "两次输入的新密码不一致",
+    "passwordChanged": "密码已修改",
+    "passwordChangeFailed": "密码修改失败",
+    "currentPassword": "当前密码",
+    "newPassword": "新密码",
+    "confirmNewPassword": "确认新密码",
+    "changing": "修改中...",
+    "changePassword": "修改密码",
+    "auditTitle": "审计日志",
+    "auditEmpty": "暂无审计日志。当您进行登录、修改密码等操作后，日志将在此显示。",
+    "auditIndex": "序号",
+    "auditEvent": "事件",
+    "auditOperator": "操作人",
+    "auditTime": "时间",
+    "loadingMore": "加载中...",
+    "loadMore": "加载更多"
+  },
+  "preferences": {
+    "tabs": {
+      "ui": "界面设置",
+      "ai": "AI 配置"
+    },
+    "searchPlaceholder": "搜索设置...",
+    "noMatch": "无匹配项",
+    "close": "关闭",
+    "language": "语言",
+    "languageHint": "选择后界面语言立即切换，并保存到你的账号偏好设置",
+    "fontSize": "字体大小",
+    "fontSizeHint": "PDF 阅读器字体缩放等设置（后续版本支持）"
+  },
   "papers": {
     "favorite": "收藏",
     "unfavorite": "取消收藏",
@@ -307,7 +540,12 @@
     "favoriteTab": "收藏",
     "saved": "已保存",
     "participants": "参与者",
-    "noPaperSelected": "请从左侧上传论文或选择已上传的论文开始阅读"
+    "noPaperSelected": "请从左侧上传论文或选择已上传的论文开始阅读",
+    "createPaper": "创建论文",
+    "importPaper": "导入论文",
+    "refresh": "刷新",
+    "close": "关闭",
+    "editorPlaceholder": "开始撰写你的论文..."
   },
   "forum": {
     "disciplines": "学科分类",
@@ -362,7 +600,16 @@
     "noData": "暂无数据",
     "myPapers": "我的书架",
     "papers": "篇论文",
-    "error": "出错了"
+    "error": "出错了",
+    "switchLanguage": "切换语言",
+    "language": "语言",
+    "languageChanged": "界面语言已切换为{language}",
+    "edit": "编辑",
+    "next": "下一步",
+    "back": "返回",
+    "noComments": "暂无评论",
+    "browser": "浏览器",
+    "loadingEditor": "编辑器加载中..."
   },
   "legal": {
     "back": "返回登录",
@@ -666,5 +913,226 @@
         }
       ]
     }
+  },
+  "assistant": {
+    "thinking": "思考中",
+    "processing": "正在处理",
+    "organizing": "整理答案",
+    "thinkingAria": "AI 正在处理",
+    "reasoningActive": "正在思考",
+    "reasoningTitle": "思考过程",
+    "me": "我",
+    "assistantName": "PR助手",
+    "providerRequired": "请先配置并激活一个 Provider，再选择模型或发送消息。",
+    "providerRequiredShort": "请先配置 Provider",
+    "providerRequiredQuote": "请先配置 Provider，论文引用已保留在输入框。",
+    "contextParsing": "论文正文仍在解析，当前先使用选中文本提问；解析完成后可继续追问。",
+    "contextUnavailable": "暂时无法获取论文上下文，已使用选中文本继续提问。",
+    "newChat": "新对话",
+    "selectHistory": "选择历史对话",
+    "history": "历史对话",
+    "noHistory": "暂无历史对话",
+    "providerDeleted": "Provider 已删除",
+    "replying": "回复中",
+    "createdAt": "创建 {time}",
+    "lastMessageAt": "最后对话 {time}",
+    "selectChatProvider": "选择当前对话 Provider",
+    "selectProvider": "选择 Provider",
+    "noProvider": "未配置 Provider",
+    "emptyHint": "在下方输入文本开始 AI 对话",
+    "replyFailed": "回复失败，请重新发送",
+    "emptyReply": "未收到可显示的回复",
+    "pageRef": "{title} · 第 {page} 页",
+    "removeImage": "移除图片",
+    "removeQuote": "移除引用",
+    "inputPlaceholder": "输入消息，Enter 发送，Shift+Enter 换行",
+    "inputPlaceholderQuoted": "在引用下方输入你的问题，Enter 发送",
+    "inputPlaceholderNoProvider": "请先配置 Provider 后开始对话",
+    "configureProvider": "配置 Provider",
+    "provider": "Provider",
+    "selectModel": "选择模型",
+    "sendMessage": "发送消息",
+    "disclaimer": "AI 生成内容仅供参考，请核对重要信息",
+    "replyInterrupted": "上一次回复在页面关闭前未完成，请重新发送"
+  },
+  "categories": {
+    "thesis": {
+      "fields": {
+        "degreeType": {
+          "label": "学位类型",
+          "options": {
+            "doctor": "博士",
+            "master": "硕士",
+            "bachelor": "学士"
+          }
+        },
+        "advisor": {
+          "label": "导师"
+        },
+        "university": {
+          "label": "学校/机构"
+        },
+        "major": {
+          "label": "专业"
+        }
+      },
+      "label": "学位论文"
+    },
+    "journal": {
+      "fields": {
+        "journalName": {
+          "label": "期刊/会议名称"
+        },
+        "volume": {
+          "label": "卷号"
+        },
+        "issue": {
+          "label": "期号"
+        },
+        "pages": {
+          "label": "页码"
+        },
+        "issnIsbn": {
+          "label": "ISSN/ISBN"
+        },
+        "indexing": {
+          "label": "收录情况",
+          "options": {
+            "SCI": "SCI",
+            "EI": "EI",
+            "SSCI": "SSCI",
+            "PKU_CORE": "北大核心",
+            "CSSCI": "CSSCI",
+            "OTHER": "其他"
+          }
+        }
+      },
+      "label": "期刊会议论文"
+    },
+    "preprint": {
+      "fields": {
+        "platform": {
+          "label": "预印本平台",
+          "options": {
+            "arxiv": "arXiv",
+            "biorxiv": "bioRxiv",
+            "ssrn": "SSRN",
+            "researchgate": "ResearchGate",
+            "other": "其他"
+          }
+        },
+        "versionNumber": {
+          "label": "版本号"
+        },
+        "doiStatus": {
+          "label": "DOI 状态",
+          "options": {
+            "has_doi": "有 DOI",
+            "no_doi": "暂无 DOI"
+          }
+        }
+      },
+      "label": "预印本"
+    },
+    "course": {
+      "fields": {
+        "courseName": {
+          "label": "课程名称"
+        },
+        "instructor": {
+          "label": "授课教师"
+        },
+        "university": {
+          "label": "学校"
+        },
+        "semester": {
+          "label": "学期",
+          "placeholder": "例: 2024-2025 秋季学期"
+        }
+      },
+      "label": "课程论文"
+    },
+    "tech_report": {
+      "fields": {
+        "institution": {
+          "label": "研究机构"
+        },
+        "reportNumber": {
+          "label": "报告编号"
+        },
+        "projectName": {
+          "label": "项目名称"
+        }
+      },
+      "label": "研究报告"
+    },
+    "patent": {
+      "fields": {
+        "patentNumber": {
+          "label": "专利号"
+        },
+        "patentType": {
+          "label": "专利类型",
+          "options": {
+            "invention": "发明专利",
+            "utility_model": "实用新型",
+            "design": "外观设计"
+          }
+        },
+        "applicationDate": {
+          "label": "申请日期"
+        },
+        "grantDate": {
+          "label": "授权日期"
+        },
+        "patentHolder": {
+          "label": "专利权人"
+        }
+      },
+      "label": "专利文献"
+    }
+  },
+  "errors": {
+    "loginExpired": "登录已过期，请重新登录",
+    "forbidden": "权限不足",
+    "badRequest": "参数错误",
+    "notFound": "资源不存在",
+    "fileDeleteFailed": "原文件删除失败，论文记录已保留，请稍后重试",
+    "twoFactorExpired": "两步验证会话已过期，请重新登录",
+    "unknown": "未知错误",
+    "unknownNetwork": "未知网络错误",
+    "providerNoDetail": "Provider 未返回错误详情",
+    "httpHtmlResponse": "HTTP {status}：Provider 返回了 HTML 页面而不是模型响应",
+    "providerUnreachable": "浏览器无法访问 Provider；请检查 Base URL、CORS、TLS 证书以及 HTTPS 页面是否请求了 HTTP 地址",
+    "providerAborted": "请求已中止或超时",
+    "baseUrlScheme": "Base URL 只支持 http:// 或 https://",
+    "baseUrlMixedContent": "当前页面是 HTTPS，浏览器会阻止请求 HTTP Provider（Mixed Content）",
+    "baseUrlInvalid": "Base URL 格式无效",
+    "relayUnavailable": "Provider 中继不可用",
+    "noDisplayText": "Provider 的流式和非流式响应都没有可显示文本",
+    "modelsUnreadable": "模型接口响应无法读取",
+    "modelsHtml": "模型接口返回了 HTML 页面而不是模型列表",
+    "modelsNotJson": "模型接口返回的不是有效 JSON",
+    "modelsNoId": "模型接口响应中没有可识别的模型 ID",
+    "modelsNoPath": "模型接口未命中可用的 API 路径",
+    "modelsEmpty": "模型列表为空",
+    "providerTestNoModel": "无法确定测试模型：{detail}。请先手动填写一个该 Provider 支持的模型",
+    "baseUrlAutofixed": "，已自动补全 Base URL 的 /v1 API 路径",
+    "providerTestOkModel": "连接成功，模型 {model} 可用{correction}",
+    "providerTestOkList": "连接成功，已获取 {count} 个模型并验证 {model}{correction}",
+    "providerTestChatFailed": "对话接口测试失败（模型 {model}）：{detail}",
+    "emptyResponse": "Provider 返回成功，但响应中没有可显示的文本",
+    "endpointMismatch": "Provider 返回了 HTML 页面而不是模型响应，请检查 Base URL 是否指向 API 根路径",
+    "withDiagnostic": "{message}。响应诊断：{diagnostic}",
+    "providerBusiness": "Provider 返回了业务错误",
+    "providerBusinessDetail": "Provider 业务错误：{detail}",
+    "providerFailedStatus": "Provider 返回了失败状态",
+    "modelRefusal": "模型拒绝生成文本：{refusal}",
+    "noTextFinishReason": "Provider 未返回文本，结束原因：{reason}",
+    "toolCallOnly": "模型只返回了工具调用，但当前对话没有可执行工具"
+  },
+  "notifications": {
+    "welcomeTitle": "系统功能介绍",
+    "welcomeMessage": "欢迎使用 PaperHelper！点击查看当前版本功能特性"
   }
 }

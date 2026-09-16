@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react"
 import { X, User, Lock, Shield, Clock, MonitorSmartphone, Loader2, Camera, Upload, Link } from "lucide-react"
+import { useLocale, useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { useUserStore } from "@/stores/user-store"
 import { useToastStore } from "@/stores/toast-store"
@@ -15,12 +16,12 @@ type ProfileTab = "info" | "password" | "2fa" | "devices" | "audit"
 /** 后端 pr_users.avatar_url 放宽到 VARCHAR(1000000)，留点余量给 JSON 转义 */
 const MAX_AVATAR_DATA_URL_LENGTH = 900_000
 
-const TABS: { key: ProfileTab; label: string; icon: React.ReactNode }[] = [
-  { key: "info", label: "基本信息", icon: <User className="size-4" /> },
-  { key: "password", label: "密码安全", icon: <Lock className="size-4" /> },
-  { key: "2fa", label: "两步验证", icon: <Shield className="size-4" /> },
-  { key: "devices", label: "信任设备", icon: <MonitorSmartphone className="size-4" /> },
-  { key: "audit", label: "审计日志", icon: <Clock className="size-4" /> },
+const TABS: { key: ProfileTab; labelKey: string; icon: React.ReactNode }[] = [
+  { key: "info", labelKey: "tabInfo", icon: <User className="size-4" /> },
+  { key: "password", labelKey: "tabPassword", icon: <Lock className="size-4" /> },
+  { key: "2fa", labelKey: "tabTwoFactor", icon: <Shield className="size-4" /> },
+  { key: "devices", labelKey: "tabDevices", icon: <MonitorSmartphone className="size-4" /> },
+  { key: "audit", labelKey: "tabAudit", icon: <Clock className="size-4" /> },
 ]
 
 interface ProfileDialogProps {
@@ -29,6 +30,7 @@ interface ProfileDialogProps {
 }
 
 export function ProfileDialog({ open, onClose }: ProfileDialogProps) {
+  const t = useTranslations("settings")
   const { profile, loadProfile } = useUserStore()
   const [activeTab, setActiveTab] = useState<ProfileTab>("info")
 
@@ -57,7 +59,7 @@ export function ProfileDialog({ open, onClose }: ProfileDialogProps) {
                 )}
               >
                 <span className="shrink-0">{tab.icon}</span>
-                <span>{tab.label}</span>
+                <span>{t(tab.labelKey)}</span>
               </button>
             ))}
           </nav>
@@ -67,7 +69,7 @@ export function ProfileDialog({ open, onClose }: ProfileDialogProps) {
         <div className="flex-1 flex flex-col min-w-0">
           <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border-subtle)]">
             <h2 className="text-sm font-semibold text-[var(--text-primary)]">
-              {TABS.find((t) => t.key === activeTab)?.label}
+              {TABS.find((tab) => tab.key === activeTab)?.labelKey && t(TABS.find((tab) => tab.key === activeTab)!.labelKey)}
             </h2>
             <button
               onClick={onClose}
@@ -90,6 +92,7 @@ export function ProfileDialog({ open, onClose }: ProfileDialogProps) {
 }
 
 function AvatarSection({ profile, onUpdate }: { profile: ReturnType<typeof useUserStore.getState>["profile"]; onUpdate: () => void }) {
+  const t = useTranslations("settings")
   const [showOverlay, setShowOverlay] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [urlInput, setUrlInput] = useState("")
@@ -143,29 +146,29 @@ function AvatarSection({ profile, onUpdate }: { profile: ReturnType<typeof useUs
       }
       try {
         await authApi.updateProfile({ avatarUrl: dataUrl })
-        useToastStore.getState().addToast({ message: "头像已更新", type: "success" })
+        useToastStore.getState().addToast({ message: t("avatarUpdated"), type: "success" })
         onUpdate()
       } catch {
-        useToastStore.getState().addToast({ message: "头像更新失败", type: "error" })
+        useToastStore.getState().addToast({ message: t("avatarUpdateFailed"), type: "error" })
       }
     }
     reader.readAsDataURL(file)
     setMenuOpen(false)
-  }, [onUpdate])
+  }, [onUpdate, t])
 
   const handleUrlSubmit = useCallback(async () => {
     if (!urlInput.trim()) return
     try {
       await authApi.updateProfile({ avatarUrl: urlInput.trim() })
-      useToastStore.getState().addToast({ message: "头像已更新", type: "success" })
+      useToastStore.getState().addToast({ message: t("avatarUpdated"), type: "success" })
       onUpdate()
       setUrlInput("")
       setShowUrlInput(false)
     } catch {
-      useToastStore.getState().addToast({ message: "头像更新失败", type: "error" })
+      useToastStore.getState().addToast({ message: t("avatarUpdateFailed"), type: "error" })
     }
     setMenuOpen(false)
-  }, [urlInput, onUpdate])
+  }, [urlInput, onUpdate, t])
 
   return (
     <div className="px-4 py-5 border-b border-[var(--border-subtle)]">
@@ -208,7 +211,7 @@ function AvatarSection({ profile, onUpdate }: { profile: ReturnType<typeof useUs
                     autoFocus
                     value={urlInput}
                     onChange={(e) => setUrlInput(e.target.value)}
-                    placeholder="图片 URL..."
+                    placeholder={t("imageUrlPlaceholder")}
                     className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] px-2 py-1 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
                     onKeyDown={(e) => { if (e.key === "Enter") handleUrlSubmit() }}
                   />
@@ -220,14 +223,14 @@ function AvatarSection({ profile, onUpdate }: { profile: ReturnType<typeof useUs
                     className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors"
                   >
                     <Upload className="size-3.5" />
-                    从本地上传
+                    {t("uploadLocal")}
                   </button>
                   <button
                     onClick={() => setShowUrlInput(true)}
                     className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors"
                   >
                     <Link className="size-3.5" />
-                    网络图片
+                    {t("imageUrl")}
                   </button>
                 </>
               )}
@@ -256,6 +259,8 @@ function BasicInfoTab({
   profile: ReturnType<typeof useUserStore.getState>["profile"]
   onUpdate: () => void
 }) {
+  const t = useTranslations("settings")
+  const tc = useTranslations("common")
   const [displayName, setDisplayName] = useState(profile?.displayName || "")
   const [saving, setSaving] = useState(false)
   // 没自定义名字时，界面上显示的就是系统生成的「用户{id}」，把它作为占位提示
@@ -265,19 +270,19 @@ function BasicInfoTab({
     setSaving(true)
     try {
       await authApi.updateProfile({ displayName: displayName || undefined })
-      useToastStore.getState().addToast({ message: "资料已更新", type: "success" })
+      useToastStore.getState().addToast({ message: t("profileUpdated"), type: "success" })
       onUpdate()
     } catch {
-      useToastStore.getState().addToast({ message: "更新失败", type: "error" })
+      useToastStore.getState().addToast({ message: t("updateFailed"), type: "error" })
     } finally {
       setSaving(false)
     }
-  }, [displayName, onUpdate])
+  }, [displayName, onUpdate, t])
 
   return (
     <div className="space-y-6">
       <div className="space-y-1.5">
-        <label className="text-xs font-medium text-[var(--text-secondary)]">显示名称</label>
+        <label className="text-xs font-medium text-[var(--text-secondary)]">{t("displayName")}</label>
         <input
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
@@ -287,7 +292,7 @@ function BasicInfoTab({
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-xs font-medium text-[var(--text-secondary)]">邮箱</label>
+        <label className="text-xs font-medium text-[var(--text-secondary)]">{t("email")}</label>
         <input
           readOnly
           value={profile?.email || ""}
@@ -303,13 +308,14 @@ function BasicInfoTab({
         style={{ background: "var(--accent)" }}
       >
         {saving && <Loader2 className="size-3.5 animate-spin" />}
-        {saving ? "保存中..." : "保存"}
+        {saving ? t("saving") : tc("save")}
       </button>
     </div>
   )
 }
 
 function PasswordTab() {
+  const t = useTranslations("settings")
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -317,35 +323,35 @@ function PasswordTab() {
 
   const handleChange = useCallback(async () => {
     if (!currentPassword || !newPassword) {
-      useToastStore.getState().addToast({ message: "请填写所有密码字段", type: "error" })
+      useToastStore.getState().addToast({ message: t("passwordAllFields"), type: "error" })
       return
     }
     if (newPassword.length < 6) {
-      useToastStore.getState().addToast({ message: "新密码至少 6 个字符", type: "error" })
+      useToastStore.getState().addToast({ message: t("passwordTooShort"), type: "error" })
       return
     }
     if (newPassword !== confirmPassword) {
-      useToastStore.getState().addToast({ message: "两次输入的新密码不一致", type: "error" })
+      useToastStore.getState().addToast({ message: t("passwordMismatch"), type: "error" })
       return
     }
     setSaving(true)
     try {
       await authApi.changePassword({ currentPassword, newPassword })
-      useToastStore.getState().addToast({ message: "密码已修改", type: "success" })
+      useToastStore.getState().addToast({ message: t("passwordChanged"), type: "success" })
       setCurrentPassword("")
       setNewPassword("")
       setConfirmPassword("")
     } catch (e) {
-      useToastStore.getState().addToast({ message: (e as Error).message || "密码修改失败", type: "error" })
+      useToastStore.getState().addToast({ message: (e as Error).message || t("passwordChangeFailed"), type: "error" })
     } finally {
       setSaving(false)
     }
-  }, [currentPassword, newPassword, confirmPassword])
+  }, [currentPassword, newPassword, confirmPassword, t])
 
   return (
     <div className="space-y-6">
       <div className="space-y-1.5">
-        <label className="text-xs font-medium text-[var(--text-secondary)]">当前密码</label>
+        <label className="text-xs font-medium text-[var(--text-secondary)]">{t("currentPassword")}</label>
         <input
           type="password"
           value={currentPassword}
@@ -355,7 +361,7 @@ function PasswordTab() {
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-xs font-medium text-[var(--text-secondary)]">新密码</label>
+        <label className="text-xs font-medium text-[var(--text-secondary)]">{t("newPassword")}</label>
         <input
           type="password"
           value={newPassword}
@@ -365,7 +371,7 @@ function PasswordTab() {
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-xs font-medium text-[var(--text-secondary)]">确认新密码</label>
+        <label className="text-xs font-medium text-[var(--text-secondary)]">{t("confirmNewPassword")}</label>
         <input
           type="password"
           value={confirmPassword}
@@ -380,13 +386,15 @@ function PasswordTab() {
         className="rounded-lg px-4 py-2 text-sm font-medium text-[var(--surface-1)] transition-colors disabled:opacity-50"
         style={{ background: "var(--accent)" }}
       >
-        {saving ? "修改中..." : "修改密码"}
+        {saving ? t("changing") : t("changePassword")}
       </button>
     </div>
   )
 }
 
 function AuditLogTab() {
+  const t = useTranslations("settings")
+  const locale = useLocale()
   const [logs, setLogs] = useState<Array<{ id: number; event: string; operator: string; createdAt: string }>>([])
   const [page, setPage] = useState(0)
   const [hasMore, setHasMore] = useState(true)
@@ -421,9 +429,9 @@ function AuditLogTab() {
       {logs.length === 0 && !loading ? (
         <div className="flex flex-col items-center justify-center pt-16 text-center">
           <Clock className="size-12 text-[var(--text-tertiary)] mb-4" />
-          <h3 className="text-sm font-medium text-[var(--text-primary)] mb-2">审计日志</h3>
+          <h3 className="text-sm font-medium text-[var(--text-primary)] mb-2">{t("auditTitle")}</h3>
           <p className="text-xs text-[var(--text-tertiary)] max-w-[260px]">
-            暂无审计日志。当您进行登录、修改密码等操作后，日志将在此显示。
+            {t("auditEmpty")}
           </p>
         </div>
       ) : (
@@ -432,10 +440,10 @@ function AuditLogTab() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-2)]">
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-[var(--text-secondary)]">序号</th>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-[var(--text-secondary)]">事件</th>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-[var(--text-secondary)]">操作人</th>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-[var(--text-secondary)]">时间</th>
+                  <th className="px-4 py-2.5 text-start text-xs font-medium text-[var(--text-secondary)]">{t("auditIndex")}</th>
+                  <th className="px-4 py-2.5 text-start text-xs font-medium text-[var(--text-secondary)]">{t("auditEvent")}</th>
+                  <th className="px-4 py-2.5 text-start text-xs font-medium text-[var(--text-secondary)]">{t("auditOperator")}</th>
+                  <th className="px-4 py-2.5 text-start text-xs font-medium text-[var(--text-secondary)]">{t("auditTime")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -445,7 +453,7 @@ function AuditLogTab() {
                     <td className="px-4 py-2.5 text-[var(--text-primary)] font-medium">{log.event}</td>
                     <td className="px-4 py-2.5 text-[var(--text-secondary)]">{log.operator}</td>
                     <td className="px-4 py-2.5 text-[var(--text-tertiary)] text-xs">
-                      {new Date(log.createdAt).toLocaleString("zh-CN", {
+                      {new Date(log.createdAt).toLocaleString(locale, {
                         year: "numeric", month: "2-digit", day: "2-digit",
                         hour: "2-digit", minute: "2-digit",
                       })}
@@ -461,7 +469,7 @@ function AuditLogTab() {
               disabled={loading}
               className="w-full py-2 text-sm text-[var(--accent)] hover:bg-[var(--bg-hover)] rounded-lg transition-colors disabled:opacity-50"
             >
-              {loading ? "加载中..." : "加载更多"}
+              {loading ? t("loadingMore") : t("loadMore")}
             </button>
           )}
         </>

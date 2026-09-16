@@ -1,4 +1,26 @@
-## 当前迭代：v0.1.47
+## 当前迭代：v0.1.48
+
+发布分支：`feature/v0.1.48`；类型：功能迭代（国际化语言切换）；需求编号：`REQ-202609-0111`。
+
+需求要两件事：**全站国际化**（简体中文默认，另加繁体中文、藏语、维吾尔语、德语、阿拉伯语、韩语、日语、法语、越南语、西班牙语、意大利语、波斯语，共 13 种，且「所有细节都不能放过」），以及**修好登录页那个点了没反应的语言切换**——点它要弹出下拉列表选语言，选完进系统后界面要跟着走，同时把个人设置「偏好设置 → 语言」更新成所选语言。
+
+先定位「点了没反应」的根因，这决定了整个切换链路怎么写：`app/layout.tsx` 是**根布局**，位置在 `app/[locale]/` **之上**。next-intl 的 `NextIntlClientProvider`、`<html lang>`、`<html dir>` 都挂在根布局上，而客户端软导航（`router.push`）只重渲染 `[locale]` 以下的子树——根布局不在其中。旧的 `LangToggle` 正是直接改状态/软跳转，于是文案、`lang`、`dir` 全部停在旧语言，看起来就是「按钮是死的」。所以本轮的切换一律走整页跳转。
+
+- **语言注册表 `src/i18n/locales.ts` 是唯一事实来源**：`LOCALES` 顺序即切换器展示顺序，`LOCALE_META` 记每种语言的母语名、英文名与书写方向（`ar` / `fa` / `ug` 为 `rtl`），另导出 `LOCALE_COOKIE = NEXT_LOCALE`、`DEFAULT_LOCALE = zh`、`isAppLocale`、`matchLocale`（把 `zh-TW`、`ug-Arab-CN` 这类浏览器标签归一化到站点语言）。加语言只改这一处 + 补一份 `locales/<code>/common.json`。
+- **`en` 保留**：需求列出的 13 种里没有英文，但站点原本就有 `en`，线上已有用户把偏好设成 `en`，`/en/*` 老链接也在。直接下掉会让这批用户和老链接一起失效，因此保留在列表末尾，只作兼容项；切换器里照常展示。
+- **切换链路 `src/i18n/switch-locale.ts`**：`applyLocale()` 一次做三件事——写 `NEXT_LOCALE` Cookie（`next-intl` 中间件据此记住语言，之后访问 `/` 也会落到这个语言）、在 `localStorage` 打一个「用户亲自选过」的标记、整页 `window.location.assign` 到同一路由的新语言地址。**不能只看 Cookie 判断用户选没选过**：中间件每次请求都会按协商结果把 `NEXT_LOCALE` 写上，Cookie 有值 ≠ 用户选过；`hasExplicitLocaleChoice()` 读的就是那个 localStorage 标记。
+- **登录页下拉**：`src/components/ui/LanguageSwitcher.tsx` 是真下拉（点击外部关闭、当前项打勾、`aria-selected`），每项同时给出母语名和英文名（如「العربية / Arabic」）；已登录时选完顺手 `PUT /api/settings` 写回偏好，失败只 `console.warn` 不阻断切换。
+- **偏好设置里的语言**：`个人设置 → 偏好设置` 与 `设置页` 都换成共用的 `LanguagePicker`。设置页原来那个语言项只改本地 state、不写后端，现在保存即写 `UserSettings.language`，切换后整页跟随。后端 `UserSettings.language`（默认 `zh`）与 `GET/PUT /api/settings` 早就在，**本轮后端零改动**。
+- **换设备登录跟着账号走（`src/i18n/locale-preference.ts`）**：登录成功后 `settleLocaleAfterLogin()` —— 这台设备上用户主动选过语言，就把所选语言写进账号偏好；没选过（新设备，语言是中间件协商出来的默认值），则读取账号偏好并把界面整页切过去。两条路径都不会覆盖用户的显式选择。
+- **RTL**：根布局按 `LOCALE_META[locale].dir` 设置 `<html dir>`；布局代码统一改成 Tailwind 逻辑方向工具类（`ms-`/`me-`/`ps-`/`pe-`/`start-`/`end-`/`text-start`/`border-e`），否则阿拉伯语、波斯语、维吾尔语下会留下一堆钉死在左边的元素。
+- **组件外文案**：API 客户端、AI Provider 与其响应解析、Zustand store、设备工具等不在 React 里，拿不到 `useTranslations`。新增 `src/i18n/runtime.ts` + 根布局里的 `RuntimeLocaleBridge`（渲染期登记，不是 `useEffect`，保证首屏之后立刻发起的请求已经能取到消息表），这些模块在**调用时**取文案而不是模块求值时取，避免语言切换后还留着旧语言的常量。
+- **无语言前缀的路径**：`/callback` 被中间件刻意绕开 intl 处理，拿不到 locale 头。`src/i18n/request.ts` 补了一次 Cookie 兜底（`next-intl` 自身没有 Cookie 回退），否则 GitHub 回调页的 `<html lang/dir>` 和文案会永远停在简体中文；另外用 `zh` 做消息兜底合并，任何一种语言缺键时都还能显示。
+
+验收标准：新增 `locale-switch.test.ts`（前缀替换、Cookie/标记写入、`matchLocale` 归一化、RTL 列表）与 `language-switcher.test.tsx`（下拉列全 14 种语言、当前项选中态、选阿拉伯语触发 `applyLocale`、未登录不写偏好、已登录写偏好、重选当前语言不跳转），全部通过；`tsc --noEmit`、`vitest run`、`npm run lint`、`next build` 与后端 `./gradlew clean test bootJar` 全绿；按 `feature/v0.1.48 -> dev -> main` 发布，线上核对各语言页面（含 `/ar/login` 的 `dir="rtl"`、繁体/藏文/维吾尔文文案）与 `/api/health` 版本号。
+
+本轮**无数据库迁移、无接口改动、无新依赖**（v0.1.47 的 `V15` 随基线一并带入）：12 种新增语言的文案来自批量翻译（人工抽查），版本号（前后端 `VERSION`、`package.json`、`build.gradle.kts`、favicon `?v=`）统一升到 `0.1.48`。
+
+## 上一迭代：v0.1.47（已发布）
 
 发布分支：`feature/v0.1.47`；类型：缺陷修复 + UI（登录后的默认身份）；需求编号：`REQ-202609-0110`。
 

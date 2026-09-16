@@ -1,7 +1,8 @@
 {
   "app": {
     "name": "PaperHelper",
-    "tagline": "Academic Paper Reading Platform"
+    "tagline": "Academic Paper Reading Platform",
+    "description": "Academic paper reading, annotation, note-taking and AI-assisted reading platform powered by GROBID"
   },
   "nav": {
     "library": "My Bookshelf",
@@ -37,12 +38,36 @@
     "paperAbstractPlaceholder": "Enter or paste abstract...",
     "creating": "Creating...",
     "readingSessions": "Recent reading sessions",
-    "paperCategory": "Category"
+    "paperCategory": "Category",
+    "extraFieldsSuffix": "— specific fields",
+    "storageLocationHint": "Choose where to store the paper (optional)",
+    "noStorageConfigHint": "No storage configuration yet — create one in settings",
+    "storageConfig": "Storage configuration",
+    "noStorage": "Do not use storage",
+    "createStepBasic": "Basic info",
+    "createStepFields": "Category fields",
+    "createStepStorage": "Storage",
+    "layoutSingle": "Single page",
+    "layoutTwo": "Two columns",
+    "layoutThree": "Three columns",
+    "layoutFour": "Four columns",
+    "layoutSix": "Six columns",
+    "createAnnotationFailed": "Failed to create annotation",
+    "createNoteFailed": "Failed to create note",
+    "copyTitleSuccess": "Paper title copied",
+    "copyTitleHint": "Click to copy the paper title",
+    "switchToDark": "Switch to dark mode",
+    "switchToLight": "Switch to light mode",
+    "pageLayout": "Page layout",
+    "exitFullscreen": "Exit full screen",
+    "enterFullscreen": "Full screen reading",
+    "uploadHint": "Supports direct PDF links | local upload",
+    "urlTitleOptional": "Title (optional)"
   },
   "paper": {
     "basicInfo": "Basic Info",
     "versionHistory": "Version History",
-    "storageInfo": "Storage Info",
+    "storageInfo": "Storage",
     "publish": "Publish",
     "publishVersion": "Publish Version",
     "versionNumber": "Version Number",
@@ -53,7 +78,7 @@
     "storageConfig": "Storage Config",
     "storageType": "Storage Type",
     "noStorage": "No storage configured",
-    "noStorageHint": "Versions will not be pushed to any storage platform",
+    "noStorageHint": "Versions do not need to be pushed to a storage platform",
     "details": "Details",
     "downloadPdf": "Download PDF",
     "default": "Default",
@@ -65,13 +90,39 @@
     "publishing": "Publishing...",
     "selectStorage": "Select storage location (optional)",
     "noStorageConfig": "No storage configs. Create one in Settings.",
-    "back": "Back"
+    "back": "Back",
+    "tabInfo": "Basic info",
+    "tabVersions": "Versions",
+    "tabStorage": "Storage",
+    "detailSuffix": "— details",
+    "abstract": "Abstract",
+    "versionNumberPlaceholder": "e.g. 1.0, v2, 2024-01-draft",
+    "versionRemarkPlaceholder": "Version notes (optional)"
   },
   "panel": {
     "metadata": "Metadata",
     "annotations": "Annotations",
     "notes": "Notes",
-    "aiChat": "AI Chat"
+    "aiChat": "AI Chat",
+    "annotationDeleted": "Annotation deleted",
+    "annotationDeleteFailed": "Failed to delete annotation",
+    "noteDeleted": "Note deleted",
+    "noteDeleteFailed": "Failed to delete note",
+    "annotationUpdated": "Annotation updated",
+    "annotationUpdateFailed": "Failed to update annotation",
+    "noteUpdated": "Note updated",
+    "noteUpdateFailed": "Failed to update note",
+    "emptyAnnotations": "No annotations yet",
+    "emptyNotes": "No notes yet",
+    "editAnnotation": "Edit annotation",
+    "deleteAnnotation": "Delete annotation",
+    "editNote": "Edit note",
+    "deleteNote": "Delete note",
+    "quotedText": "Quoted text · p.{page}",
+    "comments": "Comments",
+    "commentCount": "{count} comments",
+    "expand": "Expand panel",
+    "collapse": "Collapse panel"
   },
   "metadata": {
     "title": "Title",
@@ -157,7 +208,27 @@
     "note": "Note",
     "color": "Color",
     "addComment": "Add Comment",
-    "delete": "Delete"
+    "delete": "Delete",
+    "copySuccess": "Copied",
+    "createAnnotation": "Create annotation",
+    "createNote": "Create note",
+    "askAi": "Ask AI",
+    "copyText": "Copy text",
+    "editAnnotation": "Edit annotation",
+    "editNote": "Edit note",
+    "quotedText": "Quoted text",
+    "noteTitlePlaceholder": "Note title (optional)",
+    "annotationPlaceholder": "Write your annotation (Markdown supported)...",
+    "notePlaceholder": "Write your note (Markdown supported)...",
+    "insertImage": "Insert image",
+    "paperPageRef": "Paper #{id} · Page {page}",
+    "pageRef": "Page {page}",
+    "currentPaperAnnotations": "This Paper",
+    "allAnnotations": "All Annotations",
+    "commentFailed": "Failed to comment",
+    "reply": "Reply",
+    "replyPlaceholder": "Reply...",
+    "commentPlaceholder": "Write your comment..."
   },
   "notes": {
     "newNote": "New Note",
@@ -167,7 +238,12 @@
     "edit": "Edit",
     "preview": "Preview",
     "noNotes": "No notes yet",
-    "totalNotes": "notes"
+    "totalNotes": "notes",
+    "currentPaperNotes": "This Paper",
+    "allNotes": "All Notes",
+    "paperPageRef": "Paper #{id} · Page {page}",
+    "titlePlaceholder": "Note title...",
+    "contentPlaceholder": "Write your note in markdown..."
   },
   "ai": {
     "selectModel": "Select Model",
@@ -231,7 +307,11 @@
     "twoFactorInvalid": "That code is not valid",
     "trustDevice": "Trust this device and skip 2FA next time",
     "verifyAndLogin": "Verify and sign in",
-    "backToLogin": "Back to sign in"
+    "backToLogin": "Back to login",
+    "callbackMissingCode": "Missing authorization code",
+    "callbackFailed": "Authentication failed",
+    "callbackTwoFactor": "Two-factor verification required...",
+    "callbackCompleting": "Completing login..."
   },
   "notification": {
     "title": "Notifications",
@@ -273,6 +353,159 @@
     "light": "Light Mode",
     "dark": "Dark Mode"
   },
+  "settings": {
+    "title": "Settings",
+    "preferences": "Preferences",
+    "theme": "Theme",
+    "language": "Language",
+    "languageHint": "The interface language changes immediately and is saved to your account preferences",
+    "defaultModel": "Default AI model",
+    "saved": "Saved",
+    "saveFailed": "Save failed, please try again later",
+    "back": "Back",
+    "qrFailed": "Failed to generate the QR code, please refresh and try again",
+    "qrAlt": "Two-factor authentication QR code",
+    "copyAll": "Copy all",
+    "downloadTxt": "Download TXT",
+    "recoveryCopied": "Recovery codes copied to clipboard",
+    "recoveryCopyFailed": "Copy failed, please select and copy manually",
+    "recoveryDownloaded": "Recovery codes downloaded as a txt file",
+    "recoveryFileTitle": "Bendywork PaperHelper · Two-factor recovery codes",
+    "recoveryFileAccount": "Account: {email}",
+    "recoveryFileGeneratedAt": "Generated at: {time}",
+    "recoveryFileNotice1": "Each recovery code can only be used once, please keep them safe.",
+    "recoveryFileNotice2": "These recovery codes become invalid immediately once two-factor authentication is disabled.",
+    "recoveryFileName": "Bendywork-PaperHelper-two-factor-recovery-codes.txt",
+    "recoverySummary": "{count} recovery codes in total. Each is a 6-digit number that can only be used once. Use them to regain access to your account if you cannot log in without two-factor authentication.",
+    "recoverySaved": "I have saved them safely",
+    "otpLabel": "Verification code",
+    "otpDigitLabel": "{label} digit {index}",
+    "otpOrRecoveryCode": "Verification or recovery code",
+    "deviceLoadFailed": "Failed to load the device list",
+    "deviceRemoveFailed": "Failed to remove the device",
+    "deviceRemoved": "Removed {count} device(s); they will need to sign in again",
+    "deviceTitle": "Trusted devices",
+    "deviceEmpty": "No devices have signed in yet. Once two-factor authentication is on, trusted devices can sign in with just the password, no verification code needed.",
+    "deviceIntro": "These are the devices that have signed in and been saved. Trusted devices can skip the verification code once two-factor authentication is on; removing one invalidates its issued credentials immediately, so it must sign in again.",
+    "deviceUnknown": "Unknown device",
+    "deviceCurrent": "This device",
+    "deviceTrusted": "Trusted",
+    "deviceUnknownClient": "Unknown client",
+    "deviceUnknownIp": "unknown",
+    "deviceLoginInfo": "IP {ip} · last sign-in {time}",
+    "deviceTrustedUntil": " · trusted until {time}",
+    "deviceDeleting": "Removing...",
+    "deviceDeleteSelected": "Remove selected",
+    "deviceDeleteSelectedCount": "Remove selected ({count})",
+    "deviceClearSelection": "Clear selection",
+    "storageTitle": "Storage configurations",
+    "storageDefault": "Default",
+    "storageEmpty": "No storage configuration yet",
+    "storageEditTitle": "Edit configuration",
+    "storageName": "Name *",
+    "storageTypeLabel": "Storage type",
+    "storageSetDefault": "Set as default",
+    "storageTypeConfig": "{type} configuration",
+    "storageAddNew": "Add configuration",
+    "storageDeleteConfirm": "Delete this configuration? Papers linked to it will lose their storage target.",
+    "aiConnectFailed": "Connection failed: {message}",
+    "aiActive": "Active",
+    "aiTestConnection": "Test connection",
+    "aiModelCount": "{count} models",
+    "aiNoModel": "No models",
+    "aiActivate": "Activate this provider",
+    "aiAddProvider": "Add provider",
+    "aiEditProvider": "Edit provider",
+    "aiName": "Name",
+    "aiNamePlaceholder": "e.g. OpenAI, DeepSeek",
+    "aiBaseUrl": "Base URL",
+    "aiApiKey": "API key",
+    "aiModels": "Model list (comma separated; leave empty to fetch via test)",
+    "aiEmpty": "No provider configured yet",
+    "aiEmptyHint": "Use the button above to add an OpenAI-compatible API provider",
+    "tfLoadFailed": "Failed to load the two-factor status",
+    "tfEnabled": "Two-factor authentication is on",
+    "tfDisabled": "Two-factor authentication is off",
+    "tfEnabledHint": "Signing in requires the 6-digit code from your authenticator app; trusted devices can skip it. {remaining} of {total} recovery codes remain.",
+    "tfDisabledHint": "Once enabled, signing in requires the 6-digit code from your authenticator app in addition to your password, and 9 recovery codes will be issued for account recovery.",
+    "tfStart": "Scan to set up and enable",
+    "tfSecretFailed": "Failed to generate the secret",
+    "tfNeedPassword": "Please enter your current password",
+    "tfNeedCode": "Please enter the 6-digit code from your authenticator app",
+    "tfEnabledToast": "Two-factor authentication is now on",
+    "tfEnableFailed": "Failed to enable",
+    "tfSecretCopied": "Secret copied to clipboard",
+    "tfCopyFailed": "Copy failed, please select and copy manually",
+    "tfStep1": "1. Install any authenticator app on your phone (e.g. Google Authenticator, Microsoft Authenticator).",
+    "tfStep2": "2. Scan the QR code below, or enter the secret manually.",
+    "tfStep3": "3. Enter the 6-digit code shown in the app together with your current password to finish.",
+    "tfManualSecret": "Can't scan? Enter the secret manually",
+    "tfCopy": "Copy",
+    "tfAlgorithm": "Algorithm SHA1 · {digits} digits · refreshes every {period}s",
+    "tfCurrentPassword": "Current password",
+    "tfSixDigitCode": "6-digit code",
+    "tfVerifying": "Verifying...",
+    "tfConfirmEnable": "Confirm and enable",
+    "tfRegenerate": "Regenerate recovery codes",
+    "tfRegenerateHint": "Enter your current password to regenerate 9 recovery codes",
+    "tfRegenerateFailed": "Failed to generate",
+    "tfRegeneratedToast": "Recovery codes regenerated; the old ones are now invalid",
+    "tfGenerating": "Generating...",
+    "tfConfirmGenerate": "Confirm and generate",
+    "tfDisable": "Disable two-factor authentication",
+    "tfDisableHint": "Once disabled, signing in no longer needs a code and all issued recovery codes become invalid immediately. Confirm with your password and a code — a recovery code also works.",
+    "tfNeedPasswordAndCode": "Please fill in your current password and code",
+    "tfDisabledToast": "Two-factor authentication is off and all recovery codes are invalid",
+    "tfDisableFailed": "Failed to disable",
+    "tfProcessing": "Processing...",
+    "tfConfirmDisable": "Confirm and disable",
+    "tabInfo": "Basic info",
+    "tabPassword": "Password",
+    "tabTwoFactor": "Two-factor",
+    "tabDevices": "Trusted devices",
+    "tabAudit": "Audit log",
+    "avatarUpdated": "Avatar updated",
+    "avatarUpdateFailed": "Failed to update the avatar",
+    "imageUrlPlaceholder": "Image URL...",
+    "uploadLocal": "Upload from this device",
+    "imageUrl": "From a URL",
+    "profileUpdated": "Profile updated",
+    "updateFailed": "Update failed",
+    "displayName": "Display name",
+    "email": "Email",
+    "saving": "Saving...",
+    "passwordAllFields": "Please fill in all password fields",
+    "passwordTooShort": "The new password must be at least 6 characters",
+    "passwordMismatch": "The two new passwords do not match",
+    "passwordChanged": "Password changed",
+    "passwordChangeFailed": "Failed to change the password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmNewPassword": "Confirm new password",
+    "changing": "Changing...",
+    "changePassword": "Change password",
+    "auditTitle": "Audit log",
+    "auditEmpty": "No audit log yet. Once you sign in or change your password, the entries will show up here.",
+    "auditIndex": "#",
+    "auditEvent": "Event",
+    "auditOperator": "Operator",
+    "auditTime": "Time",
+    "loadingMore": "Loading...",
+    "loadMore": "Load more"
+  },
+  "preferences": {
+    "tabs": {
+      "ui": "Interface",
+      "ai": "AI configuration"
+    },
+    "searchPlaceholder": "Search settings...",
+    "noMatch": "No matches",
+    "close": "Close",
+    "language": "Language",
+    "languageHint": "The interface switches immediately and the choice is saved to your account preferences",
+    "fontSize": "Font size",
+    "fontSizeHint": "PDF reader font scaling and similar options (coming in a later release)"
+  },
   "papers": {
     "favorite": "Favorite",
     "unfavorite": "Unfavorite",
@@ -307,7 +540,12 @@
     "favoriteTab": "Favorites",
     "saved": "Saved",
     "participants": "Participants",
-    "noPaperSelected": "Upload a paper or select one from your library to start reading"
+    "noPaperSelected": "Upload a paper or select one from your library to start reading",
+    "createPaper": "Create paper",
+    "importPaper": "Import paper",
+    "refresh": "Refresh",
+    "close": "Close",
+    "editorPlaceholder": "Start writing your paper..."
   },
   "forum": {
     "disciplines": "Disciplines",
@@ -362,7 +600,16 @@
     "noData": "No data",
     "myPapers": "My Bookshelf",
     "papers": "papers",
-    "error": "Something went wrong"
+    "error": "Something went wrong",
+    "switchLanguage": "Switch language",
+    "language": "Language",
+    "languageChanged": "Interface language switched to {language}",
+    "edit": "Edit",
+    "next": "Next",
+    "back": "Back",
+    "noComments": "No comments yet",
+    "browser": "Browser",
+    "loadingEditor": "Loading editor..."
   },
   "legal": {
     "back": "Back to Login",
@@ -666,5 +913,226 @@
         }
       ]
     }
+  },
+  "assistant": {
+    "thinking": "Thinking",
+    "processing": "Working",
+    "organizing": "Composing",
+    "thinkingAria": "AI is working",
+    "reasoningActive": "Thinking",
+    "reasoningTitle": "Reasoning",
+    "me": "Me",
+    "assistantName": "PR Assistant",
+    "providerRequired": "Configure and activate a provider before choosing a model or sending messages.",
+    "providerRequiredShort": "Configure a provider first",
+    "providerRequiredQuote": "Configure a provider first — your paper quote is kept in the input box.",
+    "contextParsing": "The paper is still being parsed; asking with the selected text for now. You can follow up once parsing finishes.",
+    "contextUnavailable": "Paper context is unavailable right now; continuing with the selected text.",
+    "newChat": "New chat",
+    "selectHistory": "Select a conversation",
+    "history": "History",
+    "noHistory": "No conversations yet",
+    "providerDeleted": "Provider removed",
+    "replying": "Replying",
+    "createdAt": "Created {time}",
+    "lastMessageAt": "Last message {time}",
+    "selectChatProvider": "Choose the provider for this chat",
+    "selectProvider": "Select provider",
+    "noProvider": "No provider configured",
+    "emptyHint": "Type below to start an AI conversation",
+    "replyFailed": "Reply failed, please try again",
+    "emptyReply": "No displayable reply received",
+    "pageRef": "{title} · p.{page}",
+    "removeImage": "Remove image",
+    "removeQuote": "Remove quote",
+    "inputPlaceholder": "Type a message — Enter to send, Shift+Enter for a new line",
+    "inputPlaceholderQuoted": "Type your question under the quote — Enter to send",
+    "inputPlaceholderNoProvider": "Configure a provider to start chatting",
+    "configureProvider": "Configure provider",
+    "provider": "Provider",
+    "selectModel": "Select model",
+    "sendMessage": "Send message",
+    "disclaimer": "AI-generated content is for reference only — verify important information",
+    "replyInterrupted": "The previous reply was interrupted when the page closed. Please send it again."
+  },
+  "categories": {
+    "thesis": {
+      "fields": {
+        "degreeType": {
+          "label": "Degree Type\", type: \"select",
+          "options": {
+            "doctor": "Doctoral",
+            "master": "Master's",
+            "bachelor": "Bachelor's"
+          }
+        },
+        "advisor": {
+          "label": "Advisor\", type: \"text"
+        },
+        "university": {
+          "label": "University\", type: \"text"
+        },
+        "major": {
+          "label": "Major"
+        }
+      },
+      "label": "Thesis / Dissertation"
+    },
+    "journal": {
+      "fields": {
+        "journalName": {
+          "label": "Journal / Conference Name\", type: \"text"
+        },
+        "volume": {
+          "label": "Volume"
+        },
+        "issue": {
+          "label": "Issue"
+        },
+        "pages": {
+          "label": "Pages"
+        },
+        "issnIsbn": {
+          "label": "ISSN/ISBN"
+        },
+        "indexing": {
+          "label": "Indexing\", type: \"select",
+          "options": {
+            "SCI": "SCI",
+            "EI": "EI",
+            "SSCI": "SSCI",
+            "PKU_CORE": "PKU Core",
+            "CSSCI": "CSSCI",
+            "OTHER": "Other"
+          }
+        }
+      },
+      "label": "Journal / Conference"
+    },
+    "preprint": {
+      "fields": {
+        "platform": {
+          "label": "Platform\", type: \"select",
+          "options": {
+            "arxiv": "arXiv",
+            "biorxiv": "bioRxiv",
+            "ssrn": "SSRN",
+            "researchgate": "ResearchGate",
+            "other": "Other"
+          }
+        },
+        "versionNumber": {
+          "label": "Version Number"
+        },
+        "doiStatus": {
+          "label": "DOI Status\", type: \"select",
+          "options": {
+            "has_doi": "Has DOI",
+            "no_doi": "No DOI"
+          }
+        }
+      },
+      "label": "Preprint"
+    },
+    "course": {
+      "fields": {
+        "courseName": {
+          "label": "Course Name\", type: \"text"
+        },
+        "instructor": {
+          "label": "Instructor"
+        },
+        "university": {
+          "label": "University"
+        },
+        "semester": {
+          "label": "Semester\", type: \"text",
+          "placeholder": "e.g. 2024-2025 Fall"
+        }
+      },
+      "label": "Course Paper"
+    },
+    "tech_report": {
+      "fields": {
+        "institution": {
+          "label": "Institution\", type: \"text"
+        },
+        "reportNumber": {
+          "label": "Report Number"
+        },
+        "projectName": {
+          "label": "Project Name"
+        }
+      },
+      "label": "Technical Report"
+    },
+    "patent": {
+      "fields": {
+        "patentNumber": {
+          "label": "Patent Number\", type: \"text"
+        },
+        "patentType": {
+          "label": "Patent Type\", type: \"select",
+          "options": {
+            "invention": "Invention",
+            "utility_model": "Utility Model",
+            "design": "Design"
+          }
+        },
+        "applicationDate": {
+          "label": "Application Date"
+        },
+        "grantDate": {
+          "label": "Grant Date"
+        },
+        "patentHolder": {
+          "label": "Patent Holder"
+        }
+      },
+      "label": "Patent"
+    }
+  },
+  "errors": {
+    "loginExpired": "Your session has expired. Please sign in again.",
+    "forbidden": "You do not have permission to do that",
+    "badRequest": "Invalid request parameters",
+    "notFound": "The requested resource was not found",
+    "fileDeleteFailed": "The original file could not be deleted. The paper record was kept — please try again later.",
+    "twoFactorExpired": "Your two-factor session has expired. Please sign in again.",
+    "unknown": "Unknown error",
+    "unknownNetwork": "Unknown network error",
+    "providerNoDetail": "The provider did not return any error details",
+    "httpHtmlResponse": "HTTP {status}: the provider returned an HTML page instead of a model response",
+    "providerUnreachable": "The browser cannot reach the provider. Check the Base URL, CORS, TLS certificate, and whether an HTTPS page is requesting an HTTP address.",
+    "providerAborted": "The request was aborted or timed out",
+    "baseUrlScheme": "The Base URL supports only http:// or https://",
+    "baseUrlMixedContent": "This page is served over HTTPS, so the browser blocks requests to an HTTP provider (mixed content)",
+    "baseUrlInvalid": "The Base URL is not a valid URL",
+    "relayUnavailable": "The provider relay is unavailable",
+    "noDisplayText": "Neither the streaming nor the non-streaming provider response contained displayable text",
+    "modelsUnreadable": "The models endpoint response could not be read",
+    "modelsHtml": "The models endpoint returned an HTML page instead of a model list",
+    "modelsNotJson": "The models endpoint did not return valid JSON",
+    "modelsNoId": "The models endpoint response contained no recognizable model ID",
+    "modelsNoPath": "No working API path was found on the models endpoint",
+    "modelsEmpty": "the model list is empty",
+    "providerTestNoModel": "Cannot determine which model to test: {detail}. Enter a model that this provider supports.",
+    "baseUrlAutofixed": ", and the /v1 API path was appended to the Base URL",
+    "providerTestOkModel": "Connected. Model {model} is available{correction}",
+    "providerTestOkList": "Connected. Fetched {count} models and verified {model}{correction}",
+    "providerTestChatFailed": "Chat endpoint test failed (model {model}): {detail}",
+    "emptyResponse": "The provider responded successfully but returned no displayable text",
+    "endpointMismatch": "The provider returned an HTML page instead of a model response. Check whether the Base URL points to the API root.",
+    "withDiagnostic": "{message}. Response diagnostics: {diagnostic}",
+    "providerBusiness": "The provider returned a business error",
+    "providerBusinessDetail": "Provider business error: {detail}",
+    "providerFailedStatus": "The provider returned a failure status",
+    "modelRefusal": "The model refused to generate text: {refusal}",
+    "noTextFinishReason": "The provider returned no text. Finish reason: {reason}",
+    "toolCallOnly": "The model returned only tool calls, but this conversation has no executable tools"
+  },
+  "notifications": {
+    "welcomeTitle": "What is new",
+    "welcomeMessage": "Welcome to PaperHelper! Tap to see what this version can do."
   }
 }

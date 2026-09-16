@@ -3,6 +3,7 @@
 // =============================================================================
 
 import type { ApiResponse, TokenResponse } from "./types"
+import { runtimeTranslator } from "@/i18n/runtime"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
 
@@ -65,14 +66,15 @@ async function refreshIfNeeded(): Promise<boolean> {
   return refreshPromise
 }
 
-/** 错误码映射为用户可读消息 */
+/** 错误码映射为用户可读消息（按当前界面语言） */
 function errorMessage(code: number, fallback: string): string {
+  const t = runtimeTranslator("errors")
   switch (code) {
-    case 1001: return "登录已过期，请重新登录"
-    case 1002: return "权限不足"
-    case 1003: return "参数错误"
-    case 1004: return "资源不存在"
-    case 1005: return "原文件删除失败，论文记录已保留，请稍后重试"
+    case 1001: return t("loginExpired")
+    case 1002: return t("forbidden")
+    case 1003: return t("badRequest")
+    case 1004: return t("notFound")
+    case 1005: return t("fileDeleteFailed")
     default: return fallback
   }
 }

@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react"
 import { MessageSquare, StickyNote, Bot, Copy } from "lucide-react"
 import { copyToClipboard } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 import { useToastStore } from "@/stores/toast-store"
 
 export type AnchorType = "annotation" | "note"
@@ -377,6 +378,7 @@ function useTextMatchPositions(
 export function AnnotationLayer({ pageNumber, anchors, scale, layoutKey = "", children, onCreateAnnotation, onCreateNote, onAskAI }: AnnotationLayerProps) {
   const [popup, setPopup] = useState<PopupMenuState | null>(null)
   const layerRef = useRef<HTMLDivElement>(null)
+  const t = useTranslations("annotation")
   const addToast = useToastStore((s) => s.addToast)
 
   const pageAnchors = anchors.filter((a) => a.pageNumber === pageNumber)
@@ -467,11 +469,11 @@ export function AnnotationLayer({ pageNumber, anchors, scale, layoutKey = "", ch
   const handleCopy = useCallback(() => {
     if (!popup) return
     copyToClipboard(popup.text).then(() => {
-      addToast({ message: "复制成功", type: "success" })
+      addToast({ message: t("copySuccess"), type: "success" })
     })
     setPopup(null)
     window.getSelection()?.removeAllRanges()
-  }, [popup, addToast])
+  }, [popup, addToast, t])
 
   const handleCreateAnnotation = useCallback(() => {
     if (!popup || !onCreateAnnotation || !layerRef.current) return
@@ -515,11 +517,11 @@ export function AnnotationLayer({ pageNumber, anchors, scale, layoutKey = "", ch
             transform: "translateX(-50%)",
           }}
         >
-          <MenuItem icon={<MessageSquare className="size-4" />} label="创建批注" onClick={handleCreateAnnotation} />
-          <MenuItem icon={<StickyNote className="size-4" />} label="创建笔记" onClick={handleCreateNote} />
-          <MenuItem icon={<Bot className="size-4" />} label="询问AI" onClick={handleAskAI} />
+          <MenuItem icon={<MessageSquare className="size-4" />} label={t("createAnnotation")} onClick={handleCreateAnnotation} />
+          <MenuItem icon={<StickyNote className="size-4" />} label={t("createNote")} onClick={handleCreateNote} />
+          <MenuItem icon={<Bot className="size-4" />} label={t("askAi")} onClick={handleAskAI} />
           <div className="h-px bg-[var(--border-subtle)] my-1 mx-2" />
-          <MenuItem icon={<Copy className="size-4" />} label="复制文本" onClick={handleCopy} />
+          <MenuItem icon={<Copy className="size-4" />} label={t("copyText")} onClick={handleCopy} />
         </div>
       )}
 

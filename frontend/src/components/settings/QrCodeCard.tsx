@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import QRCode from "qrcode"
 import { Loader2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 /**
  * 扫码绑定的二维码卡片。
@@ -21,6 +22,7 @@ interface QrCodeCardProps {
 }
 
 export function QrCodeCard({ value, size = 176, className }: QrCodeCardProps) {
+  const t = useTranslations("settings")
   const [dataUrl, setDataUrl] = useState<string | null>(null)
   const [failed, setFailed] = useState(false)
 
@@ -58,12 +60,12 @@ export function QrCodeCard({ value, size = 176, className }: QrCodeCardProps) {
       >
         {failed ? (
           <span className="px-3 text-center text-xs text-[var(--text-tertiary)]">
-            二维码生成失败，请使用下方密钥手动添加
+            {t("qrFailed")}
           </span>
         ) : dataUrl ? (
           <img
             src={dataUrl}
-            alt="两步验证二维码"
+            alt={t("qrAlt")}
             width={size}
             height={size}
             style={{ width: size, height: size, display: "block" }}

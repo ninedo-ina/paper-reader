@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
+import { formatRelativeTime } from "@/lib/relative-time"
 import { Plus, MessageCircle, ThumbsUp, Star, ChevronRight, ArrowLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToastStore } from "@/stores/toast-store"
@@ -13,6 +14,7 @@ import { PostDetailView } from "./PostDetail"
 export function ForumPage() {
   const tf = useTranslations("forum")
   const tc = useTranslations("common")
+  const locale = useLocale()
 
   const addToast = useToastStore((s) => s.addToast)
 
@@ -262,7 +264,7 @@ export function ForumPage() {
                           <Star className="w-3 h-3" />
                           {post.favoriteCount}
                         </span>
-                        <span>{formatTime(post.createdAt)}</span>
+                        <span>{formatRelativeTime(post.createdAt, tc, locale)}</span>
                       </div>
                     </div>
                   </div>
@@ -287,16 +289,3 @@ export function ForumPage() {
   )
 }
 
-function formatTime(iso: string): string {
-  const d = new Date(iso)
-  const now = new Date()
-  const diff = now.getTime() - d.getTime()
-  const minutes = Math.floor(diff / 60000)
-  if (minutes < 1) return "刚刚"
-  if (minutes < 60) return `${minutes}分钟前`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}小时前`
-  const days = Math.floor(hours / 24)
-  if (days < 30) return `${days}天前`
-  return d.toLocaleDateString("zh-CN")
-}

@@ -64,21 +64,21 @@ export function RightPanel({ paper, onConfigureProvider }: RightPanelProps) {
     try {
       await deleteAnnotation(id)
       removeAnnotation(id)
-      addToast({ message: "批注已删除", type: "success" })
+      addToast({ message: t("annotationDeleted"), type: "success" })
     } catch {
-      addToast({ message: "删除批注失败", type: "error" })
+      addToast({ message: t("annotationDeleteFailed"), type: "error" })
     }
-  }, [removeAnnotation, addToast])
+  }, [removeAnnotation, addToast, t])
 
   const handleDeleteNote = useCallback(async (id: number) => {
     try {
       await deleteNote(id)
       removeNote(id)
-      addToast({ message: "笔记已删除", type: "success" })
+      addToast({ message: t("noteDeleted"), type: "success" })
     } catch {
-      addToast({ message: "删除笔记失败", type: "error" })
+      addToast({ message: t("noteDeleteFailed"), type: "error" })
     }
-  }, [removeNote, addToast])
+  }, [removeNote, addToast, t])
 
   const handleEditAnnotation = useCallback((a: ReaderAnnotation) => {
     setEditDialogMode("annotation")
@@ -108,9 +108,9 @@ export function RightPanel({ paper, onConfigureProvider }: RightPanelProps) {
           position: upos ? { x: Number(upos.x ?? 0), y: Number(upos.y ?? 0), width: Number(upos.width ?? 0), height: Number(upos.height ?? 0) } : a.position,
           quotedText: updated.quotedText || a.quotedText,
         })
-        addToast({ message: "批注已更新", type: "success" })
+        addToast({ message: t("annotationUpdated"), type: "success" })
       } catch {
-        addToast({ message: "更新批注失败", type: "error" })
+        addToast({ message: t("annotationUpdateFailed"), type: "error" })
       }
     } else {
       const n = editItem as ReaderNote
@@ -127,14 +127,14 @@ export function RightPanel({ paper, onConfigureProvider }: RightPanelProps) {
           title: updated.title,
           position: upos ? { x: Number(upos.x ?? 0), y: Number(upos.y ?? 0), width: Number(upos.width ?? 0), height: Number(upos.height ?? 0) } : n.position,
         })
-        addToast({ message: "笔记已更新", type: "success" })
+        addToast({ message: t("noteUpdated"), type: "success" })
       } catch {
-        addToast({ message: "更新笔记失败", type: "error" })
+        addToast({ message: t("noteUpdateFailed"), type: "error" })
       }
     }
     setEditDialogOpen(false)
     setEditItem(null)
-  }, [editItem, editDialogMode, storeUpdateAnnotation, storeUpdateNote, addToast])
+  }, [editItem, editDialogMode, storeUpdateAnnotation, storeUpdateNote, addToast, t])
 
   const tabs: { key: PanelTab; label: string }[] = [
     { key: "metadata", label: t("metadata") },
@@ -151,7 +151,7 @@ export function RightPanel({ paper, onConfigureProvider }: RightPanelProps) {
       >
         <button
           onClick={() => setCollapsed(false)}
-          title="Expand panel"
+          title={t("expand")}
           className="p-1 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all"
         >
           <PanelRightOpen className="w-[15px] h-[15px]" />
@@ -171,7 +171,7 @@ export function RightPanel({ paper, onConfigureProvider }: RightPanelProps) {
         </div>
         <button
           onClick={() => setCollapsed(true)}
-          title="Collapse panel"
+          title={t("collapse")}
           className="ml-1 p-1 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all shrink-0"
         >
           <PanelRightClose className="w-[15px] h-[15px]" />
@@ -273,6 +273,7 @@ function DisplayValue({ value, mono }: { value: string | number | undefined | nu
 
 function MetadataContent({ paper }: { paper?: PaperDetailDto | null }) {
   const t = useTranslations("metadata")
+  const tcat = useTranslations("categories")
   const tp = useTranslations("paper")
   const tPapers = useTranslations("papers")
   const tc = useTranslations("common")
@@ -617,15 +618,15 @@ function MetadataContent({ paper }: { paper?: PaperDetailDto | null }) {
               className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--surface-0)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]/40"
             >
               {CATEGORIES.map((cat) => (
-                <option key={cat.value} value={cat.value}>{cat.label}</option>
+                <option key={cat.value} value={cat.value}>{tcat(cat.labelKey)}</option>
               ))}
             </select>
           ) : (
-            <DisplayValue value={catDef.label} />
+            <DisplayValue value={tcat(catDef.labelKey)} />
           )}
         </FieldRow>
         {editing && catDef.fields.map((field) => (
-          <FieldRow key={field.key} label={field.label}>
+          <FieldRow key={field.key} label={tcat(field.labelKey)}>
             {field.type === "textarea" ? (
               <textarea
                 rows={3}
@@ -641,7 +642,7 @@ function MetadataContent({ paper }: { paper?: PaperDetailDto | null }) {
               >
                 <option value="">--</option>
                 {field.options?.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  <option key={opt.value} value={opt.value}>{tcat(opt.labelKey)}</option>
                 ))}
               </select>
             ) : field.type === "date" ? (
@@ -653,9 +654,10 @@ function MetadataContent({ paper }: { paper?: PaperDetailDto | null }) {
         ))}
         {!editing && catDef.fields.map((field) => {
           const val = categoryExtraFieldValue(paper.extraFields, field.key)
+          const option = field.options?.find((item) => item.value === val)
           return (
-            <FieldRow key={field.key} label={field.label}>
-              <DisplayValue value={val || null} />
+            <FieldRow key={field.key} label={tcat(field.labelKey)}>
+              <DisplayValue value={option ? tcat(option.labelKey) : val || null} />
             </FieldRow>
           )
         })}
@@ -857,6 +859,7 @@ function AnnotationList({
   onEdit: (a: ReaderAnnotation) => void
   onDelete: (id: number) => void
 }) {
+  const t = useTranslations("panel")
   const { annotations, loadAnnotations, loadingAnnotations, setNavigationTarget } = useReaderStore()
   const paper = usePaperStore((s) => s.currentPaper)
 
@@ -873,7 +876,7 @@ function AnnotationList({
   }
 
   if (annotations.length === 0) {
-    return <EmptyState message="暂无批注" />
+    return <EmptyState message={t("emptyAnnotations")} />
   }
 
   const sorted = [...annotations].sort((a, b) => a.pageNumber - b.pageNumber)
@@ -893,14 +896,14 @@ function AnnotationList({
             <button
               onClick={() => onEdit(a)}
               className="p-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors"
-              title="编辑批注"
+              title={t("editAnnotation")}
             >
               <Pencil className="size-3.5" />
             </button>
             <button
               onClick={() => onDelete(a.id)}
               className="p-1 rounded-md hover:bg-red-50 text-[var(--text-tertiary)] hover:text-red-500 transition-colors"
-              title="删除批注"
+              title={t("deleteAnnotation")}
             >
               <Trash2 className="size-3.5" />
             </button>
@@ -910,7 +913,7 @@ function AnnotationList({
             <div className="flex items-center gap-1.5 mb-1">
               <MessageSquare className="size-3 text-[var(--text-tertiary)]" />
               <span className="text-[10.5px] text-[var(--text-tertiary)] uppercase tracking-wide">
-                引用原文 · 第{a.pageNumber}页
+                {t("quotedText", { page: a.pageNumber })}
               </span>
             </div>
             <p className="text-sm text-[var(--text-secondary)] leading-relaxed line-clamp-4">
@@ -939,6 +942,7 @@ function AnnotationList({
 }
 
 function CommentThreadButton({ annotationId, commentCount }: { annotationId: number; commentCount: number }) {
+  const t = useTranslations("panel")
   const [expanded, setExpanded] = useState(false)
 
   return (
@@ -948,7 +952,7 @@ function CommentThreadButton({ annotationId, commentCount }: { annotationId: num
         className="inline-flex items-center gap-1 text-[11px] text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors"
       >
         <MessageSquare className="size-3" />
-        <span>{commentCount > 0 ? `${commentCount} 条评论` : "评论"}</span>
+        <span>{commentCount > 0 ? t("commentCount", { count: commentCount }) : t("comments")}</span>
       </button>
       {expanded && (
         <div className="mt-3 border-t border-[var(--border-subtle)] pt-3">
@@ -965,6 +969,7 @@ function NoteList({
   onEdit: (n: ReaderNote) => void
   onDelete: (id: number) => void
 }) {
+  const t = useTranslations("panel")
   const { notes, loadNotes, loadingNotes, setNavigationTarget } = useReaderStore()
   const paper = usePaperStore((s) => s.currentPaper)
 
@@ -981,7 +986,7 @@ function NoteList({
   }
 
   if (notes.length === 0) {
-    return <EmptyState message="暂无笔记" />
+    return <EmptyState message={t("emptyNotes")} />
   }
 
   const sorted = [...notes].sort((a, b) => a.pageNumber - b.pageNumber)
@@ -1001,14 +1006,14 @@ function NoteList({
             <button
               onClick={() => onEdit(n)}
               className="p-1 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors"
-              title="编辑笔记"
+              title={t("editNote")}
             >
               <Pencil className="size-3.5" />
             </button>
             <button
               onClick={() => onDelete(n.id)}
               className="p-1 rounded-md hover:bg-red-50 text-[var(--text-tertiary)] hover:text-red-500 transition-colors"
-              title="删除笔记"
+              title={t("deleteNote")}
             >
               <Trash2 className="size-3.5" />
             </button>
@@ -1018,7 +1023,7 @@ function NoteList({
             <div className="flex items-center gap-1.5 mb-1">
               <StickyNote className="size-3 text-[var(--text-tertiary)]" />
               <span className="text-[10.5px] text-[var(--text-tertiary)] uppercase tracking-wide">
-                引用原文 · 第{n.pageNumber}页
+                {t("quotedText", { page: n.pageNumber })}
               </span>
             </div>
             <p className="text-sm text-[var(--text-secondary)] leading-relaxed line-clamp-4">

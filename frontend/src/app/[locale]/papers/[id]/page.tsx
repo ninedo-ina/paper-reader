@@ -18,15 +18,14 @@ type TabKey = "info" | "versions" | "storage"
 
 interface TabDef {
   key: TabKey
-  label: string
-  labelEn: string
+  labelKey: string
   icon: typeof Info
 }
 
 const TABS: TabDef[] = [
-  { key: "info", label: "基本信息", labelEn: "Basic Info", icon: Info },
-  { key: "versions", label: "历史版本", labelEn: "Versions", icon: GitBranch },
-  { key: "storage", label: "存储信息", labelEn: "Storage", icon: HardDrive },
+  { key: "info", labelKey: "tabInfo", icon: Info },
+  { key: "versions", labelKey: "tabVersions", icon: GitBranch },
+  { key: "storage", labelKey: "tabStorage", icon: HardDrive },
 ]
 
 export default function PaperDetailPage() {
@@ -37,6 +36,9 @@ export default function PaperDetailPage() {
   const { configs, loadConfigs } = useStorageStore()
 
   const [activeTab, setActiveTab] = useState<TabKey>("info")
+  const t = useTranslations("paper")
+  const tcat = useTranslations("categories")
+  const tp = useTranslations("papers")
   const [versions, setVersions] = useState<PaperVersionDto[]>([])
   const [isLoadingVersions, setIsLoadingVersions] = useState(false)
   const [showPublish, setShowPublish] = useState(false)
@@ -104,7 +106,7 @@ export default function PaperDetailPage() {
         <button
           onClick={() => router.push("/")}
           className="p-2 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors mb-4"
-          aria-label="Back"
+          aria-label={tp("back")}
         >
           <ArrowLeft className="size-5" />
         </button>
@@ -117,10 +119,10 @@ export default function PaperDetailPage() {
                 ? "text-[var(--accent)] bg-[var(--bg-active)]"
                 : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
             }`}
-            aria-label={tab.label}
+            aria-label={t(tab.labelKey)}
           >
             <tab.icon className="size-5" />
-            <span className="text-[9px] leading-none">{tab.label}</span>
+            <span className="text-[9px] leading-none">{t(tab.labelKey)}</span>
           </button>
         ))}
       </nav>
@@ -137,7 +139,7 @@ export default function PaperDetailPage() {
                 </h1>
                 <Button onClick={() => setShowPublish(true)}>
                   <Upload className="size-4 mr-1.5" />
-                  发布
+                  {t("publish")}
                 </Button>
               </div>
 
@@ -166,7 +168,7 @@ export default function PaperDetailPage() {
 
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20">
-                  {catDef?.label ?? currentPaper.category}
+                  {catDef ? tcat(catDef.labelKey) : currentPaper.category}
                 </span>
                 <span className="text-xs text-[var(--text-tertiary)]">
                   {currentPaper.sourceType}
@@ -177,14 +179,14 @@ export default function PaperDetailPage() {
               {extraFields && Object.keys(extraFields).length > 0 && (
                 <div className="rounded-xl border border-[var(--border-color)] bg-[var(--surface-0)] p-5">
                   <h3 className="text-sm font-semibold text-[var(--text-secondary)] mb-3">
-                    {catDef?.label ?? ""} — 详细信息
+                    {tcat(catDef.labelKey)} {tp("detailSuffix")}
                   </h3>
                   <dl className="grid grid-cols-2 gap-x-6 gap-y-3">
                     {Object.entries(extraFields).map(([key, val]) => {
                       const fieldDef = catDef?.fields.find((f) => f.key === key)
                       return (
                         <div key={key} className="flex flex-col gap-0.5">
-                          <dt className="text-xs text-[var(--text-tertiary)]">{fieldDef?.label ?? key}</dt>
+                          <dt className="text-xs text-[var(--text-tertiary)]">{fieldDef ? tcat(fieldDef.labelKey) : key}</dt>
                           <dd className="text-sm text-[var(--text-primary)]">{String(val)}</dd>
                         </div>
                       )
@@ -196,7 +198,7 @@ export default function PaperDetailPage() {
               {/* Abstract */}
               {currentPaper.abstractText && (
                 <div className="rounded-xl border border-[var(--border-color)] bg-[var(--surface-0)] p-5">
-                  <h3 className="text-sm font-semibold text-[var(--text-secondary)] mb-2">摘要</h3>
+                  <h3 className="text-sm font-semibold text-[var(--text-secondary)] mb-2">{t("abstract")}</h3>
                   <p className="text-sm text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap">
                     {currentPaper.abstractText}
                   </p>
@@ -212,7 +214,7 @@ export default function PaperDetailPage() {
                     className="inline-flex items-center gap-1.5 text-sm text-[var(--accent)] hover:underline"
                   >
                     <Download className="size-4" />
-                    下载 PDF
+                    {t("downloadPdf")}
                   </button>
                 </div>
               )}
@@ -223,10 +225,10 @@ export default function PaperDetailPage() {
           {activeTab === "versions" && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-[var(--text-primary)]">历史版本</h2>
+                <h2 className="text-xl font-semibold text-[var(--text-primary)]">{t("versionHistory")}</h2>
                 <Button onClick={() => setShowPublish(true)}>
                   <Upload className="size-4 mr-1.5" />
-                  发布新版本
+                  {t("publishNewVersion")}
                 </Button>
               </div>
 
@@ -236,8 +238,8 @@ export default function PaperDetailPage() {
                 </div>
               ) : versions.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-sm text-[var(--text-tertiary)]">暂无版本记录</p>
-                  <p className="text-xs text-[var(--text-tertiary)] mt-1">点击「发布」创建第一个版本</p>
+                  <p className="text-sm text-[var(--text-tertiary)]">{t("noVersions")}</p>
+                  <p className="text-xs text-[var(--text-tertiary)] mt-1">{t("createFirstVersion")}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -278,7 +280,7 @@ export default function PaperDetailPage() {
           {/* Storage Tab */}
           {activeTab === "storage" && (
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-[var(--text-primary)]">存储信息</h2>
+              <h2 className="text-xl font-semibold text-[var(--text-primary)]">{t("storageInfo")}</h2>
 
               {storageConfig ? (
                 <div className="rounded-xl border border-[var(--border-color)] bg-[var(--surface-0)] p-5">
@@ -287,12 +289,12 @@ export default function PaperDetailPage() {
                   </h3>
                   <dl className="grid grid-cols-2 gap-x-6 gap-y-3">
                     <div className="flex flex-col gap-0.5">
-                      <dt className="text-xs text-[var(--text-tertiary)]">存储类型</dt>
+                      <dt className="text-xs text-[var(--text-tertiary)]">{t("storageType")}</dt>
                       <dd className="text-sm text-[var(--text-primary)]">{storageConfig.storageType}</dd>
                     </div>
                     <div className="flex flex-col gap-0.5">
-                      <dt className="text-xs text-[var(--text-tertiary)]">默认</dt>
-                      <dd className="text-sm text-[var(--text-primary)]">{storageConfig.isDefault ? "是" : "否"}</dd>
+                      <dt className="text-xs text-[var(--text-tertiary)]">{t("default")}</dt>
+                      <dd className="text-sm text-[var(--text-primary)]">{storageConfig.isDefault ? t("yes") : t("no")}</dd>
                     </div>
                     {Object.entries(storageConfig.config).map(([key, val]) => {
                       // Mask sensitive fields
@@ -312,8 +314,8 @@ export default function PaperDetailPage() {
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <p className="text-sm text-[var(--text-tertiary)]">未关联存储配置</p>
-                  <p className="text-xs text-[var(--text-tertiary)] mt-1">发布版本时无需推送到存储平台</p>
+                  <p className="text-sm text-[var(--text-tertiary)]">{t("noStorage")}</p>
+                  <p className="text-xs text-[var(--text-tertiary)] mt-1">{t("noStorageHint")}</p>
                 </div>
               )}
             </div>

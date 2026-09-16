@@ -14,13 +14,15 @@ interface PaperDetailPanelProps {
   onSaved?: () => void
 }
 
-function renderField(field: CategoryField, value: string, onChange: (v: string) => void) {
+type FieldTranslator = (key: string) => string
+
+function renderField(tc: FieldTranslator, field: CategoryField, value: string, onChange: (v: string) => void) {
   switch (field.type) {
     case "textarea":
       return (
         <textarea
           rows={3}
-          placeholder={field.placeholder}
+          placeholder={field.placeholderKey ? tc(field.placeholderKey) : undefined}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--surface-0)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]/40 resize-none"
@@ -35,7 +37,7 @@ function renderField(field: CategoryField, value: string, onChange: (v: string) 
         >
           <option value="">--</option>
           {field.options?.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
+            <option key={opt.value} value={opt.value}>{tc(opt.labelKey)}</option>
           ))}
         </select>
       )
@@ -47,7 +49,7 @@ function renderField(field: CategoryField, value: string, onChange: (v: string) 
       return (
         <Input
           type="text"
-          placeholder={field.placeholder}
+          placeholder={field.placeholderKey ? tc(field.placeholderKey) : undefined}
           value={value}
           onChange={(e) => onChange(e.target.value)}
         />
@@ -60,6 +62,7 @@ export function PaperDetailPanel({ paper, onSaved }: PaperDetailPanelProps) {
   const tc = useTranslations("common")
   const tm = useTranslations("metadata")
   const tpaper = useTranslations("paper")
+  const tcat = useTranslations("categories")
   const { updatePaper, error } = usePaperStore()
 
   const [title, setTitle] = useState(paper.title)
@@ -115,7 +118,7 @@ export function PaperDetailPanel({ paper, onSaved }: PaperDetailPanelProps) {
     } finally {
       setIsSaving(false)
     }
-  }, [paper.id, title, authors, participants, abstractText, category, extraFields, doi, year, journal, updatePaper, onSaved])
+  }, [paper.id, title, authors, participants, abstractText, category, extraFields, doi, year, journal, updatePaper, onSaved, tp])
 
   return (
     <div className="h-full flex flex-col bg-[var(--bg-root)]">
@@ -227,7 +230,7 @@ export function PaperDetailPanel({ paper, onSaved }: PaperDetailPanelProps) {
               className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--surface-0)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]/40"
             >
               {CATEGORIES.map((cat) => (
-                <option key={cat.value} value={cat.value}>{cat.label}</option>
+                <option key={cat.value} value={cat.value}>{tcat(cat.labelKey)}</option>
               ))}
             </select>
           </div>
@@ -235,10 +238,10 @@ export function PaperDetailPanel({ paper, onSaved }: PaperDetailPanelProps) {
           {catDef.fields.map((field) => (
             <div key={field.key} className="space-y-1.5">
               <label className="text-sm font-medium text-[var(--text-secondary)]">
-                {field.label}
+                {tcat(field.labelKey)}
                 {field.required && <span className="text-red-400"> *</span>}
               </label>
-              {renderField(field, extraFields[field.key] || "", (v) => handleFieldChange(field.key, v))}
+              {renderField(tcat, field, extraFields[field.key] || "", (v) => handleFieldChange(field.key, v))}
             </div>
           ))}
         </fieldset>

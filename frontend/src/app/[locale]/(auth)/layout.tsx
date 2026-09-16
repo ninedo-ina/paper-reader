@@ -1,6 +1,6 @@
 import { BookOpen } from "lucide-react"
 import { ThemeToggle } from "@/components/ui/ThemeToggle"
-import { LangToggle } from "@/components/ui/LangToggle"
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher"
 import { ParticleField } from "@/components/auth/ParticleField"
 import { LoginExperience } from "@/components/auth/LoginExperience"
 import { AuthFooter } from "@/components/auth/AuthFooter"
@@ -18,7 +18,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           PAPERHELPER
         </div>
         <div className="flex items-center gap-1">
-          <LangToggle />
+          <LanguageSwitcher />
           <ThemeToggle />
         </div>
       </div>

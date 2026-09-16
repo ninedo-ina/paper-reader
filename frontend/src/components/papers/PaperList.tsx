@@ -64,20 +64,20 @@ export function PaperList({ activeId, onSelect, onUpload, onCreate, onClose }: P
             {t("myPapers")}
           </h2>
           <div className="flex items-center gap-0.5">
-            <button onClick={onCreate} title="创建论文"
+            <button onClick={onCreate} title={tp("createPaper")}
               className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all">
               <Plus className="w-3.5 h-3.5" />
             </button>
-            <button onClick={onUpload} title="导入论文"
+            <button onClick={onUpload} title={tp("importPaper")}
               className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all">
               <Upload className="w-3.5 h-3.5" />
             </button>
-            <button onClick={handleRefresh} title="刷新" disabled={isListLoading}
+            <button onClick={handleRefresh} title={tp("refresh")} disabled={isListLoading}
               className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all disabled:opacity-50">
               <RefreshCw className={cn("w-3.5 h-3.5", isListLoading && "animate-spin")} />
             </button>
             {onClose && (
-              <button onClick={onClose} title="关闭"
+              <button onClick={onClose} title={tp("close")}
                 className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all">
                 <X className="w-3.5 h-3.5" />
               </button>

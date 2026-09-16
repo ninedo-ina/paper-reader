@@ -4,6 +4,7 @@ import { ChatPanel } from "@/components/chat/ChatPanel"
 import { useChatStore } from "@/stores/chat-store"
 import { usePreferencesStore, type AiProvider } from "@/stores/preferences-store"
 import { useUserStore } from "@/stores/user-store"
+import { withIntl } from "@/test/intl"
 
 const firstProvider: AiProvider = {
   id: "provider-first",
@@ -67,7 +68,7 @@ describe("ChatPanel thinking state", () => {
   })
 
   it("cycles visible processing text inside the assistant bubble", () => {
-    render(<ChatPanel />)
+    render(withIntl(<ChatPanel />))
 
     const status = screen.getByRole("status", { name: "AI 正在处理" })
     expect(status).toHaveTextContent("思考中")
@@ -136,7 +137,7 @@ describe("ChatPanel thinking state", () => {
       directChatTitleGenerating: {},
     })
 
-    render(<ChatPanel />)
+    render(withIntl(<ChatPanel />))
 
     expect(screen.getByRole("img", { name: "论文读者" })).toHaveAttribute(
       "src",

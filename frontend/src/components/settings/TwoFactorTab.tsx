@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, type ReactNode } from "react"
 import { Copy, Loader2, ShieldCheck, ShieldOff, Smartphone } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useToastStore } from "@/stores/toast-store"
 import { useUserStore } from "@/stores/user-store"
 import * as securityApi from "@/lib/api/security"
@@ -19,6 +20,7 @@ type Step = "loading" | "idle" | "bind" | "codes"
  * 两种情况下都会重新下发 9 个恢复码，保证账号始终能用恢复码找回。
  */
 export function TwoFactorTab() {
+  const t = useTranslations("settings")
   const [status, setStatus] = useState<TwoFactorStatus | null>(null)
   const [step, setStep] = useState<Step>("loading")
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([])
@@ -31,9 +33,9 @@ export function TwoFactorTab() {
       setStep("idle")
     } catch (e) {
       setStep("idle")
-      useToastStore.getState().addToast({ message: (e as Error).message || "加载两步验证状态失败", type: "error" })
+      useToastStore.getState().addToast({ message: (e as Error).message || t("tfLoadFailed"), type: "error" })
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     loadStatus()
@@ -83,12 +85,12 @@ export function TwoFactorTab() {
         )}
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-[var(--text-primary)]">
-            {status?.enabled ? "两步验证已开启" : "两步验证未开启"}
+            {status?.enabled ? t("tfEnabled") : t("tfDisabled")}
           </p>
           <p className="mt-1 text-xs leading-5 text-[var(--text-tertiary)]">
             {status?.enabled
-              ? `登录时需要额外输入身份验证器上的 6 位动态码；已信任的设备可跳过。剩余可用恢复码 ${status.recoveryCodesRemaining} / ${status.recoveryCodesTotal} 个。`
-              : "开启后，登录时除密码外还需输入身份验证器上的 6 位动态码，并会下发 9 个恢复码用于找回账号。"}
+              ? t("tfEnabledHint", { remaining: status.recoveryCodesRemaining, total: status.recoveryCodesTotal })
+              : t("tfDisabledHint")}
           </p>
         </div>
       </div>
@@ -106,7 +108,7 @@ export function TwoFactorTab() {
           style={{ background: "var(--accent)" }}
         >
           <Smartphone className="size-4" />
-          扫码绑定并开启
+          {t("tfStart")}
         </button>
       )}
     </div>
@@ -136,6 +138,8 @@ function BindWizard({
   onCancel: () => void
   onFinished: (codes: string[]) => void
 }) {
+  const t = useTranslations("settings")
+  const tc = useTranslations("common")
   const [setup, setSetup] = useState<TwoFactorSetup | null>(null)
   const [password, setPassword] = useState("")
   const [code, setCode] = useState("")
@@ -151,7 +155,7 @@ function BindWizard({
       })
       .catch((e: Error) => {
         if (!cancelled) {
-          useToastStore.getState().addToast({ message: e.message || "生成密钥失败", type: "error" })
+          useToastStore.getState().addToast({ message: e.message || t("tfSecretFailed"), type: "error" })
           onCancel()
         }
       })
@@ -161,36 +165,36 @@ function BindWizard({
     return () => {
       cancelled = true
     }
-  }, [onCancel])
+  }, [onCancel, t])
 
   const submit = useCallback(async () => {
     if (!password) {
-      useToastStore.getState().addToast({ message: "请输入当前密码", type: "error" })
+      useToastStore.getState().addToast({ message: t("tfNeedPassword"), type: "error" })
       return
     }
     if (!/^\d{6}$/.test(code.trim())) {
-      useToastStore.getState().addToast({ message: "请输入身份验证器上的 6 位动态码", type: "error" })
+      useToastStore.getState().addToast({ message: t("tfNeedCode"), type: "error" })
       return
     }
     setSubmitting(true)
     try {
       const res = await securityApi.enableTwoFactor({ password, code: code.trim() })
-      useToastStore.getState().addToast({ message: "两步验证已开启", type: "success" })
+      useToastStore.getState().addToast({ message: t("tfEnabledToast"), type: "success" })
       onFinished(res.recoveryCodes)
     } catch (e) {
-      useToastStore.getState().addToast({ message: (e as Error).message || "开启失败", type: "error" })
+      useToastStore.getState().addToast({ message: (e as Error).message || t("tfEnableFailed"), type: "error" })
     } finally {
       setSubmitting(false)
     }
-  }, [password, code, onFinished])
+  }, [password, code, onFinished, t])
 
   const copySecret = async () => {
     if (!setup?.secret) return
     try {
       await copyToClipboard(setup.secret)
-      useToastStore.getState().addToast({ message: "密钥已复制到剪贴板", type: "success" })
+      useToastStore.getState().addToast({ message: t("tfSecretCopied"), type: "success" })
     } catch {
-      useToastStore.getState().addToast({ message: "复制失败，请手动选择后复制", type: "error" })
+      useToastStore.getState().addToast({ message: t("tfCopyFailed"), type: "error" })
     }
   }
 
@@ -205,36 +209,36 @@ function BindWizard({
   return (
     <div className="space-y-5">
       <ol className="space-y-1.5 text-xs leading-5 text-[var(--text-secondary)]">
-        <li>1. 在手机上下载任意身份验证器 App（如 Google Authenticator、Microsoft Authenticator）。</li>
-        <li>2. 扫描下方二维码，或手动输入密钥。</li>
-        <li>3. 输入 App 中显示的 6 位动态码与当前密码，完成绑定。</li>
+        <li>{t("tfStep1")}</li>
+        <li>{t("tfStep2")}</li>
+        <li>{t("tfStep3")}</li>
       </ol>
 
       <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
         {setup && <QrCodeCard value={setup.otpauthUri} />}
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-xs font-medium text-[var(--text-secondary)]">无法扫码？手动输入密钥</p>
+            <p className="text-xs font-medium text-[var(--text-secondary)]">{t("tfManualSecret")}</p>
             <button
               type="button"
               onClick={copySecret}
               className="inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
             >
               <Copy className="size-3.5" />
-              复制
+              {t("tfCopy")}
             </button>
           </div>
           <code className="block break-all rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] px-3 py-2 font-mono text-xs tracking-wider text-[var(--text-primary)]">
             {setup?.secret}
           </code>
           <p className="text-xs text-[var(--text-tertiary)]">
-            算法 SHA1 · {setup?.digits ?? 6} 位 · {setup?.period ?? 30} 秒刷新
+            {t("tfAlgorithm", { digits: setup?.digits ?? 6, period: setup?.period ?? 30 })}
           </p>
         </div>
       </div>
 
       <div className="space-y-4">
-        <FieldRow label="当前密码" htmlFor="two-factor-password">
+        <FieldRow label={t("tfCurrentPassword")} htmlFor="two-factor-password">
           <input
             id="two-factor-password"
             type="password"
@@ -245,7 +249,7 @@ function BindWizard({
           />
         </FieldRow>
 
-        <FieldRow label="6 位动态码" htmlFor="two-factor-code">
+        <FieldRow label={t("tfSixDigitCode")} htmlFor="two-factor-code">
           <OtpInput id="two-factor-code" value={code} onChange={setCode} />
         </FieldRow>
       </div>
@@ -259,14 +263,14 @@ function BindWizard({
           style={{ background: "var(--accent)" }}
         >
           {submitting && <Loader2 className="size-3.5 animate-spin" />}
-          {submitting ? "校验中..." : "确认开启"}
+          {submitting ? t("tfVerifying") : t("tfConfirmEnable")}
         </button>
         <button
           type="button"
           onClick={onCancel}
           className="rounded-lg border border-[var(--border-subtle)] px-4 py-2.5 text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)]"
         >
-          取消
+          {tc("cancel")}
         </button>
       </div>
     </div>
@@ -275,28 +279,30 @@ function BindWizard({
 
 /** 重新生成恢复码：只需密码，旧码立即失效 */
 function RegenerateSection({ onDone }: { onDone: (codes: string[]) => void }) {
+  const t = useTranslations("settings")
+  const tc = useTranslations("common")
   const [open, setOpen] = useState(false)
   const [password, setPassword] = useState("")
   const [busy, setBusy] = useState(false)
 
   const submit = useCallback(async () => {
     if (!password) {
-      useToastStore.getState().addToast({ message: "请输入当前密码", type: "error" })
+      useToastStore.getState().addToast({ message: t("tfNeedPassword"), type: "error" })
       return
     }
     setBusy(true)
     try {
       const res = await securityApi.regenerateRecoveryCodes({ password })
-      useToastStore.getState().addToast({ message: "恢复码已重新生成，旧恢复码立即失效", type: "success" })
+      useToastStore.getState().addToast({ message: t("tfRegeneratedToast"), type: "success" })
       setPassword("")
       setOpen(false)
       onDone(res.recoveryCodes)
     } catch (e) {
-      useToastStore.getState().addToast({ message: (e as Error).message || "生成失败", type: "error" })
+      useToastStore.getState().addToast({ message: (e as Error).message || t("tfRegenerateFailed"), type: "error" })
     } finally {
       setBusy(false)
     }
-  }, [password, onDone])
+  }, [password, onDone, t])
 
   if (!open) {
     return (
@@ -305,15 +311,15 @@ function RegenerateSection({ onDone }: { onDone: (codes: string[]) => void }) {
         onClick={() => setOpen(true)}
         className="rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-hover)]"
       >
-        重新生成恢复码
+        {t("tfRegenerate")}
       </button>
     )
   }
 
   return (
     <div className="space-y-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-4">
-      <p className="text-xs font-medium text-[var(--text-secondary)]">输入当前密码以重新生成 9 个恢复码</p>
-      <FieldRow label="当前密码" htmlFor="regenerate-password">
+      <p className="text-xs font-medium text-[var(--text-secondary)]">{t("tfRegenerateHint")}</p>
+      <FieldRow label={t("tfCurrentPassword")} htmlFor="regenerate-password">
         <input
           id="regenerate-password"
           type="password"
@@ -332,14 +338,14 @@ function RegenerateSection({ onDone }: { onDone: (codes: string[]) => void }) {
           style={{ background: "var(--accent)" }}
         >
           {busy && <Loader2 className="size-3.5 animate-spin" />}
-          {busy ? "生成中..." : "确认生成"}
+          {busy ? t("tfGenerating") : t("tfConfirmGenerate")}
         </button>
         <button
           type="button"
           onClick={() => { setOpen(false); setPassword("") }}
           className="rounded-lg px-4 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)]"
         >
-          取消
+          {tc("cancel")}
         </button>
       </div>
     </div>
@@ -348,6 +354,8 @@ function RegenerateSection({ onDone }: { onDone: (codes: string[]) => void }) {
 
 /** 关闭两步验证：密码 + 动态码双校验，关闭后所有恢复码立即失效 */
 function DisableSection({ onDone }: { onDone: () => void }) {
+  const t = useTranslations("settings")
+  const tc = useTranslations("common")
   const [open, setOpen] = useState(false)
   const [password, setPassword] = useState("")
   const [code, setCode] = useState("")
@@ -355,23 +363,23 @@ function DisableSection({ onDone }: { onDone: () => void }) {
 
   const submit = useCallback(async () => {
     if (!password || !code.trim()) {
-      useToastStore.getState().addToast({ message: "请填写当前密码与动态码", type: "error" })
+      useToastStore.getState().addToast({ message: t("tfNeedPasswordAndCode"), type: "error" })
       return
     }
     setBusy(true)
     try {
       await securityApi.disableTwoFactor({ password, code: code.trim() })
-      useToastStore.getState().addToast({ message: "两步验证已关闭，恢复码已全部失效", type: "success" })
+      useToastStore.getState().addToast({ message: t("tfDisabledToast"), type: "success" })
       setPassword("")
       setCode("")
       setOpen(false)
       onDone()
     } catch (e) {
-      useToastStore.getState().addToast({ message: (e as Error).message || "关闭失败", type: "error" })
+      useToastStore.getState().addToast({ message: (e as Error).message || t("tfDisableFailed"), type: "error" })
     } finally {
       setBusy(false)
     }
-  }, [password, code, onDone])
+  }, [password, code, onDone, t])
 
   if (!open) {
     return (
@@ -380,7 +388,7 @@ function DisableSection({ onDone }: { onDone: () => void }) {
         onClick={() => setOpen(true)}
         className="rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)]"
       >
-        关闭两步验证
+        {t("tfDisable")}
       </button>
     )
   }
@@ -388,9 +396,9 @@ function DisableSection({ onDone }: { onDone: () => void }) {
   return (
     <div className="space-y-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-4">
       <p className="text-xs font-medium text-[var(--text-secondary)]">
-        关闭后登录不再需要动态码，已下发的恢复码会立即失效。请用密码 + 动态码确认，动态码也可以用恢复码代替。
+        {t("tfDisableHint")}
       </p>
-      <FieldRow label="当前密码" htmlFor="disable-password">
+      <FieldRow label={t("tfCurrentPassword")} htmlFor="disable-password">
         <input
           id="disable-password"
           type="password"
@@ -400,8 +408,8 @@ function DisableSection({ onDone }: { onDone: () => void }) {
           className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-1)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
         />
       </FieldRow>
-      <FieldRow label="动态码" htmlFor="disable-code">
-        <OtpInput id="disable-code" value={code} onChange={setCode} variant="inset" label="动态码或恢复码" />
+      <FieldRow label={t("otpLabel")} htmlFor="disable-code">
+        <OtpInput id="disable-code" value={code} onChange={setCode} variant="inset" label={t("otpOrRecoveryCode")} />
       </FieldRow>
       <div className="flex gap-2">
         <button
@@ -411,14 +419,14 @@ function DisableSection({ onDone }: { onDone: () => void }) {
           className="inline-flex items-center gap-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-1)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition-colors disabled:opacity-60 hover:bg-[var(--bg-hover)]"
         >
           {busy && <Loader2 className="size-3.5 animate-spin" />}
-          {busy ? "处理中..." : "确认关闭"}
+          {busy ? t("tfProcessing") : t("tfConfirmDisable")}
         </button>
         <button
           type="button"
           onClick={() => { setOpen(false); setPassword(""); setCode("") }}
           className="rounded-lg px-4 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)]"
         >
-          取消
+          {tc("cancel")}
         </button>
       </div>
     </div>

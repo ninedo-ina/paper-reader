@@ -5,6 +5,7 @@ import type { PaperContextChunkDto } from "@/lib/api/types"
 import { listChats, getChat, createChat, sendMessage, deleteChat } from "@/lib/api/ai-chats"
 import { usePreferencesStore, type AiProvider } from "@/stores/preferences-store"
 import { EmptyAiResponseError } from "@/lib/ai-chat-response"
+import { runtimeTranslator } from "@/i18n/runtime"
 import {
   describeProviderNetworkError,
   normalizeProviderBaseUrl,
@@ -45,6 +46,8 @@ export interface ChatMessageItem {
 export interface DirectChat {
   id: string
   title: string
+  /** 标题还是占位（未按首轮对话自动生成）。标题本身按用户语言存，判定只能靠这个标记。 */
+  isUntitled?: boolean
   model: string
   providerId: string
   messages: ChatMessageItem[]
@@ -53,8 +56,18 @@ export interface DirectChat {
 }
 
 const MODELS = ["gpt-4o", "gpt-4o-mini", "claude-sonnet-4-6", "gemini-2.5-pro"] as const
-const DEFAULT_DIRECT_TITLE = "新对话"
 const DIRECT_TITLE_LIMIT = 32
+
+/**
+ * 「上次回复被页面关闭打断」的占位标记。
+ * 这条消息产生于 store 的 persist 合并阶段（模块求值时），那时还没有当前语言的消息表，
+ * 所以这里只落标记，真正的文案由聊天面板在渲染时翻译。
+ */
+export const INTERRUPTED_REPLY_STATUS = "#interrupted-reply"
+
+/** 历史上写死过的默认标题（简体/繁体），仅用于迁移老数据 */
+const LEGACY_DEFAULT_TITLES = new Set(["新对话", "新對話"])
+
 const TITLE_CONTEXT_LIMIT = 1600
 
 interface ChatState {
@@ -107,7 +120,8 @@ function createDirectChat(model: string, providerId: string): DirectChat {
   const now = new Date().toISOString()
   return {
     id: createId(),
-    title: DEFAULT_DIRECT_TITLE,
+    title: "",
+    isUntitled: true,
     model,
     providerId,
     messages: [],
@@ -161,8 +175,8 @@ function updateDirectChatTitle(
   title: string,
 ): DirectChat[] {
   return chats.map((chat) =>
-    chat.id === chatId && chat.title === DEFAULT_DIRECT_TITLE
-      ? { ...chat, title }
+    chat.id === chatId && chat.isUntitled
+      ? { ...chat, title, isUntitled: false }
       : chat,
   )
 }
@@ -197,6 +211,7 @@ function buildPaperPrompt(content: string, context?: PaperMessageContext): strin
 
   return [
     "你正在帮助用户阅读一篇论文。请只基于下方论文上下文回答；上下文不足时明确说明，不要编造论文没有提供的事实。",
+    "请始终使用与用户提问相同的语言回答（用户用中文提问就用中文，用英文提问就用英文，其它语言同理）。",
     `论文标题：${context.paperTitle}`,
     context.abstractText ? `论文摘要：${context.abstractText}` : "",
     chunks ? `与选区相关的论文片段：\n${chunks}` : "",
@@ -256,7 +271,7 @@ async function generateDirectChatTitle({
       {
         role: "system",
         content:
-          "你是对话标题生成器。请根据用户与 PR助手 的对话生成一个简洁、准确的标题。只输出标题，不要解释、引号、Markdown 或“标题”前缀；中文最多 18 个汉字，英文最多 8 个单词。",
+          "你是对话标题生成器。请根据用户与 PR助手 的对话生成一个简洁、准确的标题。只输出标题，不要解释、引号、Markdown 或“标题”前缀。标题语言必须与用户提问的语言一致：中文最多 18 个汉字，其它语言最多 8 个单词。",
       },
       {
         role: "user",
@@ -309,7 +324,7 @@ function normalizeDirectMessages(
       return [{
         ...message,
         status: "error" as const,
-        statusMessage: "上一次回复在页面关闭前未完成，请重新发送",
+        statusMessage: INTERRUPTED_REPLY_STATUS,
       }]
     }
 
@@ -322,7 +337,7 @@ function normalizeDirectMessages(
 function describeDirectChatError(error: unknown, apiKey: string): string {
   if (error instanceof EmptyAiResponseError) return error.message
   const networkMessage = describeProviderNetworkError(error)
-  return redactProviderErrorText(networkMessage, apiKey) || "未知错误"
+  return redactProviderErrorText(networkMessage, apiKey) || runtimeTranslator("errors")("unknown")
 }
 
 export const useChatStore = create<ChatState>()(
@@ -620,7 +635,7 @@ export const useChatStore = create<ChatState>()(
           set((state) => {
             const patch: Partial<ChatMessageItem> = {
               status: "error",
-              statusMessage: `回复失败：${errorMessage}`,
+              statusMessage: errorMessage,
             }
             return {
               messages:
@@ -646,7 +661,7 @@ export const useChatStore = create<ChatState>()(
         if (
           !completedAssistantContent ||
           !chat ||
-          chat.title !== DEFAULT_DIRECT_TITLE ||
+          !chat.isUntitled ||
           get().directChatTitleGenerating[targetChatId]
         ) {
           return
@@ -720,10 +735,17 @@ export const useChatStore = create<ChatState>()(
       name: "pr-ai-direct-chats",
       merge: (persistedState, currentState) => {
         const persisted = (persistedState ?? {}) as Partial<ChatState>
-        const directChats = (persisted.directChats ?? currentState.directChats).map((chat) => ({
-          ...chat,
-          messages: normalizeDirectMessages(chat.messages, true),
-        }))
+        const directChats = (persisted.directChats ?? currentState.directChats).map((chat) => {
+          // 老数据里占位标题是写死的中文，且没有 isUntitled 标记：这里补一次迁移，
+          // 否则这些会话会永远停在中文占位标题上。
+          const isUntitled = chat.isUntitled ?? LEGACY_DEFAULT_TITLES.has(chat.title)
+          return {
+            ...chat,
+            title: isUntitled ? "" : chat.title,
+            isUntitled,
+            messages: normalizeDirectMessages(chat.messages, true),
+          }
+        })
         const activeDirectChat = directChats.find(
           (chat) => chat.id === persisted.activeDirectChatId,
         )

@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { useRef } from "react"
 import type { ClipboardEvent, KeyboardEvent } from "react"
 
@@ -18,7 +19,7 @@ interface OtpInputProps {
    * 放在已经铺了 surface-2 的面板里时传 inset，格子改用 surface-1 才不会糊成一片。
    */
   variant?: "default" | "inset"
-  /** 无障碍名称，会拼成「动态码第 1 位」这样 */
+  /** 无障碍名称，会拼成「动态码第 1 位」这样；不传则用界面语言里的默认文案 */
   label?: string
 }
 
@@ -36,8 +37,10 @@ export function OtpInput({
   autoFocus,
   disabled,
   variant = "default",
-  label = "动态码",
+  label,
 }: OtpInputProps) {
+  const t = useTranslations("settings")
+  const resolvedLabel = label ?? t("otpLabel")
   const cells = useRef<(HTMLInputElement | null)[]>([])
 
   const focusCell = (index: number) => {
@@ -117,7 +120,7 @@ export function OtpInput({
           onFocus={(e) => e.target.select()}
           inputMode="numeric"
           autoComplete={index === 0 ? "one-time-code" : "off"}
-          aria-label={`${label}第 ${index + 1} 位`}
+          aria-label={t("otpDigitLabel", { label: resolvedLabel, index: index + 1 })}
           autoFocus={autoFocus && index === 0}
           disabled={disabled}
           className={`size-11 rounded-lg border text-center font-mono text-lg font-semibold text-[var(--text-primary)] transition-colors focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-60 ${surface} ${

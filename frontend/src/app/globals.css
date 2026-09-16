@@ -69,7 +69,12 @@
 }
 
 html {
-  font-family: "SF Pro Display", "SF Pro Text", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  /* 字体栈按「拉丁 → 中日韩 → 阿拉伯/波斯 → 藏文」排列：浏览器逐字回退，
+     某一语言缺字时才能落到系统里真正装了的那套字体上（切换器支持 14 种语言）。 */
+  font-family: "SF Pro Display", "SF Pro Text", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Noto Sans TC", "Noto Sans JP",
+    "Noto Sans KR", "Noto Sans Arabic", "Noto Naskh Arabic", "Geeza Pro", "Noto Sans", "Noto Sans Tibetan",
+    "Kailasa", "Jomolhari", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -77,6 +82,26 @@ html {
 body {
   background-color: var(--bg-root);
   color: var(--text-primary);
+}
+
+/* ---- 多语言书写细节 ---- */
+
+/* 阿拉伯语/波斯语/维吾尔语：字形连写与数字需要整套阿拉伯字体，别让拉丁字体抢先 */
+html[dir="rtl"] {
+  font-family: "SF Arabic", "Geeza Pro", "Noto Naskh Arabic", "Noto Sans Arabic", "Segoe UI", Tahoma,
+    "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* 藏文是上下叠写的，默认行高会把上下加字挤在一起 */
+html[lang="bo"] {
+  line-height: 1.9;
+}
+
+/* 阿拉伯字母的连写需要额外行距，否则上下标点和变音符号会互相压住 */
+html[lang="ar"],
+html[lang="fa"],
+html[lang="ug"] {
+  line-height: 1.75;
 }
 
 /* macOS glass effect utilities */

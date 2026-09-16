@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, type ChangeEvent } from "react"
+import { useTranslations } from "next-intl"
 import { X, ImageIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -19,6 +20,8 @@ const MAX_ANNOTATION_CHARS = 400
 const MAX_ANNOTATION_IMAGES = 3
 
 export function AnnotationDialog({ open, onClose, onSubmit, mode, selectedText, initialMarkdown, initialImages, initialTitle }: AnnotationDialogProps) {
+  const t = useTranslations("annotation")
+  const tc = useTranslations("common")
   const [markdown, setMarkdown] = useState(initialMarkdown || "")
   const [images, setImages] = useState<string[]>(initialImages || [])
   const [title, setTitle] = useState(initialTitle || "")
@@ -82,7 +85,9 @@ export function AnnotationDialog({ open, onClose, onSubmit, mode, selectedText, 
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border-subtle)]">
           <h3 className="text-sm font-semibold text-[var(--text-primary)]">
-            {mode === "annotation" ? (isEditing ? "编辑批注" : "创建批注") : (isEditing ? "编辑笔记" : "创建笔记")}
+            {mode === "annotation"
+              ? (isEditing ? t("editAnnotation") : t("createAnnotation"))
+              : (isEditing ? t("editNote") : t("createNote"))}
           </h3>
           <button onClick={onClose} className="p-1 rounded-md hover:bg-[var(--bg-hover)] transition-colors">
             <X className="size-4 text-[var(--text-tertiary)]" />
@@ -92,7 +97,7 @@ export function AnnotationDialog({ open, onClose, onSubmit, mode, selectedText, 
         {/* Selected text preview */}
         {selectedText && (
           <div className="px-4 py-2 bg-[var(--bg-hover)] border-b border-[var(--border-subtle)]">
-            <p className="text-xs text-[var(--text-tertiary)] mb-1">引用原文</p>
+            <p className="text-xs text-[var(--text-tertiary)] mb-1">{t("quotedText")}</p>
             <p className="text-sm text-[var(--text-secondary)] line-clamp-3">{selectedText}</p>
           </div>
         )}
@@ -103,7 +108,7 @@ export function AnnotationDialog({ open, onClose, onSubmit, mode, selectedText, 
             <input
               type="text"
               className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--surface-0)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
-              placeholder="笔记标题（可选）"
+              placeholder={t("noteTitlePlaceholder")}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
@@ -114,7 +119,7 @@ export function AnnotationDialog({ open, onClose, onSubmit, mode, selectedText, 
         <div className="flex-1 p-4">
           <textarea
             className="w-full min-h-[120px] resize-none rounded-lg border border-[var(--border-color)] bg-[var(--surface-0)] p-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
-            placeholder={mode === "annotation" ? "输入批注内容（支持Markdown格式）..." : "输入笔记内容（支持Markdown格式）..."}
+            placeholder={mode === "annotation" ? t("annotationPlaceholder") : t("notePlaceholder")}
             value={markdown}
             onChange={(e) => setMarkdown(e.target.value)}
             onPaste={handlePaste}
@@ -163,7 +168,7 @@ export function AnnotationDialog({ open, onClose, onSubmit, mode, selectedText, 
                   className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-40"
                 >
                   <ImageIcon className="size-3.5" />
-                  插入图片
+                  {t("insertImage")}
                   {imageLimit < Infinity && ` (${images.length}/${imageLimit})`}
                 </button>
               </>
@@ -174,14 +179,14 @@ export function AnnotationDialog({ open, onClose, onSubmit, mode, selectedText, 
               onClick={onClose}
               className="px-3 py-1.5 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] rounded-md transition-colors"
             >
-              取消
+              {tc("cancel")}
             </button>
             <button
               onClick={handleSubmit}
               disabled={!markdown.trim() || isOverLimit}
               className="px-4 py-1.5 text-sm bg-[var(--accent)] text-[var(--surface-1)] rounded-md hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-40"
             >
-              保存
+              {tc("save")}
             </button>
           </div>
         </div>

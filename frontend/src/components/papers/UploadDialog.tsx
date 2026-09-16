@@ -169,11 +169,11 @@ export function UploadDialog({ open, onClose, onUploaded }: UploadDialogProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="urlTitle">Title (optional)</Label>
+              <Label htmlFor="urlTitle">{t("urlTitleOptional")}</Label>
               <Input
                 id="urlTitle"
                 type="text"
-                placeholder="Paper title"
+                placeholder={t("paperTitlePlaceholder")}
                 value={urlTitle}
                 onChange={(e) => setUrlTitle(e.target.value)}
               />

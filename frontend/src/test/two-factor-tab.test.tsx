@@ -1,5 +1,6 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { withIntl } from "@/test/intl"
 import { TwoFactorTab } from "@/components/settings/TwoFactorTab"
 import * as securityApi from "@/lib/api/security"
 import type { TwoFactorSetup, TwoFactorStatus } from "@/lib/api/types"
@@ -26,7 +27,7 @@ const SETUP: TwoFactorSetup = {
 
 /** 打开绑定向导，返回后就已经停在表单上 */
 async function openBindWizard() {
-  render(<TwoFactorTab />)
+  render(withIntl(<TwoFactorTab />))
   fireEvent.click(await screen.findByRole("button", { name: /扫码绑定并开启/ }))
   await screen.findByText(SETUP.secret)
 }

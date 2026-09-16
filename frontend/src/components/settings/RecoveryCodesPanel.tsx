@@ -1,6 +1,7 @@
 "use client"
 
 import { Copy, Download } from "lucide-react"
+import { useLocale, useTranslations } from "next-intl"
 import { useToastStore } from "@/stores/toast-store"
 import { copyToClipboard } from "@/lib/clipboard"
 
@@ -13,23 +14,26 @@ interface RecoveryCodesPanelProps {
 
 /** 只提供两种保存方式：一键复制，或下载成 txt 文本文件（不做 PDF）。 */
 export function RecoveryCodesPanel({ codes, email, onDone }: RecoveryCodesPanelProps) {
+  const t = useTranslations("settings")
+  const locale = useLocale()
+
   const copyAll = async () => {
     try {
       await copyToClipboard(codes.join("\n"))
-      useToastStore.getState().addToast({ message: "恢复码已复制到剪贴板", type: "success" })
+      useToastStore.getState().addToast({ message: t("recoveryCopied"), type: "success" })
     } catch {
-      useToastStore.getState().addToast({ message: "复制失败，请手动选择后复制", type: "error" })
+      useToastStore.getState().addToast({ message: t("recoveryCopyFailed"), type: "error" })
     }
   }
 
   const downloadTxt = () => {
     const lines = [
-      "笨迪论文助手 · 两步验证恢复码",
-      email ? `账号：${email}` : null,
-      `生成时间：${new Date().toLocaleString("zh-CN")}`,
+      t("recoveryFileTitle"),
+      email ? t("recoveryFileAccount", { email }) : null,
+      t("recoveryFileGeneratedAt", { time: new Date().toLocaleString(locale) }),
       "",
-      "每个恢复码只能使用一次，请妥善保存。",
-      "关闭两步验证后，这些恢复码将立即失效。",
+      t("recoveryFileNotice1"),
+      t("recoveryFileNotice2"),
       "",
       ...codes.map((code, index) => `${index + 1}. ${code}`),
       "",
@@ -39,13 +43,13 @@ export function RecoveryCodesPanel({ codes, email, onDone }: RecoveryCodesPanelP
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = "笨迪论文助手-两步验证恢复码.txt"
+    a.download = t("recoveryFileName")
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
     // 交给浏览器读完再回收，避免部分环境下下载被中断
     setTimeout(() => URL.revokeObjectURL(url), 1000)
-    useToastStore.getState().addToast({ message: "恢复码已下载为 txt 文件", type: "success" })
+    useToastStore.getState().addToast({ message: t("recoveryDownloaded"), type: "success" })
   }
 
   return (
@@ -70,7 +74,7 @@ export function RecoveryCodesPanel({ codes, email, onDone }: RecoveryCodesPanelP
           className="inline-flex items-center gap-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-hover)]"
         >
           <Copy className="size-3.5" />
-          一键复制
+          {t("copyAll")}
         </button>
         <button
           type="button"
@@ -78,12 +82,12 @@ export function RecoveryCodesPanel({ codes, email, onDone }: RecoveryCodesPanelP
           className="inline-flex items-center gap-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-hover)]"
         >
           <Download className="size-3.5" />
-          下载 TXT 文件
+          {t("downloadTxt")}
         </button>
       </div>
 
       <p className="text-xs leading-5 text-[var(--text-tertiary)]">
-        共 {codes.length} 个恢复码，每个都是 6 位数字，且只能使用一次。请在不开启两步验证时无法登录的情况下用它找回账号。
+        {t("recoverySummary", { count: codes.length })}
       </p>
 
       {onDone && (
@@ -93,7 +97,7 @@ export function RecoveryCodesPanel({ codes, email, onDone }: RecoveryCodesPanelP
           className="rounded-lg px-5 py-2.5 text-sm font-semibold text-[var(--surface-1)] transition-all hover:brightness-110"
           style={{ background: "var(--accent)" }}
         >
-          我已妥善保存
+          {t("recoverySaved")}
         </button>
       )}
     </div>

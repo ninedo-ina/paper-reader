@@ -7,6 +7,7 @@ import {
   ProviderEndpointMismatchError,
 } from "@/lib/ai-chat-response"
 import { requestRaw } from "@/lib/api/client"
+import { runtimeTranslator } from "@/i18n/runtime"
 
 export interface TestableAiProvider {
   baseUrl: string
@@ -131,7 +132,7 @@ export function redactProviderErrorText(value: string, apiKey: string): string {
 }
 
 function extractErrorMessage(value: string): string {
-  if (!value.trim()) return "Provider 未返回错误详情"
+  if (!value.trim()) return runtimeTranslator("errors")("providerNoDetail")
 
   try {
     const payload = JSON.parse(value) as Record<string, unknown>
@@ -160,6 +161,7 @@ async function createProviderHttpError(
   response: Response,
   apiKey: string,
 ): Promise<Error> {
+  const t = runtimeTranslator("errors")
   let body = ""
   try {
     body = await response.text()
@@ -169,7 +171,7 @@ async function createProviderHttpError(
 
   if (looksLikeHtmlResponse(response, body)) {
     return new ProviderEndpointMismatchError(
-      `HTTP ${response.status}：Provider 返回了 HTML 页面而不是模型响应`,
+      t("httpHtmlResponse", { status: response.status }),
     )
   }
 
@@ -186,27 +188,29 @@ export async function describeProviderHttpError(response: Response, apiKey: stri
 }
 
 export function describeProviderNetworkError(error: unknown): string {
+  const t = runtimeTranslator("errors")
   const message = error instanceof Error ? error.message : String(error)
 
   if (/failed to fetch|networkerror|load failed/i.test(message)) {
-    return "浏览器无法访问 Provider；请检查 Base URL、CORS、TLS 证书以及 HTTPS 页面是否请求了 HTTP 地址"
+    return t("providerUnreachable")
   }
-  if (/abort/i.test(message)) return "请求已中止或超时"
-  return message || "未知网络错误"
+  if (/abort/i.test(message)) return t("providerAborted")
+  return message || t("unknownNetwork")
 }
 
 function validateBaseUrl(baseUrl: string): string | null {
+  const t = runtimeTranslator("errors")
   try {
     const url = new URL(baseUrl)
     if (url.protocol !== "http:" && url.protocol !== "https:") {
-      return "Base URL 只支持 http:// 或 https://"
+      return t("baseUrlScheme")
     }
     if (typeof window !== "undefined" && window.location.protocol === "https:" && url.protocol === "http:") {
-      return "当前页面是 HTTPS，浏览器会阻止请求 HTTP Provider（Mixed Content）"
+      return t("baseUrlMixedContent")
     }
     return null
   } catch {
-    return "Base URL 格式无效"
+    return t("baseUrlInvalid")
   }
 }
 
@@ -263,7 +267,7 @@ export async function requestAiChatCompletionDetailed({
   ): Promise<AiChatResponseResult> => {
     const request = async (stream: boolean) => {
       if (viaRelay) {
-        if (!relayFetch) throw new Error("Provider 中继不可用")
+        if (!relayFetch) throw new Error(runtimeTranslator("errors")("relayUnavailable"))
         return requestProviderRelayDetailed(
           candidateBaseUrl,
           apiKey,
@@ -301,7 +305,7 @@ export async function requestAiChatCompletionDetailed({
         if (!isEmptyAiResponseError(fallbackError)) throw fallbackError
         throw new EmptyAiResponseError(
           `stream={${error.diagnostic}}; non-stream={${fallbackError.diagnostic}}`,
-          "Provider 的流式和非流式响应都没有可显示文本",
+          runtimeTranslator("errors")("noDisplayText"),
         )
       }
     }
@@ -376,24 +380,24 @@ async function fetchProviderModels(
       try {
         body = await response.text()
       } catch {
-        return { models: [], error: "模型接口响应无法读取" }
+        return { models: [], error: runtimeTranslator("errors")("modelsUnreadable") }
       }
 
       if (looksLikeHtmlResponse(response, body)) {
         if (index < candidates.length - 1) continue
-        return { models: [], error: "模型接口返回了 HTML 页面而不是模型列表" }
+        return { models: [], error: runtimeTranslator("errors")("modelsHtml") }
       }
 
       let payload: unknown
       try {
         payload = JSON.parse(body)
       } catch {
-        return { models: [], error: "模型接口返回的不是有效 JSON" }
+        return { models: [], error: runtimeTranslator("errors")("modelsNotJson") }
       }
 
       const models = extractModelIds(payload)
       if (models.length === 0) {
-        return { models: [], error: "模型接口响应中没有可识别的模型 ID" }
+        return { models: [], error: runtimeTranslator("errors")("modelsNoId") }
       }
 
       return { models, baseUrl }
@@ -425,19 +429,19 @@ async function fetchProviderModels(
         const body = await response.text()
         if (looksLikeHtmlResponse(response, body)) {
           if (index < candidates.length - 1) continue
-          return { models: [], error: "模型接口返回了 HTML 页面而不是模型列表" }
+          return { models: [], error: runtimeTranslator("errors")("modelsHtml") }
         }
 
         let payload: unknown
         try {
           payload = JSON.parse(body)
         } catch {
-          return { models: [], error: "模型接口返回的不是有效 JSON" }
+          return { models: [], error: runtimeTranslator("errors")("modelsNotJson") }
         }
 
         const models = extractModelIds(payload)
         if (models.length === 0) {
-          return { models: [], error: "模型接口响应中没有可识别的模型 ID" }
+          return { models: [], error: runtimeTranslator("errors")("modelsNoId") }
         }
         return { models, baseUrl }
       } catch (error) {
@@ -451,7 +455,7 @@ async function fetchProviderModels(
     models: [],
     error: lastNetworkError
       ? describeProviderNetworkError(lastNetworkError)
-      : "模型接口未命中可用的 API 路径",
+      : runtimeTranslator("errors")("modelsNoPath"),
   }
 }
 
@@ -477,7 +481,9 @@ export async function testAiProviderConnection(
     if (models.length === 0) {
       return {
         ok: false,
-        message: `无法确定测试模型：${discovery.error ?? "模型列表为空"}。请先手动填写一个该 Provider 支持的模型`,
+        message: runtimeTranslator("errors")("providerTestNoModel", {
+          detail: discovery.error ?? runtimeTranslator("errors")("modelsEmpty"),
+        }),
       }
     }
   }
@@ -499,14 +505,18 @@ export async function testAiProviderConnection(
 
     const correctedBaseUrl = resolvedBaseUrl !== baseUrl ? resolvedBaseUrl : undefined
     const correctionMessage = correctedBaseUrl
-      ? "，已自动补全 Base URL 的 /v1 API 路径"
+      ? runtimeTranslator("errors")("baseUrlAutofixed")
       : ""
     return {
       ok: true,
       message:
         configuredModels.length > 0
-          ? `连接成功，模型 ${model} 可用${correctionMessage}`
-          : `连接成功，已获取 ${models.length} 个模型并验证 ${model}${correctionMessage}`,
+          ? runtimeTranslator("errors")("providerTestOkModel", { model, correction: correctionMessage })
+          : runtimeTranslator("errors")("providerTestOkList", {
+              count: models.length,
+              model,
+              correction: correctionMessage,
+            }),
       models: configuredModels.length > 0 ? undefined : models,
       baseUrl: correctedBaseUrl,
     }
@@ -516,7 +526,7 @@ export async function testAiProviderConnection(
       : redactProviderErrorText(describeProviderNetworkError(error), provider.apiKey)
     return {
       ok: false,
-      message: `对话接口测试失败（模型 ${model}）：${detail}`,
+      message: runtimeTranslator("errors")("providerTestChatFailed", { model, detail }),
     }
   }
 }

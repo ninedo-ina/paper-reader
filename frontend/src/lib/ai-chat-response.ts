@@ -1,11 +1,16 @@
-export const EMPTY_AI_RESPONSE_MESSAGE =
-  "Provider 返回成功，但响应中没有可显示的文本"
+import { runtimeTranslator } from "@/i18n/runtime"
 
-export const PROVIDER_ENDPOINT_MISMATCH_MESSAGE =
-  "Provider 返回了 HTML 页面而不是模型响应，请检查 Base URL 是否指向 API 根路径"
+/** 这两条消息会出现在 toast 上，按当前界面语言取，不再写死中文。 */
+export function emptyAiResponseMessage(): string {
+  return runtimeTranslator("errors")("emptyResponse")
+}
+
+export function providerEndpointMismatchMessage(): string {
+  return runtimeTranslator("errors")("endpointMismatch")
+}
 
 export class ProviderEndpointMismatchError extends Error {
-  constructor(message = PROVIDER_ENDPOINT_MISMATCH_MESSAGE) {
+  constructor(message = providerEndpointMismatchMessage()) {
     super(message)
     this.name = "ProviderEndpointMismatchError"
   }
@@ -21,8 +26,12 @@ export function isProviderEndpointMismatchError(
 export class EmptyAiResponseError extends Error {
   readonly diagnostic: string
 
-  constructor(diagnostic = "", message = EMPTY_AI_RESPONSE_MESSAGE) {
-    super(diagnostic ? `${message}。响应诊断：${diagnostic}` : message)
+  constructor(diagnostic = "", message = emptyAiResponseMessage()) {
+    super(
+      diagnostic
+        ? runtimeTranslator("errors")("withDiagnostic", { message, diagnostic })
+        : message,
+    )
     this.name = "EmptyAiResponseError"
     this.diagnostic = diagnostic
   }
@@ -596,6 +605,7 @@ function stringFromErrorValue(value: unknown, depth = 0): string {
 }
 
 function findProviderProblem(payload: unknown, depth = 0): string {
+  const t = runtimeTranslator("errors")
   if (depth > MAX_NESTING_DEPTH || !payload || typeof payload !== "object") return ""
   if (Array.isArray(payload)) {
     for (const item of payload) {
@@ -610,26 +620,26 @@ function findProviderProblem(payload: unknown, depth = 0): string {
     const value = getField(record, key)
     if (value === undefined || value === null) continue
     const detail = stringFromErrorValue(value)
-    return detail ? `Provider 业务错误：${detail}` : "Provider 返回了业务错误"
+    return detail ? t("providerBusinessDetail", { detail }) : t("providerBusiness")
   }
 
   if (hasExplicitFailure(record)) {
     const detail = stringFromErrorValue(
       getField(record, "detail", "message", "msg", "reason", "code"),
     )
-    return detail ? `Provider 业务错误：${detail}` : "Provider 返回了失败状态"
+    return detail ? t("providerBusinessDetail", { detail }) : t("providerFailedStatus")
   }
 
   const refusal = stringFromErrorValue(getField(record, "refusal"))
-  if (refusal) return `模型拒绝生成文本：${refusal}`
+  if (refusal) return t("modelRefusal", { refusal })
 
   const finishReason = String(getField(record, "finish_reason", "finishReason") ?? "").trim()
   if (/content[_-]?filter|safety|blocked|recitation/i.test(finishReason)) {
-    return `Provider 未返回文本，结束原因：${finishReason}`
+    return t("noTextFinishReason", { reason: finishReason })
   }
 
   if (getField(record, "tool_calls", "toolCalls", "function_call", "functionCall")) {
-    return "模型只返回了工具调用，但当前对话没有可执行工具"
+    return t("toolCallOnly")
   }
 
   for (const value of Object.values(record)) {

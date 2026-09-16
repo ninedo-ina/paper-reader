@@ -101,7 +101,7 @@ export function NotesPanel({ activeNoteId, onSelect, onClose, onNavigateToPaper 
           </h2>
           <div className="flex items-center gap-0.5">
             <button
-              title="Create note"
+              title={t("notes.newNote")}
               className="p-1.5 rounded-md text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -117,25 +117,25 @@ export function NotesPanel({ activeNoteId, onSelect, onClose, onNavigateToPaper 
 
         {/* Tab bar */}
         <div className="flex rounded-lg bg-[var(--surface-2)] p-0.5 gap-0.5 mt-2">
-          {(["all", "current"] as NotesTab[]).map((t) => (
+          {(["all", "current"] as NotesTab[]).map((tabKey) => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
+              key={tabKey}
+              onClick={() => setTab(tabKey)}
               className={cn(
                 "flex-1 py-1.5 text-xs rounded-md transition-all font-medium",
-                tab === t
+                tab === tabKey
                   ? "bg-[var(--bg-primary)] text-[var(--text-primary)] shadow-sm"
                   : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]",
               )}
             >
-              {t === "current" ? "当前论文笔记" : "全部笔记"}
+              {tabKey === "current" ? t("notes.currentPaperNotes") : t("notes.allNotes")}
             </button>
           ))}
         </div>
 
         {tab === "all" && (
           <p className="text-[11px] text-[var(--text-tertiary)] mt-2">
-            {total} {t("notes.totalNotes") || "notes"}
+            {total} {t("notes.totalNotes")}
           </p>
         )}
       </div>
@@ -148,7 +148,7 @@ export function NotesPanel({ activeNoteId, onSelect, onClose, onNavigateToPaper 
         <div className="flex-1 flex flex-col items-center justify-center gap-2 p-4">
           <StickyNote className="size-8 text-[var(--text-tertiary)]" />
           <p className="text-sm text-[var(--text-tertiary)] text-center">
-            {t("notes.noNotes") || "No notes yet"}
+            {t("notes.noNotes")}
           </p>
         </div>
       ) : (
@@ -170,7 +170,7 @@ export function NotesPanel({ activeNoteId, onSelect, onClose, onNavigateToPaper 
                   </p>
                   {tab === "all" && note.pageNumber != null && (
                     <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">
-                      Paper #{note.paperId} · 第{note.pageNumber}页
+                      {t("notes.paperPageRef", { id: note.paperId, page: note.pageNumber })}
                     </p>
                   )}
                   <p className="text-xs text-[var(--text-tertiary)] mt-0.5 line-clamp-2">

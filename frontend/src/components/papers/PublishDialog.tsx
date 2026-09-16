@@ -17,6 +17,7 @@ interface PublishDialogProps {
 
 export function PublishDialog({ open, paperId, onClose, onPublished }: PublishDialogProps) {
   const c = useTranslations("common")
+  const t = useTranslations("paper")
   const [version, setVersion] = useState("")
   const [remark, setRemark] = useState("")
   const [isPublishing, setIsPublishing] = useState(false)
@@ -62,7 +63,7 @@ export function PublishDialog({ open, paperId, onClose, onPublished }: PublishDi
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={handleClose} />
       <div className="relative glass-surface-strong rounded-xl border border-white/10 w-full max-w-md mx-4 p-6 shadow-2xl">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">发布版本</h2>
+          <h2 className="text-lg font-semibold text-[var(--text-primary)]">{t("publishVersion")}</h2>
           <button
             type="button"
             onClick={handleClose}
@@ -76,11 +77,11 @@ export function PublishDialog({ open, paperId, onClose, onPublished }: PublishDi
         <div className="space-y-4">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-[var(--text-secondary)]">
-              版本号 <span className="text-red-400">*</span>
+              {t("versionNumber")} <span className="text-red-400">*</span>
             </label>
             <Input
               type="text"
-              placeholder="例: 1.0, v2, 2024-01-draft"
+              placeholder={t("versionNumberPlaceholder")}
               value={version}
               onChange={(e) => setVersion(e.target.value)}
               autoFocus
@@ -88,10 +89,10 @@ export function PublishDialog({ open, paperId, onClose, onPublished }: PublishDi
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-[var(--text-secondary)]">备注</label>
+            <label className="text-sm font-medium text-[var(--text-secondary)]">{t("versionRemark")}</label>
             <textarea
               rows={3}
-              placeholder="版本说明（可选）"
+              placeholder={t("versionRemarkPlaceholder")}
               value={remark}
               onChange={(e) => setRemark(e.target.value)}
               className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--surface-0)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]/40 resize-none"
@@ -107,12 +108,12 @@ export function PublishDialog({ open, paperId, onClose, onPublished }: PublishDi
             {isPublishing ? (
               <>
                 <Loader2 className="size-4 mr-1.5 animate-spin" />
-                发布中...
+                {t("publishing")}
               </>
             ) : (
               <>
                 <Upload className="size-4 mr-1.5" />
-                发布
+                {t("publish")}
               </>
             )}
           </Button>

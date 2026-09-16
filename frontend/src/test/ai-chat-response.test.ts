@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 import {
   consumeAiChatResponse,
   consumeAiChatResponseDetailed,
-  EMPTY_AI_RESPONSE_MESSAGE,
+  emptyAiResponseMessage,
   splitThinkContent,
 } from "@/lib/ai-chat-response"
 
@@ -351,7 +351,7 @@ describe("consumeAiChatResponse", () => {
     )
 
     await expect(consumeAiChatResponse(response, () => undefined)).rejects.toThrow(
-      EMPTY_AI_RESPONSE_MESSAGE,
+      emptyAiResponseMessage(),
     )
   })
 
@@ -361,7 +361,7 @@ describe("consumeAiChatResponse", () => {
     })
 
     await expect(consumeAiChatResponse(response, () => undefined)).rejects.toThrow(
-      EMPTY_AI_RESPONSE_MESSAGE,
+      emptyAiResponseMessage(),
     )
   })
 

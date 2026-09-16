@@ -1,0 +1,1138 @@
+{
+  "app": {
+    "name": "PaperHelper",
+    "tagline": "Nền tảng đọc bài báo trực tuyến",
+    "description": "Nền tảng đọc bài báo khoa học trực tuyến dựa trên GROBID, hỗ trợ chú thích, ghi chú và đọc bằng AI"
+  },
+  "nav": {
+    "library": "Tủ sách của tôi",
+    "upload": "Tải lên bài báo",
+    "history": "Lịch sử đọc",
+    "notes": "Ghi chú của tôi",
+    "annotations": "Chú thích bài báo",
+    "created": "Bài báo của tôi",
+    "tags": "Thẻ",
+    "settings": "Tùy chọn",
+    "circle": "Cộng đồng nghiên cứu",
+    "chats": "Nhóm và tin nhắn riêng",
+    "sectionLibrary": "Tủ sách",
+    "sectionDiscover": "Khám phá",
+    "sectionCommunication": "Giao lưu"
+  },
+  "reader": {
+    "uploadPdf": "Tải lên PDF",
+    "openUrl": "Mở liên kết",
+    "dragOrClick": "Kéo thả tệp PDF vào đây hoặc bấm để tải lên",
+    "page": "Trang",
+    "zoom": "Thu phóng",
+    "search": "Tìm kiếm văn bản",
+    "noPaperSelected": "Vui lòng tải lên bài báo từ bên trái hoặc chọn một bài báo đã tải lên để bắt đầu đọc",
+    "createPaper": "Tạo bài báo",
+    "paperTitle": "Tiêu đề bài báo",
+    "paperTitlePlaceholder": "Nhập tiêu đề bài báo",
+    "paperAuthors": "Tác giả",
+    "paperAuthorsPlaceholder": "Tên tác giả",
+    "paperParticipants": "Người tham gia",
+    "paperParticipantsPlaceholder": "Tên người tham gia",
+    "paperAbstract": "Tóm tắt",
+    "paperAbstractPlaceholder": "Nhập hoặc dán tóm tắt...",
+    "creating": "Đang tạo...",
+    "readingSessions": "Phiên đọc gần đây",
+    "paperCategory": "Danh mục",
+    "extraFieldsSuffix": "— Trường riêng",
+    "storageLocationHint": "Chọn vị trí lưu bài báo (tùy chọn)",
+    "noStorageConfigHint": "Chưa có cấu hình lưu trữ, có thể tạo trong cài đặt",
+    "storageConfig": "Cấu hình lưu trữ",
+    "noStorage": "Không dùng lưu trữ",
+    "createStepBasic": "Thông tin cơ bản",
+    "createStepFields": "Trường phân loại",
+    "createStepStorage": "Cấu hình lưu trữ",
+    "layoutSingle": "Một trang",
+    "layoutTwo": "Hai cột",
+    "layoutThree": "Ba cột",
+    "layoutFour": "Bốn cột",
+    "layoutSix": "Sáu cột",
+    "createAnnotationFailed": "Tạo chú thích thất bại",
+    "createNoteFailed": "Tạo ghi chú thất bại",
+    "copyTitleSuccess": "Sao chép tiêu đề bài báo thành công",
+    "copyTitleHint": "Nhấp để sao chép tiêu đề bài báo",
+    "switchToDark": "Chuyển sang chế độ tối",
+    "switchToLight": "Chuyển sang chế độ sáng",
+    "pageLayout": "Bố cục phân trang",
+    "exitFullscreen": "Thoát toàn màn hình",
+    "enterFullscreen": "Đọc toàn màn hình",
+    "uploadHint": "Hỗ trợ liên kết PDF trực tiếp | Tải lên từ máy",
+    "urlTitleOptional": "Tiêu đề (tùy chọn)"
+  },
+  "paper": {
+    "basicInfo": "Thông tin cơ bản",
+    "versionHistory": "Lịch sử phiên bản",
+    "storageInfo": "Thông tin lưu trữ",
+    "publish": "Xuất bản",
+    "publishVersion": "Xuất bản phiên bản",
+    "versionNumber": "Số phiên bản",
+    "versionRemark": "Ghi chú",
+    "publishNewVersion": "Xuất bản phiên bản mới",
+    "noVersions": "Chưa có phiên bản nào",
+    "createFirstVersion": "Nhấn “Xuất bản” để tạo phiên bản đầu tiên",
+    "storageConfig": "Cấu hình lưu trữ",
+    "storageType": "Loại lưu trữ",
+    "noStorage": "Chưa liên kết cấu hình lưu trữ",
+    "noStorageHint": "Không cần đẩy lên nền tảng lưu trữ khi xuất bản phiên bản",
+    "details": "Thông tin chi tiết",
+    "downloadPdf": "Tải xuống PDF",
+    "default": "Mặc định",
+    "yes": "Có",
+    "no": "Không",
+    "pushStatus": "Trạng thái đẩy",
+    "viewDetails": "Xem chi tiết",
+    "category": "Danh mục",
+    "publishing": "Đang xuất bản...",
+    "selectStorage": "Chọn vị trí lưu trữ bài báo (tùy chọn)",
+    "noStorageConfig": "Chưa có cấu hình lưu trữ, có thể tạo trong cài đặt",
+    "back": "Quay lại",
+    "tabInfo": "Thông tin cơ bản",
+    "tabVersions": "Lịch sử phiên bản",
+    "tabStorage": "Thông tin lưu trữ",
+    "detailSuffix": "— Thông tin chi tiết",
+    "abstract": "Tóm tắt",
+    "versionNumberPlaceholder": "Ví dụ: 1.0, v2, 2024-01-draft",
+    "versionRemarkPlaceholder": "Ghi chú phiên bản (tùy chọn)"
+  },
+  "panel": {
+    "metadata": "Thông tin bài báo",
+    "annotations": "Chú thích",
+    "notes": "Ghi chú",
+    "aiChat": "Trò chuyện AI",
+    "annotationDeleted": "Đã xóa chú thích",
+    "annotationDeleteFailed": "Xóa chú thích thất bại",
+    "noteDeleted": "Đã xóa ghi chú",
+    "noteDeleteFailed": "Xóa ghi chú thất bại",
+    "annotationUpdated": "Đã cập nhật chú thích",
+    "annotationUpdateFailed": "Cập nhật chú thích thất bại",
+    "noteUpdated": "Đã cập nhật ghi chú",
+    "noteUpdateFailed": "Cập nhật ghi chú thất bại",
+    "emptyAnnotations": "Chưa có chú thích",
+    "emptyNotes": "Chưa có ghi chú",
+    "editAnnotation": "Chỉnh sửa chú thích",
+    "deleteAnnotation": "Xóa chú thích",
+    "editNote": "Chỉnh sửa ghi chú",
+    "deleteNote": "Xóa ghi chú",
+    "quotedText": "Trích dẫn nguyên văn · Trang {page}",
+    "comments": "Bình luận",
+    "commentCount": "{count} bình luận",
+    "expand": "Mở rộng bảng",
+    "collapse": "Thu gọn bảng"
+  },
+  "metadata": {
+    "title": "Tiêu đề",
+    "authors": "Tác giả",
+    "year": "Năm",
+    "journal": "Tạp chí",
+    "doi": "DOI",
+    "abstract": "Tóm tắt",
+    "participants": "Người tham gia",
+    "category": "Danh mục",
+    "extraFields": "Trường mở rộng",
+    "sourceType": "Loại nguồn",
+    "sourceUrl": "Liên kết nguồn",
+    "pageCount": "Số trang",
+    "fileSize": "Kích thước tệp",
+    "id": "ID",
+    "createdAt": "Thời gian tạo",
+    "updatedAt": "Thời gian cập nhật",
+    "publicationInfo": "Thông tin xuất bản",
+    "fileInfo": "Thông tin tệp",
+    "systemInfo": "Thông tin hệ thống",
+    "grobidResult": "Phân tích GROBID",
+    "edit": "Chỉnh sửa",
+    "editing": "Đang chỉnh sửa",
+    "noAbstract": "Chưa có tóm tắt",
+    "noExtraFields": "Không có trường mở rộng",
+    "enrichMetadata": "Bổ sung/Làm mới siêu dữ liệu",
+    "identifierPlaceholder": "arXiv ID hoặc DOI (tùy chọn)",
+    "metadataPreview": "Xem trước bổ sung siêu dữ liệu",
+    "metadataPreviewHint": "Mặc định chỉ chọn trường trống; hãy xác nhận giá trị xung đột trước khi áp dụng",
+    "applyMetadata": "Áp dụng trường đã chọn",
+    "noMetadataCandidates": "Không tìm thấy trường ứng viên có thể áp dụng an toàn",
+    "noExactIdentifier": "Không nhận diện được định danh chính xác",
+    "closeMetadataPreview": "Đóng bản xem trước",
+    "dismissMetadataError": "Đóng thông báo lỗi",
+    "selectPaper": "Vui lòng chọn một bài báo",
+    "metadataLookupFailed": "Tra cứu siêu dữ liệu thất bại",
+    "metadataApplyFailed": "Áp dụng siêu dữ liệu thất bại",
+    "metadataApplied": "Đã bổ sung {count} trường",
+    "arxivId": "arXiv ID",
+    "arxivVersion": "Phiên bản arXiv",
+    "arxivCategories": "Danh mục arXiv",
+    "arxivPrimaryCategory": "Danh mục chính",
+    "arxivComment": "Ghi chú arXiv",
+    "submittedAt": "Gửi lần đầu",
+    "lastRevised": "Sửa đổi lần cuối",
+    "repositoryDoi": "DOI kho lưu trữ",
+    "publicationType": "Loại xuất bản",
+    "publicationDate": "Ngày xuất bản",
+    "volume": "Tập",
+    "issue": "Số phát hành",
+    "publicationPages": "Trang xuất bản",
+    "articleNumber": "Số bài báo",
+    "publisher": "Nhà xuất bản",
+    "issn": "ISSN",
+    "isbn": "ISBN",
+    "licenseUrl": "Giấy phép",
+    "dblpKey": "Mã DBLP",
+    "externalMetadata": "Siêu dữ liệu bên ngoài",
+    "conflict": "Có xung đột",
+    "currentValue": "Giá trị hiện tại: {value}",
+    "source": "Nguồn",
+    "parseStatus": "Phân tích toàn văn",
+    "parsePending": "Chờ phân tích",
+    "parseProcessing": "Đang phân tích",
+    "parseReady": "Đã hoàn tất",
+    "parseFailed": "Thất bại: {error}",
+    "warning": {
+      "ARXIV_LOOKUP_FAILED": "Tra cứu arXiv thất bại, không áp dụng các trường của nó",
+      "REPOSITORY_DOI_UNVERIFIED": "DOI kho lưu trữ arXiv chưa được DataCite xác nhận",
+      "FORMAL_PUBLICATION_CANDIDATE": "Đã tìm thấy ứng viên công bố chính thức, vui lòng xác nhận số tập và số trang trước khi áp dụng",
+      "DOI_LOOKUP_FAILED": "Thông tin đăng ký DOI tạm thời không khả dụng",
+      "DBLP_PUBLICATION_CANDIDATE": "DBLP đã trả về ứng viên công bố chính thức, vui lòng xác nhận trước khi áp dụng",
+      "IDENTIFIER_METADATA_MISMATCH": "Đã phân giải mã định danh chính xác, nhưng tiêu đề trả về khác với bài báo hiện tại; các trường liên quan đều cần xác nhận thủ công",
+      "NO_EXACT_IDENTIFIER": "Không nhận diện được arXiv ID hoặc DOI chính xác, kết quả tìm kiếm theo tiêu đề sẽ không được tự động áp dụng",
+      "NO_METADATA_CANDIDATES": "Nguồn có thẩm quyền không trả về trường nào có thể bổ sung"
+    }
+  },
+  "annotation": {
+    "highlight": "Tô sáng",
+    "underline": "Gạch chân",
+    "strikethrough": "Gạch ngang",
+    "note": "Ghi chú",
+    "color": "Màu sắc",
+    "addComment": "Thêm bình luận",
+    "delete": "Xóa",
+    "copySuccess": "Sao chép thành công",
+    "createAnnotation": "Tạo chú thích",
+    "createNote": "Tạo ghi chú",
+    "askAi": "Hỏi AI",
+    "copyText": "Sao chép văn bản",
+    "editAnnotation": "Sửa chú thích",
+    "editNote": "Sửa ghi chú",
+    "quotedText": "Trích dẫn nguyên văn",
+    "noteTitlePlaceholder": "Tiêu đề ghi chú (tùy chọn)",
+    "annotationPlaceholder": "Nhập nội dung chú thích (hỗ trợ Markdown)...",
+    "notePlaceholder": "Nhập nội dung ghi chú (hỗ trợ Markdown)...",
+    "insertImage": "Chèn ảnh",
+    "paperPageRef": "Bài báo #{id} · Trang {page}",
+    "pageRef": "Trang {page}",
+    "currentPaperAnnotations": "Chú thích bài báo hiện tại",
+    "allAnnotations": "Tất cả chú thích",
+    "commentFailed": "Bình luận thất bại",
+    "reply": "Trả lời",
+    "replyPlaceholder": "Trả lời...",
+    "commentPlaceholder": "Viết chú thích của bạn..."
+  },
+  "notes": {
+    "newNote": "Tạo ghi chú mới",
+    "save": "Lưu",
+    "exportPdf": "Xuất PDF",
+    "tags": "Thẻ",
+    "edit": "Chỉnh sửa",
+    "preview": "Xem trước",
+    "noNotes": "Chưa có ghi chú",
+    "totalNotes": "ghi chú",
+    "currentPaperNotes": "Ghi chú bài báo hiện tại",
+    "allNotes": "Tất cả ghi chú",
+    "paperPageRef": "Bài báo #{id} · Trang {page}",
+    "titlePlaceholder": "Tiêu đề ghi chú...",
+    "contentPlaceholder": "Dùng Markdown để viết ghi chú của bạn..."
+  },
+  "ai": {
+    "selectModel": "Chọn mô hình",
+    "send": "Gửi",
+    "placeholder": "Nhập câu hỏi của bạn...",
+    "summarize": "Tóm tắt bài viết này",
+    "explain": "Giải thích nội dung đã chọn",
+    "translate": "Dịch sang tiếng Trung",
+    "emptyChat": "Bắt đầu trò chuyện với AI để thảo luận về nội dung bài báo"
+  },
+  "auth": {
+    "login": "Đăng nhập",
+    "loginUnifiedTitle": "Đăng nhập / Tạo tài khoản",
+    "loginUnifiedSubtitle": "Đăng nhập là đăng ký, bắt đầu ngay hành trình đọc bài báo của bạn",
+    "logout": "Đăng xuất",
+    "profile": "Trang cá nhân",
+    "email": "Email",
+    "password": "Mật khẩu",
+    "code": "Mã xác minh",
+    "sendCode": "Gửi mã xác minh",
+    "verifyCode": "Xác minh và đăng nhập",
+    "switchToCode": "Đăng nhập bằng mã xác minh",
+    "switchToPassword": "Đăng nhập bằng mật khẩu",
+    "githubLogin": "Đăng nhập bằng GitHub",
+    "emailPlaceholder": "Nhập địa chỉ email",
+    "passwordPlaceholder": "Nhập mật khẩu",
+    "codePlaceholder": "Nhập mã xác minh",
+    "loggingIn": "Đang đăng nhập...",
+    "sendingCode": "Đang gửi...",
+    "codeSentCountdown": "Gửi lại sau {seconds} giây",
+    "error": "Đăng nhập thất bại",
+    "loginEyebrow": "Mỗi lần đọc, gần hơn với hiểu biết sâu sắc",
+    "loginTagline": "Kết nối bài báo, ý tưởng và nghiên cứu tương lai",
+    "agreementPrefix": "Bằng việc đăng nhập, bạn đồng ý với",
+    "termsLink": "Điều khoản sử dụng",
+    "privacyLink": "Chính sách quyền riêng tư của PaperHelper",
+    "and": "và",
+    "copyright": "© {year} PaperHelper. Bảo lưu mọi quyền.",
+    "previousSlide": "Slide trước",
+    "nextSlide": "Slide tiếp theo",
+    "slideNumber": "Slide giới thiệu thứ {number}",
+    "loginSlides": {
+      "discover": {
+        "title": "Khám phá manh mối quan trọng từ kho bài báo khổng lồ",
+        "description": "Nhanh chóng xác định nghiên cứu đáng đọc sâu, để những ý tưởng quan trọng không bị nhấn chìm trong dòng thông tin."
+      },
+      "understand": {
+        "title": "Biến nội dung phức tạp thành rõ ràng, dễ đọc",
+        "description": "Sắp xếp tóm tắt, chú thích và ghi chú trong không gian đọc tập trung, xây dựng mạng lưới kiến thức của riêng bạn."
+      },
+      "connect": {
+        "title": "Kết nối cảm hứng thành hướng nghiên cứu mới",
+        "description": "Theo dõi mối liên hệ giữa các bài báo, để mỗi lần đọc trở thành khởi đầu cho khám phá tiếp theo."
+      }
+    },
+    "twoFactorTitle": "Xác thực hai bước",
+    "twoFactorSubtitle": "Tài khoản này đã bật xác thực hai bước, vui lòng nhập mã xác thực 6 chữ số từ ứng dụng xác thực để hoàn tất đăng nhập",
+    "twoFactorCode": "Mã xác thực / Mã khôi phục",
+    "twoFactorCodePlaceholder": "Mã xác thực 6 chữ số hoặc một mã khôi phục bất kỳ",
+    "twoFactorHint": "Không tìm thấy ứng dụng xác thực? Bạn có thể nhập mã khôi phục đã lưu khi bật xác thực hai bước.",
+    "twoFactorInvalid": "Mã xác thực hoặc mã khôi phục không đúng",
+    "trustDevice": "Tin cậy thiết bị này, lần sau đăng nhập không cần xác thực hai bước",
+    "verifyAndLogin": "Xác minh và đăng nhập",
+    "backToLogin": "Quay lại đăng nhập",
+    "callbackMissingCode": "Thiếu mã ủy quyền",
+    "callbackFailed": "Xác thực thất bại",
+    "callbackTwoFactor": "Cần xác thực hai bước...",
+    "callbackCompleting": "Đang hoàn tất đăng nhập..."
+  },
+  "notification": {
+    "title": "Thông báo",
+    "systemTab": "Thông báo hệ thống",
+    "appTab": "Thông báo ứng dụng",
+    "notifications": "thông báo",
+    "markAllRead": "Đánh dấu tất cả đã đọc",
+    "viewVersion": "Xem tính năng phiên bản",
+    "empty": "Chưa có thông báo"
+  },
+  "version": {
+    "title": "Chào mừng bạn đến với PaperHelper",
+    "subtitle": "Nền tảng đọc và quản lý bài báo học thuật tất cả trong một",
+    "gotIt": "Đã hiểu",
+    "features": {
+      "upload": {
+        "title": "Tải lên và quản lý bài báo",
+        "desc": "Hỗ trợ tải lên PDF, nhập từ URL và tạo bài báo thủ công"
+      },
+      "annotate": {
+        "title": "Chú thích khi đọc",
+        "desc": "Nhiều cách chú thích như tô sáng, gạch chân, ghi chú"
+      },
+      "aiChat": {
+        "title": "Đọc với AI hỗ trợ",
+        "desc": "Trò chuyện với AI để tóm tắt, giải thích và dịch nội dung bài báo"
+      },
+      "notify": {
+        "title": "Trung tâm thông báo",
+        "desc": "Quản lý phân loại thông báo hệ thống và thông báo ứng dụng"
+      },
+      "github": {
+        "title": "Nhiều phương thức đăng nhập",
+        "desc": "Hỗ trợ đăng nhập bằng email/mật khẩu, mã xác minh và ủy quyền GitHub"
+      }
+    }
+  },
+  "theme": {
+    "light": "Chế độ sáng",
+    "dark": "Chế độ tối"
+  },
+  "settings": {
+    "title": "Cài đặt",
+    "preferences": "Tùy chọn",
+    "theme": "Chủ đề",
+    "language": "Ngôn ngữ",
+    "languageHint": "Sau khi chọn, ngôn ngữ giao diện sẽ có hiệu lực ngay và được lưu đồng bộ vào tùy chọn tài khoản của bạn",
+    "defaultModel": "Mô hình AI mặc định",
+    "saved": "Đã lưu",
+    "saveFailed": "Lưu thất bại, vui lòng thử lại sau",
+    "back": "Quay lại",
+    "qrFailed": "Tạo mã QR thất bại, vui lòng làm mới trang và thử lại",
+    "qrAlt": "Mã QR xác thực hai bước",
+    "copyAll": "Sao chép tất cả",
+    "downloadTxt": "Tải xuống tệp TXT",
+    "recoveryCopied": "Đã sao chép mã khôi phục vào bộ nhớ tạm",
+    "recoveryCopyFailed": "Sao chép thất bại, vui lòng chọn thủ công rồi sao chép",
+    "recoveryDownloaded": "Đã tải mã khôi phục xuống dưới dạng tệp txt",
+    "recoveryFileTitle": "PaperHelper · Mã khôi phục xác thực hai bước",
+    "recoveryFileAccount": "Tài khoản: {email}",
+    "recoveryFileGeneratedAt": "Thời gian tạo: {time}",
+    "recoveryFileNotice1": "Mỗi mã khôi phục chỉ có thể sử dụng một lần, vui lòng bảo quản cẩn thận.",
+    "recoveryFileNotice2": "Sau khi tắt xác thực hai bước, các mã khôi phục này sẽ hết hiệu lực ngay lập tức.",
+    "recoveryFileName": "PaperHelper-Mã khôi phục xác thực hai bước.txt",
+    "recoverySummary": "Tổng cộng có {count} mã khôi phục, mỗi mã gồm 6 chữ số và chỉ có thể sử dụng một lần. Vui lòng dùng mã để khôi phục tài khoản trong trường hợp bạn không thể đăng nhập khi không bật xác thực hai bước.",
+    "recoverySaved": "Tôi đã lưu cẩn thận",
+    "otpLabel": "Mã OTP",
+    "otpDigitLabel": "{label} chữ số thứ {index}",
+    "otpOrRecoveryCode": "Mã xác thực động hoặc mã khôi phục",
+    "deviceLoadFailed": "Không thể tải danh sách thiết bị",
+    "deviceRemoveFailed": "Không thể xóa thiết bị",
+    "deviceRemoved": "Đã xóa {count} thiết bị, thiết bị đó cần đăng nhập lại",
+    "deviceTitle": "Thiết bị tin cậy",
+    "deviceEmpty": "Chưa có thiết bị nào từng đăng nhập. Sau khi bật xác thực hai bước, thiết bị tin cậy khi đăng nhập lại chỉ cần nhập mật khẩu, không cần mã xác thực động.",
+    "deviceIntro": "Dưới đây là các thiết bị đã đăng nhập và được lưu. Thiết bị tin cậy khi xác thực hai bước được bật có thể đăng nhập mà không cần mã xác thực động; sau khi xóa, thông tin xác thực đăng nhập đã phát hành cho thiết bị đó sẽ hết hiệu lực ngay lập tức và cần đăng nhập lại.",
+    "deviceUnknown": "Thiết bị không xác định",
+    "deviceCurrent": "Thiết bị hiện tại",
+    "deviceTrusted": "Đã tin cậy",
+    "deviceUnknownClient": "Máy khách không xác định",
+    "deviceUnknownIp": "Không xác định",
+    "deviceLoginInfo": "IP {ip} · Đăng nhập gần nhất {time}",
+    "deviceTrustedUntil": " · Tin cậy đến {time}",
+    "deviceDeleting": "Đang xóa...",
+    "deviceDeleteSelected": "Xóa mục đã chọn",
+    "deviceDeleteSelectedCount": "Xóa mục đã chọn ({count})",
+    "deviceClearSelection": "Bỏ chọn",
+    "storageTitle": "Cấu hình lưu trữ",
+    "storageDefault": "Mặc định",
+    "storageEmpty": "Chưa có cấu hình lưu trữ",
+    "storageEditTitle": "Chỉnh sửa cấu hình",
+    "storageName": "Tên *",
+    "storageTypeLabel": "Loại lưu trữ",
+    "storageSetDefault": "Đặt làm mặc định",
+    "storageTypeConfig": "Cấu hình {type}",
+    "storageAddNew": "Thêm cấu hình mới",
+    "storageDeleteConfirm": "Bạn có chắc muốn xóa cấu hình này? Các bài báo đã liên kết sẽ mất mục tiêu lưu trữ.",
+    "aiConnectFailed": "Kết nối thất bại: {message}",
+    "aiActive": "Đã kích hoạt",
+    "aiTestConnection": "Kiểm tra kết nối",
+    "aiModelCount": "{count} mô hình",
+    "aiNoModel": "Không có mô hình",
+    "aiActivate": "Kích hoạt nhà cung cấp này",
+    "aiAddProvider": "Thêm nhà cung cấp",
+    "aiEditProvider": "Chỉnh sửa nhà cung cấp",
+    "aiName": "Tên",
+    "aiNamePlaceholder": "Ví dụ: OpenAI, DeepSeek",
+    "aiBaseUrl": "Địa chỉ yêu cầu (Base URL)",
+    "aiApiKey": "Khóa (API Key)",
+    "aiModels": "Danh sách mô hình (phân tách bằng dấu phẩy, để trống sẽ tự động lấy khi kiểm tra)",
+    "aiEmpty": "Chưa cấu hình nhà cung cấp nào",
+    "aiEmptyHint": "Nhấp vào nút phía trên để thêm nhà cung cấp API tương thích với OpenAI",
+    "tfLoadFailed": "Không thể tải trạng thái xác thực hai bước",
+    "tfEnabled": "Đã bật xác thực hai bước",
+    "tfDisabled": "Chưa bật xác thực hai bước",
+    "tfEnabledHint": "Khi đăng nhập, cần nhập thêm mã xác thực động 6 chữ số từ ứng dụng xác thực; thiết bị tin cậy có thể bỏ qua. Còn lại {remaining} / {total} mã khôi phục khả dụng.",
+    "tfDisabledHint": "Sau khi bật, khi đăng nhập ngoài mật khẩu còn cần nhập mã xác thực động 6 chữ số từ ứng dụng xác thực, và hệ thống sẽ cấp 9 mã khôi phục để khôi phục tài khoản.",
+    "tfStart": "Quét mã để liên kết và bật",
+    "tfSecretFailed": "Tạo khóa thất bại",
+    "tfNeedPassword": "Vui lòng nhập mật khẩu hiện tại",
+    "tfNeedCode": "Vui lòng nhập mã động 6 chữ số trên ứng dụng xác thực",
+    "tfEnabledToast": "Đã bật xác thực hai bước",
+    "tfEnableFailed": "Bật thất bại",
+    "tfSecretCopied": "Đã sao chép khóa vào bộ nhớ tạm",
+    "tfCopyFailed": "Sao chép thất bại, vui lòng chọn thủ công rồi sao chép",
+    "tfStep1": "1. Tải xuống bất kỳ ứng dụng xác thực nào trên điện thoại (như Google Authenticator, Microsoft Authenticator).",
+    "tfStep2": "2. Quét mã QR bên dưới hoặc nhập khóa thủ công.",
+    "tfStep3": "3. Nhập mã động 6 chữ số hiển thị trong ứng dụng và mật khẩu hiện tại để hoàn tất liên kết.",
+    "tfManualSecret": "Không quét được mã? Nhập khóa thủ công",
+    "tfCopy": "Sao chép",
+    "tfAlgorithm": "Thuật toán SHA1 · {digits} chữ số · làm mới mỗi {period} giây",
+    "tfCurrentPassword": "Mật khẩu hiện tại",
+    "tfSixDigitCode": "Mã động 6 chữ số",
+    "tfVerifying": "Đang xác minh...",
+    "tfConfirmEnable": "Xác nhận bật",
+    "tfRegenerate": "Tạo lại mã khôi phục",
+    "tfRegenerateHint": "Nhập mật khẩu hiện tại để tạo lại 9 mã khôi phục",
+    "tfRegenerateFailed": "Tạo thất bại",
+    "tfRegeneratedToast": "Đã tạo lại mã khôi phục, mã khôi phục cũ hết hiệu lực ngay lập tức",
+    "tfGenerating": "Đang tạo...",
+    "tfConfirmGenerate": "Xác nhận tạo",
+    "tfDisable": "Tắt xác thực hai bước",
+    "tfDisableHint": "Sau khi tắt, đăng nhập sẽ không cần mã động nữa; các mã khôi phục đã phát hành sẽ hết hiệu lực ngay lập tức. Vui lòng xác nhận bằng mật khẩu + mã động; mã động cũng có thể thay bằng mã khôi phục.",
+    "tfNeedPasswordAndCode": "Vui lòng nhập mật khẩu hiện tại và mã động",
+    "tfDisabledToast": "Đã tắt xác thực hai bước, tất cả mã khôi phục đã hết hiệu lực",
+    "tfDisableFailed": "Tắt thất bại",
+    "tfProcessing": "Đang xử lý...",
+    "tfConfirmDisable": "Xác nhận tắt",
+    "tabInfo": "Thông tin cơ bản",
+    "tabPassword": "Bảo mật mật khẩu",
+    "tabTwoFactor": "Xác thực hai bước",
+    "tabDevices": "Thiết bị tin cậy",
+    "tabAudit": "Nhật ký kiểm toán",
+    "avatarUpdated": "Đã cập nhật ảnh đại diện",
+    "avatarUpdateFailed": "Cập nhật ảnh đại diện thất bại",
+    "imageUrlPlaceholder": "URL hình ảnh...",
+    "uploadLocal": "Tải lên từ máy",
+    "imageUrl": "Hình ảnh từ mạng",
+    "profileUpdated": "Đã cập nhật hồ sơ",
+    "updateFailed": "Cập nhật thất bại",
+    "displayName": "Tên hiển thị",
+    "email": "Email",
+    "saving": "Đang lưu...",
+    "passwordAllFields": "Vui lòng nhập tất cả trường mật khẩu",
+    "passwordTooShort": "Mật khẩu mới phải có ít nhất 6 ký tự",
+    "passwordMismatch": "Mật khẩu mới nhập lại không khớp",
+    "passwordChanged": "Mật khẩu đã được thay đổi",
+    "passwordChangeFailed": "Đổi mật khẩu thất bại",
+    "currentPassword": "Mật khẩu hiện tại",
+    "newPassword": "Mật khẩu mới",
+    "confirmNewPassword": "Xác nhận mật khẩu mới",
+    "changing": "Đang thay đổi...",
+    "changePassword": "Đổi mật khẩu",
+    "auditTitle": "Nhật ký kiểm toán",
+    "auditEmpty": "Chưa có nhật ký kiểm toán. Khi bạn đăng nhập, đổi mật khẩu hoặc thực hiện các thao tác khác, nhật ký sẽ hiển thị tại đây.",
+    "auditIndex": "STT",
+    "auditEvent": "Sự kiện",
+    "auditOperator": "Người thực hiện",
+    "auditTime": "Thời gian",
+    "loadingMore": "Đang tải...",
+    "loadMore": "Tải thêm"
+  },
+  "preferences": {
+    "tabs": {
+      "ui": "Cài đặt giao diện",
+      "ai": "Cấu hình AI"
+    },
+    "searchPlaceholder": "Tìm kiếm cài đặt...",
+    "noMatch": "Không có kết quả phù hợp",
+    "close": "Đóng",
+    "language": "Ngôn ngữ",
+    "languageHint": "Sau khi chọn, ngôn ngữ giao diện sẽ chuyển ngay và được lưu vào tùy chọn tài khoản của bạn",
+    "fontSize": "Cỡ chữ",
+    "fontSizeHint": "Các cài đặt như thu phóng phông chữ trong trình đọc PDF (sẽ hỗ trợ trong phiên bản sau)"
+  },
+  "papers": {
+    "favorite": "Yêu thích",
+    "unfavorite": "Bỏ yêu thích",
+    "tags": "Thẻ",
+    "share": "Chia sẻ",
+    "download": "Tải xuống",
+    "delete": "Xóa",
+    "moreActions": "Thêm thao tác",
+    "deleteTitle": "Xóa bài báo",
+    "deleteConfirm": "Bạn có chắc muốn xóa “{title}” không?",
+    "deleteDescription": "Sau khi xóa, bản ghi bài báo cùng các chú thích, ghi chú, lịch sử đọc và nội dung phân tích liên quan sẽ không thể khôi phục.",
+    "deleteOriginalFile": "Đồng thời xóa tệp gốc",
+    "deleteOriginalFileHint": "Sau khi chọn, máy chủ sẽ không giữ lại bản sao tệp này.",
+    "deleteRecordOnlyHint": "Khi không chọn, chỉ xóa bản ghi trong PaperHelper, tệp gốc trên máy chủ vẫn được giữ lại.",
+    "noOriginalFile": "Bài báo này không có tệp gốc đã tải lên, chỉ xóa bản ghi bài báo và dữ liệu liên quan trong PaperHelper.",
+    "deleting": "Đang xóa...",
+    "deleteSuccess": "Đã xóa bài báo",
+    "deleteFailed": "Xóa bài báo thất bại",
+    "addTag": "Thêm thẻ",
+    "tagPlaceholder": "Nhập tên thẻ",
+    "noTags": "Chưa có thẻ",
+    "shareDescription": "Mô tả chia sẻ",
+    "shareDescriptionPlaceholder": "Thêm thông tin mô tả...",
+    "shareHint": "Thêm mô tả chia sẻ, sau khi xác nhận sẽ sao chép vào bộ nhớ tạm",
+    "shareSuccess": "Đã ghi vào bộ nhớ tạm, mau gửi cho bạn bè trên WeChat nhé",
+    "shareConfirm": "Xác nhận chia sẻ",
+    "paperInfo": "Thông tin bài báo",
+    "pdfView": "Đọc PDF",
+    "allTab": "Tất cả",
+    "createTab": "Tạo",
+    "importTab": "Nhập",
+    "favoriteTab": "Yêu thích",
+    "saved": "Đã lưu",
+    "participants": "Người tham gia",
+    "noPaperSelected": "Vui lòng tải bài báo lên từ bên trái hoặc chọn bài báo đã tải lên để bắt đầu đọc",
+    "createPaper": "Tạo bài báo",
+    "importPaper": "Nhập bài báo",
+    "refresh": "Làm mới",
+    "close": "Đóng",
+    "editorPlaceholder": "Bắt đầu viết bài báo của bạn..."
+  },
+  "forum": {
+    "disciplines": "Phân loại ngành học",
+    "selectDiscipline": "Chọn một ngành học",
+    "selectTopic": "Chọn một chủ đề",
+    "createPost": "Đăng bài",
+    "postTitle": "Tiêu đề bài viết",
+    "postTitlePlaceholder": "Nhập tiêu đề",
+    "postContent": "Nội dung",
+    "postContentPlaceholder": "Chia sẻ suy nghĩ của bạn...",
+    "publish": "Đăng",
+    "publishing": "Đang đăng...",
+    "reply": "Trả lời",
+    "replyPlaceholder": "Viết câu trả lời của bạn...",
+    "submitReply": "Đăng trả lời",
+    "noPosts": "Chưa có bài đăng",
+    "noComments": "Chưa có bình luận",
+    "deletePost": "Xóa",
+    "deleteConfirm": "Bạn có chắc muốn xóa bài đăng này không?",
+    "loadMore": "Tải thêm",
+    "back": "Quay lại diễn đàn",
+    "like": "Thích",
+    "favorite": "Lưu"
+  },
+  "chat": {
+    "privateMessages": "Tin nhắn riêng",
+    "groupChats": "Trò chuyện nhóm",
+    "recent": "Gần đây",
+    "friends": "Bạn bè",
+    "createGroup": "Tạo nhóm",
+    "groupName": "Tên nhóm",
+    "groupNamePlaceholder": "Nhập tên nhóm",
+    "selectMembers": "Chọn thành viên",
+    "searchMembers": "Tìm người dùng",
+    "creating": "Đang tạo...",
+    "noContacts": "Chưa có liên hệ",
+    "noMessages": "Chưa có tin nhắn",
+    "noGroups": "Chưa có nhóm",
+    "messagePlaceholder": "Nhập tin nhắn...",
+    "send": "Gửi",
+    "selectChat": "Chọn một cuộc trò chuyện để bắt đầu",
+    "followBack": "Theo dõi lại",
+    "following": "Đang theo dõi"
+  },
+  "common": {
+    "loading": "Đang tải...",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "delete": "Xóa",
+    "confirm": "Xác nhận",
+    "search": "Tìm kiếm",
+    "noData": "Chưa có dữ liệu",
+    "myPapers": "Thư viện của tôi",
+    "papers": "bài báo",
+    "error": "Đã xảy ra lỗi",
+    "switchLanguage": "Chuyển ngôn ngữ",
+    "language": "Ngôn ngữ",
+    "languageChanged": "Ngôn ngữ giao diện đã được chuyển thành {language}",
+    "edit": "Chỉnh sửa",
+    "next": "Tiếp theo",
+    "back": "Quay lại",
+    "noComments": "Chưa có bình luận",
+    "browser": "Trình duyệt",
+    "loadingEditor": "Đang tải trình chỉnh sửa..."
+  },
+  "legal": {
+    "back": "Quay lại đăng nhập",
+    "terms": {
+      "title": "Điều khoản sử dụng",
+      "updatedAt": "Cập nhật lần cuối: Tháng 9 năm 2026",
+      "sections": [
+        {
+          "heading": "Chấp nhận và phạm vi của thỏa thuận",
+          "body": "Chào mừng bạn đến với PaperHelper (sau đây gọi là “Nền tảng” hoặc “chúng tôi”). “Điều khoản sử dụng” này (sau đây gọi là “Điều khoản”) là thỏa thuận có tính ràng buộc giữa bạn và đơn vị vận hành PaperHelper liên quan đến việc sử dụng các dịch vụ đọc, quản lý, chú thích, ghi chú, đọc hỗ trợ bởi AI, thảo luận nghiên cứu, tin nhắn riêng tư và các dịch vụ liên quan khác do Nền tảng cung cấp (sau đây gọi là “Dịch vụ”). Trước khi bạn đăng ký tài khoản, đăng nhập, truy cập hoặc sử dụng Dịch vụ bằng bất kỳ cách nào, vui lòng đọc kỹ và hiểu đầy đủ toàn bộ nội dung của Điều khoản này, đặc biệt là các điều khoản được in đậm nhằm miễn trừ hoặc giới hạn trách nhiệm của chúng tôi, các điều khoản hạn chế quyền của bạn, cũng như các điều khoản về giải quyết tranh chấp và luật áp dụng; những điều khoản này có ảnh hưởng quan trọng đến quyền và nghĩa vụ giữa bạn và chúng tôi. Khi bạn hoàn tất đăng ký, nhấp vào nút đồng ý, đánh dấu vào ô tương ứng hoặc chấp nhận Dịch vụ thông qua hành vi sử dụng thực tế, bạn được coi là đã đọc, hiểu và đồng ý chịu sự ràng buộc của toàn bộ nội dung Điều khoản này. Nếu bạn không đồng ý với bất kỳ nội dung nào của Điều khoản này, vui lòng ngay lập tức ngừng đăng ký hoặc sử dụng Dịch vụ. Điều khoản này áp dụng cho các hình thức dịch vụ do Nền tảng cung cấp như phiên bản web và các ứng dụng khách, ứng dụng mini, giao diện API có thể ra mắt sau này."
+        },
+        {
+          "heading": "Định nghĩa",
+          "body": "Để thuận tiện cho việc hiểu, Điều khoản này định nghĩa các thuật ngữ liên quan như sau: 1) “Người dùng” hoặc “bạn” là cá nhân hoặc tổ chức sử dụng Dịch vụ thông qua đăng ký, đăng nhập hoặc các phương thức hợp pháp khác; 2) “Tài khoản” là thông tin xác thực mà bạn đăng ký được trên Nền tảng để nhận diện danh tính của bạn, bao gồm nhưng không giới hạn ở thông tin đăng nhập bằng email và mật khẩu cũng như danh tính liên kết với đăng nhập một lần của bên thứ ba, đăng nhập ủy quyền OAuth; 3) “Nội dung người dùng” là bất kỳ nội dung nào bạn tải lên, nhập, tạo, chỉnh sửa, chú thích hoặc gửi bằng cách khác trong quá trình sử dụng Dịch vụ, bao gồm nhưng không giới hạn ở tệp bài báo học thuật, tài liệu PDF, ghi chú, chú thích, đánh dấu, thẻ, phát biểu thảo luận, tin nhắn riêng tư, hồ sơ cá nhân và các tài liệu khác; 4) “Nội dung nền tảng” là nội dung do chúng tôi hoặc bên cấp phép của chúng tôi tạo, sở hữu hoặc cấp phép liên quan đến Dịch vụ, bao gồm nhưng không giới hạn ở mã phần mềm, thiết kế giao diện, biểu tượng, nhãn hiệu, văn bản, hướng dẫn và cơ sở dữ liệu; 5) “Chức năng hỗ trợ AI” là các chức năng như tóm tắt bài báo, dịch, hỏi đáp, diễn giải, đề xuất liên quan dựa trên công nghệ trí tuệ nhân tạo do Nền tảng cung cấp. Các định nghĩa trên chỉ nhằm giải thích Điều khoản này, không ảnh hưởng đến ý nghĩa vốn có của các thuật ngữ pháp lý liên quan."
+        },
+        {
+          "heading": "Nội dung dịch vụ",
+          "body": "Dịch vụ này chủ yếu hướng đến các nhà nghiên cứu, sinh viên và người dùng khác có nhu cầu đọc bài báo học thuật và cộng tác nghiên cứu, cung cấp các chức năng bao gồm nhưng không giới hạn ở: tải lên và quản lý tài liệu bài báo, đọc và chú thích PDF, quản lý ghi chú và thẻ, tìm kiếm và tổ chức tài liệu dựa trên siêu dữ liệu, tóm tắt và hỏi đáp có hỗ trợ AI, liên kết tài liệu và xây dựng mạng lưới tri thức, thảo luận nhóm nghiên cứu, tin nhắn riêng tư trong nền tảng, trung tâm thông báo, v.v. Chúng tôi không ngừng cải tiến và nâng cấp dịch vụ, có thể thêm mới, tối ưu hóa hoặc ngừng cung cấp một số chức năng theo từng thời điểm. Bạn hiểu và đồng ý rằng các chức năng cụ thể, giao diện, cách tương tác của Dịch vụ có thể được điều chỉnh theo bản cập nhật; miễn là không ảnh hưởng đến các quyền cốt lõi của bạn, chúng tôi không cần thông báo riêng cho bạn về mỗi lần điều chỉnh. Đối với các chức năng được ghi rõ là “bản thử nghiệm”, “Beta”, “thử nghiệm”, bạn biết rằng chúng có thể có vấn đề như độ ổn định chưa cao, độ chính xác còn hạn chế; bạn nên sử dụng thận trọng và tự đánh giá rủi ro phát sinh từ đó."
+        },
+        {
+          "heading": "Đăng ký và đăng nhập tài khoản",
+          "body": "Bạn có thể đăng ký tài khoản Nền tảng bằng email và mật khẩu, hoặc trong trường hợp đáp ứng điều kiện tương ứng, đăng nhập bằng ủy quyền qua tài khoản bên thứ ba mà chúng tôi hỗ trợ (như GitHub và các nền tảng lưu trữ mã nguồn khác hoặc hệ thống xác thực danh tính thống nhất). Bạn cam kết rằng mọi thông tin cung cấp trong quá trình đăng ký và sử dụng là trung thực, chính xác, đầy đủ, đồng thời cập nhật kịp thời khi thông tin thay đổi. Bạn có nghĩa vụ bảo quản cẩn thận tài khoản, mật khẩu, thông tin xác thực API và các thông tin đăng nhập khác; không được cho mượn, cho thuê, chuyển nhượng, bán hoặc cung cấp cho bên thứ ba sử dụng dưới bất kỳ hình thức nào. Mọi thao tác được thực hiện thông qua tài khoản của bạn đều được coi là hành vi của chính bạn, và mọi trách nhiệm phát sinh từ đó do bạn gánh chịu. Nếu bạn phát hiện tài khoản bị chiếm dụng, thông tin xác thực bị rò rỉ hoặc tình huống bất thường khác, bạn nên ngay lập tức thông báo cho chúng tôi qua phương thức liên hệ được nêu trong Điều khoản này; chúng tôi sẽ hỗ trợ bạn áp dụng các biện pháp bảo vệ như đóng băng, đặt lại, nhưng đối với tổn thất đã phát sinh trước khi chúng tôi nhận được thông báo, chúng tôi không chịu trách nhiệm ngoài những quy định rõ ràng của pháp luật. Chúng tôi bảo lưu quyền áp dụng các biện pháp như cảnh báo, hạn chế chức năng, tạm ngừng hoặc chấm dứt dịch vụ khi phát hiện tài khoản có rủi ro bảo mật, vi phạm Điều khoản này hoặc quy định pháp luật."
+        },
+        {
+          "heading": "Đăng nhập và ủy quyền bên thứ ba",
+          "body": "Khi bạn chọn đăng nhập vào Nền tảng bằng tài khoản bên thứ ba (bao gồm nhưng không giới hạn ở đăng nhập GitHub OAuth), nghĩa là bạn đồng ý để chúng tôi lấy thông tin nhận diện cần thiết của bạn theo cơ chế ủy quyền của nền tảng bên thứ ba đó (như mã định danh duy nhất, biệt danh, email, v.v.; phạm vi cụ thể căn cứ theo trang ủy quyền hiển thị). Bạn phải tự tuân thủ điều khoản dịch vụ và chính sách quyền riêng tư của nền tảng bên thứ ba liên quan, đồng thời hiểu rằng hành vi của nền tảng bên thứ ba không thuộc sự kiểm soát của chúng tôi. Nếu bạn hủy ủy quyền cho bên thứ ba, nền tảng bên thứ ba ngừng dịch vụ hoặc điều chỉnh giao diện, bạn có thể không tiếp tục đăng nhập bằng phương thức đó; bạn có thể truy cập tài khoản bằng phương thức thay thế như email và mật khẩu. Chúng tôi không chịu trách nhiệm đối với lỗi đăng nhập, thông tin không chính xác hoặc bất thường khi đồng bộ dữ liệu do nguyên nhân từ nền tảng bên thứ ba, nhưng sẽ cố gắng hỗ trợ bạn giải quyết."
+        },
+        {
+          "heading": "Quy tắc hành vi người dùng",
+          "body": "Khi sử dụng Dịch vụ, bạn phải tuân thủ pháp luật và quy định của Cộng hòa Nhân dân Trung Hoa cũng như pháp luật của quốc gia hoặc khu vực bạn cư trú, tôn trọng trật tự công cộng và đạo đức xã hội, không được sử dụng Dịch vụ để thực hiện bất kỳ hoạt động vi phạm pháp luật nào. Bạn cam kết không thực hiện các hành vi sau: 1) tải lên, lưu trữ, truyền bá nội dung bị pháp luật và quy định nghiêm cấm như gây nguy hại đến an ninh quốc gia, phá hoại ổn định xã hội, tuyên truyền bạo lực khủng bố, khiêu dâm, cờ bạc, ma túy, phân biệt chủng tộc, vu khống xúc phạm người khác; 2) xâm phạm quyền sở hữu trí tuệ, bí mật kinh doanh, quyền riêng tư, quyền hình ảnh, quyền danh dự hoặc quyền lợi hợp pháp khác của bất kỳ bên thứ ba nào, bao gồm việc tải lên trái phép bài báo, sách hoặc tác phẩm được bảo hộ bản quyền khác của người khác mà bạn không có quyền lợi hợp pháp; 3) tiến hành dịch ngược, giải mã ngược bất kỳ phần nào của Dịch vụ, cố gắng lấy mã nguồn, hoặc tạo ra, truyền bá các chương trình gian lận, chương trình bẻ khóa, script tự động hàng loạt liên quan đến Dịch vụ; 4) dùng bất kỳ phương tiện kỹ thuật nào để gây nhiễu hoạt động bình thường của Dịch vụ, máy chủ và mạng lưới, bao gồm nhưng không giới hạn ở thu thập dữ liệu độc hại, tấn công lưu lượng, thăm dò và khai thác lỗ hổng, lạm dụng tài nguyên; 5) đăng ký hàng loạt, mua bán tài khoản, mạo danh người khác; 6) sử dụng chức năng hỗ trợ AI để tạo hoặc truyền bá nội dung vi phạm pháp luật, quy định hoặc trật tự công cộng và đạo đức xã hội; 7) các hành vi khác vi phạm pháp luật, quy định, Điều khoản này hoặc quy tắc vận hành hợp lý của chúng tôi. Nếu bạn vi phạm các quy tắc trên, chúng tôi có quyền tùy theo mức độ để áp dụng các biện pháp như xóa nội dung, hạn chế chức năng, khóa tài khoản, đồng thời lưu giữ hồ sơ liên quan và báo cáo cho cơ quan chủ quản theo pháp luật; nếu gây tổn thất cho chúng tôi hoặc bên thứ ba, bạn phải chịu trách nhiệm bồi thường."
+        },
+        {
+          "heading": "Quyền và ủy quyền đối với nội dung người dùng",
+          "body": "Bạn giữ toàn bộ quyền lợi hợp pháp đối với nội dung người dùng mà bạn tải lên và tạo ra. Trong phạm vi cần thiết để cung cấp dịch vụ này cho bạn, bạn cấp cho chúng tôi một giấy phép miễn phí, không độc quyền, có thể sử dụng trong thời gian dịch vụ vận hành, cho phép chúng tôi lưu trữ, sao lưu, chuyển đổi định dạng, lập chỉ mục, lưu đệm, hiển thị nội dung người dùng (chỉ hiển thị cho bạn và các đối tượng cộng tác mà bạn ủy quyền rõ ràng) cũng như xử lý cần thiết để cung cấp các tính năng hỗ trợ AI. Ngoài việc cần thiết để cung cấp, duy trì và cải thiện dịch vụ này, hoặc cung cấp cho cơ quan có thẩm quyền theo quy định pháp luật, chúng tôi sẽ không sử dụng nội dung người dùng của bạn cho mục đích khác, không bán nội dung đó cho bất kỳ bên thứ ba nào và cũng không sử dụng nội dung đó để phát triển thương mại không liên quan đến dịch vụ này. Bạn chịu trách nhiệm về tính hợp pháp và tính xác thực của nội dung người dùng; mọi tranh chấp hoặc trách nhiệm phát sinh từ nội dung người dùng do bạn tự chịu. Khi bạn xóa nội dung người dùng hoặc hủy tài khoản, chúng tôi sẽ xóa hoặc ẩn danh hóa dữ liệu tương ứng theo quy định của các điều khoản này và Chính sách quyền riêng tư, trừ dữ liệu mà pháp luật yêu cầu phải lưu giữ hoặc đã vào chu kỳ sao lưu và chưa hết hạn."
+        },
+        {
+          "heading": "Quyền sở hữu trí tuệ của nền tảng",
+          "body": "Toàn bộ nền tảng này, bao gồm phần mềm, mã nguồn, thiết kế trang, nhãn hiệu, biểu trưng, nội dung văn bản, hình ảnh, cấu trúc cơ sở dữ liệu và nội dung nền tảng, đều thuộc quyền sở hữu trí tuệ của chúng tôi hoặc chủ thể quyền tương ứng, được bảo hộ bởi luật bản quyền, luật nhãn hiệu, luật sáng chế và các quy định pháp luật khác về sở hữu trí tuệ. Nếu không có sự cho phép bằng văn bản của chúng tôi, không ai được sao chép, đăng lại, truyền bá, sao gương, bán bất kỳ phần nào của nền tảng này hoặc sử dụng cho mục đích thương mại. Mọi quyền không được cấp rõ ràng cho bạn theo các điều khoản này đều được chúng tôi bảo lưu. Mọi việc bạn sử dụng nhãn hiệu, biểu trưng của chúng tôi trong quá trình sử dụng dịch vụ này (trừ trường hợp cần trích dẫn tên nền tảng để mô tả hợp lý) đều phải được chúng tôi đồng ý trước bằng văn bản. Đối với các bài báo học thuật do người dùng tải lên, chúng tôi tôn trọng quyền lợi hợp pháp của tác giả gốc và nhà xuất bản; khi tải tài liệu lên, bạn phải bảo đảm rằng bạn có quyền lợi hợp pháp đối với tệp tương ứng hoặc đã được ủy quyền cần thiết, và việc sử dụng hợp lý trong học thuật không được vượt quá phạm vi pháp luật cho phép."
+        },
+        {
+          "heading": "Lưu ý đặc biệt về các tính năng hỗ trợ AI",
+          "body": "Các tính năng hỗ trợ đọc bằng AI do nền tảng này cung cấp (bao gồm nhưng không giới hạn ở tạo tóm tắt, hỏi đáp nội dung, dịch, diễn giải và gợi ý) được thực hiện dựa trên công nghệ trí tuệ nhân tạo và học máy. Bạn hiểu và đồng ý rằng: 1) Kết quả do AI tạo ra được sản sinh tự động bởi thuật toán, có thể có sai sót, thiếu sót, sai lệch hoặc thông tin lỗi thời, chỉ mang tính tham khảo, không cấu thành lời khuyên chuyên môn dưới bất kỳ hình thức nào (bao gồm nhưng không giới hạn ở kết luận học thuật, ý kiến pháp lý, lời khuyên y tế hoặc lời khuyên đầu tư), và bạn không nên coi đó là căn cứ quyết định duy nhất; 2) Hiệu suất của tính năng AI phụ thuộc vào chất lượng nội dung bạn nhập, năng lực mô hình và tài nguyên tính toán; chúng tôi không đưa ra bất kỳ bảo đảm rõ ràng hay ngụ ý nào về tính chính xác, đầy đủ, phù hợp của kết quả; 3) Bạn phải chịu trách nhiệm về phán đoán cuối cùng và hành vi sử dụng của mình khi trích dẫn, áp dụng nội dung do AI tạo ra, đồng thời tuân thủ các quy định liên quan của cơ sở học thuật, tạp chí hoặc nhà xuất bản nơi bạn thuộc về về việc sử dụng công cụ AI; 4) Nội dung bạn nhập vào tính năng AI có thể được xử lý trong phạm vi cần thiết để thực hiện mục đích tính năng; cách thức xử lý cụ thể xem tại Chính sách quyền riêng tư; 5) Nếu tính năng AI phụ thuộc vào mô hình hoặc dịch vụ của bên thứ ba, khả năng đáp ứng tương ứng sẽ chịu ảnh hưởng từ trạng thái dịch vụ của bên thứ ba; chúng tôi sẽ trong phạm vi hợp lý áp dụng các biện pháp để giảm thiểu ảnh hưởng."
+        },
+        {
+          "heading": "Dịch vụ bên thứ ba và liên kết ngoài",
+          "body": "Dịch vụ này có thể chứa liên kết đến trang web, tài nguyên của bên thứ ba hoặc các thành phần dịch vụ do bên thứ ba cung cấp (như dịch vụ đăng nhập, công cụ phân tích tài liệu, dịch vụ mô hình AI, hạ tầng đám mây, v.v.). Việc quản lý và vận hành các dịch vụ bên thứ ba này không do chúng tôi kiểm soát, và chúng tôi cũng không bảo đảm tính xác thực, hợp pháp, chính xác của nội dung trong đó. Mọi rủi ro và tổn thất phát sinh từ việc bạn truy cập hoặc sử dụng dịch vụ bên thứ ba do bạn tự chịu. Khi điều khoản, chính sách của dịch vụ bên thứ ba thay đổi hoặc dịch vụ chấm dứt, khiến chức năng tương ứng của dịch vụ này bị hạn chế hoặc không khả dụng, chúng tôi sẽ tùy tình hình thực tế áp dụng phương án thay thế, điều chỉnh chức năng hoặc thông báo kịp thời. Thông tin bạn gửi cho bên thứ ba thông qua dịch vụ này cũng phải tuân thủ chính sách quyền riêng tư và điều khoản dịch vụ của bên thứ ba đó."
+        },
+        {
+          "heading": "Thay đổi, gián đoạn và chấm dứt dịch vụ",
+          "body": "Chúng tôi nỗ lực bảo đảm tính liên tục và ổn định của dịch vụ, nhưng bạn hiểu rằng do bảo trì hệ thống, nâng cấp, sự cố, bất thường từ phụ thuộc bên thứ ba, bất khả kháng (bao gồm nhưng không giới hạn ở thiên tai, tấn công mạng, điều chỉnh chính sách, sự cố nhà mạng viễn thông, v.v.) hoặc các lý do hợp lý khác, dịch vụ này có thể bị gián đoạn, chậm trễ, lỗi dữ liệu hoặc hạn chế chức năng. Đối với bảo trì theo kế hoạch, chúng tôi sẽ cố gắng thông báo trước; đối với sự cố đột xuất, chúng tôi sẽ khắc phục càng sớm càng tốt. Chúng tôi bảo lưu quyền thay đổi, tạm dừng hoặc chấm dứt một phần hoặc toàn bộ dịch vụ dựa trên nhu cầu phát triển kinh doanh; đối với thay đổi quan trọng, chúng tôi sẽ thông báo trước cho bạn bằng phương thức hợp lý như thông báo trong ứng dụng/trang, đồng thời bảo đảm theo pháp luật quyền hợp lý của bạn trong việc xuất, di chuyển hoặc xóa dữ liệu cá nhân. Nếu bạn vi phạm các điều khoản này hoặc pháp luật liên quan, chúng tôi có quyền hạn chế hoặc chấm dứt cung cấp dịch vụ cho bạn bất cứ lúc nào mà không phải chịu trách nhiệm vi phạm hợp đồng với bạn. Bạn cũng có thể ngừng sử dụng dịch vụ này bất cứ lúc nào và yêu cầu hủy tài khoản."
+        },
+        {
+          "heading": "Lưu trữ, sao lưu và xóa dữ liệu",
+          "body": "Các tệp bài báo, ghi chú và chú thích do bạn tải lên cùng nội dung người dùng khác sẽ được lưu trữ trên máy chủ của chúng tôi hoặc dịch vụ lưu trữ đám mây mà chúng tôi thuê. Chúng tôi sẽ áp dụng các biện pháp kỹ thuật và quản lý phổ biến trong ngành để bảo đảm an toàn dữ liệu, đồng thời sao lưu theo chu kỳ hợp lý. Tuy nhiên, bạn hiểu rằng bất kỳ cơ chế lưu trữ và sao lưu nào cũng không thể loại trừ hoàn toàn rủi ro mất mát, hư hỏng dữ liệu; chúng tôi khuyên bạn nên tự sao lưu riêng đối với tài liệu quan trọng. Sau khi bạn chủ động xóa một nội dung người dùng, nội dung đó sẽ chuyển sang trạng thái không thể truy cập trực tiếp và sẽ được xóa hoàn toàn khỏi bản sao lưu khi chu kỳ sao lưu kết thúc; sau khi bạn hủy tài khoản, chúng tôi sẽ xử lý dữ liệu cá nhân của bạn theo quy định của Chính sách quyền riêng tư. Đối với tài khoản vượt quá hạn mức lưu trữ (nếu có) hoặc tài khoản không hoạt động trong thời gian dài, chúng tôi có thể áp dụng các biện pháp như giới hạn, dọn dẹp hoặc xóa sau khi thông báo."
+        },
+        {
+          "heading": "Tuyên bố miễn trừ trách nhiệm và giới hạn trách nhiệm",
+          "body": "Trong phạm vi tối đa pháp luật cho phép: 1) Dịch vụ này được cung cấp trên cơ sở “nguyên trạng” và “sẵn có”; chúng tôi không bảo đảm dịch vụ vận hành không gián đoạn, không có lỗi, an toàn tuyệt đối, cũng không đưa ra bảo đảm ngụ ý về khả năng thương mại hoặc tính phù hợp cho một mục đích cụ thể; 2) Chúng tôi không chịu trách nhiệm đối với các tổn thất gián tiếp, do hậu quả, mang tính trừng phạt như mất thu nhập, mất lợi nhuận, mất dữ liệu, tổn hại uy tín, chậm tiến độ nghiên cứu do bạn sử dụng hoặc không thể sử dụng dịch vụ này, ngay cả khi chúng tôi đã được thông báo về khả năng xảy ra tổn thất đó; 3) Toàn bộ trách nhiệm bồi thường của chúng tôi đối với bạn (nếu có) được giới hạn ở mức số tiền bạn thực tế đã thanh toán để sử dụng dịch vụ này trong mười hai tháng trước khi phát sinh khiếu nại (nếu bạn không trả phí, giới hạn là một trăm nhân dân tệ); 4) Chúng tôi không chịu trách nhiệm theo pháp luật đối với thiệt hại do bất khả kháng, nguyên nhân từ bên thứ ba hoặc lỗi của chính bạn. Các điều khoản miễn trừ và giới hạn trách nhiệm trong mục này không áp dụng cho trách nhiệm mà pháp luật cấm loại trừ hoặc giới hạn, chẳng hạn như thiệt hại về thân thể do cố ý hoặc sơ suất nghiêm trọng, cũng như các nghĩa vụ bắt buộc theo quy định pháp luật."
+        },
+        {
+          "heading": "Bồi thường",
+          "body": "Nếu bạn vi phạm các điều khoản này, pháp luật, hoặc nội dung người dùng do bạn cung cấp xâm phạm quyền lợi hợp pháp của bên thứ ba, khiến chúng tôi hoặc các bên liên kết, nhân viên, đại lý của chúng tôi bị bên thứ ba khiếu nại, phàn nàn, xử phạt hành chính hoặc khởi kiện, hoặc phát sinh tổn thất vì việc đó (bao gồm chi phí luật sư hợp lý và chi phí điều tra, thu thập chứng cứ), bạn phải có trách nhiệm giải quyết và giữ cho chúng tôi không bị thiệt hại. Nếu bạn gây tổn thất cho chúng tôi vì việc đó, chúng tôi có quyền yêu cầu bạn bồi hoàn."
+        },
+        {
+          "heading": "Sửa đổi điều khoản và thông báo",
+          "body": "Chúng tôi có quyền sửa đổi các điều khoản này vào thời điểm thích hợp tùy theo thay đổi của pháp luật và nhu cầu vận hành. Các điều khoản sửa đổi sẽ được công bố thông qua các phương thức hợp lý như thông báo trên nền tảng này, tin nhắn trong ứng dụng/trang hoặc email. Nếu bạn tiếp tục sử dụng dịch vụ này sau khi điều khoản sửa đổi có hiệu lực, được coi là bạn chấp nhận các điều khoản sửa đổi; nếu bạn không đồng ý với nội dung sửa đổi, bạn nên ngừng sử dụng dịch vụ này và có thể yêu cầu hủy tài khoản. Đối với những thay đổi quan trọng trong các điều khoản này (đặc biệt là thay đổi liên quan đến quyền lợi quan trọng của bạn), chúng tôi sẽ nhắc nhở bạn theo cách rõ ràng hơn. Mọi thông báo giữa bạn và chúng tôi có thể được gửi theo phương thức liên hệ nêu trong các điều khoản này; thông báo do chúng tôi gửi cho bạn được coi là đã gửi sau khi gửi đến email đăng ký của bạn hoặc công bố qua tin nhắn trong ứng dụng/trang."
+        },
+        {
+          "heading": "Luật áp dụng và giải quyết tranh chấp",
+          "body": "Việc xác lập, hiệu lực, giải thích, thực hiện và giải quyết tranh chấp của các điều khoản này đều áp dụng pháp luật Cộng hòa Nhân dân Trung Hoa (không bao gồm pháp luật Hồng Kông, Ma Cao, Đài Loan và các quy phạm pháp luật về xung đột pháp luật). Mọi tranh chấp phát sinh từ các điều khoản này hoặc dịch vụ này, hai bên trước hết phải giải quyết thông qua thương lượng thiện chí; nếu thương lượng không thành, bất kỳ bên nào cũng có thể khởi kiện tại tòa án nhân dân có thẩm quyền nơi bị đơn cư trú. Nếu một phần điều khoản bị xác định là vô hiệu hoặc không thể thực thi thì không ảnh hưởng đến hiệu lực của các điều khoản khác. Nếu các điều khoản này xung đột với quy định bắt buộc của pháp luật và quy định pháp luật thì lấy quy định pháp luật làm chuẩn. Việc không thực hiện hoặc chậm thực hiện bất kỳ quyền nào không cấu thành việc từ bỏ quyền đó."
+        },
+        {
+          "heading": "Điều khoản bổ sung và thông tin liên hệ",
+          "body": "Các điều khoản này tạo thành toàn bộ thỏa thuận giữa bạn và chúng tôi về dịch vụ này, và thay thế mọi thỏa thuận bằng lời nói hoặc văn bản trước đó về cùng nội dung. Tiêu đề của các điều khoản chỉ nhằm mục đích thuận tiện cho việc đọc, không ảnh hưởng đến việc giải thích điều khoản. Việc chúng tôi không thực hiện hoặc chậm thực hiện quyền theo các điều khoản này không cấu thành sự từ bỏ quyền. Nếu bạn có bất kỳ câu hỏi, ý kiến hoặc đề xuất nào về các điều khoản này hoặc dịch vụ này, hoặc phát hiện bất kỳ hành vi vi phạm pháp luật nào, bạn có thể liên hệ với chúng tôi qua kênh phản hồi trong nền tảng hoặc email do đơn vị vận hành công bố; chúng tôi sẽ xử lý trong thời hạn hợp lý. Các điều khoản này lấy bản tiếng Trung làm chuẩn; nếu bạn sử dụng bản ngôn ngữ khác, trong trường hợp có mâu thuẫn hoặc cách hiểu khác nhau, lấy bản tiếng Trung làm chuẩn."
+        },
+        {
+          "heading": "Đăng nhập một lần và hệ thống tài khoản",
+          "body": "Để nâng cao trải nghiệm sử dụng, nền tảng này có thể thiết lập hệ thống tài khoản thống nhất hoặc đăng nhập một lần (SSO) với các sản phẩm khác thuộc cùng đơn vị vận hành (bao gồm nhưng không giới hạn ở ứng dụng đọc dành cho người dùng cuối, hệ thống xác thực danh tính thống nhất, v.v.). Khi bạn dùng tài khoản thống nhất để đăng nhập nền tảng này, định danh của bạn có thể được chia sẻ giữa các sản phẩm liên quan để đạt được đăng nhập liền mạch và đồng bộ thông tin cơ bản. Bạn hiểu và đồng ý rằng: 1) thông tin được truyền qua đăng nhập một lần chỉ giới hạn ở định danh và dữ liệu cơ bản cần thiết để thực hiện đăng nhập liên kết, phạm vi cụ thể căn cứ theo nội dung hiển thị trên trang xác nhận ủy quyền; 2) việc bạn sửa đổi thông tin tài khoản trong bất kỳ sản phẩm liên kết nào (như biệt danh, email) có thể được đồng bộ và phản ánh trên nền tảng này; 3) nếu bạn muốn hủy liên kết tài khoản với các sản phẩm khác, bạn có thể xử lý qua cài đặt tài khoản hoặc liên hệ đơn vị vận hành; sau khi hủy liên kết, bạn vẫn có thể truy cập tài khoản của mình bằng cách đăng nhập riêng của nền tảng này. Nếu dịch vụ xác thực danh tính thống nhất gặp sự cố, việc đăng nhập vào nền tảng này có thể bị hạn chế; chúng tôi sẽ nhanh chóng phối hợp khôi phục, nhưng không chịu trách nhiệm vi phạm hợp đồng đối với những gián đoạn tạm thời do hạ tầng định danh dùng chung gây ra."
+        },
+        {
+          "heading": "Cộng tác, nhóm nghiên cứu và phạm vi hiển thị nội dung",
+          "body": "Dịch vụ này có thể cung cấp các tính năng như nhóm nghiên cứu, chia sẻ tài liệu, chú thích cộng tác, hỗ trợ bạn và người khác thảo luận về cùng một tài liệu. Bạn nên tự mình cân nhắc kỹ phạm vi và đối tượng chia sẻ: bên nhận nội dung được chia sẻ có thể có khả năng lưu, chuyển tiếp hoặc phát tán thêm nội dung đó; chúng tôi không thể kiểm soát hoàn toàn những hành vi như vậy. Đối với nội dung liên quan đến kết quả nghiên cứu chưa công bố, dữ liệu mật hoặc quyền riêng tư cá nhân, bạn nên chỉ chia sẻ với những người hoàn toàn tin cậy và tuân thủ quy định của cơ quan bạn công tác về quản lý dữ liệu và bảo mật. Người tạo nhóm hoặc quản trị viên (nếu có) có thể quản lý thành viên và nội dung trong phạm vi tính năng cho phép; các hành vi quản lý liên quan do họ tự chịu trách nhiệm. Nếu bạn có phản đối về nội dung do người khác đăng trong tình huống cộng tác, bạn có thể phản hồi cho chúng tôi qua kênh báo cáo; chúng tôi sẽ xử lý theo pháp luật và quy định."
+        },
+        {
+          "heading": "Tin nhắn nội bộ và tính năng trao đổi",
+          "body": "Các tính năng liên lạc như tin nhắn nội bộ, trả lời thảo luận do nền tảng này cung cấp chỉ dành cho trao đổi chính đáng liên quan đến nghiên cứu và học tập. Bạn không được dùng các tính năng trên để gửi thông tin rác, thông tin quấy rối, quảng cáo thương mại, thông tin lừa đảo hoặc nội dung không được yêu cầu khác; không được mạo danh người khác hoặc liên kết sai sự thật với bất kỳ tổ chức nào. Để bảo vệ an toàn người dùng và xử lý khiếu nại khi cần thiết, chúng tôi có thể tiến hành kiểm tra thủ công hoặc kỹ thuật đối với thông tin bị nghi ngờ vi phạm pháp luật, trên cơ sở tuân thủ pháp luật, thỏa thuận và nguyên tắc tối thiểu hóa. Mọi giao dịch, hợp tác hoặc quan hệ khác mà bạn thiết lập với người khác qua tin nhắn riêng là hành vi độc lập giữa bạn và đối phương; chúng tôi không tham gia và cũng không chịu trách nhiệm bảo chứng. Hãy cảnh giác với lừa đảo trực tuyến, không dễ dàng tin theo các yêu cầu chuyển khoản, nạp tiền, cho vay, v.v. mà người khác đưa ra trong tin nhắn riêng."
+        },
+        {
+          "heading": "Dịch vụ thông báo",
+          "body": "Nền tảng này có thể gửi cho bạn các thông báo liên quan đến dịch vụ qua thông báo nội bộ, email, v.v., bao gồm nhắc nhở bảo mật, cập nhật tính năng, thông báo hệ thống, nhắc nhở tương tác cộng tác, v.v. Bạn có thể quản lý một phần tùy chọn thông báo trong cài đặt tài khoản; tuy nhiên, đối với các thông báo về vấn đề quan trọng như an toàn tài khoản, tuyên bố pháp lý, thay đổi dịch vụ, ngay cả khi bạn đã tắt một số tùy chọn, chúng tôi vẫn có thể gửi cho bạn; những thông báo này cấu thành một phần thông báo hợp lệ theo các điều khoản này. Chúng tôi cố gắng bảo đảm thông báo kịp thời và chính xác, nhưng không chịu trách nhiệm về hậu quả do chậm truyền, nhà cung cấp dịch vụ email chặn, bạn không kiểm tra kịp thời hoặc các nguyên nhân khác."
+        },
+        {
+          "heading": "Quy định sử dụng API và tự động hóa",
+          "body": "Nếu nền tảng này cung cấp cho bạn giao diện lập trình ứng dụng (API) hoặc năng lực mở trong một số phiên bản, bạn chỉ được sử dụng khi tuân thủ các điều khoản này và tài liệu API tương ứng, đồng thời không được: 1) gọi vượt quá tần suất, hạn ngạch hoặc mục đích ghi trong tài liệu; 2) dùng API để cung cấp cho bên thứ ba sản phẩm cạnh tranh với dịch vụ của chúng tôi; 3) vượt qua hoặc cố gắng vượt qua cơ chế xác thực, giới hạn tần suất, kiểm soát rủi ro; 4) dùng API để xuất hàng loạt nội dung nền tảng hoặc dữ liệu của người dùng khác. Chúng tôi có quyền điều chỉnh hạn ngạch và chính sách API theo tình trạng dịch vụ tổng thể, đồng thời áp dụng các biện pháp như giới hạn tần suất, khóa thông tin xác thực đối với các lệnh gọi bất thường. Rủi ro sử dụng API và dữ liệu liên quan do bạn tự chịu; tính khả dụng của API không cấu thành bất kỳ cam kết liên tục nào."
+        },
+        {
+          "heading": "Liêm chính học thuật và sử dụng tuân thủ",
+          "body": "PaperHelper được định vị là công cụ hỗ trợ đọc và nghiên cứu học thuật. Bạn cam kết tuân thủ các quy định về liêm chính học thuật của cơ quan, tạp chí và nhà xuất bản nơi bạn hoạt động, bao gồm nhưng không giới hạn ở: không dùng nền tảng này hoặc tính năng hỗ trợ AI của nền tảng để tạo ra kết quả học thuật cần tuyên bố tính nguyên bản mà không công bố; không sử dụng dịch vụ này để viết hộ luận văn, làm hộ bài tập hoặc thực hiện các hành vi gian lận học thuật khác; không tải xuống hàng loạt hoặc phát tán toàn văn tài liệu được bảo hộ bản quyền. Chúng tôi tôn trọng truyền thống liêm chính được cộng đồng học thuật hình thành lâu dài và hoan nghênh người dùng sử dụng dịch vụ này cho mục đích học tập, nghiên cứu chính đáng. Đối với tài khoản bị nghi ngờ gian lận học thuật nghiêm trọng hoặc xâm phạm bản quyền hàng loạt, chúng tôi có quyền áp dụng biện pháp hạn chế sau khi xác minh và phối hợp với chủ sở hữu quyền và cơ quan liên quan để xử lý theo pháp luật."
+        },
+        {
+          "heading": "Người chưa thành niên sử dụng",
+          "body": "Dịch vụ này chủ yếu dành cho người dùng đã thành niên có đầy đủ năng lực hành vi dân sự. Nếu bạn là người chưa thành niên dưới mười tám tuổi, bạn nên sử dụng dịch vụ này khi có sự đồng ý và hướng dẫn của người giám hộ, đồng thời người giám hộ giúp bạn đọc và đồng ý với các điều khoản này. Chúng tôi không chủ động quảng bá thương mại tới người chưa thành niên. Nếu bạn là người giám hộ của người chưa thành niên và phát hiện người được giám hộ đã đăng ký hoặc sử dụng dịch vụ này mà không có sự đồng ý của bạn, bạn có thể liên hệ với chúng tôi để xử lý; chúng tôi sẽ hỗ trợ hủy tài khoản, xóa dữ liệu cá nhân liên quan theo pháp luật và quy định. Các sắp xếp cụ thể liên quan đến bảo vệ thông tin cá nhân của người chưa thành niên được nêu chi tiết trong “Chính sách quyền riêng tư”."
+        },
+        {
+          "heading": "Phí dịch vụ và thỏa thuận thương mại",
+          "body": "Hiện tại một số tính năng của dịch vụ này có thể được cung cấp miễn phí; chúng tôi không loại trừ khả năng ra mắt phiên bản trả phí, tính năng giá trị gia tăng hoặc chương trình hội viên trong tương lai. Nếu ra mắt dịch vụ trả phí, chúng tôi sẽ công bố rõ ràng mức phí, cách tính phí và quy tắc hoàn tiền bằng phương thức dễ thấy trước khi thu phí, và dịch vụ chỉ có hiệu lực sau khi bạn đồng ý rõ ràng và hoàn tất thanh toán. Khoản phí đã thanh toán sẽ được xử lý hủy đăng ký và hoàn tiền theo quy tắc công bố vào thời điểm đó. Trừ khi pháp luật có quy định khác hoặc chúng tôi có cam kết riêng, tính khả dụng của các tính năng miễn phí không cấu thành nghĩa vụ hợp đồng liên tục của chúng tôi; tuy nhiên chúng tôi vẫn sẽ cố gắng duy trì sự ổn định của dịch vụ theo thỏa thuận trong các điều khoản này. Nền tảng này sẽ không hiển thị quảng cáo nhắm mục tiêu gắn chặt với nội dung nghiên cứu của bạn theo cách gây ảnh hưởng đến việc sử dụng bình thường khi chưa có sự đồng ý của bạn."
+        },
+        {
+          "heading": "Xử lý vi phạm và khiếu nại",
+          "body": "Nếu chúng tôi áp dụng biện pháp xử lý đối với tài khoản hoặc nội dung của bạn theo các điều khoản này, chúng tôi sẽ cố gắng thông báo lý do xử lý cho bạn qua tin nhắn nội bộ hoặc email (trừ trường hợp pháp luật, quy định cấm tiết lộ). Nếu bạn có ý kiến phản đối về kết quả xử lý, bạn có thể gửi khiếu nại cho chúng tôi trong thời hạn hợp lý sau khi nhận thông báo, trình bày sự việc, lý do và cung cấp bằng chứng cần thiết. Chúng tôi sẽ bố trí người xem xét thủ công và phản hồi kết quả cho bạn trong thời gian hợp lý. Đối với trường hợp xử lý sai, chúng tôi sẽ kịp thời khôi phục tài khoản hoặc nội dung của bạn. Cơ chế khiếu nại không làm thay đổi quyền của chúng tôi trong việc trước tiên áp dụng biện pháp tạm thời để kiểm soát rủi ro trong tình huống khẩn cấp (ví dụ liên quan đến thông tin vi phạm nghiêm trọng, sự cố an ninh)."
+        },
+        {
+          "heading": "Báo cáo và xử lý sự cố an ninh mạng",
+          "body": "Chúng tôi sẽ thiết lập cơ chế ứng phó sự cố an ninh mạng theo yêu cầu của pháp luật. Nếu bạn phát hiện lỗ hổng bảo mật, dấu hiệu rò rỉ dữ liệu hoặc vấn đề an toàn khác trên nền tảng này, vui lòng báo ngay cho chúng tôi qua kênh liên hệ bảo mật. Chúng tôi hoan nghênh và cảm ơn các nhà nghiên cứu bảo mật thiện chí, có trách nhiệm khi báo cáo lỗ hổng theo đúng quy định. Khi xảy ra sự cố an toàn dữ liệu ảnh hưởng đến quyền lợi người dùng, chúng tôi sẽ khởi động xử lý khẩn cấp trong thời hạn luật định, thông báo cho người dùng bị ảnh hưởng theo pháp luật và báo cáo cơ quan có thẩm quyền liên quan, đồng thời áp dụng biện pháp khắc phục để ngăn chặn thiệt hại lan rộng. Bạn vui lòng tuân thủ các yêu cầu an toàn của chúng tôi, chẳng hạn như cập nhật mật khẩu kịp thời, bật phương thức đăng nhập an toàn hơn, v.v.; thiệt hại do bạn không bảo quản thông tin xác thực đúng cách sẽ được xử lý theo quy định tại các điều khoản này."
+        },
+        {
+          "heading": "Xuất và di chuyển dữ liệu",
+          "body": "Để bảo đảm quyền kiểm soát dữ liệu của bạn, nền tảng này có thể cung cấp chức năng xuất dữ liệu như danh sách bài báo, ghi chú, chú thích, v.v.; phạm vi và định dạng hỗ trợ cụ thể tùy thuộc vào chức năng thực tế mà sản phẩm cung cấp. Trong trường hợp dịch vụ có thay đổi trọng yếu hoặc chấm dứt, chúng tôi sẽ thông báo trước theo quy định pháp luật và cung cấp cho bạn thời hạn, phương thức hợp lý để xuất hoặc di chuyển dữ liệu. Không được sử dụng chức năng xuất dữ liệu để thu thập nội dung của người khác hàng loạt hoặc lẩn tránh các quy tắc ứng xử tại các điều khoản này. Đối với các vấn đề khả dụng do khác biệt định dạng dữ liệu xuất, khả năng tương thích của bên thứ ba hoặc các nguyên nhân khác, chúng tôi sẽ hỗ trợ trong phạm vi hợp lý nhưng không bảo đảm."
+        },
+        {
+          "heading": "Cài đặt cá nhân hóa và dữ liệu tùy chọn",
+          "body": "Dữ liệu tùy chọn như sở thích đọc, cài đặt giao diện, lựa chọn ngôn ngữ, chế độ chủ đề, v.v. mà bạn tạo ra trong quá trình sử dụng dịch vụ này sẽ được dùng để mang đến cho bạn trải nghiệm phù hợp hơn với thói quen sử dụng. Bạn có thể sửa đổi hoặc đặt lại các tùy chọn liên quan bất cứ lúc nào trong phần cài đặt. Việc xóa bộ nhớ cục bộ của trình duyệt, đổi thiết bị hoặc sử dụng khi chưa đăng nhập có thể khiến một số tùy chọn không được duy trì. Chúng tôi sẽ không ra quyết định bất lợi gây ảnh hưởng trọng yếu đến bạn dựa trên dữ liệu tùy chọn của bạn; quy tắc xử lý dữ liệu cụ thể xin xem tại “Chính sách quyền riêng tư”."
+        },
+        {
+          "heading": "Cập nhật sản phẩm và phát hành dần",
+          "body": "Để liên tục cải thiện chất lượng dịch vụ, chúng tôi có thể áp dụng các phương thức kỹ thuật như phát hành dần, thử nghiệm A/B để một số người dùng trải nghiệm trước tính năng hoặc giao diện mới. Cách hoạt động của các tính năng trong phạm vi phát hành dần có thể khác với phiên bản công khai và có thể được điều chỉnh hoặc thu hồi bất cứ lúc nào. Dữ liệu thử nghiệm liên quan chỉ được dùng để đánh giá phương án sản phẩm và cải thiện trải nghiệm. Nếu bạn có ý kiến phản đối việc tham gia thử nghiệm phát hành dần, bạn có thể thông báo qua kênh phản hồi; chúng tôi sẽ điều chỉnh tùy theo khả năng của sản phẩm. Thỏa thuận này không miễn trừ nghĩa vụ của chúng tôi trong việc đưa ra thông báo rõ ràng cho bạn trước các thay đổi về quyền lợi trọng yếu."
+        },
+        {
+          "heading": "Bảo lưu quyền của bên vận hành",
+          "body": "Ngoài các quyền đã được trao rõ ràng trong các điều khoản này, chúng tôi bảo lưu mọi quyền đối với nền tảng này và các công nghệ liên quan. Chúng tôi có quyền điều chỉnh hợp lý phạm vi dịch vụ, hình thái tính năng, hạn mức tài nguyên được đề cập trong các điều khoản này dựa trên pháp luật, yêu cầu quản lý, rủi ro an toàn hoặc tính hợp lý trong vận hành. Đối với mọi thay đổi bất lợi có ảnh hưởng thực chất đến quyền lợi của bạn, chúng tôi sẽ xử lý theo nguyên tắc thông báo rõ ràng trước hoặc công bố kịp thời sau đó kèm biện pháp khắc phục hợp lý. Việc chúng tôi không yêu cầu bạn thực hiện một nghĩa vụ nào đó không có nghĩa là chúng tôi từ bỏ quyền yêu cầu bạn thực hiện nghĩa vụ đó trong tương lai; việc chúng tôi chấp nhận sự khoan dung của bạn đối với một hành vi vi phạm cũng không cấu thành sự cho phép chung đối với loại hành vi đó."
+        },
+        {
+          "heading": "Toàn bộ thỏa thuận và tính phân tách",
+          "body": "Các điều khoản này, “Chính sách quyền riêng tư”, thông báo tức thời trên trang đăng ký tài khoản và các quy tắc chuyên biệt được công bố trong nền tảng này (nếu có) cùng tạo thành thỏa thuận đầy đủ giữa bạn và chúng tôi về dịch vụ này; nếu có xung đột, quy tắc chuyên biệt áp dụng cho tính năng hoặc tình huống cụ thể sẽ được ưu tiên áp dụng. Nếu bất kỳ điều khoản nào trong các điều khoản này bị cơ quan có thẩm quyền xác định là vô hiệu, trái pháp luật hoặc không thể thực thi, điều khoản đó sẽ được giải thích, sửa đổi hoặc tách khỏi các điều khoản này trong phạm vi tối thiểu cần thiết, mà không ảnh hưởng đến hiệu lực của các điều khoản còn lại. Hồ sơ hành vi và nhật ký hệ thống (trong phạm vi giá trị chứng minh mà pháp luật cho phép) về việc bạn và chúng tôi thực hiện nghĩa vụ có thể được dùng làm tài liệu chứng cứ để giải quyết tranh chấp."
+        },
+        {
+          "heading": "Kênh liên hệ và phản hồi",
+          "body": "Bạn có thể liên hệ với chúng tôi theo các cách sau: mục “Cài đặt—Phản hồi” trong ứng dụng hoặc email hỗ trợ được ghi trên trang thông báo của nền tảng này. Chúng tôi thường phản hồi trong thời gian làm việc hợp lý sau khi nhận được phản hồi; các vấn đề khẩn cấp như an toàn tài khoản, khiếu nại quyền riêng tư sẽ được chúng tôi xử lý ưu tiên. Ý kiến quý báu của bạn có thể được đưa vào kế hoạch cải tiến sản phẩm; khi gửi phản hồi, bạn đồng ý để chúng tôi sử dụng chính nội dung phản hồi nhằm mục đích cải tiến sản phẩm, nhưng không bao gồm dữ liệu cá nhân chưa công khai và kết quả nghiên cứu chưa công bố của bạn. Một lần nữa cảm ơn bạn đã tin tưởng và ủng hộ PaperHelper, hy vọng nó trở thành người bạn đồng hành đáng tin cậy trong hành trình học thuật của bạn."
+        },
+        {
+          "heading": "Cửa sổ bảo trì và tính khả dụng của dịch vụ",
+          "body": "Để bảo đảm hệ thống vận hành ổn định lâu dài, chúng tôi có thể thiết lập các cửa sổ bảo trì cố định (ví dụ vào thời điểm ít người sử dụng) để thực hiện nâng cấp, di chuyển và kiểm tra định kỳ. Thời gian gián đoạn ngắn trong cửa sổ bảo trì sẽ được nêu trong thông báo hoặc nhắc nhở bảo trì. Chúng tôi vận hành hệ thống theo tiêu chuẩn kỹ thuật hợp lý, bao gồm triển khai dự phòng, giám sát cảnh báo, quy hoạch dung lượng và diễn tập sự cố, nhưng ngoài thỏa thuận mức dịch vụ được cam kết bằng văn bản (nếu có), chúng tôi không cam kết về tỷ lệ phần trăm khả dụng cụ thể. Nếu công việc nghiên cứu của bạn yêu cầu tính liên tục cao, bạn nên kết hợp sao lưu cục bộ và sắp xếp thời gian, tránh phụ thuộc tập trung vào một dịch vụ trực tuyến duy nhất tại các thời điểm then chốt. Đối với thời gian gián đoạn dài ngoài phạm vi kiểm soát hợp lý, chúng tôi sẽ giải thích nguyên nhân và biện pháp cải thiện cho bạn sau đó."
+        },
+        {
+          "heading": "Quy định ghi tên và trích dẫn",
+          "body": "Khi bạn sử dụng các tính năng hỗ trợ AI của nền tảng này trong viết học thuật để sắp xếp quan điểm, trau chuốt ngôn ngữ hoặc tạo tóm tắt, bạn nên tuân thủ các yêu cầu cụ thể của cơ quan, tạp chí hoặc hội nghị mục tiêu về việc khai báo và ghi tên tác giả khi dùng công cụ AI, chủ động trình bày trung thực việc sử dụng công cụ, và chịu trách nhiệm tác giả đối với nội dung cuối cùng. Khi trích dẫn tài liệu, bạn nên kiểm tra nguồn gốc ban đầu, tránh phụ thuộc vào các mục trích dẫn được tạo tự động mà chưa xác minh. Chúng tôi khuyến khích coi nền tảng này là công cụ nâng cao hiệu quả đọc và nghiên cứu, chứ không phải thay thế cho quá trình rèn luyện học thuật nghiêm ngặt và phản biện đồng nghiệp. Tranh chấp học thuật hoặc hình thức kỷ luật phát sinh do không tuân thủ quy định khai báo và ghi tên liên quan sẽ do bạn tự chịu trách nhiệm; chúng tôi sẽ phối hợp với cơ quan có thẩm quyền trong phạm vi pháp luật cho phép để phục vụ điều tra chính đáng."
+        },
+        {
+          "heading": "Cảnh báo rủi ro và ví dụ tình huống điển hình",
+          "body": "Để giúp bạn hiểu rõ hơn các điều khoản này, chúng tôi xin nêu các tình huống điển hình sau: Ví dụ một, bạn tải một bài báo của người khác có được từ internet lên nền tảng này chỉ để đọc và ghi chú cá nhân; nếu hành vi đó vượt quá phạm vi được phép, trách nhiệm xâm phạm liên quan do bạn chịu, và chúng tôi sẽ xử lý theo pháp luật sau khi nhận được thông báo hợp lệ từ chủ thể quyền; Ví dụ hai, bạn dựa vào bản tổng quan tài liệu do AI tạo ra để nộp trực tiếp cho bài tập khóa học mà không thực hiện bất kỳ xác minh và khai báo nào, hậu quả học thuật phát sinh do bạn tự đối mặt; Ví dụ ba, bạn cho bạn học biết mật khẩu tài khoản khiến tài liệu nghiên cứu bị xóa nhầm; vì thuộc trường hợp bạn chủ động tiết lộ thông tin đăng nhập, chúng tôi sẽ cố gắng hỗ trợ khôi phục nhưng theo pháp luật không chịu trách nhiệm bồi thường; Ví dụ bốn, do kiểm soát mạng tại khu vực bạn ở hoặc sự cố tuyến quốc tế khiến bạn tạm thời không thể truy cập dịch vụ, đây là trường hợp chúng tôi không thể kiểm soát hợp lý, tổn thất liên quan không do chúng tôi chịu. Các ví dụ trên chỉ nhằm giúp hiểu rõ hơn, không cấu thành việc giải thích thu hẹp phạm vi điều khoản."
+        },
+        {
+          "heading": "Hiệu lực và lịch sử phiên bản",
+          "body": "Các điều khoản này có hiệu lực kể từ ngày nền tảng này chính thức phát hành và ghi lại lịch sử sửa đổi theo số phiên bản cùng với quá trình cập nhật sản phẩm. Mỗi sửa đổi mang tính thực chất sẽ được ghi rõ thời gian cập nhật lần cuối ở đầu trang; bạn cũng có thể biết được các khác biệt chính giữa các phiên bản lịch sử bằng cách yêu cầu bên vận hành cung cấp. Bạn nên đọc lại các điều khoản này mỗi khi có tính năng quan trọng được ra mắt hoặc sau khi nhận thông báo sửa đổi, để kịp thời hiểu những thay đổi về quyền và nghĩa vụ của mình. Phiên bản điều khoản này có mã số V1.0."
+        }
+      ]
+    },
+    "privacy": {
+      "title": "Chính sách quyền riêng tư",
+      "updatedAt": "Cập nhật lần cuối: tháng 9 năm 2026",
+      "sections": [
+        {
+          "heading": "Giới thiệu",
+          "body": "PaperHelper (sau đây gọi là “chúng tôi”) hiểu rõ tầm quan trọng của thông tin cá nhân đối với bạn; chúng tôi sẽ tuân theo yêu cầu pháp luật, áp dụng các biện pháp bảo vệ an toàn phù hợp và nỗ lực bảo vệ thông tin cá nhân của bạn một cách an toàn, có thể kiểm soát. Chính sách quyền riêng tư này (sau đây gọi là “Chính sách này”) nhằm giúp bạn hiểu chúng tôi sẽ thu thập những dữ liệu nào, sử dụng những dữ liệu đó như thế nào, bảo vệ chúng ra sao và bạn có những quyền liên quan nào. Chính sách này áp dụng cho các hình thức dịch vụ khác nhau do nền tảng cung cấp, gồm bản web và các ứng dụng khách, ứng dụng nhỏ, giao diện API có thể ra mắt sau này. Vui lòng đọc kỹ và hiểu đầy đủ Chính sách này trước khi sử dụng dịch vụ, đặc biệt là nội dung được nhấn mạnh bằng chữ in đậm. Việc bạn bắt đầu sử dụng dịch vụ hoặc tiếp tục sử dụng sau khi chúng tôi cập nhật Chính sách này đồng nghĩa với việc bạn đã hiểu đầy đủ và đồng ý với Chính sách này. Nếu bạn không đồng ý với bất kỳ nội dung nào của Chính sách này, vui lòng ngay lập tức ngừng sử dụng dịch vụ. Nếu có bất kỳ thắc mắc, ý kiến hoặc đề xuất nào, bạn có thể liên hệ với chúng tôi qua các kênh được nêu trong Chính sách này."
+        },
+        {
+          "heading": "Chúng tôi thu thập và sử dụng thông tin của bạn như thế nào",
+          "body": "Để cung cấp dịch vụ này cho bạn, chúng tôi sẽ thu thập và sử dụng thông tin cá nhân của bạn theo nguyên tắc “hợp pháp, chính đáng, cần thiết”. Cụ thể bao gồm các trường hợp sau: 1) Đăng ký và đăng nhập tài khoản: khi bạn đăng ký bằng email và mật khẩu, chúng tôi thu thập địa chỉ email và mật khẩu của bạn (được lưu dưới dạng băm không thể đảo ngược); khi bạn đăng nhập bằng tài khoản bên thứ ba (như GitHub), chúng tôi thu thập mã người dùng duy nhất, biệt danh, ảnh đại diện và email mà nền tảng đó trả về cho bạn (trong phạm vi được xác nhận tại trang ủy quyền); khi bạn đăng nhập qua hệ thống xác thực danh tính thống nhất (SSO), chúng tôi thu thập thông tin phiên dùng để nhận diện danh tính của bạn và thông tin tài khoản cơ bản. 2) Cung cấp chức năng cốt lõi: khi bạn tải lên bài báo, tạo ghi chú, thêm chú thích, chúng tôi thu thập nội dung tệp bạn tải lên và siêu dữ liệu liên quan (như tên tệp, kích thước, thời gian tải lên, số trang, vị trí chú thích, v.v.) để lưu trữ, truy xuất, hiển thị và đồng bộ. 3) Chức năng hỗ trợ AI: khi bạn sử dụng các tính năng AI như tóm tắt, hỏi đáp, dịch, chúng tôi gửi nội dung văn bản do bạn chỉ định (như văn bản được chọn, đoạn trên trang, câu hỏi của bạn) đến bộ phận xử lý cung cấp năng lực mô hình cho chúng tôi để tạo kết quả. 4) Bảo đảm dịch vụ an toàn, ổn định: chúng tôi thu thập thời gian đăng nhập, IP đăng nhập, thông tin thiết bị và trình duyệt (như loại trình duyệt, tùy chọn ngôn ngữ), nhật ký thao tác, v.v. để kiểm toán an ninh, khắc phục sự cố và phân tích thống kê. 5) Thông báo và tin nhắn: để gửi cho bạn thông báo hệ thống, tương tác cộng tác và tin nhắn riêng, chúng tôi xử lý mã tài khoản và nội dung tin nhắn của bạn."
+        },
+        {
+          "heading": "Quy tắc sử dụng thông tin cá nhân",
+          "body": "Chúng tôi sử dụng thông tin cá nhân của bạn đúng theo các mục đích nêu trong Chính sách này và tuân thủ các quy tắc sau: 1) Giới hạn mục đích: thông tin được thu thập chỉ dùng để thực hiện các mục đích được nêu rõ trong Chính sách này, trừ khi có sự ủy quyền lại của bạn hoặc pháp luật có quy định khác; 2) Tối thiểu cần thiết: chúng tôi cố gắng giới hạn phạm vi thu thập ở mức tối thiểu cần thiết để thực hiện chức năng; 3) Tổng hợp và khử nhận dạng: dữ liệu dùng cho phân tích thống kê, cải tiến sản phẩm sẽ được tổng hợp hoặc khử nhận dạng càng nhiều càng tốt để không thể trực tiếp nhận diện danh tính của bạn; 4) Cấm bán: chúng tôi không bán thông tin cá nhân của bạn cho bất kỳ bên thứ ba nào; 5) Thuật toán và quyết định tự động: chúng tôi không đưa ra quyết định tự động dựa trên thông tin cá nhân của bạn gây ảnh hưởng trọng yếu đến quyền lợi cá nhân của bạn. Nếu bạn cần chúng tôi ngừng sử dụng thông tin cụ thể, bạn có thể gửi yêu cầu qua các kênh được nêu trong Chính sách này."
+        },
+        {
+          "heading": "Cookie và các công nghệ tương tự",
+          "body": "Để bảo đảm dịch vụ hoạt động bình thường, duy trì trạng thái đăng nhập và ghi nhớ tùy chọn của bạn, chúng tôi có thể sử dụng Cookie, lưu trữ cục bộ (LocalStorage), lưu trữ phiên và các công nghệ tương tự. Trong đó: Cookie xác thực danh tính dùng để duy trì phiên đăng nhập trong thời gian bạn truy cập, thuộc loại cần thiết để thực hiện dịch vụ; lưu trữ tùy chọn dùng để ghi nhớ chế độ giao diện, ngôn ngữ và các cài đặt khác mà bạn chọn. Bạn có thể quản lý hoặc xóa Cookie qua cài đặt trình duyệt, nhưng sau khi xóa Cookie xác thực danh tính, bạn cần đăng nhập lại để sử dụng các chức năng yêu cầu nhận diện danh tính. Chúng tôi không sử dụng Cookie cho bất kỳ mục đích nào khác ngoài các mục đích nêu trong Chính sách này. Nếu nền tảng này nhúng các thành phần bên thứ ba (như cổng đăng nhập bên thứ ba), bên thứ ba tương ứng có thể đặt Cookie theo chính sách riêng của họ; bạn nên đọc phần giải thích chính sách của họ."
+        },
+        {
+          "heading": "Chúng tôi chia sẻ, chuyển giao và công khai thông tin của bạn như thế nào",
+          "body": "Chúng tôi sẽ không chủ động chia sẻ thông tin cá nhân của bạn với bên thứ ba, trừ các trường hợp sau: 1) Có được sự ủy quyền, đồng ý rõ ràng của bạn trước đó; 2) Khi cần thiết để thực hiện dịch vụ, truyền dữ liệu cần thiết cho các bên xử lý được ủy thác cung cấp hạ tầng và hỗ trợ kỹ thuật (như máy chủ đám mây, lưu trữ đối tượng, dịch vụ cơ sở dữ liệu, nhà cung cấp dịch vụ mô hình AI); chúng tôi sẽ ký với họ thỏa thuận bảo mật và xử lý dữ liệu nghiêm ngặt, yêu cầu họ chỉ xử lý trong phạm vi mục đích của Chính sách này; 3) Theo yêu cầu bắt buộc của pháp luật, giải quyết tranh chấp tố tụng hoặc cơ quan hành chính, tư pháp; 4) Trong trường hợp sáp nhập, mua lại, tái cấu trúc tài sản, nếu cần chuyển giao thông tin cá nhân, chúng tôi sẽ yêu cầu bên nắm giữ mới tiếp tục chịu sự ràng buộc của Chính sách này; nếu không, chúng tôi sẽ yêu cầu họ xin lại sự ủy quyền của bạn. Ngoài ra, chúng tôi sẽ không công khai thông tin cá nhân của bạn, trừ trường hợp có sự đồng ý rõ ràng của bạn hoặc pháp luật có quy định khác. Ngoài các trường hợp sau, chúng tôi không chia sẻ thông tin của bạn: các hành vi cộng tác và chia sẻ do bạn chủ động thực hiện (như chia sẻ tài liệu cho thành viên nhóm nghiên cứu); phạm vi và nội dung chia sẻ như vậy do bạn tự quyết định."
+        },
+        {
+          "heading": "Chúng tôi lưu trữ và bảo vệ thông tin của bạn như thế nào",
+          "body": "Thông tin cá nhân của bạn được lưu trữ trên máy chủ trong lãnh thổ Cộng hòa Nhân dân Trung Hoa (nếu liên quan đến truyền dữ liệu xuyên biên giới, chúng tôi sẽ thực hiện nghĩa vụ tương ứng theo yêu cầu pháp luật). Thời hạn lưu trữ là thời gian ngắn nhất cần thiết để thực hiện các mục đích nêu trong Chính sách này, trừ khi pháp luật có yêu cầu bắt buộc khác; sau khi vượt quá thời hạn, chúng tôi sẽ xóa hoặc ẩn danh hóa thông tin cá nhân của bạn. Chúng tôi áp dụng các công nghệ bảo mật phổ biến trong ngành để bảo vệ thông tin của bạn, bao gồm nhưng không giới hạn ở: mã hóa truyền tải (HTTPS/TLS), lưu trữ mật khẩu dạng băm, kiểm soát truy cập và nguyên tắc đặc quyền tối thiểu, kiểm toán nhật ký, cơ chế sao lưu và khắc phục thảm họa. Đồng thời, chúng tôi đã thiết lập hệ thống quản lý an toàn thông tin hoàn thiện và quy trình ứng phó khẩn cấp. Mặc dù đã áp dụng các biện pháp trên, bạn cần hiểu rằng không có biện pháp kỹ thuật nào có thể bảo đảm tuyệt đối an toàn thông tin; môi trường internet tồn tại rủi ro cố hữu. Nếu không may xảy ra sự cố an toàn thông tin cá nhân, chúng tôi sẽ theo yêu cầu pháp luật kịp thời kích hoạt phương án ứng phó khẩn cấp, thông báo cho bạn trong thời hạn quy định về tình hình sự cố, ảnh hưởng có thể có và các biện pháp khắc phục đã thực hiện, đồng thời báo cáo cơ quan chủ quản liên quan."
+        },
+        {
+          "heading": "Quyền của bạn",
+          "body": "Theo các quy định pháp luật liên quan, bạn có các quyền sau đối với thông tin cá nhân của mình: 1) Tra cứu và sao chép: bạn có thể xem, xuất bất cứ lúc nào trong nền tảng này các nội dung như hồ sơ cơ bản, danh sách bài báo, ghi chú và chú thích của bạn; 2) Chỉnh sửa và bổ sung: khi bạn phát hiện thông tin về bạn mà chúng tôi xử lý có sai sót, bạn có quyền yêu cầu chúng tôi chỉnh sửa hoặc bổ sung; bạn cũng có thể tự sửa phần lớn hồ sơ trong phần cài đặt; 3) Xóa: trong các trường hợp pháp luật quy định (như mục đích xử lý đã đạt được, chúng tôi vi phạm pháp luật hoặc thỏa thuận khi xử lý thông tin, v.v.), bạn có quyền yêu cầu xóa thông tin cá nhân của mình; bạn cũng có thể tự xóa ghi chú, chú thích, bài báo đã tải lên và các nội dung khác; 4) Rút lại đồng ý: bạn có thể rút lại sự ủy quyền, đồng ý bằng cách đăng xuất tài khoản, tắt chức năng tương ứng, v.v.; việc rút lại đồng ý không ảnh hưởng đến các xử lý đã thực hiện trước đó dựa trên sự ủy quyền; 5) Hủy tài khoản: bạn có thể yêu cầu hủy tài khoản qua trang cài đặt hoặc bằng cách liên hệ với chúng tôi; chúng tôi sẽ xóa hoặc ẩn danh hóa thông tin cá nhân của bạn trong thời hạn hợp lý sau khi hoàn tất xác minh danh tính, trừ trường hợp pháp luật yêu cầu lưu giữ; 6) Nhận bản sao và chuyển giao: trong phạm vi khả thi về kỹ thuật và phù hợp quy định pháp luật, chúng tôi hỗ trợ bạn nhận bản sao thông tin cá nhân. Để bảo đảm an toàn, trước khi đáp ứng các yêu cầu trên, chúng tôi có thể cần xác minh danh tính của bạn. Chúng tôi sẽ phản hồi trong vòng mười lăm ngày làm việc; đối với yêu cầu hợp lý, chúng tôi không thu phí, nhưng với yêu cầu lặp lại, vượt quá giới hạn hợp lý của cùng một người dùng, chúng tôi có thể thu khoản phí cần thiết để bù đắp chi phí."
+        },
+        {
+          "heading": "Xử lý dữ liệu liên quan đến chức năng AI",
+          "body": "Khi bạn sử dụng tính năng đọc hỗ trợ bởi AI, chúng tôi sẽ xử lý dữ liệu liên quan như sau: 1) Nội dung đầu vào: văn bản bạn chọn, trang bạn tải lên hoặc câu hỏi bạn nhập sẽ được chuyển đến khâu xử lý mô hình để tạo kết quả; chúng tôi tuân thủ nguyên tắc tối thiểu hóa, chỉ truyền nội dung cần thiết để thực hiện tính năng; 2) Cách thức xử lý: dịch vụ mô hình có thể xử lý đầu vào của bạn theo phương thức tự động để tạo đầu ra, cụ thể do bên cung cấp năng lực cho chúng tôi thực hiện theo thỏa thuận xử lý dữ liệu đã ký với chúng tôi; chúng tôi yêu cầu bên đó không được dùng đầu vào của bạn để huấn luyện mô hình cho công chúng hoặc cho các mục đích thương mại khác; 3) Nội dung đầu ra: các kết quả như tóm tắt, câu trả lời do AI tạo sẽ được hiển thị cho bạn và có thể được lưu đệm để nâng cao hiệu năng; 4) Dữ liệu phản hồi: phản hồi thích, không thích hoặc sửa lỗi của bạn đối với kết quả sẽ được dùng để cải thiện chất lượng tính năng. Bạn vui lòng không đưa thông tin riêng tư của người khác hoặc thông tin có độ nhạy cảm cao vào đầu vào AI; trách nhiệm phát sinh từ nội dung bạn chủ động nhập được xử lý theo quy định tại Điều khoản Sử dụng."
+        },
+        {
+          "heading": "Bảo vệ thông tin cá nhân của người chưa thành niên",
+          "body": "Chúng tôi rất coi trọng việc bảo vệ thông tin cá nhân của người chưa thành niên. Dịch vụ này chủ yếu hướng đến người dùng trưởng thành; nếu bạn là người chưa thành niên dưới mười tám tuổi, vui lòng sử dụng dịch vụ này khi có sự đồng ý và hướng dẫn của người giám hộ, đồng thời để người giám hộ giúp bạn đọc và đồng ý với chính sách này. Nếu chúng tôi phát hiện đã thu thập thông tin cá nhân của người chưa thành niên mà chưa có sự đồng ý trước của người giám hộ, chúng tôi sẽ tìm cách xóa dữ liệu liên quan trong thời gian sớm nhất. Người giám hộ của người chưa thành niên có thể liên hệ với chúng tôi qua thông tin liên hệ nêu trong chính sách này để thực hiện các quyền như tra cứu, chỉnh sửa, xóa, v.v.; sau khi xác minh quan hệ giám hộ, chúng tôi sẽ phối hợp xử lý theo quy định pháp luật."
+        },
+        {
+          "heading": "Cập nhật chính sách này",
+          "body": "Chúng tôi có thể sửa đổi chính sách này vào thời điểm thích hợp. Nếu không có sự đồng ý rõ ràng của bạn, chúng tôi sẽ không cắt giảm các quyền mà bạn được hưởng theo chính sách này. Đối với các thay đổi quan trọng, chúng tôi sẽ thông báo cho bạn bằng cách thức nổi bật như thông báo trên trang web, cửa sổ bật lên hoặc email, đồng thời cập nhật thời gian “Cập nhật lần cuối” ở đầu trang. Nội dung thay đổi bao gồm nhưng không giới hạn ở: thông tin cơ bản của chúng tôi thay đổi, mục đích/cách thức/loại thông tin cá nhân được xử lý thay đổi, quyền của bạn đối với thông tin cá nhân và cách thức thực hiện quyền thay đổi, v.v. Nếu bạn tiếp tục sử dụng dịch vụ này sau khi chính sách được cập nhật, nghĩa là bạn đã đọc và hiểu chính sách đã cập nhật; nếu bạn không đồng ý, vui lòng ngừng sử dụng và có thể chọn xóa tài khoản."
+        },
+        {
+          "heading": "Cách liên hệ với chúng tôi",
+          "body": "Nếu bạn có bất kỳ thắc mắc, ý kiến hoặc đề xuất nào về chính sách này hoặc việc bảo vệ thông tin cá nhân, hoặc cho rằng hành vi xử lý của chúng tôi xâm phạm quyền và lợi ích hợp pháp của bạn, bạn có thể liên hệ với chúng tôi qua kênh “Cài đặt—Phản hồi” trong ứng dụng hoặc email hỗ trợ do đơn vị vận hành công bố. Chúng tôi sẽ phản hồi trong vòng mười lăm ngày làm việc sau khi nhận được yêu cầu của bạn. Nếu bạn không hài lòng với phản hồi của chúng tôi, đặc biệt khi bạn cho rằng hành vi của chúng tôi gây tổn hại đến quyền và lợi ích hợp pháp của bạn, bạn cũng có thể khiếu nại, tố cáo với cơ quan quản lý không gian mạng, cơ quan bảo vệ thông tin cá nhân hoặc cơ quan có thẩm quyền khác có liên quan."
+        },
+        {
+          "heading": "Các trường hợp ngoại lệ không cần xin sự đồng ý",
+          "body": "Theo các quy định pháp luật liên quan, trong những trường hợp sau, việc chúng tôi thu thập, sử dụng thông tin cá nhân của bạn không cần có sự đồng ý của bạn: 1) Cần thiết để giao kết, thực hiện hợp đồng mà bạn là một bên, ví dụ như cung cấp cho bạn các tính năng đọc và ghi chú cốt lõi; 2) Cần thiết để thực hiện chức trách pháp luật hoặc nghĩa vụ pháp định, ví dụ như phối hợp với cơ quan tư pháp điều tra; 3) Cần thiết để ứng phó với tình huống khẩn cấp về sức khỏe cộng đồng, hoặc trong trường hợp khẩn cấp để bảo vệ tính mạng, sức khỏe và tài sản của bạn; 4) Xử lý thông tin cá nhân do bạn tự công khai hoặc thông tin cá nhân đã được công khai hợp pháp khác trong phạm vi hợp lý; 5) Xử lý thông tin cá nhân trong phạm vi hợp lý để thực hiện các hành vi vì lợi ích công cộng như đưa tin thời sự, giám sát dư luận; 6) Các trường hợp khác do pháp luật, quy định quy định. Bạn vui lòng hiểu rằng việc đánh giá các trường hợp ngoại lệ nêu trên đều căn cứ theo quy định pháp luật và chúng tôi sẽ thực hiện trong giới hạn hợp lý và cần thiết."
+        },
+        {
+          "heading": "Bảo vệ thông tin cá nhân nhạy cảm",
+          "body": "Chúng tôi hiểu rõ rằng một số thông tin nếu bị rò rỉ hoặc bị sử dụng trái phép có thể dễ khiến phẩm giá của bạn bị xâm phạm hoặc gây nguy hại đến an toàn thân thể, tài sản của bạn; đó là thông tin cá nhân nhạy cảm, ví dụ như thông tin sinh trắc học, tôn giáo, tín ngưỡng, danh tính cụ thể, sức khỏe y tế, tài khoản tài chính, lộ trình di chuyển, v.v. Là công cụ đọc học thuật, về nguyên tắc dịch vụ này không chủ động thu thập các thông tin cá nhân nhạy cảm nêu trên. Bạn vui lòng thận trọng khi nhập loại thông tin này vào ghi chú, chú thích, nội dung thảo luận và tin nhắn riêng. Nếu bạn tự lựa chọn đưa thông tin cá nhân nhạy cảm vào nội dung người dùng, chúng tôi sẽ áp dụng các biện pháp bảo vệ như đối với thông tin cá nhân thông thường theo chính sách này, nhưng rủi ro tương ứng cần do bạn biết rõ và tự đánh giá. Nếu bạn phát hiện nội dung của người khác có chứa thông tin cá nhân nhạy cảm của bạn mà không được bạn đồng ý, bạn có thể báo cáo với chúng tôi; chúng tôi sẽ xử lý theo quy định pháp luật."
+        },
+        {
+          "heading": "Quy định cụ thể về việc xóa tài khoản",
+          "body": "Khi bạn quyết định xóa tài khoản, bạn có thể gửi yêu cầu xóa qua trang cài đặt tài khoản của nền tảng này hoặc gửi yêu cầu qua thông tin liên hệ nêu trong chính sách này. Sau khi nhận được yêu cầu, chúng tôi sẽ xác minh danh tính và thực hiện xóa trong thời hạn hợp lý sau khi xác minh đạt yêu cầu. Hậu quả của việc xóa tài khoản bao gồm: 1) Bạn sẽ không thể sử dụng các dịch vụ yêu cầu danh tính tài khoản đó; bài báo, ghi chú, chú thích, thảo luận và tin nhắn riêng liên quan đến tài khoản đó sẽ không thể truy cập nữa; 2) Chúng tôi sẽ xóa hoặc ẩn danh hóa thông tin cá nhân liên quan đến tài khoản đó, nhưng các bản ghi mà pháp luật yêu cầu lưu giữ (như nhật ký giao dịch và bảo mật phải lưu theo yêu cầu pháp luật) sẽ tiếp tục được lưu trong thời hạn quy định và chỉ được sử dụng trong phạm vi cần thiết để đạt mục đích lưu giữ; 3) Các bản sao dữ liệu trong chu kỳ sao lưu sẽ tự động bị xóa sau khi bản sao lưu hết hạn. Yêu cầu xóa tài khoản sau khi được thực hiện sẽ không thể khôi phục; nếu bạn có tài liệu cần giữ lại trước khi xóa, vui lòng xuất trước."
+        },
+        {
+          "heading": "Các tình huống điển hình về chia sẻ và xử lý ủy thác dữ liệu",
+          "body": "Để bạn hiểu rõ hơn về luồng dữ liệu, chúng tôi liệt kê các tình huống điển hình tại đây: 1) Hạ tầng đám mây: dữ liệu của bạn được lưu trữ trong dịch vụ máy chủ đám mây và cơ sở dữ liệu mà chúng tôi ủy thác; nhà cung cấp dịch vụ chỉ cung cấp tài nguyên lưu trữ và tính toán, không sử dụng dữ liệu của bạn cho mục đích khác; 2) Phân tích tài liệu: khi bạn tải lên các tệp tài liệu như PDF, chúng tôi có thể gọi dịch vụ phân tích tài liệu để trích xuất siêu dữ liệu và nội dung chính; dữ liệu cần cho việc phân tích sẽ được xử lý theo cách thức đã thỏa thuận sau khi tác vụ hoàn tất; 3) Dịch vụ mô hình AI: đầu vào và đầu ra liên quan đến tính năng AI sẽ được xử lý thông qua nhà cung cấp dịch vụ mô hình đã ký thỏa thuận xử lý dữ liệu với chúng tôi; phạm vi xử lý giới hạn ở mức cần thiết để thực hiện tính năng; 4) Dịch vụ email: khi bạn sử dụng các tính năng liên quan đến email (như khôi phục mật khẩu), chúng tôi sẽ gửi email cho bạn thông qua nhà cung cấp dịch vụ email; 5) Thống kê và giám sát: để khắc phục sự cố và cải thiện hiệu năng, chúng tôi sử dụng công cụ nhật ký và giám sát để xử lý dữ liệu kỹ thuật đã được khử nhận dạng. Các bên được ủy thác nêu trên đều bị ràng buộc bởi hợp đồng nghiêm ngặt và không được xử lý dữ liệu vượt quá phạm vi ủy thác."
+        },
+        {
+          "heading": "Truyền dữ liệu xuyên biên giới",
+          "body": "Hiện tại, máy chủ và các khâu xử lý dữ liệu chính của chúng tôi nằm trong lãnh thổ Cộng hòa Nhân dân Trung Hoa. Nếu do điều chỉnh kiến trúc kỹ thuật hoặc sử dụng các thành phần bên thứ ba ở nước ngoài (như dịch vụ đăng nhập ở nước ngoài, dịch vụ mô hình) khiến thông tin cá nhân của bạn cần được truyền ra nước ngoài, chúng tôi sẽ thực hiện các thủ tục cần thiết theo yêu cầu pháp luật như đánh giá an ninh, lưu hồ sơ hợp đồng tiêu chuẩn hoặc lấy sự đồng ý riêng của bạn, đồng thời giải thích rõ ràng cho bạn tên, thông tin liên hệ, mục đích xử lý, cách thức xử lý và loại thông tin cá nhân của bên nhận ở nước ngoài. Chúng tôi sẽ tiếp tục theo dõi các yêu cầu mới nhất của pháp luật về truyền dữ liệu xuyên biên giới và kịp thời điều chỉnh phương án xử lý dữ liệu. Nếu bạn có thắc mắc về truyền dữ liệu xuyên biên giới, có thể tư vấn qua các kênh nêu trong chính sách này."
+        },
+        {
+          "heading": "Ra quyết định tự động và trải nghiệm cá nhân hóa",
+          "body": "Dịch vụ của chúng tôi có thể sử dụng công nghệ tự động trong các tình huống sau: 1) Gợi ý liên kết tài liệu: dựa trên siêu dữ liệu của các tài liệu bạn đã đọc, đã chú thích để gợi ý các bài báo có thể liên quan; 2) Sắp xếp nội dung: sắp xếp thông báo và thảo luận theo thời gian và mức độ liên quan. Các xử lý nêu trên chỉ nhằm nâng cao trải nghiệm duyệt xem, không liên quan đến quyết định có ảnh hưởng trọng yếu đến quyền lợi của bạn và cũng không được dùng để định giá phân biệt. Bạn có thể yêu cầu chúng tôi dừng xử lý cá nhân hóa liên quan bất cứ lúc nào bằng cách xóa dữ liệu hoặc liên hệ với chúng tôi. Chúng tôi sẽ không sử dụng thông tin cá nhân của bạn để tạo hồ sơ người dùng và đối xử bất công hoặc không hợp lý với bạn."
+        },
+        {
+          "heading": "Bảo đảm tổ chức cho an toàn thông tin",
+          "body": "Ngoài các biện pháp kỹ thuật, chúng tôi còn bảo đảm an toàn thông tin ở cấp tổ chức và quy chế: 1) Xác định rõ người phụ trách an toàn dữ liệu và bộ phận chịu trách nhiệm, triển khai quản lý phân loại, phân cấp dữ liệu; 2) Đào tạo bảo mật và quản lý quyền đối với nhân viên tiếp xúc với thông tin cá nhân, ký thỏa thuận bảo mật; việc phân quyền tuân theo nguyên tắc tối thiểu cần thiết và được rà soát định kỳ; 3) Thiết lập cơ chế phê duyệt truy cập dữ liệu và ghi nhật ký, giám sát và cảnh báo hành vi truy cập bất thường; 4) Xây dựng phương án ứng phó sự cố an toàn thông tin cá nhân và diễn tập định kỳ; 5) Thực hiện thẩm tra kỹ lưỡng và ràng buộc hợp đồng với đối tác bên ngoài, làm rõ trách nhiệm an toàn của họ. Việc triển khai các biện pháp này sẽ chịu sự kiểm toán nội bộ và có thể chịu kiểm tra bên ngoài theo yêu cầu của cơ quan quản lý."
+        },
+        {
+          "heading": "Các câu hỏi thường gặp về việc bạn thực hiện quyền",
+          "body": "Trong thực tế, các câu hỏi thường gặp của người dùng gồm: 1) Dữ liệu tôi xuất bao gồm những nội dung gì? Phạm vi do tính năng xuất cung cấp phụ thuộc vào khả năng thực tế của sản phẩm, thường bao gồm thông tin cơ bản của bạn cùng danh sách bài báo, ghi chú và chú thích do bạn tạo; 2) Vì sao sau khi xóa vẫn có thể tìm thấy một số thông tin? Thao tác xóa sẽ khiến dữ liệu ngay lập tức chuyển sang trạng thái không thể truy cập, nhưng việc cập nhật chỉ mục tìm kiếm và bộ nhớ đệm có thể có độ trễ ngắn; bản sao lưu sẽ bị xóa sau khi chu kỳ sao lưu kết thúc; 3) Khác biệt giữa hủy tài khoản và xóa là gì? Hủy tài khoản áp dụng cho toàn bộ tài khoản và toàn bộ dữ liệu của tài khoản; xóa có thể áp dụng cho từng nội dung; 4) Tôi quên email đăng ký thì phải làm sao? Bạn có thể khôi phục bằng phương thức khác đã liên kết trong cài đặt tài khoản, hoặc liên hệ với chúng tôi để xử lý sau khi xác minh danh tính; 5) Thực hiện quyền có mất phí không? Chúng tôi không thu phí với yêu cầu trong phạm vi hợp lý; yêu cầu lặp lại hoặc vượt quá giới hạn hợp lý có thể bị thu khoản phí hợp lý cho chi phí phát sinh. Nếu bạn có thắc mắc khác, vui lòng liên hệ bất cứ lúc nào."
+        },
+        {
+          "heading": "Đa thiết bị và đồng bộ dữ liệu",
+          "body": "Khi bạn đăng nhập cùng một tài khoản trên các thiết bị khác nhau, bài báo, ghi chú và chú thích của bạn sẽ được đồng bộ ở phía máy chủ để bảo đảm trải nghiệm nhất quán trên nhiều thiết bị. Quá trình đồng bộ sử dụng truyền tải mã hóa; máy chủ chỉ lưu dữ liệu phiên bản cần thiết để thực hiện đồng bộ. Thao tác xóa trên một thiết bị sẽ được đồng bộ sang các thiết bị khác; nếu xảy ra xung đột đồng bộ (ví dụ chỉnh sửa ngoại tuyến rồi trực tuyến để hợp nhất), hệ thống sẽ xử lý theo chiến lược hợp nhất đặt trước và cố gắng giữ lại nội dung của cả hai bên. Nếu bạn không muốn một số nội dung được đồng bộ, bạn có thể chọn chỉ sử dụng chức năng tương ứng ở cục bộ (nếu nền tảng hỗ trợ), hoặc đăng xuất tài khoản rồi mới chỉnh sửa. Đối với dữ liệu bị ghi đè hoặc mất do cơ chế đồng bộ, chúng tôi sẽ cố gắng hỗ trợ khôi phục bản sao lưu, nhưng không loại trừ khả năng không thể khôi phục; khuyến nghị bạn định kỳ xuất các nội dung quan trọng."
+        },
+        {
+          "heading": "Thành phần bên thứ ba và giấy phép nguồn mở",
+          "body": "Nền tảng này đã sử dụng nhiều thành phần nguồn mở và thư viện bên thứ ba chất lượng cao trong quá trình xây dựng. Thông tin giấy phép của các thành phần này không thay đổi cam kết của chính sách này đối với bạn: chúng tôi chịu nghĩa vụ bảo vệ dữ liệu được xử lý thông qua thành phần ở mức tương đương với xử lý trực tiếp. Một số thành phần có thể tạo nhật ký kỹ thuật trong quá trình chạy (như báo cáo lỗi khung), chúng tôi sẽ yêu cầu hoặc cấu hình trong phạm vi kỹ thuật cho phép để chúng chỉ thu thập thông tin kỹ thuật đã được khử nhạy cảm. Toàn văn giấy phép nguồn mở và tuyên bố quyền, xin lấy theo bản công bố chính thức của từng thành phần; nếu bạn cần biết danh sách các thành phần nguồn mở chính được nền tảng sử dụng, có thể yêu cầu chúng tôi qua email hỗ trợ."
+        },
+        {
+          "heading": "Giám sát và kiểm toán tuân thủ",
+          "body": "Chúng tôi sẽ tích cực phối hợp với yêu cầu kiểm tra, giám sát và kiểm toán tuân thủ của cơ quan có thẩm quyền, đồng thời cung cấp tài liệu và giải trình cần thiết theo pháp luật. Trong phạm vi pháp luật cho phép, chúng tôi cũng chủ động thực hiện tự đánh giá tuân thủ, bao gồm đánh giá tác động bảo vệ thông tin cá nhân (PIA) và đánh giá an toàn, đồng thời không ngừng cải thiện các biện pháp bảo vệ dựa trên kết quả đánh giá. Khi luật, quy định mới, tiêu chuẩn quốc gia hoặc chuẩn mực ngành đưa ra yêu cầu cao hơn đối với các vấn đề nêu trong chính sách này, chúng tôi sẽ kịp thời cập nhật chính sách và quy chế nội bộ để bảo đảm luôn phù hợp với chuẩn tuân thủ mới nhất."
+        },
+        {
+          "heading": "Giải thích thuật ngữ",
+          "body": "Để thuận tiện hiểu chính sách này, chúng tôi giải thích các thuật ngữ chính như sau: 1) Thông tin cá nhân: các loại thông tin được ghi lại bằng điện tử hoặc cách khác liên quan đến cá nhân đã được nhận diện hoặc có thể nhận diện, không bao gồm thông tin sau khi đã ẩn danh; 2) Thông tin cá nhân nhạy cảm: thông tin cá nhân mà khi bị rò rỉ hoặc sử dụng trái phép dễ dẫn đến xâm phạm phẩm giá con người hoặc gây nguy hại cho thân thể, tài sản của cá nhân; 3) Ẩn danh: quá trình xử lý thông tin cá nhân đến mức không thể nhận diện một cá nhân cụ thể và không thể khôi phục; 4) Khử nhận dạng: quá trình xử lý thông tin cá nhân để khi không có thông tin bổ sung thì không thể nhận diện một cá nhân cụ thể; 5) Bên xử lý được ủy quyền: tổ chức hoặc cá nhân xử lý thông tin cá nhân cho chúng tôi theo chỉ dẫn của chúng tôi; 6) Chu kỳ sao lưu: khoảng thời gian lưu bản sao dữ liệu nhằm mục đích chống thảm họa; sau khi kết thúc, bản sao sẽ bị xóa."
+        },
+        {
+          "heading": "Khuyến nghị an toàn tài khoản",
+          "body": "Bảo vệ thông tin cá nhân không chỉ là trách nhiệm của chúng tôi mà còn cần sự tham gia của bạn. Chúng tôi khuyến nghị bạn: 1) Đặt mật khẩu có độ mạnh cao (kết hợp chữ cái, chữ số và ký hiệu), tránh dùng chung một mật khẩu với các trang web khác; 2) Không tiết lộ tài khoản, mật khẩu hoặc thông tin phiên cho người khác, kể cả người tự xưng là nhân viên hỗ trợ của chúng tôi — nhân viên của chúng tôi sẽ không yêu cầu bạn cung cấp mật khẩu; 3) Đăng xuất kịp thời sau khi dùng xong trên thiết bị không thường dùng; 4) Định kỳ kiểm tra hoạt động đăng nhập và tình trạng ủy quyền của tài khoản; khi phát hiện bất thường, hãy đổi mật khẩu và liên hệ với chúng tôi; 5) Thận trọng xử lý liên kết và tệp đính kèm không rõ nguồn gốc để phòng chống tấn công lừa đảo. Nếu bạn nghi ngờ tài khoản có bất thường, vui lòng liên hệ với chúng tôi ngay qua các kênh nêu trong chính sách này; chúng tôi sẽ hỗ trợ bạn khóa tài khoản, đặt lại mật khẩu và rà soát rủi ro."
+        },
+        {
+          "heading": "Nhật ký và dữ liệu kiểm toán",
+          "body": "Để bảo đảm an toàn dịch vụ, khắc phục sự cố và đáp ứng yêu cầu tuân thủ, chúng tôi ghi nhật ký kỹ thuật cần thiết, bao gồm thời gian yêu cầu, địa chỉ yêu cầu, loại thao tác, trạng thái kết quả và địa chỉ nguồn, v.v. Dữ liệu nhật ký được khử nhạy cảm, việc truy cập bị kiểm soát chặt chẽ, thời hạn lưu thường không vượt quá giới hạn tối đa do pháp luật quy định. Nhật ký chủ yếu được dùng cho các mục đích sau: nhận diện và ngăn chặn hành vi tấn công, phân tích điểm nghẽn hiệu năng hệ thống, tái hiện và sửa lỗi, hỗ trợ điều tra và thu thập chứng cứ sự cố an toàn. Nhật ký sẽ không được dùng để xây dựng chân dung thương mại về bạn và cũng không được chia sẻ với bên thứ ba cho mục đích tiếp thị. Nếu bạn có thắc mắc về các bản ghi nhật ký liên quan đến mình, bạn có thể hỏi chúng tôi; chúng tôi sẽ giải thích tình hình xử lý cho bạn trong phạm vi pháp luật cho phép."
+        },
+        {
+          "heading": "Phân loại và phân cấp dữ liệu",
+          "body": "Chúng tôi quản lý dữ liệu theo phân loại và phân cấp dựa trên mức độ nhạy cảm và tầm quan trọng nghiệp vụ: 1) Loại thông tin xác thực danh tính (như mã băm mật khẩu, mã phiên) được bảo vệ ở cấp cao nhất, lưu trữ bằng mã băm và mã hóa, truy cập cần hai người ủy quyền; 2) Loại hồ sơ cá nhân (như email, biệt danh) được kiểm soát truy cập nghiêm ngặt, chỉ hiển thị ở những khâu cần thiết để thực hiện chức năng; 3) Loại nội dung người dùng (như bài báo, ghi chú, chú thích) thuộc về bạn; chúng tôi lưu trữ và xử lý theo chỉ dẫn của bạn, không kiểm duyệt nội dung (trừ trường hợp pháp luật, quy định yêu cầu); 4) Loại nhật ký kỹ thuật (như bản ghi truy cập) được lưu ở dạng khử nhạy cảm cho mục đích vận hành và an toàn. Dữ liệu ở các cấp khác nhau được áp dụng biện pháp kiểm soát khác biệt trong từng khâu lưu trữ, truyền tải, truy cập, tiêu hủy; dữ liệu có cấp càng cao thì kiểm soát càng nghiêm ngặt."
+        },
+        {
+          "heading": "Dữ liệu lưu cục bộ trong trình duyệt",
+          "body": "Để nâng cao trải nghiệm, một phần dữ liệu sẽ được lưu cục bộ trong trình duyệt của bạn, bao gồm: thông tin phiên đăng nhập (dùng để tránh đăng nhập lặp lại), tùy chọn giao diện (như chế độ chủ đề, lựa chọn ngôn ngữ, cài đặt trình đọc), bộ nhớ đệm chỉnh sửa tạm thời (dùng để tránh mất nội dung do đóng bất ngờ). Những dữ liệu cục bộ này chỉ được lưu trên thiết bị của bạn; bạn có thể xóa chúng bằng chức năng xóa dữ liệu của trình duyệt hoặc dùng chức năng đăng xuất có trong nền tảng để kích hoạt dọn dẹp. Xin lưu ý, sau khi xóa dữ liệu cục bộ, bạn cần đăng nhập lại; một số tùy chọn sẽ trở về giá trị mặc định. Khi dùng thiết bị công cộng hoặc dùng chung, khuyến nghị bạn dùng chế độ ẩn danh và đăng xuất tài khoản sau khi dùng để tránh thông tin cá nhân bị người dùng sau truy cập."
+        },
+        {
+          "heading": "Sắp xếp dữ liệu trong trường hợp hợp tác và sáp nhập",
+          "body": "Nếu chúng tôi có sáp nhập, bị mua lại, chuyển nhượng tài sản hoặc giao dịch tương tự, thông tin cá nhân của bạn có thể là một phần của tài sản được chuyển giao. Trong trường hợp đó, chúng tôi sẽ: 1) đánh giá khả năng bảo vệ dữ liệu của bên nhận trước giao dịch; 2) yêu cầu bên nhận tiếp tục thực hiện các nghĩa vụ theo chính sách này, hoặc xin lại sự đồng ý của bạn trước khi chính sách thay đổi; 3) thông báo cho bạn tên và thông tin liên hệ của bên nhận thông qua công bố công khai hoặc các hình thức khác theo quy định pháp luật. Nếu hình thức dịch vụ thay đổi sau giao dịch (như đổi tên, tích hợp tính năng), chúng tôi sẽ thông báo cho bạn trong thời hạn hợp lý và bảo đảm việc bạn thực hiện các quyền tra cứu, chỉnh sửa, xóa và hủy tài khoản không bị ảnh hưởng."
+        },
+        {
+          "heading": "Chỉnh sửa lỗi và chất lượng dữ liệu",
+          "body": "Chúng tôi sẽ nỗ lực bảo đảm thông tin cá nhân được xử lý luôn chính xác, đầy đủ và được cập nhật kịp thời. Nếu bạn phát hiện chúng tôi đang xử lý thông tin về bạn có sai sót (ví dụ: email đăng ký bị sai, thông tin cá nhân không chính xác), bạn có thể tự chỉnh sửa qua trang cài đặt hoặc liên hệ với chúng tôi để yêu cầu chỉnh sửa. Đối với yêu cầu chỉnh sửa bạn gửi, chúng tôi sẽ xác minh danh tính trước, sau đó hoàn tất chỉnh sửa trong thời hạn hợp lý và đồng bộ kết quả chỉnh sửa đến các hệ thống liên quan. Nếu việc chỉnh sửa liên quan đến bên thứ ba (ví dụ: nguồn danh tính SSO), chúng tôi có thể cần phối hợp với các bên liên quan để xử lý, khi đó chúng tôi sẽ thông báo cho bạn thời gian hoàn thành dự kiến. Chất lượng dữ liệu rất quan trọng đối với chất lượng dịch vụ; cảm ơn bạn đã hỗ trợ chúng tôi duy trì độ chính xác của thông tin."
+        },
+        {
+          "heading": "Nguyên tắc mặc định của thiết kế quyền riêng tư",
+          "body": "Trong giai đoạn thiết kế sản phẩm và dịch vụ, chúng tôi tuân thủ các nguyên tắc “Bảo vệ quyền riêng tư mặc định” (Privacy by Default) và “Quyền riêng tư tích hợp vào thiết kế” (Privacy by Design): 1) Thực hiện đánh giá tác động bảo vệ thông tin cá nhân trước khi ra mắt tính năng mới, nhằm nhận diện và giảm thiểu rủi ro về quyền riêng tư; 2) Cấu hình mặc định áp dụng việc thu thập tối thiểu, các quyền không thiết yếu mặc định bị tắt; 3) Việc hiển thị dữ liệu tuân thủ nguyên tắc giảm thiểu khả năng hiển thị, ghi chú và chú thích của bạn mặc định chỉ bạn nhìn thấy, hành vi chia sẻ cần do bạn chủ động thực hiện; 4) Chức năng xuất và xóa được tích hợp sẵn như năng lực tiêu chuẩn, thay vì bản vá bổ sung sau; 5) Giao diện bên ngoài tuân thủ nguyên tắc trường tối thiểu, tránh phơi bày dữ liệu quá mức. Những nguyên tắc này xuyên suốt toàn bộ vòng đời sản phẩm, bao gồm các khâu đánh giá yêu cầu, phát triển, kiểm thử và vận hành sau khi ra mắt."
+        },
+        {
+          "heading": "Giải thích ranh giới của Chính sách quyền riêng tư",
+          "body": "Chính sách này áp dụng cho các hoạt động xử lý thông tin cá nhân của bạn mà chúng tôi thực hiện thông qua nền tảng này. Các trường hợp sau đây không thuộc phạm vi điều chỉnh của chính sách này, mà áp dụng chính sách tương ứng hoặc do chủ thể tương ứng chịu trách nhiệm: 1) Các trang web hoặc dịch vụ của bên thứ ba mà bạn truy cập (kể cả khi được chuyển hướng qua liên kết trên nền tảng này), hoạt động xử lý thông tin của họ chịu sự ràng buộc bởi chính sách quyền riêng tư của chính họ; 2) Các thao tác ủy quyền bạn thực hiện thông qua nền tảng tài khoản của bên thứ ba (như GitHub), việc xử lý thông tin liên quan tuân theo chính sách của bên nền tảng, chúng tôi chỉ tiếp nhận thông tin sau khi được xác nhận trên trang ủy quyền; 3) Phiên bản riêng tư (nếu có) do tổ chức của bạn mua sắm, triển khai hoặc quản lý thống nhất, chủ thể xử lý dữ liệu và quy tắc xử lý tuân theo thỏa thuận đã ký giữa tổ chức và đơn vị vận hành. Vui lòng lưu ý phân biệt chủ thể xử lý thông tin trong các tình huống khác nhau và đọc kỹ các điều khoản liên quan."
+        },
+        {
+          "heading": "Khiếu nại và giám sát",
+          "body": "Nếu bạn cho rằng hành vi xử lý thông tin cá nhân của chúng tôi đã xâm phạm quyền và lợi ích hợp pháp của bạn, bạn có thể bảo vệ quyền của mình thông qua các cách sau: 1) Gửi khiếu nại đến chúng tôi, trình bày sự việc, lý do và yêu cầu; chúng tôi sẽ xử lý và phản hồi trong vòng mười lăm ngày làm việc; 2) Khiếu nại, tố cáo với cơ quan quản lý không gian mạng hoặc cơ quan khác có trách nhiệm bảo vệ thông tin cá nhân; 3) Khởi kiện ra Tòa án nhân dân theo quy định pháp luật đối với tranh chấp liên quan. Chúng tôi cam kết sẽ không áp dụng bất kỳ hình thức hạn chế hay biện pháp phân biệt đối xử nào đối với tài khoản của bạn vì bạn thực hiện các quyền nêu trên. Đối với các hành vi vi phạm đã được xác minh là đúng, chúng tôi sẽ chịu trách nhiệm theo pháp luật, áp dụng các biện pháp khắc phục, đồng thời phản hồi kết quả xử lý cho bạn."
+        },
+        {
+          "heading": "Mối quan hệ với Điều khoản Sử dụng",
+          "body": "Chính sách này cùng với Điều khoản Sử dụng tạo thành toàn bộ văn bản pháp lý làm cơ sở cho việc bạn sử dụng Dịch vụ này. Nếu Chính sách này và Điều khoản Sử dụng có sự không nhất quán về các vấn đề xử lý thông tin cá nhân, thì áp dụng theo Chính sách này; nếu Chính sách này chưa đề cập đến vấn đề nào, thì thực hiện theo Điều khoản Sử dụng. Khi pháp luật và quy định có yêu cầu bắt buộc về xử lý thông tin cá nhân, bất kể Chính sách này quy định như thế nào, đều áp dụng theo pháp luật và quy định. Việc bạn sử dụng Dịch vụ này có nghĩa là bạn đã đồng thời đọc và đồng ý với hai tài liệu nêu trên; việc bạn không đồng ý với bất kỳ tài liệu nào trong số đó đều có nghĩa là bạn nên ngừng sử dụng Dịch vụ này."
+        },
+        {
+          "heading": "Mô tả tình huống ví dụ",
+          "body": "Để giúp bạn hiểu trực quan về chính sách này, chúng tôi cung cấp các ví dụ sau: Ví dụ một, bạn đăng ký bằng email, chúng tôi chỉ lưu địa chỉ email và hàm băm mật khẩu, không yêu cầu bạn cung cấp tên thật hoặc số điện thoại; Ví dụ hai, bạn đăng nhập qua GitHub, chúng tôi chỉ nhận thông tin cơ bản mà bạn xác nhận trên trang ủy quyền của GitHub, không đọc nội dung kho mã của bạn; Ví dụ ba, bạn sử dụng tính năng hỏi đáp AI để hỏi về ý nghĩa của một đoạn trong bài báo, chỉ văn bản của đoạn đó và câu hỏi của bạn được truyền đến bước xử lý của mô hình, các ghi chú khác của bạn sẽ không bị gửi kèm; Ví dụ bốn, bạn chia sẻ một tài liệu với nhóm nghiên cứu, sau đó các thành viên trong nhóm có thể xem nội dung được chia sẻ của tài liệu đó, nhưng các tài liệu khác mà bạn chưa chia sẻ vẫn chỉ mình bạn xem được; Ví dụ năm, bạn yêu cầu xóa tài khoản, sau khi xác minh danh tính, chúng tôi xóa dữ liệu cá nhân của bạn, các bản sao trong bản sao lưu sẽ tự động bị xóa khi chu kỳ sao lưu kết thúc. Các ví dụ trên nhằm minh họa logic xử lý; chi tiết cụ thể căn cứ theo cách triển khai thực tế của sản phẩm và nội dung chính của chính sách này."
+        },
+        {
+          "heading": "Phiên bản và hiệu lực",
+          "body": "Số phiên bản của chính sách này là V1.0 và có hiệu lực kể từ ngày phát hành. Chúng tôi sẽ ghi lại tóm tắt của mỗi thay đổi quan trọng và thời gian cập nhật trên trang này để bạn có thể tra cứu. Nếu bạn tiếp tục sử dụng dịch vụ này sau khi chính sách được cập nhật, điều đó có nghĩa là bạn chấp nhận nội dung đã cập nhật; nếu không đồng ý, bạn có thể ngừng sử dụng và yêu cầu xóa tài khoản. Bạn nên định kỳ xem lại chính sách này để hiểu cách chúng tôi bảo vệ thông tin cá nhân của bạn. Cảm ơn bạn đã tin tưởng PaperHelper; chúng tôi sẽ tiếp tục xử lý dữ liệu của bạn một cách thận trọng và minh bạch."
+        }
+      ]
+    }
+  },
+  "assistant": {
+    "thinking": "Đang suy nghĩ",
+    "processing": "Đang xử lý",
+    "organizing": "Đang tổng hợp câu trả lời",
+    "thinkingAria": "AI đang xử lý",
+    "reasoningActive": "Đang suy nghĩ",
+    "reasoningTitle": "Quá trình suy nghĩ",
+    "me": "Tôi",
+    "assistantName": "Trợ lý PR",
+    "providerRequired": "Vui lòng cấu hình và kích hoạt một nhà cung cấp trước, sau đó chọn mô hình hoặc gửi tin nhắn.",
+    "providerRequiredShort": "Vui lòng cấu hình nhà cung cấp trước",
+    "providerRequiredQuote": "Vui lòng cấu hình nhà cung cấp trước, trích dẫn bài báo đã được giữ trong ô nhập.",
+    "contextParsing": "Nội dung chính của bài báo vẫn đang được phân tích; hiện tại hãy dùng văn bản đã chọn để đặt câu hỏi; sau khi phân tích xong, bạn có thể tiếp tục hỏi thêm.",
+    "contextUnavailable": "Tạm thời không thể lấy ngữ cảnh bài báo; đã dùng văn bản đã chọn để tiếp tục đặt câu hỏi.",
+    "newChat": "Cuộc trò chuyện mới",
+    "selectHistory": "Chọn lịch sử trò chuyện",
+    "history": "Lịch sử trò chuyện",
+    "noHistory": "Chưa có lịch sử trò chuyện",
+    "providerDeleted": "Nhà cung cấp đã bị xóa",
+    "replying": "Đang trả lời",
+    "createdAt": "Đã tạo {time}",
+    "lastMessageAt": "Trò chuyện cuối lúc {time}",
+    "selectChatProvider": "Chọn nhà cung cấp cho cuộc trò chuyện hiện tại",
+    "selectProvider": "Chọn nhà cung cấp",
+    "noProvider": "Chưa cấu hình nhà cung cấp",
+    "emptyHint": "Nhập văn bản bên dưới để bắt đầu trò chuyện với AI",
+    "replyFailed": "Trả lời thất bại, vui lòng gửi lại",
+    "emptyReply": "Không nhận được phản hồi có thể hiển thị",
+    "pageRef": "{title} · Trang {page}",
+    "removeImage": "Xóa ảnh",
+    "removeQuote": "Xóa trích dẫn",
+    "inputPlaceholder": "Nhập tin nhắn, Enter để gửi, Shift+Enter để xuống dòng",
+    "inputPlaceholderQuoted": "Nhập câu hỏi của bạn dưới trích dẫn, Enter để gửi",
+    "inputPlaceholderNoProvider": "Vui lòng cấu hình nhà cung cấp trước khi bắt đầu trò chuyện",
+    "configureProvider": "Cấu hình nhà cung cấp",
+    "provider": "Nhà cung cấp",
+    "selectModel": "Chọn mô hình",
+    "sendMessage": "Gửi tin nhắn",
+    "disclaimer": "Nội dung do AI tạo chỉ mang tính tham khảo, vui lòng kiểm tra thông tin quan trọng",
+    "replyInterrupted": "Phản hồi trước đó chưa hoàn tất khi trang đóng, vui lòng gửi lại"
+  },
+  "categories": {
+    "thesis": {
+      "fields": {
+        "degreeType": {
+          "label": "Loại bằng cấp",
+          "options": {
+            "doctor": "Tiến sĩ",
+            "master": "Thạc sĩ",
+            "bachelor": "Cử nhân"
+          }
+        },
+        "advisor": {
+          "label": "Người hướng dẫn"
+        },
+        "university": {
+          "label": "Trường/Cơ quan"
+        },
+        "major": {
+          "label": "Chuyên ngành"
+        }
+      },
+      "label": "Luận văn"
+    },
+    "journal": {
+      "fields": {
+        "journalName": {
+          "label": "Tên tạp chí/hội nghị"
+        },
+        "volume": {
+          "label": "Tập"
+        },
+        "issue": {
+          "label": "Số"
+        },
+        "pages": {
+          "label": "Số trang"
+        },
+        "issnIsbn": {
+          "label": "ISSN/ISBN"
+        },
+        "indexing": {
+          "label": "Tình trạng lập chỉ mục",
+          "options": {
+            "SCI": "SCI",
+            "EI": "EI",
+            "SSCI": "SSCI",
+            "PKU_CORE": "Lõi Bắc Đại",
+            "CSSCI": "CSSCI",
+            "OTHER": "Khác"
+          }
+        }
+      },
+      "label": "Bài báo tạp chí/hội nghị"
+    },
+    "preprint": {
+      "fields": {
+        "platform": {
+          "label": "Nền tảng preprint",
+          "options": {
+            "arxiv": "arXiv",
+            "biorxiv": "bioRxiv",
+            "ssrn": "SSRN",
+            "researchgate": "ResearchGate",
+            "other": "Khác"
+          }
+        },
+        "versionNumber": {
+          "label": "Số phiên bản"
+        },
+        "doiStatus": {
+          "label": "Trạng thái DOI",
+          "options": {
+            "has_doi": "Có DOI",
+            "no_doi": "Chưa có DOI"
+          }
+        }
+      },
+      "label": "Bản in trước"
+    },
+    "course": {
+      "fields": {
+        "courseName": {
+          "label": "Tên môn học"
+        },
+        "instructor": {
+          "label": "Giảng viên"
+        },
+        "university": {
+          "label": "Trường"
+        },
+        "semester": {
+          "label": "Học kỳ",
+          "placeholder": "Ví dụ: Học kỳ Thu 2024-2025"
+        }
+      },
+      "label": "Tiểu luận môn học"
+    },
+    "tech_report": {
+      "fields": {
+        "institution": {
+          "label": "Tổ chức nghiên cứu"
+        },
+        "reportNumber": {
+          "label": "Số báo cáo"
+        },
+        "projectName": {
+          "label": "Tên dự án"
+        }
+      },
+      "label": "Báo cáo nghiên cứu"
+    },
+    "patent": {
+      "fields": {
+        "patentNumber": {
+          "label": "Số bằng sáng chế"
+        },
+        "patentType": {
+          "label": "Loại bằng sáng chế",
+          "options": {
+            "invention": "Sáng chế",
+            "utility_model": "Giải pháp hữu ích",
+            "design": "Kiểu dáng công nghiệp"
+          }
+        },
+        "applicationDate": {
+          "label": "Ngày nộp đơn"
+        },
+        "grantDate": {
+          "label": "Ngày cấp bằng"
+        },
+        "patentHolder": {
+          "label": "Chủ sở hữu bằng sáng chế"
+        }
+      },
+      "label": "Tài liệu bằng sáng chế"
+    }
+  },
+  "errors": {
+    "loginExpired": "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại",
+    "forbidden": "Không đủ quyền",
+    "badRequest": "Tham số không hợp lệ",
+    "notFound": "Không tìm thấy tài nguyên",
+    "fileDeleteFailed": "Xóa tệp gốc thất bại, bản ghi bài báo đã được giữ lại, vui lòng thử lại sau",
+    "twoFactorExpired": "Phiên xác thực hai bước đã hết hạn, vui lòng đăng nhập lại",
+    "unknown": "Lỗi không xác định",
+    "unknownNetwork": "Lỗi mạng không xác định",
+    "providerNoDetail": "Provider không trả về chi tiết lỗi",
+    "httpHtmlResponse": "HTTP {status}: Provider đã trả về trang HTML thay vì phản hồi của mô hình",
+    "providerUnreachable": "Trình duyệt không thể truy cập Provider; vui lòng kiểm tra Base URL, CORS, chứng chỉ TLS và liệu trang HTTPS có đang gọi địa chỉ HTTP hay không",
+    "providerAborted": "Yêu cầu đã bị hủy hoặc quá thời gian chờ",
+    "baseUrlScheme": "Base URL chỉ hỗ trợ http:// hoặc https://",
+    "baseUrlMixedContent": "Trang hiện tại là HTTPS, trình duyệt sẽ chặn yêu cầu tới Provider HTTP (Mixed Content)",
+    "baseUrlInvalid": "Định dạng Base URL không hợp lệ",
+    "relayUnavailable": "Trung chuyển Provider không khả dụng",
+    "noDisplayText": "Cả phản hồi streaming lẫn non-streaming của Provider đều không có văn bản hiển thị được",
+    "modelsUnreadable": "Không thể đọc phản hồi từ API mô hình",
+    "modelsHtml": "API mô hình trả về trang HTML thay vì danh sách mô hình",
+    "modelsNotJson": "API mô hình trả về JSON không hợp lệ",
+    "modelsNoId": "Phản hồi của API mô hình không có ID mô hình nhận diện được",
+    "modelsNoPath": "API mô hình không khớp với đường dẫn API khả dụng nào",
+    "modelsEmpty": "Danh sách mô hình trống",
+    "providerTestNoModel": "Không thể xác định mô hình kiểm tra: {detail}. Vui lòng nhập thủ công một mô hình mà Provider này hỗ trợ trước",
+    "baseUrlAutofixed": ", đã tự động bổ sung đường dẫn API /v1 của Base URL",
+    "providerTestOkModel": "Kết nối thành công, mô hình {model} khả dụng{correction}",
+    "providerTestOkList": "Kết nối thành công, đã lấy được {count} mô hình và xác minh {model}{correction}",
+    "providerTestChatFailed": "Kiểm thử API trò chuyện thất bại (mô hình {model}): {detail}",
+    "emptyResponse": "Nhà cung cấp trả về thành công, nhưng phản hồi không có văn bản nào để hiển thị",
+    "endpointMismatch": "Nhà cung cấp trả về trang HTML thay vì phản hồi mô hình, vui lòng kiểm tra Base URL có trỏ đến đường dẫn gốc API không",
+    "withDiagnostic": "{message}. Chẩn đoán phản hồi: {diagnostic}",
+    "providerBusiness": "Nhà cung cấp trả về lỗi nghiệp vụ",
+    "providerBusinessDetail": "Lỗi nghiệp vụ nhà cung cấp: {detail}",
+    "providerFailedStatus": "Nhà cung cấp trả về trạng thái thất bại",
+    "modelRefusal": "Mô hình từ chối tạo văn bản: {refusal}",
+    "noTextFinishReason": "Nhà cung cấp không trả về văn bản, lý do kết thúc: {reason}",
+    "toolCallOnly": "Mô hình chỉ trả về lệnh gọi công cụ, nhưng cuộc trò chuyện hiện tại không có công cụ nào có thể thực thi"
+  },
+  "notifications": {
+    "welcomeTitle": "Giới thiệu tính năng hệ thống",
+    "welcomeMessage": "Chào mừng bạn đến với PaperHelper! Nhấp để xem các tính năng của phiên bản hiện tại"
+  }
+}

@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
+import { withIntl } from "@/test/intl"
 import { RecoveryCodesPanel } from "@/components/settings/RecoveryCodesPanel"
 
 // REQ-202609-0104: nine 6-digit codes, saved by copy or by a plain .txt
@@ -25,7 +26,7 @@ describe("recovery codes panel", () => {
   })
 
   it("renders all nine six-digit codes", () => {
-    render(<RecoveryCodesPanel codes={CODES} />)
+    render(withIntl(<RecoveryCodesPanel codes={CODES} />))
 
     for (const code of CODES) {
       expect(screen.getByText(code)).toBeInTheDocument()
@@ -38,7 +39,7 @@ describe("recovery codes panel", () => {
     const writeText = vi.fn().mockResolvedValue(undefined)
     Object.assign(navigator, { clipboard: { writeText } })
 
-    render(<RecoveryCodesPanel codes={CODES} />)
+    render(withIntl(<RecoveryCodesPanel codes={CODES} />))
     fireEvent.click(screen.getByRole("button", { name: /一键复制/ }))
 
     await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(1))
@@ -59,7 +60,7 @@ describe("recovery codes panel", () => {
       clicked.push(this)
     })
 
-    render(<RecoveryCodesPanel codes={CODES} email="reader@example.com" />)
+    render(withIntl(<RecoveryCodesPanel codes={CODES} email="reader@example.com" />))
     fireEvent.click(screen.getByRole("button", { name: /下载 TXT 文件/ }))
 
     expect(clicked).toHaveLength(1)

@@ -6,7 +6,14 @@ The repository contains the C-side product and its API. The administration conso
 
 > **Maintainer start here:** read the [documentation index](docs/README.md), then the [new maintainer guide](docs/NEW_MAINTAINER_GUIDE.md) and [complete project status](docs/PROJECT_STATUS.md). They record the real production topology, configuration rules, known risks, and release workflow without requiring previous chat context.
 
-## Current Iteration: v0.1.47
+## Current Iteration: v0.1.48
+
+- Branch: `feature/v0.1.48`
+- Requirement: `REQ-202609-0111` — internationalization, and the language switcher on the sign-in page that had stopped responding.
+- Scope: the client now speaks fourteen languages — Simplified Chinese (default), Traditional Chinese, English, Tibetan, Uyghur, German, Arabic, Korean, Japanese, French, Vietnamese, Spanish, Italian and Persian. `src/i18n/locales.ts` is the single source of truth (code, native name, English name, writing direction); every user-visible string lives in `src/i18n/locales/<locale>/common.json` and is looked up through `next-intl`, so hardcoded Chinese is gone from the pages, dialogs, toasts, empty states and `title`/`placeholder`/`aria-label` attributes. The sign-in page's globe button used to do nothing: the old toggle flipped a client-side state that the root layout — which sits *above* `[locale]` and therefore never re-renders on a soft navigation — could not see, so `<html lang>`/`<html dir>`, the server-rendered copy and the message bundle all stayed on the old language. It is now a dropdown listing every language under its native name plus its English name, and picking one writes the `NEXT_LOCALE` cookie and does a **full page navigation** to the same route in the new language, which is what actually re-renders the whole tree. The choice follows the user into the app: 个人设置 → 偏好设置 → 语言 shows the current language and saves it to `UserSettings.language` through the existing `PUT /api/settings`, and on the next sign-in from a fresh device the account preference is adopted (`src/i18n/locale-preference.ts`) — unless the user has explicitly picked a language on that device, which wins. Arabic, Persian and Uyghur are right-to-left: the root layout sets `dir`, and the layouts were converted to Tailwind's logical utilities (`ms-`/`me-`/`ps-`/`pe-`/`start-`/`end-`/`text-start`/`border-e`) so nothing stays pinned left. Strings that live outside React — the API client, the AI provider and its response parser, the Zustand stores, device utilities — go through a small runtime translator (`src/i18n/runtime.ts`) that the root layout keeps in sync with the active locale.
+- No database migration of its own and no API change: it lands on top of v0.1.47's `V15__widen_user_avatar.sql`, already applied in production. The version moves to `0.1.48`.
+
+## Previous Iteration: v0.1.47
 
 - Branch: `feature/v0.1.47`
 - Requirement: `REQ-202609-0110` — a freshly logged-in account showed no username, no email and a "?" avatar; give it a default avatar and a system-generated name, show the email in the personal center, and close the avatar menu when blank space is clicked.
@@ -31,36 +38,29 @@ The repository contains the C-side product and its API. The administration conso
 - No database migration, no new dependency, no client-side behaviour change; the client only moves to version `0.1.44`.
 - Status: released. Commit `6327bfe` on `feature/v0.1.44`, merged to `dev` and `main` on 2026-09-15 UTC, deployed and verified in production (`/api/health` reports `0.1.44`); deployment detail and the end-to-end mail check are recorded in `docs/MAINTENANCE.md`.
 
-## Earlier Iteration: v0.1.43
+## Previous Iteration: v0.1.43
 
 - Branch: `feature/v0.1.43`
 - Requirement: `REQ-202609-0104` — the QR code shown while enabling two-factor authentication looked harsh.
 - Scope: the bind wizard's QR no longer inverts to a dark plate in the dark theme. It is always drawn dark-on-white (what authenticator apps scan best), and it now sits inside a rounded white card with a hairline border, a soft shadow and a little padding, so it reads as a deliberate card rather than a bare black square. `ThemeAwareQrCode.tsx` became `QrCodeCard.tsx` because it is no longer theme-aware.
 - No behaviour change: same requests, same payloads, no database migration, no new dependency.
 
-## Previous Iteration: v0.1.42
+## Earlier Iteration: v0.1.42
 
 - Branch: `feature/v0.1.42`
 - Requirement: `REQ-202609-0104` — polish the two-factor authentication form in the personal center.
 - Scope: a UI-only pass over the personal-center two-factor tab. The six-digit code field is now a row of six separate cells (auto-advance, paste and one-time-code autofill spread across cells, backspace steps back, arrow keys move) instead of one narrow monospace box. The manually typed secret key gets a copy button of its own. The 「当前密码」 and 「6 位动态码」 labels sit to the left of their inputs with a real gap in between, and the same left/right arrangement is applied to the regenerate-recovery-codes and disable-two-factor forms.
 - No behaviour change: the same requests go out with the same payloads, no database migration, no new dependency.
 
-## Earlier Iteration: v0.1.41
-
-- Branch: `feature/v0.1.41`
-- Requirement: `REQ-202609-0104` — complete the two-factor authentication feature in the personal center.
-- Scope: an end-to-end TOTP (RFC 6238) two-factor flow: API, database tables, login challenge, and personal-center UI. First-time enabling is a QR scan-and-bind wizard; re-enabling after a disable runs the same wizard. Every enable issues nine 6-digit single-use recovery codes, saved by either one-click copy or a plain `.txt` download (no PDF), and they stop working the moment two-factor is disabled. The QR image is drawn dark-on-white in a rounded card so it stays scannable in every theme (v0.1.43 dropped the earlier theme-inverting dark plate). A new 「信任设备」 menu sits alongside 「两步验证」 (four menus become five); it lists every device that has logged in, supports manual multi-select deletion, and a deleted device's already-issued login token stops working immediately.
-- Patch in v0.1.41: an expired or unparseable two-factor challenge token now answers with 「登录凭证已失效，请重新登录」 instead of a generic 500, so a login paused longer than the five-minute challenge window returns to the password step instead of showing an internal error.
-
 ## Current Release
 
 - Default branch: `main`
 - Integration branch: `dev`
-- Released version branch: `feature/v0.1.45` (released to production)
-- Client version: `0.1.45`
+- Released version branch: `feature/v0.1.46` (in development)
+- Client version: `0.1.46`
 - Production version: `0.1.45` (verified 2026-09-15 UTC)
-- Default locale: Chinese (`zh`)
-- Supported locales: Chinese (`zh`) and English (`en`)
+- Default locale: Simplified Chinese (`zh`)
+- Supported locales: Simplified Chinese (`zh`), Traditional Chinese (`zh-Hant`), English (`en`), Tibetan (`bo`), Uyghur (`ug`), German (`de`), Arabic (`ar`), Korean (`ko`), Japanese (`ja`), French (`fr`), Vietnamese (`vi`), Spanish (`es`), Italian (`it`) and Persian (`fa`) — Arabic, Persian and Uyghur render right-to-left
 - Production client: `https://paper.pilo.eu.cc`
 
 ## Product Preview
@@ -114,6 +114,7 @@ paper-reader/
 |   |-- public/               favicon and static assets
 |   |-- src/app/              routes, locale layouts, middleware
 |   |-- src/components/       reader, papers, notes, chat, forum, layout
+|   |-- src/i18n/             locale registry and per-language message catalogues
 |   |-- src/lib/api/           typed API clients and DTOs
 |   |-- src/stores/            Zustand application stores
 |   `-- package.json
@@ -155,7 +156,7 @@ paper-reader/
 ### Authentication
 
 - Email/password login.
-- Email verification-code login API; the current implementation writes codes to the backend log and does not yet deliver real email.
+- Email verification-code login; codes are delivered through the Bendywork notification center (see `docs/NOTIFICATION_TEMPLATES.md`).
 - GitHub OAuth callback flow.
 - Short-lived access token plus refresh token stored by the client session store.
 - Middleware route guard based on the `pr_session` cookie.
@@ -403,7 +404,9 @@ The frontend API wrapper is in [frontend/src/lib/api](frontend/src/lib/api), and
 - `/api/health` reads the backend version from Spring Boot build metadata, so the reported release always follows the JAR being executed instead of a controller constant.
 - Paper cards reserve a dedicated action area beside the category badge. Their delete action uses a confirmation dialog and lets users choose whether the server should also remove the stored original file.
 - The current-paper card uses a short inset capsule, a low-contrast border, and theme-specific layered highlights/shadows instead of a heavy full-height black edge.
-- Source UI copy is localized under `frontend/src/i18n/locales/{zh,en}/common.json`.
+- Source UI copy lives under `frontend/src/i18n/locales/<locale>/common.json`, one directory per supported language. `frontend/src/i18n/locales.ts` is the registry (code, native name, English name, direction) and the only place that needs editing when a language is added; `zh` is the source of truth, and every other locale must keep the same key set.
+- Layout code uses logical direction utilities (`ms-`/`me-`/`ps-`/`pe-`/`start-`/`end-`/`text-start`/`border-e`) instead of left/right, so the right-to-left languages (`ar`, `fa`, `ug`) mirror correctly.
+- Switching language always goes through `applyLocale()` in `frontend/src/i18n/switch-locale.ts`: it writes the `NEXT_LOCALE` cookie and performs a full page navigation. A client-side `router.push` would leave the root layout (which sits above `[locale]`) on the previous language.
 
 ## Versioned Development
 

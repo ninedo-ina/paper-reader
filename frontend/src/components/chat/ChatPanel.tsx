@@ -13,7 +13,8 @@ import {
   Settings2,
   X,
 } from "lucide-react"
-import { useChatStore, MODELS } from "@/stores/chat-store"
+import { useTranslations, useLocale } from "next-intl"
+import { useChatStore, MODELS, INTERRUPTED_REPLY_STATUS } from "@/stores/chat-store"
 import type { PaperMessageContext } from "@/stores/chat-store"
 import { usePreferencesStore } from "@/stores/preferences-store"
 import { useToastStore } from "@/stores/toast-store"
@@ -28,12 +29,12 @@ interface ChatPanelProps {
   onConfigureProvider?: () => void
 }
 
-const THINKING_LABELS = ["思考中", "正在处理", "整理答案"] as const
+const THINKING_LABEL_KEYS = ["thinking", "processing", "organizing"] as const
 
-function formatChatTime(value: string): string {
+function formatChatTime(value: string, locale: string): string {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return "--"
-  return new Intl.DateTimeFormat("zh-CN", {
+  return new Intl.DateTimeFormat(locale, {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -44,11 +45,12 @@ function formatChatTime(value: string): string {
 }
 
 function ThinkingIndicator() {
+  const t = useTranslations("assistant")
   const [labelIndex, setLabelIndex] = useState(0)
 
   useEffect(() => {
     const timer = window.setInterval(() => {
-      setLabelIndex((index) => (index + 1) % THINKING_LABELS.length)
+      setLabelIndex((index) => (index + 1) % THINKING_LABEL_KEYS.length)
     }, 1400)
     return () => window.clearInterval(timer)
   }, [])
@@ -57,10 +59,10 @@ function ThinkingIndicator() {
     <div
       className="flex min-w-[104px] items-center gap-2 text-xs text-[var(--text-secondary)]"
       role="status"
-      aria-label="AI 正在处理"
+      aria-label={t("thinkingAria")}
     >
       <span className="inline-block min-w-[52px]" aria-hidden="true">
-        {THINKING_LABELS[labelIndex]}
+        {t(THINKING_LABEL_KEYS[labelIndex])}
       </span>
       <span className="flex items-center gap-1" aria-hidden="true">
         {[0, 160, 320].map((delay) => (
@@ -82,6 +84,7 @@ function ReasoningDisclosure({
   content: string
   streaming: boolean
 }) {
+  const t = useTranslations("assistant")
   const [open, setOpen] = useState(false)
 
   return (
@@ -93,7 +96,7 @@ function ReasoningDisclosure({
         aria-expanded={open}
       >
         <Brain className="size-3.5 shrink-0" />
-        <span>{streaming ? "正在思考" : "思考过程"}</span>
+        <span>{streaming ? t("reasoningActive") : t("reasoningTitle")}</span>
         <ChevronRight className={cn("size-3.5 shrink-0 transition-transform", open && "rotate-90")} />
       </button>
       {open && (
@@ -107,6 +110,8 @@ function ReasoningDisclosure({
 }
 
 export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
+  const t = useTranslations("assistant")
+  const locale = useLocale()
   const {
     messages,
     directChats,
@@ -156,7 +161,7 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
     () => [...directChats].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt)),
     [directChats],
   )
-  const displayName = defaultDisplayName(profile) || "我"
+  const displayName = defaultDisplayName(profile) || t("me")
   const avatar = defaultAvatar(profile?.email, displayName)
   const userInitial = avatar.initial
 
@@ -199,10 +204,10 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
 
   const showProviderRequired = useCallback(() => {
     addToast({
-      message: "请先配置并激活一个 Provider，再选择模型或发送消息。",
+      message: t("providerRequired"),
       type: "info",
     })
-  }, [addToast])
+  }, [addToast, t])
 
   const handleConfigureProvider = useCallback(() => {
     onConfigureProvider?.()
@@ -320,14 +325,14 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
         chunks: response.chunks,
       }
       if (response.parseStatus === "PENDING" || response.parseStatus === "PROCESSING") {
-        addToast({ message: "论文正文仍在解析，当前先使用选中文本提问；解析完成后可继续追问。", type: "info" })
+        addToast({ message: t("contextParsing"), type: "info" })
       }
     } catch {
-      addToast({ message: "暂时无法获取论文上下文，已使用选中文本继续提问。", type: "info" })
+      addToast({ message: t("contextUnavailable"), type: "info" })
     }
 
     await sendDirect(content, selectedModel, selectedProvider, context)
-  }, [addToast, composerQuote, currentChatSending, input, pastedImages, selectedModel, selectedProvider, sendDirect, showProviderRequired])
+  }, [addToast, composerQuote, currentChatSending, input, pastedImages, selectedModel, selectedProvider, sendDirect, showProviderRequired, t])
 
   useEffect(() => {
     const question = consumePendingPaperQuestion()
@@ -336,7 +341,7 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
     requestAnimationFrame(() => inputRef.current?.focus())
     if (!selectedProvider && providerPromptedForRequest.current !== question.requestId) {
       providerPromptedForRequest.current = question.requestId
-      addToast({ message: "请先配置 Provider，论文引用已保留在输入框。", type: "info" })
+      addToast({ message: t("providerRequiredQuote"), type: "info" })
       onConfigureProvider?.()
     }
   }, [
@@ -345,6 +350,7 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
     onConfigureProvider,
     pendingPaperQuestion,
     selectedProvider,
+    t,
   ])
 
   const handleKeyDown = useCallback(
@@ -370,7 +376,7 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
     }
   }, [])
 
-  const currentTitle = activeDirectChat?.title ?? "新对话"
+  const currentTitle = activeDirectChat?.title || t("newChat")
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -385,7 +391,7 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
               setModelOpen(false)
             }}
             className="flex min-w-0 max-w-full items-center gap-1.5 rounded-lg px-1.5 py-1 text-left text-xs text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
-            aria-label="选择历史对话"
+            aria-label={t("selectHistory")}
           >
             <span className="truncate">{currentTitle}</span>
             <ChevronDown className={cn("size-3 shrink-0 text-[var(--text-tertiary)] transition-transform", historyOpen && "rotate-180")} />
@@ -393,10 +399,10 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
           {historyOpen && (
             <div className="absolute left-0 top-full z-50 mt-1 w-[min(310px,calc(100vw-2rem))] overflow-hidden rounded-xl border border-[var(--border-color)] bg-[var(--surface-0)] py-1 shadow-xl">
               <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)]">
-                历史对话
+                {t("history")}
               </div>
               {historyChats.length === 0 ? (
-                <p className="px-3 py-3 text-xs text-[var(--text-tertiary)]">暂无历史对话</p>
+                <p className="px-3 py-3 text-xs text-[var(--text-tertiary)]">{t("noHistory")}</p>
               ) : (
                 <div className="max-h-64 overflow-auto">
                   {historyChats.map((chat) => (
@@ -413,16 +419,16 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
                         <Bot className="size-3" />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-xs text-[var(--text-primary)]">{chat.title}</span>
+                        <span className="block truncate text-xs text-[var(--text-primary)]">{chat.title || t("newChat")}</span>
                         <span className="block text-[10px] leading-4 text-[var(--text-tertiary)]">
-                          {providers.find((provider) => provider.id === chat.providerId)?.name ?? "Provider 已删除"} · {chat.model}
-                          {directChatSending[chat.id] ? " · 回复中" : ""}
+                          {providers.find((provider) => provider.id === chat.providerId)?.name ?? t("providerDeleted")} · {chat.model}
+                          {directChatSending[chat.id] ? ` · ${t("replying")}` : ""}
                         </span>
                         <span className="block text-[10px] leading-4 text-[var(--text-tertiary)]">
-                          创建 {formatChatTime(chat.createdAt)}
+                          {t("createdAt", { time: formatChatTime(chat.createdAt, locale) })}
                         </span>
                         <span className="block text-[10px] leading-4 text-[var(--text-tertiary)]">
-                          最后对话 {formatChatTime(chat.updatedAt)}
+                          {t("lastMessageAt", { time: formatChatTime(chat.updatedAt, locale) })}
                         </span>
                       </span>
                     </button>
@@ -443,14 +449,14 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
                 ? "text-[var(--text-tertiary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
                 : "text-amber-600 hover:bg-amber-500/10 dark:text-amber-400",
             )}
-            title={providers.length > 0 ? "选择当前对话 Provider" : "请先配置 Provider"}
+            title={providers.length > 0 ? t("selectChatProvider") : t("providerRequiredShort")}
           >
             {selectedProvider ? (
               <span className="max-w-[108px] truncate">{selectedProvider.name}</span>
             ) : (
               <>
                 <AlertTriangle className="size-3.5" />
-                <span>{providers.length > 0 ? "选择 Provider" : "未配置 Provider"}</span>
+                <span>{providers.length > 0 ? t("selectProvider") : t("noProvider")}</span>
               </>
             )}
             {providers.length > 0 && (
@@ -459,7 +465,7 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
           </button>
           {providerOpen && providers.length > 0 && (
             <div className="absolute right-0 top-full z-50 mt-1 w-[210px] overflow-hidden rounded-xl border border-[var(--border-color)] bg-[var(--surface-0)] py-1 shadow-xl">
-              <div className="px-3 py-1.5 text-[10px] text-[var(--text-tertiary)]">选择 Provider</div>
+              <div className="px-3 py-1.5 text-[10px] text-[var(--text-tertiary)]">{t("selectProvider")}</div>
               {providers.map((provider) => (
                 <button
                   key={provider.id}
@@ -481,8 +487,8 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
           type="button"
           onClick={handleNewChat}
           className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg text-[var(--text-tertiary)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
-          title="新对话"
-          aria-label="新对话"
+          title={t("newChat")}
+          aria-label={t("newChat")}
         >
           <MessageSquarePlus className="size-4" />
         </button>
@@ -493,14 +499,14 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
         {messages.length === 0 && (
           <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
             <Bot className="size-8 text-[var(--text-tertiary)]" />
-            <p className="text-sm text-[var(--text-tertiary)]">在下方输入文本开始 AI 对话</p>
+            <p className="text-sm text-[var(--text-tertiary)]">{t("emptyHint")}</p>
             {!selectedProvider && (
               <button
                 type="button"
                 onClick={handleConfigureProvider}
                 className="text-xs text-[var(--accent)] hover:underline"
               >
-                请先配置 Provider
+                {t("providerRequiredShort")}
               </button>
             )}
           </div>
@@ -511,7 +517,7 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
             className={cn("flex gap-2.5", message.role === "user" ? "justify-end" : "justify-start")}
           >
             {message.role !== "user" && (
-              <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--accent)]/10" title="PR助手">
+              <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--accent)]/10" title={t("assistantName")}>
                 <Bot className="size-3.5 text-[var(--accent)]" />
               </div>
             )}
@@ -527,7 +533,7 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
             >
               {message.role === "assistant" ? (
                 <div>
-                  <p className="mb-1 text-[10px] font-medium text-[var(--text-tertiary)]">PR助手</p>
+                  <p className="mb-1 text-[10px] font-medium text-[var(--text-tertiary)]">{t("assistantName")}</p>
                   {message.status === "thinking" && !message.content.trim() && !message.reasoning?.trim() ? (
                     <ThinkingIndicator />
                   ) : (
@@ -553,11 +559,13 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
                           )}
                           role="alert"
                         >
-                          {message.statusMessage ?? "回复失败，请重新发送"}
+                          {message.statusMessage === INTERRUPTED_REPLY_STATUS
+                            ? t("replyInterrupted")
+                            : message.statusMessage || t("replyFailed")}
                         </p>
                       )}
                       {!message.content.trim() && !message.reasoning?.trim() && message.status !== "error" && (
-                        <p className="text-xs text-[var(--text-tertiary)]">未收到可显示的回复</p>
+                        <p className="text-xs text-[var(--text-tertiary)]">{t("emptyReply")}</p>
                       )}
                     </>
                   )}
@@ -567,7 +575,7 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
                   {message.paperContext && (
                     <div className="mb-2 rounded-lg border border-current/15 bg-black/5 px-2.5 py-2 dark:bg-white/5">
                       <p className="mb-1 text-[10px] font-medium opacity-70">
-                        {message.paperContext.paperTitle} · 第 {message.paperContext.pageNumber} 页
+                        {t("pageRef", { title: message.paperContext.paperTitle, page: message.paperContext.pageNumber })}
                       </p>
                       <p className="line-clamp-4 whitespace-pre-wrap break-words text-xs opacity-80">
                         “{message.paperContext.quote}”
@@ -606,7 +614,7 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
                 type="button"
                 onClick={() => setPastedImages((images) => images.filter((_, imageIndex) => imageIndex !== index))}
                 className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-red-500 opacity-0 transition-opacity group-hover:opacity-100"
-                aria-label="移除图片"
+                aria-label={t("removeImage")}
               >
                 <X className="size-3 text-white" />
               </button>
@@ -622,13 +630,13 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
                 <Quote className="mt-0.5 size-3.5 shrink-0 text-[var(--accent)]" />
                 <div className="min-w-0 flex-1">
                   <p className="text-[10px] font-medium text-[var(--text-secondary)]">
-                    {composerQuote.paperTitle} · 第 {composerQuote.pageNumber} 页
+                    {t("pageRef", { title: composerQuote.paperTitle, page: composerQuote.pageNumber })}
                   </p>
                   <p className="mt-1 max-h-16 overflow-hidden whitespace-pre-wrap break-words text-xs leading-5 text-[var(--text-primary)]">
                     “{composerQuote.selectedText}”
                   </p>
                 </div>
-                <button type="button" onClick={() => setComposerQuote(null)} className="shrink-0 rounded-md p-1 text-[var(--text-tertiary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]" aria-label="移除引用">
+                <button type="button" onClick={() => setComposerQuote(null)} className="shrink-0 rounded-md p-1 text-[var(--text-tertiary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]" aria-label={t("removeQuote")}>
                   <X className="size-3.5" />
                 </button>
               </div>
@@ -640,7 +648,7 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
             onChange={(event) => setInput(event.target.value)}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
-            placeholder={selectedProvider ? (composerQuote ? "在引用下方输入你的问题，Enter 发送" : "输入消息，Enter 发送，Shift+Enter 换行") : "请先配置 Provider 后开始对话"}
+            placeholder={selectedProvider ? (composerQuote ? t("inputPlaceholderQuoted") : t("inputPlaceholder")) : t("inputPlaceholderNoProvider")}
             rows={3}
             disabled={currentChatSending}
             className="block max-h-32 min-h-[72px] w-full resize-none border-0 bg-transparent px-3.5 py-3 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-placeholder)] disabled:opacity-50"
@@ -657,10 +665,10 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
                     ? "text-[var(--text-tertiary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
                     : "text-amber-600 hover:bg-amber-500/10 dark:text-amber-400",
                 )}
-                title={selectedProvider ? "配置 Provider" : "请先配置 Provider"}
+                title={selectedProvider ? t("configureProvider") : t("providerRequiredShort")}
               >
                 {selectedProvider ? <Settings2 className="size-3" /> : <AlertTriangle className="size-3" />}
-                <span className="truncate">{selectedProvider ? "Provider" : "配置 Provider"}</span>
+                <span className="truncate">{selectedProvider ? t("provider") : t("configureProvider")}</span>
               </button>
 
               <div className="relative" ref={modelRef}>
@@ -673,15 +681,15 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
                       ? "text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
                       : "cursor-not-allowed text-[var(--text-placeholder)]",
                   )}
-                  title={selectedProvider ? "选择模型" : "请先配置 Provider"}
+                  title={selectedProvider ? t("selectModel") : t("providerRequiredShort")}
                   aria-disabled={!selectedProvider}
                 >
-                  <span className="max-w-[120px] truncate">{selectedProvider ? selectedModel : "未配置 Provider"}</span>
+                  <span className="max-w-[120px] truncate">{selectedProvider ? selectedModel : t("noProvider")}</span>
                   <ChevronDown className={cn("size-3 shrink-0", modelOpen && "rotate-180")} />
                 </button>
                 {modelOpen && selectedProvider && (
                   <div className="absolute bottom-full left-0 z-50 mb-1 w-[190px] overflow-hidden rounded-xl border border-[var(--border-color)] bg-[var(--surface-0)] py-1 shadow-xl">
-                    <div className="px-3 py-1.5 text-[10px] text-[var(--text-tertiary)]">选择模型</div>
+                    <div className="px-3 py-1.5 text-[10px] text-[var(--text-tertiary)]">{t("selectModel")}</div>
                     {availableModels.map((model) => (
                       <button
                         key={model}
@@ -706,13 +714,13 @@ export function ChatPanel({ onConfigureProvider }: ChatPanelProps) {
               onClick={() => void handleSend()}
               disabled={!input.trim() || currentChatSending}
               className="inline-flex size-8 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)] text-[var(--surface-1)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-30"
-              aria-label="发送消息"
+              aria-label={t("sendMessage")}
             >
               <Send className="size-3.5" />
             </button>
           </div>
         </div>
-        <p className="mt-1.5 px-1 text-[10px] text-[var(--text-placeholder)]">AI 生成内容仅供参考，请核对重要信息</p>
+        <p className="mt-1.5 px-1 text-[10px] text-[var(--text-placeholder)]">{t("disclaimer")}</p>
       </div>
     </div>
   )

@@ -2,18 +2,21 @@ import { useState } from "react"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { OtpInput } from "@/components/settings/OtpInput"
+import { IntlProvider } from "./intl"
 
 /** 受控组件，测试里补一层 state 才能真实地「输入」 */
 function Harness({ onChange, initial = "" }: { onChange?: (value: string) => void; initial?: string }) {
   const [value, setValue] = useState(initial)
   return (
-    <OtpInput
-      value={value}
-      onChange={(next) => {
-        setValue(next)
-        onChange?.(next)
-      }}
-    />
+    <IntlProvider>
+      <OtpInput
+        value={value}
+        onChange={(next) => {
+          setValue(next)
+          onChange?.(next)
+        }}
+      />
+    </IntlProvider>
   )
 }
 

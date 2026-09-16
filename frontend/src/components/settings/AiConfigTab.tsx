@@ -5,6 +5,7 @@ import { Plus, Trash2, Check, Loader2, Eye, EyeOff, Wifi, Pencil, Bot } from "lu
 import { usePreferencesStore } from "@/stores/preferences-store"
 import type { AiProvider } from "@/stores/preferences-store"
 import { testAiProviderConnection } from "@/lib/ai-provider"
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 
 interface ProviderFormData {
@@ -22,6 +23,8 @@ const DEFAULT_FORM: ProviderFormData = {
 }
 
 export function AiConfigTab() {
+  const t = useTranslations("settings")
+  const tc = useTranslations("common")
   const { providers, activeProviderId, addProvider, updateProvider, removeProvider, setActiveProvider } =
     usePreferencesStore()
 
@@ -103,12 +106,12 @@ export function AiConfigTab() {
         }
         setTestResult({ id, ok: result.ok, message: result.message })
       } catch (e) {
-        setTestResult({ id, ok: false, message: `连接失败：${(e as Error).message}` })
+        setTestResult({ id, ok: false, message: t("aiConnectFailed", { message: (e as Error).message }) })
       } finally {
         setTesting(null)
       }
     },
-    [editingId, providers, updateProvider],
+    [editingId, providers, updateProvider, t],
   )
 
   const isEditing = isNew || editingId !== null
@@ -134,7 +137,7 @@ export function AiConfigTab() {
                   <span className="text-xs text-[var(--text-tertiary)] font-mono truncate max-w-[200px]">{p.baseUrl}</span>
                   {activeProviderId === p.id && (
                     <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                      已激活
+                      {t("aiActive")}
                     </span>
                   )}
                 </div>
@@ -143,7 +146,7 @@ export function AiConfigTab() {
                     onClick={() => handleTest(p.id)}
                     disabled={testing === p.id}
                     className="p-1.5 rounded-md hover:bg-[var(--bg-hover)] transition-colors"
-                    title="测试连接"
+                    title={t("aiTestConnection")}
                   >
                     {testing === p.id ? (
                       <Loader2 className="size-3.5 animate-spin text-[var(--text-tertiary)]" />
@@ -154,7 +157,7 @@ export function AiConfigTab() {
                   <button
                     onClick={() => handleEdit(p)}
                     className="p-1.5 rounded-md hover:bg-[var(--bg-hover)] transition-colors"
-                    title="编辑"
+                    title={tc("edit")}
                   >
                     <Pencil className="size-3.5 text-[var(--text-tertiary)]" />
                   </button>
@@ -162,7 +165,7 @@ export function AiConfigTab() {
                     <button
                       onClick={() => removeProvider(p.id)}
                       className="p-1.5 rounded-md hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-                      title="删除"
+                      title={tc("delete")}
                     >
                       <Trash2 className="size-3.5 text-[var(--text-tertiary)] hover:text-red-500" />
                     </button>
@@ -171,7 +174,7 @@ export function AiConfigTab() {
               </div>
               <div className="flex items-center gap-2 mt-2.5">
                 <span className="text-[10.5px] text-[var(--text-tertiary)]">
-                  {p.models.length > 0 ? `${p.models.length} 个模型` : "无模型"}
+                  {p.models.length > 0 ? t("aiModelCount", { count: p.models.length }) : t("aiNoModel")}
                 </span>
                 {p.models.slice(0, 4).map((m) => (
                   <span key={m} className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--bg-hover)] text-[var(--text-secondary)]">
@@ -200,7 +203,7 @@ export function AiConfigTab() {
                   className="flex items-center gap-1 mt-2.5 text-xs text-[var(--accent)] hover:underline"
                 >
                   <Check className="size-3" />
-                  激活此 Provider
+                  {t("aiActivate")}
                 </button>
               )}
             </div>
@@ -212,20 +215,20 @@ export function AiConfigTab() {
       {isEditing ? (
         <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-4 space-y-3">
           <h3 className="text-sm font-medium text-[var(--text-primary)]">
-            {isNew ? "添加 Provider" : "编辑 Provider"}
+            {isNew ? t("aiAddProvider") : t("aiEditProvider")}
           </h3>
           <div className="space-y-3">
             <div>
-              <label className="block text-xs text-[var(--text-tertiary)] mb-1">名称</label>
+              <label className="block text-xs text-[var(--text-tertiary)] mb-1">{t("aiName")}</label>
               <input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="如 OpenAI, DeepSeek"
+                placeholder={t("aiNamePlaceholder")}
                 className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-0)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
               />
             </div>
             <div>
-              <label className="block text-xs text-[var(--text-tertiary)] mb-1">请求地址 (Base URL)</label>
+              <label className="block text-xs text-[var(--text-tertiary)] mb-1">{t("aiBaseUrl")}</label>
               <input
                 value={form.baseUrl}
                 onChange={(e) => setForm({ ...form, baseUrl: e.target.value })}
@@ -234,7 +237,7 @@ export function AiConfigTab() {
               />
             </div>
             <div>
-              <label className="block text-xs text-[var(--text-tertiary)] mb-1">密钥 (API Key)</label>
+              <label className="block text-xs text-[var(--text-tertiary)] mb-1">{t("aiApiKey")}</label>
               <div className="relative">
                 <input
                   value={form.apiKey}
@@ -253,7 +256,7 @@ export function AiConfigTab() {
             </div>
             <div>
               <label className="block text-xs text-[var(--text-tertiary)] mb-1">
-                模型列表（逗号分隔，留空将以测试获取）
+                {t("aiModels")}
               </label>
               <input
                 value={form.models}
@@ -268,7 +271,7 @@ export function AiConfigTab() {
               onClick={handleCancel}
               className="px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] rounded-md transition-colors"
             >
-              取消
+              {tc("cancel")}
             </button>
             <button
               onClick={handleSave}
@@ -276,7 +279,7 @@ export function AiConfigTab() {
               className="flex items-center gap-1 px-4 py-1.5 text-xs bg-[var(--accent)] text-[var(--surface-1)] rounded-md hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-40"
             >
               <Check className="size-3" />
-              保存
+              {tc("save")}
             </button>
           </div>
         </div>
@@ -286,7 +289,7 @@ export function AiConfigTab() {
           className="flex items-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-[var(--border-subtle)] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:border-[var(--text-secondary)] transition-colors w-full justify-center"
         >
           <Plus className="size-4" />
-          <span className="text-sm">添加 Provider</span>
+          <span className="text-sm">{t("aiAddProvider")}</span>
         </button>
       )}
 
@@ -294,8 +297,8 @@ export function AiConfigTab() {
       {providers.length === 0 && !isEditing && (
         <div className="text-center py-8">
           <Bot className="size-10 text-[var(--text-tertiary)] mx-auto mb-2" />
-          <p className="text-sm text-[var(--text-tertiary)]">尚未配置任何 Provider</p>
-          <p className="text-xs text-[var(--text-tertiary)] mt-1">点击上方按钮添加 OpenAI 兼容的 API 服务商</p>
+          <p className="text-sm text-[var(--text-tertiary)]">{t("aiEmpty")}</p>
+          <p className="text-xs text-[var(--text-tertiary)] mt-1">{t("aiEmptyHint")}</p>
         </div>
       )}
     </div>
