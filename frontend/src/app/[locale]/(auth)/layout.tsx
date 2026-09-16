@@ -12,7 +12,11 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="absolute inset-0 bg-[linear-gradient(180deg,var(--bg-root),var(--surface-0))] opacity-90" />
         <ParticleField />
       </div>
-      <div className="relative z-10 mx-auto flex w-full max-w-7xl items-center justify-between gap-1">
+      {/* z-30 keeps the header (and the language dropdown hanging out of it) above the
+          sign-in row below, which is a later sibling with the same z-10: equal z-index
+          means the later one wins, so the dropdown used to be covered by the form card
+          and its options could not be clicked. */}
+      <div className="relative z-30 mx-auto flex w-full max-w-7xl items-center justify-between gap-1">
         <div className="flex items-center gap-3 text-sm font-semibold tracking-[.18em] text-[var(--accent)]">
           <span className="grid size-10 place-items-center rounded-xl border border-[var(--border-color)] bg-[var(--accent-soft)]"><BookOpen className="size-5" /></span>
           PAPERHELPER
