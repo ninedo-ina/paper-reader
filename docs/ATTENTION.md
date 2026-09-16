@@ -8,7 +8,8 @@
 - 组件外的文案（`src/lib/api/client.ts`、`src/lib/ai-provider.ts`、`src/lib/ai-chat-response.ts`、`src/lib/device.ts`、各 Zustand store）走 `runtimeTranslator()`（`src/i18n/runtime.ts`），消息表由根布局的 `RuntimeLocaleBridge` 在**渲染期**登记。**取文案要写在调用的函数里，不能提到模块顶层做常量**，否则语言切换后常量还是旧语言；`RuntimeLocaleBridge` 里那次赋值也别挪进 `useEffect`，否则首屏之后立刻发出的请求取不到消息表。
 - RTL（`ar` / `fa` / `ug`）靠两件事：根布局按 `LOCALE_META[locale].dir` 写 `<html dir>`，布局代码用 Tailwind 逻辑方向工具类（`ms-`/`me-`/`ps-`/`pe-`/`start-`/`end-`/`text-start`/`border-e`）。**新写布局时不要用 `ml-`/`pr-`/`left-`/`text-left`**，否则这三种语言下元素会钉死在左边。
 - `en` 是**兼容项**：需求给的 13 种语言里没有英文，但线上已有用户把偏好设成 `en`、`/en/*` 老链接也在用，所以保留在 `LOCALES` 末尾。**不要因为「需求没写」把它删掉**，删了这批用户和老链接一起失效。
-- 文案源是 `locales/zh/common.json`（828 条）。**任何语言包都必须与 zh 等键**，缺键会退回中文显示。批量翻译脚本在 `/tmp`（不入库），走的是外部代理、有 429 限流，翻译完必须抽查。
+- 文案源是 `locales/zh/common.json`（833 条，按拍平后的可翻译条目计；叶子键 691 个）。**任何语言包都必须与 zh 等键**（14 个包逐条对齐，0 缺 0 多），缺键会退回中文显示。批量翻译脚本在 `/tmp`（不入库），走的是外部代理、有 429 限流，翻译完必须抽查。
+- **语言下拉「看不见 / 点不着」多半是层叠问题，不是 next-intl 的问题。** 菜单是 `z-50`，但 `z-index` 只在自己所在的层叠上下文里比大小，真正较劲的是「挂菜单的容器」和它的兄弟。登录页 `(auth)/layout.tsx` 原来是顶栏和内容行同为 `z-10` 的兄弟、内容行在 DOM 里更靠后，于是菜单被登录卡片压住（线上实测：`elementFromPoint` 命中的是 `DIV.space-y-5 px-8 py-2`，选项点不动）。现在顶栏是 `z-30`，`frontend/src/test/auth-layout.test.tsx` 用 `zIndexOf(header) > zIndexOf(row)` 锁住这条不变量，**改回 `z-10` 该用例会以 `expected 10 to be greater than 10` 失败**，别为了让两条 `z-10` 对齐而改测试。移动切换器时先确认新容器的 `z-index` 打得过兄弟，只把菜单本身的数值往上加没用。
 - 后端 `UserSettings.language`（默认 `zh`）与 `GET/PUT /api/settings` 早就在，**本轮后端零改动**，只是前端开始真正读写它；偏好里的语言值前端用 `isAppLocale` 兜底，写进库的非法值只会被忽略、不会报错。
 - 本轮**无接口改动、无数据库迁移、无新依赖**，后端 Kotlin 代码未改，只随版本号重新构建与重启。
 - 本轮的收尾要把 v0.1.47 新增的几处中文并进 i18n：`ProfileDialog.tsx` 的「图片太大，请换一张 700KB 以内的图片」、`aria-label="更换头像"`、`placeholder="未绑定邮箱"` 都走 `t()`；`frontend/src/test/profile-dialog.test.tsx` 用 `src/test/intl.tsx` 的 `withIntl` 包一层。头像菜单的默认头像 / 点击外部收起逻辑原样保留，只是文案改为取消息表。
