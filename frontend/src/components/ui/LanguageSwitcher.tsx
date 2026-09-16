@@ -60,7 +60,8 @@ export function LanguageSwitcher() {
         <div
           role="listbox"
           aria-label={t("language")}
-          className="absolute end-0 top-10 z-50 max-h-80 w-56 overflow-y-auto rounded-xl border border-[var(--border-color)] bg-[var(--surface-0)] py-1 shadow-[var(--shadow-md)]"
+          // scrollbar-hidden：14 种语言超出 max-h-80，要能滚但不要露出滚动条
+          className="scrollbar-hidden absolute end-0 top-10 z-50 max-h-80 w-56 overflow-y-auto rounded-xl border border-[var(--border-color)] bg-[var(--surface-0)] py-1 shadow-[var(--shadow-md)]"
         >
           {LOCALES.map((code) => {
             const active = code === current

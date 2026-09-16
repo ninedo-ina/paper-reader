@@ -143,6 +143,23 @@ html[lang="ug"] {
   background: var(--text-secondary);
 }
 
+/* 隐藏滚动条、保留滚动能力。
+   语言下拉、偏好设置里的语言网格这类弹出面板本身有圆角和阴影，6px 的原生滚动条
+   会贴着右边缘切进去，和面板的圆角对不齐，所以这些面板一律不显示滚动条，
+   但 overflow-y-auto 照旧，鼠标滚轮 / 触屏 / 键盘仍然能滚。
+   三个声明缺一不可：Firefox 认 scrollbar-width，旧 Edge/IE 认 -ms-overflow-style，
+   Chromium/Safari 认 ::-webkit-scrollbar。 */
+.scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
 /* Spin animation */
 @keyframes spin {
   from { transform: rotate(0deg); }

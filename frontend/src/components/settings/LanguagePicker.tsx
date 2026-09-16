@@ -28,7 +28,8 @@ export function LanguagePicker({ value, onSelect, className }: LanguagePickerPro
     <div
       role="listbox"
       aria-label={t("language")}
-      className={cn("grid max-h-72 grid-cols-2 gap-2 overflow-y-auto pe-1", className)}
+      // scrollbar-hidden：能滚但不露滚动条；滚动条没了，pe-1 那条给它让位的留白也一并去掉
+      className={cn("scrollbar-hidden grid max-h-72 grid-cols-2 gap-2 overflow-y-auto", className)}
     >
       {LOCALES.map((code) => {
         const active = value === code
