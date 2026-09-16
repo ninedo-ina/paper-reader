@@ -37,6 +37,12 @@ function chainToMain(): { main: HTMLElement; chain: HTMLElement[] } {
   return { main, chain }
 }
 
+/** 取 Tailwind 的 z-N；没写就是 z-auto，按 0 算 */
+function zIndexOf(el: HTMLElement): number {
+  const m = /(?:^|\s)z-(\d+)(?:\s|$)/.exec(el.className)
+  return m ? Number(m[1]) : 0
+}
+
 describe("auth layout vertical rhythm", () => {
   beforeEach(() => {
     // 布局背景里的粒子画布在 jsdom 里拿不到 2d context（会往 stderr 喷一堆
@@ -76,5 +82,27 @@ describe("auth layout vertical rhythm", () => {
     // 垂直方向：页脚仍然被 mt-auto 顶到最下面，居中用的是中间那行的富余空间
     expect(footer.className).toContain("mt-auto")
     expect(footer.className).not.toContain("flex-1")
+  })
+
+  // 语言下拉挂在顶栏里（`z-50` 的菜单），而顶栏和内容行是 main 的两个兄弟。
+  // 兄弟之间 z-index 相等时**后面的赢**，内容行在 DOM 里更靠后，于是下拉虽然
+  // `z-50` 也会被登录卡片压住 —— 选项落在卡片范围内就既看不见也点不着，这就是
+  // 「登录页语言切换失效」的现场。锁住「顶栏严格高于内容行」，别把 z-30 改回去。
+  it("paints the header, and the language dropdown hanging out of it, above the sign-in row", () => {
+    const { main, chain } = chainToMain()
+    const row = chain[chain.length - 1]
+
+    const trigger = document.querySelector('button[aria-haspopup="listbox"]') as HTMLElement
+    expect(trigger).not.toBeNull()
+    let header = trigger
+    while (header.parentElement && header.parentElement !== main) {
+      header = header.parentElement
+    }
+
+    expect(header.parentElement).toBe(main)
+    expect(row.parentElement).toBe(main)
+    expect(zIndexOf(header)).toBeGreaterThan(zIndexOf(row))
+    // 内容行自己也要留在背景装饰（z-0）之上，别为了拉开差距把它压到背景下面
+    expect(zIndexOf(row)).toBeGreaterThan(0)
   })
 })
