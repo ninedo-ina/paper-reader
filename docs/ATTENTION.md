@@ -7,6 +7,8 @@
 - `Sidebar.tsx` 回退后与 v0.1.50 之前的原始版本只差两个类名：`text-left → text-start`、`ml-auto → ms-auto`（LTR 下渲染完全一致，RTL 下方向正确）。**这两处逻辑类要保留**，不要为了「完全回退」改回物理方向类。
 - 组件级回归：本轮**没有**给菜单栏加新测试 —— 菜单栏的要求是「回到原样」，锁死具体类名只会挡住以后的正当改动；侧栏的 `frontend/src/test/tabbar-badge.test.tsx`（5 例）继续锁角标形态，**不要动它**。
 - 本轮**无接口改动、无数据库迁移、无新依赖**，后端 Kotlin 零改动（`backend/VERSION` 按发布规范统一到 `0.1.51`，但 jar 有意不重建、`paper-reader-backend` 不重启，线上仍是 `paper-reader-backend-0.1.49.jar`，故 `/api/health` 仍返回 `0.1.49`）。判断前端版本请看 favicon `?v=0.1.51` 与构建产物哈希。
+- 状态：已发布（提交 `8331e47` + `f3ff2be`，`--no-ff` 合并提交 `cd46367`，`pnpm run build` + `pm2 restart paper-reader-frontend`，重启计数 12 → 13，2026-09-17 14:22:03 UTC 起 online）。线上实测：服务端 CSS（`0f36cad2d495bd20.css` sha256 `276f1a16…`）与 `[locale]/page-0788348c7811f6f2.js`（sha256 `f7674fbf…`）和本地构建逐字节一致，同一份 CSS 里 `ms-auto`/`px-[7px]`/`py-[2px]`/`rounded-[10px]`（菜单栏行内胶囊）与 `min-w-[16px]`/`.-end-2`（侧栏角标）**并存**、`ml-auto` 0 处；`zh` 与 `ar` 下菜单栏八行胶囊均 `position: static` 且落在行内，侧栏四个 71.75px tab 角标仍 `absolute` / `-8px`；负对照注入 v0.1.50 的角标结构后检测器读出 `absolute`，证明度量有效。
+- 本轮 `feature/v0.1.51` 合入 `main` 后，把 `dev` 从 `f2f708e` **快进**到 `cd46367`（非强推、未改写历史），`main` / `dev` / `feature/v0.1.51` 现已对齐。后续分支按 `feature → dev → main` 走，开分支前先确认 `dev` 不落后于 `main`。
 
 ## v0.1.50 侧栏（`TabBar`）菜单计数徽标改为标题角标
 
@@ -19,7 +21,7 @@
 - `TabBar` 是共用组件，「我的书架」左栏（`components/papers/PaperList.tsx`）与阅读器右栏（`components/layout/RightPanel.tsx:170`）同时受益；右栏目前 tabs 无 `count`，改 `TabBar` 会一起影响，改之前先确认右栏窄容器下的表现。
 - `data-tab-key` 属性和下划线指示器的 `ResizeObserver` 逻辑本轮未动，**不要为了改角标顺手重排**：指示器靠 `querySelectorAll("[data-tab-key]")` 定位。
 - 本轮**无接口改动、无数据库迁移、无新依赖**，后端 Kotlin 零改动。按全局「代码完成 = 合入生产分支并部署」的口径本轮只重建并重启了前端 PM2 进程（`paper-reader-frontend`），**后端 `paper-reader-backend` 刻意未重启**（必须带 `backend/.env` 启动，无关重启只会制造事故），因此线上 `/api/health` 仍返回 `0.1.49`，这是有意为之的版本漂移，不是部署漏做。
-- 本轮 `feature/v0.1.50` 先合入 `main`，随后把 `dev` 快进到同一提交（`dev` 当时停在 `b0409ef`，是本轮的祖先，快进不产生合并提交）。后续分支仍按 `feature → dev → main` 走，开分支前先确认 `dev` 不落后于 `main`。
+- 本轮 `feature/v0.1.50` 合入 `main` 后**没有动 `dev`**（`dev` 当时仍停在 `b0409ef`，是本轮的祖先）；把 `dev` 快进到当时的 `main` 是 **v0.1.51** 做的事（`f2f708e` → `cd46367`），别把两轮记混。后续分支仍按 `feature → dev → main` 走，开分支前先确认 `dev` 不落后于 `main`。
 
 ## v0.1.48 国际化语言切换
 
