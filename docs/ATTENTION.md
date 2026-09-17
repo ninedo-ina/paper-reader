@@ -1,9 +1,21 @@
-## v0.1.50 侧栏菜单计数徽标改为标题角标
+## v0.1.51 菜单栏计数回退为行内、侧栏角标保留
+
+- 需求编号仍是 `REQ-202609-0126`（是 v0.1.50 的**范围纠正**，不是新需求），分支 `feature/v0.1.51`，从 v0.1.50 的发布提交 `f2f708e` 展开。**「菜单栏」和「侧栏」是两个不同的组件，不要再混为一谈**：
+  - **菜单栏** = `frontend/src/components/layout/Sidebar.tsx`，全局左栏 `w-[220px]`，含「书架 / 发现 / 交流」三个分区（library / history / created / notes / annotations / tags / circle / chats）。这里的计数**保持原来的行内形态**：`<span className="flex-1 text-start">{t(key)}</span>` 标签 + `<span className="ms-auto … rounded-[10px]">` 胶囊，两者是 flex 兄弟，数字跟在文字屁股后面（`Sidebar.tsx:96-102`）。v0.1.50 把它也改成了角标，属越界改动，本轮已回退。
+  - **侧栏** = 点开菜单之后左栏里的 `TabBar`（「我的书架」的所有 / 创建 / 导入 / 收藏，挂在 `components/papers/PaperList.tsx`）。**只有这里**才用角标，v0.1.50 对 `TabBar` 的改动是对的，本轮一字未动。
+- 判断依据是容器形态，不是「统一风格」：菜单栏每行是一个 full-width 条目、标签空间宽裕，行内计数从来不会被挤成竖排；侧栏在 `w-72`（288px，内容 287px）里是四个 `flex-1` 均分 ≈72px，扣掉 `px-3` 只剩 ≈48px，行内计数才会把中文标题挤成逐字竖排。**只有「窄容器 + 均分」这个组合才需要角标**，宽松的单列列表不需要。
+- `Sidebar.tsx` 回退后与 v0.1.50 之前的原始版本只差两个类名：`text-left → text-start`、`ml-auto → ms-auto`（LTR 下渲染完全一致，RTL 下方向正确）。**这两处逻辑类要保留**，不要为了「完全回退」改回物理方向类。
+- 组件级回归：本轮**没有**给菜单栏加新测试 —— 菜单栏的要求是「回到原样」，锁死具体类名只会挡住以后的正当改动；侧栏的 `frontend/src/test/tabbar-badge.test.tsx`（5 例）继续锁角标形态，**不要动它**。
+- 本轮**无接口改动、无数据库迁移、无新依赖**，后端 Kotlin 零改动（`backend/VERSION` 按发布规范统一到 `0.1.51`，但 jar 有意不重建、`paper-reader-backend` 不重启，线上仍是 `paper-reader-backend-0.1.49.jar`，故 `/api/health` 仍返回 `0.1.49`）。判断前端版本请看 favicon `?v=0.1.51` 与构建产物哈希。
+
+## v0.1.50 侧栏（`TabBar`）菜单计数徽标改为标题角标
+
+> 下节的「必须用角标」结论**只适用于侧栏 `TabBar`**；它当时对菜单栏 `Sidebar.tsx` 一并做的角标改动已在 v0.1.51 回退，见上一节。
 
 - 本轮需求编号 `REQ-202609-0126`，分支 `feature/v0.1.50`，从 `b0409ef` 展开。根因不是计数来源，是布局：`TabBar` 每个页签 `flex-1` 在 `w-72`（288px，内容 287px）的左栏里均分到 ≈72px，扣掉 `px-3` 后只剩 ≈48px 给「标题 + 徽标」，中文于是按字断行，变成逐字竖排。
-- **徽标必须是脱离文档流的绝对定位角标：`absolute -top-2 -end-2`。不要再改回 `inline-flex` 行内并排 + `gap-*`**，那正是本轮要修的 bug —— 行内徽标会抢标题宽度，`frontend/src/test/tabbar-badge.test.tsx` 已用 `badge.classList.contains("absolute")` 上锁（实测把 `absolute` 去掉，该用例在 `tabbar-badge.test.tsx:44` 以 `expected false to be true` 失败）。
+- **侧栏 `TabBar` 的徽标必须是脱离文档流的绝对定位角标：`absolute -top-2 -end-2`。不要再改回 `inline-flex` 行内并排 + `gap-*`**，那正是本轮要修的 bug —— 行内徽标会抢标题宽度，`frontend/src/test/tabbar-badge.test.tsx` 已用 `badge.classList.contains("absolute")` 上锁（实测把 `absolute` 去掉，该用例在 `tabbar-badge.test.tsx:44` 以 `expected false to be true` 失败）。**但这条不要外推到菜单栏**：`Sidebar.tsx` 是单列 full-width 条目，标签宽度够用，行内胶囊就是它的正确形态。
 - **标题外面的 `relative inline-flex min-w-0 max-w-full` 包装层和标题上的 `truncate` 都不要删**：包装层是角标的定位容器（删了角标会飘到页签左上角而不是标题右上角），`truncate` 负责极端窄容器下兜底，删了会退回逐字换行。
-- **方向与偏移一律用逻辑类（`ms-`/`me-`/`ps-`/`pe-`/`start-`/`end-`/`text-start`），不得用 `ml-`/`mr-`/`left-`/`right-`/`text-left`。** 本轮 `Sidebar.tsx` 里原有的 `ml-auto` + `text-left` 已换成 `-end-2` + `text-start`，回退会让 `ar`/`fa`/`ug` 三种 RTL 语言下角标钉死在右边、标题左对齐失效。
+- **方向与偏移一律用逻辑类（`ms-`/`me-`/`ps-`/`pe-`/`start-`/`end-`/`text-start`），不得用 `ml-`/`mr-`/`left-`/`right-`/`text-left`。** 本轮把 `Sidebar.tsx` 原有的 `ml-auto` + `text-left` 换成了 `ms-auto` + `text-start`，v0.1.51 回退角标形态时**保留了这两个逻辑类**（LTR 下与原来的物理类渲染一致，`ar`/`fa`/`ug` 三种 RTL 语言下方向才正确）—— 回退的是「角标 vs 行内」的形态，不是方向类，两件事分开看。
 - `TabBar` 是共用组件，「我的书架」左栏（`components/papers/PaperList.tsx`）与阅读器右栏（`components/layout/RightPanel.tsx:170`）同时受益；右栏目前 tabs 无 `count`，改 `TabBar` 会一起影响，改之前先确认右栏窄容器下的表现。
 - `data-tab-key` 属性和下划线指示器的 `ResizeObserver` 逻辑本轮未动，**不要为了改角标顺手重排**：指示器靠 `querySelectorAll("[data-tab-key]")` 定位。
 - 本轮**无接口改动、无数据库迁移、无新依赖**，后端 Kotlin 零改动。按全局「代码完成 = 合入生产分支并部署」的口径本轮只重建并重启了前端 PM2 进程（`paper-reader-frontend`），**后端 `paper-reader-backend` 刻意未重启**（必须带 `backend/.env` 启动，无关重启只会制造事故），因此线上 `/api/health` 仍返回 `0.1.49`，这是有意为之的版本漂移，不是部署漏做。
