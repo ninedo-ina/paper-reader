@@ -1,4 +1,18 @@
-## 迭代：v0.1.49（已发布）
+## 迭代：v0.1.50（已发布）
+
+发布分支：`feature/v0.1.50`；类型：UI 修复；需求编号：`REQ-202609-0126`；状态：2026-09-17 UTC 已合并 `main`（显式 `--no-ff` 合并提交 `658c3ba`，本轮不经 `dev`）并部署验收（发布记录见 `docs/MAINTENANCE.md`）。
+
+用户反馈：书架左栏的四个 tab（全部 / 创建 / 导入 / 收藏）只要带上计数徽标，标题就被压成**逐字竖排**，一个字占一行，读不出来。
+
+根因是徽标抢了标题的宽度，不是字号问题：书架左栏 `aside.w-72` 只有 288px，四个 `flex-1` 等宽按钮实宽 71.75px，按钮本身是 `gap-1.5` + `px-3`（左右各 12px），而徽标是按钮内的**文档流内** `inline-flex` 兄弟节点（`min-w-[18px]`，`99+` 实测约 24px）。72 - 24（padding）- 24（徽标）- 6（gap）≈ 18px，而两个汉字需要 28px，于是逐字换行成 2 行（块高 40px、按钮高 60px）。`Sidebar.tsx` 展开态的菜单项用的是同一套流内徽标 + `ml-auto`，同样会被压。
+
+做法是把徽标变成**脱离文档流的角标**：`absolute -top-2 -end-2`、`h-[16px] min-w-[16px]`、`whitespace-nowrap`、`rounded-full` + 细边框，并加 `aria-hidden="true"` 与 `pointer-events-none`（纯装饰，不该被点也不该被读屏）；计数 >99 截断成 `99+`，为 0 不渲染。标题包一层 `span.relative inline-flex min-w-0 max-w-full`，内层 `span.min-w-0 truncate`，按钮去掉 `gap-1.5`；`Sidebar.tsx` 同款改造，`flex-1 text-left` 与 `ml-auto` 换成 `min-w-0 truncate text-start`。定位一律用逻辑属性（`-end-2` / `-top-2` / `text-start`），LTR 落右上、RTL 自动镜像到左上。徽标 `aria-hidden` 后按钮的可访问名会丢掉计数，两处补 `aria-label="{label} ({badge})"`。
+
+验收标准：新增 `tabbar-badge.test.tsx` 锁定「徽标是脱离文档流的角标」——必须 `absolute` / `-top-2` / `-end-2` / `pointer-events-none` / `aria-hidden="true"`，标题必须 `truncate`，按钮 className 不得再出现 `gap-1.5`（出现即意味着徽标又被塞回文档流），`128` 截断为 `99+`、`0` 不渲染、可访问名为 `全部 (99+)`；`pnpm exec tsc --noEmit`、`pnpm lint`、`pnpm run build` 全绿；线上核对 favicon `?v=0.1.50`、服务端样式表与首屏 JS chunk 和本地构建逐字节一致，并在公网页面实测：288px 侧栏里 tab 条 287px、四个按钮宽度合计 287px、每个标题 `Range.getClientRects()` 行数为 1（块高 20px），徽标落在侧栏内且 RTL 下镜像到左侧；**同时必须做负对照** —— 在同一页面注入改造前的流内徽标结构，读数应仍是 2 行 / 40px，证明这套度量抓得住原始缺陷（只报「改完好看」、没有负对照的度量不算验收）。
+
+本轮**纯前端改动**：无数据库迁移、无接口改动、无新依赖、Kotlin 零代码改动。版本号仍按规范统一到 `0.1.50`，但后端 jar **有意不重建、不重启**（为一个内容无变化的 jar 重启只会造成无收益的中断），线上后端仍是 `paper-reader-backend-0.1.49.jar`，故 `/api/health` 仍返回 `0.1.49`；判断前端版本请看 favicon `?v=` 与构建产物哈希。
+
+## 上一迭代：v0.1.49（已发布）
 
 发布分支：`feature/v0.1.49`；类型：UI 修复；需求编号：`REQ-202609-0111` 收尾；状态：2026-09-16 UTC 已合并 `dev` / `main` 并部署验收（发布记录见 `docs/MAINTENANCE.md`）。
 
