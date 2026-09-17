@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
     applicationName: "PaperHelper",
     description: t("description"),
     icons: {
-      icon: "/paperhelper-favicon-light.svg?v=0.1.49",
+      icon: "/paperhelper-favicon-light.svg?v=0.1.50",
     },
   }
 }
