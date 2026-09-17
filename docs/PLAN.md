@@ -1,12 +1,29 @@
-## 迭代：v0.1.50（已发布）
+## 迭代：v0.1.51（已发布）
 
-发布分支：`feature/v0.1.50`；类型：UI 修复；需求编号：`REQ-202609-0126`；状态：2026-09-17 UTC 已合并 `main`（显式 `--no-ff` 合并提交 `658c3ba`，本轮不经 `dev`）并部署验收（发布记录见 `docs/MAINTENANCE.md`）。
+发布分支：`feature/v0.1.51`；类型：UI 回退（范围纠正）；需求编号：`REQ-202609-0126`（**不是新需求**，是 v0.1.50 的范围纠正）；状态：2026-09-17 UTC 已合并 `main`（显式 `--no-ff` 合并提交 `cd46367`，父提交 `f2f708e` + `f3ff2be`）并部署验收，随后分支上追加的仅文档同步提交又以第二个显式 `--no-ff` 合并提交带入 `main`，`dev` 已快进到该合并提交（`main` 与 `dev` 同指，`feature/v0.1.51` 为其祖先；发布记录见 `docs/MAINTENANCE.md`）。
+
+用户反馈：v0.1.50 改过头了。**「菜单栏」和「侧栏」是两个不同的地方**——「书架 发现 交流，这些地方，这是叫菜单栏」，菜单栏上的数字**不要**做成徽标，要恢复原来的样子；**只有菜单点开之后的侧栏**，侧栏的菜单才需要做成徽标。
+
+- **菜单栏** = `frontend/src/components/layout/Sidebar.tsx`，全局左栏 `w-[220px]`，按 书架 / 发现 / 交流 分组的 `library` / `history` / `created` / `notes` / `annotations` / `tags` / `circle` / `chats` 八项。它是**单列整行**布局，行宽 211px，数字一直是**行尾的行内胶囊**：`<span className="flex-1 text-start">{t(key)}</span>` 与 `<span className="ms-auto … rounded-[10px]">` 是 flex 兄弟（`Sidebar.tsx:96-102`）。v0.1.50 把它也改成角标，属越界，本轮已回退。
+- **侧栏** = 点开菜单之后左栏里的 `TabBar`（「我的书架」的 所有 / 创建 / 导入 / 收藏，挂在 `components/papers/PaperList.tsx`，容器 `aside.w-72` 288px，四个 `flex-1` 按钮各约 71.75px）。**只有这里**才用角标；v0.1.50 对 `TabBar` 的改动是对的，本轮一字未动。
+
+判断依据是**容器形态**，不是「统一风格」：窄容器 + 均分按钮时，流内徽标会把标题挤成逐字竖排，必须脱离文档流；宽松的单列列表不存在这个约束，行内胶囊反而更贴合原有版式。**只有「窄容器 + 均分」这个组合才需要角标**，不要外推。
+
+`Sidebar.tsx` 回退后与 v0.1.50 之前的原始版本只差两个类名：`text-left → text-start`、`ml-auto → ms-auto`。**这两处逻辑类要保留**（14 种语言含 RTL 的 ar / fa / ug）。
+
+验收标准：本**没有**给菜单栏加新测试（回退的目标是恢复原状，而不是锁定一套新样式）；侧栏的 `frontend/src/test/tabbar-badge.test.tsx`（5 项）继续锁角标形态，**不要动它**。`pnpm exec tsc --noEmit`、`next lint`、`pnpm run build` 全绿；线上核对 favicon `?v=0.1.51`、服务端样式表与 `[locale]/page-*.js` chunk 与本地构建逐字节一致；公网页面实测 `zh`（LTR）与 `ar`（RTL）两种语言下，菜单栏八行的胶囊均为 `position: static`、落在按钮内（右边缘留 `px-3` 的 12px）、与行垂直居中对齐、标签不逐字竖排，同时侧栏四个 tab 的角标仍为 `position: absolute` / `inset-inline-end: -8px`；**同时必须做负对照** —— 在同一页面注入 v0.1.50 的角标结构，检测器应读出 `position: absolute`，证明这套度量抓得住当年的越界。
+
+本轮**纯前端改动**：无数据库迁移、无接口改动、无新依赖、Kotlin 零代码改动。版本号仍按规范统一到 `0.1.51`，但后端 jar **有意不重建、不重启**，线上后端仍是 `paper-reader-backend-0.1.49.jar`，故 `/api/health` 仍返回 `0.1.49`；判断前端版本请看 favicon `?v=` 与构建产物哈希。
+
+## 上一迭代：v0.1.50（已发布）
+
+发布分支：`feature/v0.1.50`；类型：UI 修复；需求编号：`REQ-202609-0126`；状态：2026-09-17 UTC 已合并 `main`（显式 `--no-ff` 合并提交 `658c3ba`，本轮不经 `dev`）并部署验收（发布记录见 `docs/MAINTENANCE.md`）。**注意：本轮对 `Sidebar.tsx`（菜单栏）的改造属越界，已由 v0.1.51 回退；下列描述中只保留 `TabBar.tsx`（侧栏）部分有效。**
 
 用户反馈：书架左栏的四个 tab（全部 / 创建 / 导入 / 收藏）只要带上计数徽标，标题就被压成**逐字竖排**，一个字占一行，读不出来。
 
-根因是徽标抢了标题的宽度，不是字号问题：书架左栏 `aside.w-72` 只有 288px，四个 `flex-1` 等宽按钮实宽 71.75px，按钮本身是 `gap-1.5` + `px-3`（左右各 12px），而徽标是按钮内的**文档流内** `inline-flex` 兄弟节点（`min-w-[18px]`，`99+` 实测约 24px）。72 - 24（padding）- 24（徽标）- 6（gap）≈ 18px，而两个汉字需要 28px，于是逐字换行成 2 行（块高 40px、按钮高 60px）。`Sidebar.tsx` 展开态的菜单项用的是同一套流内徽标 + `ml-auto`，同样会被压。
+根因是徽标抢了标题的宽度，不是字号问题：书架左栏 `aside.w-72` 只有 288px，四个 `flex-1` 等宽按钮实宽 71.75px，按钮本身是 `gap-1.5` + `px-3`（左右各 12px），而徽标是按钮内的**文档流内** `inline-flex` 兄弟节点（`min-w-[18px]`，`99+` 实测约 24px）。72 - 24（padding）- 24（徽标）- 6（gap）≈ 18px，而两个汉字需要 28px，于是逐字换行成 2 行（块高 40px、按钮高 60px）。~~`Sidebar.tsx` 展开态的菜单项用的是同一套流内徽标 + `ml-auto`，同样会被压。~~（**v0.1.51 更正**：菜单栏 `Sidebar.tsx` 是 220px 宽的单列整行，行内可用宽 187px，两个汉字的标题根本压不着，把它算进本次范围是判断错误；该处已回退。）
 
-做法是把徽标变成**脱离文档流的角标**：`absolute -top-2 -end-2`、`h-[16px] min-w-[16px]`、`whitespace-nowrap`、`rounded-full` + 细边框，并加 `aria-hidden="true"` 与 `pointer-events-none`（纯装饰，不该被点也不该被读屏）；计数 >99 截断成 `99+`，为 0 不渲染。标题包一层 `span.relative inline-flex min-w-0 max-w-full`，内层 `span.min-w-0 truncate`，按钮去掉 `gap-1.5`；`Sidebar.tsx` 同款改造，`flex-1 text-left` 与 `ml-auto` 换成 `min-w-0 truncate text-start`。定位一律用逻辑属性（`-end-2` / `-top-2` / `text-start`），LTR 落右上、RTL 自动镜像到左上。徽标 `aria-hidden` 后按钮的可访问名会丢掉计数，两处补 `aria-label="{label} ({badge})"`。
+做法是把徽标变成**脱离文档流的角标**：`absolute -top-2 -end-2`、`h-[16px] min-w-[16px]`、`whitespace-nowrap`、`rounded-full` + 细边框，并加 `aria-hidden="true"` 与 `pointer-events-none`（纯装饰，不该被点也不该被读屏）；计数 >99 截断成 `99+`，为 0 不渲染。标题包一层 `span.relative inline-flex min-w-0 max-w-full`，内层 `span.min-w-0 truncate`，按钮去掉 `gap-1.5`。~~`Sidebar.tsx` 同款改造，`flex-1 text-left` 与 `ml-auto` 换成 `min-w-0 truncate text-start`。~~（**v0.1.51 已回退**：菜单栏保持 `flex-1 text-start` 标签 + `ms-auto` 行内胶囊。）定位一律用逻辑属性（`-end-2` / `-top-2` / `text-start`），LTR 落右上、RTL 自动镜像到左上。徽标 `aria-hidden` 后按钮的可访问名会丢掉计数，侧栏补 `aria-label="{label} ({badge})"`。
 
 验收标准：新增 `tabbar-badge.test.tsx` 锁定「徽标是脱离文档流的角标」——必须 `absolute` / `-top-2` / `-end-2` / `pointer-events-none` / `aria-hidden="true"`，标题必须 `truncate`，按钮 className 不得再出现 `gap-1.5`（出现即意味着徽标又被塞回文档流），`128` 截断为 `99+`、`0` 不渲染、可访问名为 `全部 (99+)`；`pnpm exec tsc --noEmit`、`pnpm lint`、`pnpm run build` 全绿；线上核对 favicon `?v=0.1.50`、服务端样式表与首屏 JS chunk 和本地构建逐字节一致，并在公网页面实测：288px 侧栏里 tab 条 287px、四个按钮宽度合计 287px、每个标题 `Range.getClientRects()` 行数为 1（块高 20px），徽标落在侧栏内且 RTL 下镜像到左侧；**同时必须做负对照** —— 在同一页面注入改造前的流内徽标结构，读数应仍是 2 行 / 40px，证明这套度量抓得住原始缺陷（只报「改完好看」、没有负对照的度量不算验收）。
 
