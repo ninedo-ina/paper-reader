@@ -1,3 +1,14 @@
+## v0.1.50 侧栏菜单计数徽标改为标题角标
+
+- 本轮需求编号 `REQ-202609-0126`，分支 `feature/v0.1.50`，从 `b0409ef` 展开。根因不是计数来源，是布局：`TabBar` 每个页签 `flex-1` 在 `w-72`（288px，内容 287px）的左栏里均分到 ≈72px，扣掉 `px-3` 后只剩 ≈48px 给「标题 + 徽标」，中文于是按字断行，变成逐字竖排。
+- **徽标必须是脱离文档流的绝对定位角标：`absolute -top-2 -end-2`。不要再改回 `inline-flex` 行内并排 + `gap-*`**，那正是本轮要修的 bug —— 行内徽标会抢标题宽度，`frontend/src/test/tabbar-badge.test.tsx` 已用 `badge.classList.contains("absolute")` 上锁（实测把 `absolute` 去掉，该用例在 `tabbar-badge.test.tsx:44` 以 `expected false to be true` 失败）。
+- **标题外面的 `relative inline-flex min-w-0 max-w-full` 包装层和标题上的 `truncate` 都不要删**：包装层是角标的定位容器（删了角标会飘到页签左上角而不是标题右上角），`truncate` 负责极端窄容器下兜底，删了会退回逐字换行。
+- **方向与偏移一律用逻辑类（`ms-`/`me-`/`ps-`/`pe-`/`start-`/`end-`/`text-start`），不得用 `ml-`/`mr-`/`left-`/`right-`/`text-left`。** 本轮 `Sidebar.tsx` 里原有的 `ml-auto` + `text-left` 已换成 `-end-2` + `text-start`，回退会让 `ar`/`fa`/`ug` 三种 RTL 语言下角标钉死在右边、标题左对齐失效。
+- `TabBar` 是共用组件，「我的书架」左栏（`components/papers/PaperList.tsx`）与阅读器右栏（`components/layout/RightPanel.tsx:170`）同时受益；右栏目前 tabs 无 `count`，改 `TabBar` 会一起影响，改之前先确认右栏窄容器下的表现。
+- `data-tab-key` 属性和下划线指示器的 `ResizeObserver` 逻辑本轮未动，**不要为了改角标顺手重排**：指示器靠 `querySelectorAll("[data-tab-key]")` 定位。
+- 本轮**无接口改动、无数据库迁移、无新依赖**，后端 Kotlin 零改动。按全局「代码完成 = 合入生产分支并部署」的口径本轮只重建并重启了前端 PM2 进程（`paper-reader-frontend`），**后端 `paper-reader-backend` 刻意未重启**（必须带 `backend/.env` 启动，无关重启只会制造事故），因此线上 `/api/health` 仍返回 `0.1.49`，这是有意为之的版本漂移，不是部署漏做。
+- 本轮 `feature/v0.1.50` 先合入 `main`，随后把 `dev` 快进到同一提交（`dev` 当时停在 `b0409ef`，是本轮的祖先，快进不产生合并提交）。后续分支仍按 `feature → dev → main` 走，开分支前先确认 `dev` 不落后于 `main`。
+
 ## v0.1.48 国际化语言切换
 
 - 本轮需求编号 `REQ-202609-0111`，从已发布的 v0.1.45 基线开 `feature/v0.1.46`。**加语言只改两处**：`frontend/src/i18n/locales.ts` 的 `LOCALES` / `LOCALE_META`，以及新增 `frontend/src/i18n/locales/<code>/common.json`。切换器、设置页、`<html lang/dir>`、浏览器语言协商都是从注册表读的，不要去组件里硬编码语言列表。
