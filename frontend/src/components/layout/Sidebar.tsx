@@ -86,6 +86,7 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
       <button
         key={item.key}
         onClick={() => onNavigate?.(item.key)}
+        aria-label={badge ? `${t(item.key)} (${badge})` : undefined}
         className={cn(
           "flex items-center gap-2.5 px-3 py-2 mx-1 rounded-[10px] text-[13.5px] font-[470] transition-all duration-150",
           "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]",
@@ -94,12 +95,20 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
         )}
       >
         <item.icon className="w-[18px] h-[18px] shrink-0" />
-        <span className="flex-1 text-left">{t(item.key)}</span>
-        {badge && (
-          <span className="ml-auto bg-[var(--accent-soft)] text-[var(--text-secondary)] text-[11px] font-semibold px-[7px] py-[2px] rounded-[10px]">
-            {badge}
-          </span>
-        )}
+        {/* The badge floats over the label's top-end corner instead of sitting
+            inline as a flex sibling, so it can never squeeze the label into
+            per-glyph vertical wrapping in a narrow / long-label locale. */}
+        <span className="relative inline-flex min-w-0 max-w-full items-center">
+          <span className="min-w-0 truncate text-start">{t(item.key)}</span>
+          {badge && (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute -top-2 -end-2 inline-flex h-[16px] min-w-[16px] items-center justify-center whitespace-nowrap rounded-full border border-[var(--border-subtle)] bg-[var(--surface-2)] px-1 text-[10px] font-semibold leading-none text-[var(--text-secondary)]"
+            >
+              {badge}
+            </span>
+          )}
+        </span>
       </button>
     )
   }
