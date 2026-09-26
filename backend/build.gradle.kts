@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "org.paperreader"
-version = "0.1.58"
+version = "0.1.59"
 
 springBoot {
     buildInfo()
@@ -41,6 +41,9 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json")
+
+    // HTML 解析（导出前把编辑器 KaTeX DOM 规整成 pandoc 可读的 MathML 注解）
+    implementation("org.jsoup:jsoup:1.18.3")
 
     // JWT
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")

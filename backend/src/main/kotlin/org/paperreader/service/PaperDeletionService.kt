@@ -1,5 +1,6 @@
 package org.paperreader.service
 
+import org.paperreader.config.ExportProperties
 import org.paperreader.exception.ResourceNotFoundException
 import org.paperreader.exception.StorageOperationException
 import org.paperreader.repository.AiChatRepository
@@ -8,12 +9,14 @@ import org.paperreader.repository.AnnotationCommentRepository
 import org.paperreader.repository.AnnotationRepository
 import org.paperreader.repository.NoteRepository
 import org.paperreader.repository.PaperChunkRepository
+import org.paperreader.repository.PaperExportArtifactRepository
 import org.paperreader.repository.PaperRepository
 import org.paperreader.repository.PaperTagRepository
 import org.paperreader.repository.PaperVersionRepository
 import org.paperreader.repository.ReadingLogRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.nio.file.Path
 
 @Service
 class PaperDeletionService(
@@ -25,10 +28,12 @@ class PaperDeletionService(
     private val paperVersionRepository: PaperVersionRepository,
     private val paperTagRepository: PaperTagRepository,
     private val paperChunkRepository: PaperChunkRepository,
+    private val paperExportArtifactRepository: PaperExportArtifactRepository,
     private val aiChatRepository: AiChatRepository,
     private val aiMessageRepository: AiMessageRepository,
     private val fileStorageService: FileStorageService,
     private val auditLogService: AuditLogService,
+    private val exportProperties: ExportProperties,
 ) {
     @Transactional
     fun deletePaper(id: Long, userId: Long, deleteFile: Boolean) {
@@ -50,6 +55,13 @@ class PaperDeletionService(
         paperVersionRepository.deleteByPaperId(paper.id)
         paperTagRepository.deleteByPaperId(paper.id)
         paperChunkRepository.deleteByPaperId(paper.id)
+
+        // 导出产物（W5）：产物文件落在 {export-root}/{paperId}/ 下，随论文一起清干净，再删登记行。
+        runCatching {
+            Path.of(exportProperties.outputDir).toAbsolutePath().normalize()
+                .resolve(paper.id.toString()).toFile().deleteRecursively()
+        }
+        paperExportArtifactRepository.deleteByPaperId(paper.id)
 
         // 正文（content_json / content_html）是 pr_papers 的列，随本行一起删除，无需单独清理。
         paperRepository.delete(paper)
