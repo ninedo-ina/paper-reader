@@ -10,6 +10,8 @@
 4. [维护规范](MAINTENANCE.md)：版本号、分支、测试、合并、部署与记录流程。
 5. [部署手册](DEPLOY.md)：本地基础设施和当前生产机的部署、验证、回滚及排障方法。
 6. [当前计划](PLAN.md)：本轮迭代和后续候选事项；实施范围仍以产品负责人最新要求为准。
+7. [写作方向路线图](WRITER_ROADMAP.md)：从 reader 延伸到 writer 的需求归纳、现状差距与迭代拆分（`REQ-202609-0255`）。
+8. [开源论文编辑器调研与选型](PAPER_EDITOR_SELECTION.md)：候选项目的实测数据、许可证风险与推荐方案（`REQ-202609-0255` 配套）。
 
 ## 按主题查找
 
@@ -20,6 +22,8 @@
 | AI 对话 | [AI_CHAT_TECHNICAL_SOLUTION.md](AI_CHAT_TECHNICAL_SOLUTION.md) | Provider、响应兼容、会话隔离、reasoning、论文上下文 |
 | PDF 渲染 | [PDF_RENDERING_PIPELINE.md](PDF_RENDERING_PIPELINE.md) | PDF.js、文本层、选区、批注与渲染兼容 |
 | 论文创建 | [CREATE_PAPER_FEATURE.md](CREATE_PAPER_FEATURE.md) | 手动创建、字段模型和编辑器 |
+| 写作方向规划 | [WRITER_ROADMAP.md](WRITER_ROADMAP.md) | reader → writer 的需求归纳、现状差距（编辑器目前是占位）、W1-W9 主题与迭代拆分 |
+| 编辑器选型 | [PAPER_EDITOR_SELECTION.md](PAPER_EDITOR_SELECTION.md) | 开源论文编辑器/排版引擎/引用生态的实测对比、许可证风险、推荐方案与 PoC 清单 |
 | 元数据补全 | [EXTERNAL_METADATA_ENRICHMENT.md](EXTERNAL_METADATA_ENRICHMENT.md) | arXiv/DOI 标识、外部 Provider、字段来源、冲突、已实现边界与后续计划 |
 | 通知邮件 | [NOTIFICATION_TEMPLATES.md](NOTIFICATION_TEMPLATES.md) | 通知中心对接契约、`template`/`template_data` 字段、灰度模板要求与验收标准 |
 | 国际化 | [I18N.md](I18N.md) | 支持的语言、语言注册表、切换链路、新增语言的步骤、RTL 与文案来源 |
@@ -42,5 +46,6 @@
 - 长期分支：`dev`（集成）、`main`（默认/生产）。本轮 `feature/v0.1.51 -> main`（显式 `--no-ff` 合并提交 `cd46367`），随后该分支上追加的仅文档同步提交又以**第二个显式 `--no-ff` 合并提交**带入 `main`（该合并提交即 `main` 与 `dev` 当前 tip），`dev` 从 `f2f708e` 一路快进过去，两个长期分支重新对齐
 - 生产域名：`https://paper.pilo.eu.cc`
 - 文档核对日期：2026-09-17（UTC）
+- 2026-09-26（UTC）新增写作方向规划文档（`REQ-202609-0255`）：[WRITER_ROADMAP.md](WRITER_ROADMAP.md) 与 [PAPER_EDITOR_SELECTION.md](PAPER_EDITOR_SELECTION.md)。**该轮为纯文档迭代，不含代码改动、不涉及版本号变更、不触发生产部署**，因此「当前发布版本」仍为 `0.1.51`、线上状态与 2026-09-17 的核验结论一致。
 
 如果这里的版本低于根目录 `frontend/VERSION` 或 `backend/VERSION`，说明交接文档没有随发布更新，应在继续开发前先核实并修正文档。

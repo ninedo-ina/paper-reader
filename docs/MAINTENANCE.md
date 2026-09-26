@@ -792,3 +792,13 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
   - **负对照（必须项）**：在**同一个线上页面**注入 v0.1.50 的角标结构（`span.relative inline-flex` 包装层 + `aria-hidden` 的 `pointer-events-none absolute -top-2 -end-2 … min-w-[16px]` 角标）到八行菜单项上，检测器对八行全部读出 `position: absolute` / `inset-inline-end: -8px` —— 说明上面这套度量**当年就能抓住这次越界**，而不是「改完看着还行」。脚本最终输出：`PASS: 菜单栏计数为行内胶囊，侧栏计数仍为 absolute -top-2 -end-2 角标，负对照有效`。
 - 说明（验收方法的边界，勿误读）：沿用 v0.1.50 的办法——登录态不可得（生产只开着管理员 GitHub 登录，C 端测试账号密码未记录），实测用 `pr_session=1` cookie（`frontend/src/middleware.ts` 只校验该 cookie 是否存在）+ 注入 localStorage 的假 token + 拦截 `**/api/papers**` 返回 `{"code":0,"data":{"items":[],"total":128,…}}`。**计数是 mock 的**（取 128 是为覆盖 `99+` 截断），被测量的 HTML/CSS/JS 全部是线上部署的真实产物，sha256 已逐字节比对。
 - 遗留与人工事项：① 线上后端仍是 `paper-reader-backend-0.1.49.jar`（有意，见「构建与部署」）；② 菜单栏本次无组件级回归测试，回退是否正确靠线上几何验收 + `ATTENTION.md` 的文字约束兜底，**后续若再有人想「统一两处风格」，先读 `docs/ATTENTION.md` 的 v0.1.51 一节**；③ 侧栏折叠态（`w-[52px]`）的圆形菜单项徽标两轮都未纳入几何验收；④ `ug`（维吾尔语）下侧栏四个 tab 宽度合计 **310.73px > 287px** 内容宽、最后一个 tab 被裁，属既有问题，本轮未修（可用的修法是给按钮加 `min-w-0`，但那会让四个 tab 都退回 71.75px 并截断德语 `Importiert`/`Favoriten`，需要单独评估）；⑤ 版式实测依赖 mock 计数，登录态下用真实计数的截图验收未做；⑥ v0.1.48 ~ v0.1.50 的其余遗留（机翻未校对、中文 AI 提示词与后端 `message` 有意保留、侧栏折叠态未验收）不变。
+
+### 无版本号迭代：writer 方向需求整理规划（`REQ-202609-0255`，2026-09-26 UTC）
+
+这一条**不是版本记录**（没有 `vX.Y.Z` 可写），列在这里是为了让版本链不断档：`git log v0.1.51..v0.1.52` 之间会出现若干提交，未来维护者需要能从本文查到它们是什么、为什么没有版本号。
+
+- 性质：**纯文档迭代**。新增 `docs/WRITER_ROADMAP.md`（reader → writer 的需求归纳、现状差距、W1-W9 主题、迭代拆分与待确认问题）与 `docs/PAPER_EDITOR_SELECTION.md`（开源论文编辑器/排版引擎/引用生态的实测对比与选型建议），并同步 `docs/README.md`、`docs/PLAN.md`、`docs/PROJECT_STATUS.md`、`docs/CREATE_PAPER_FEATURE.md`。**未改任何业务代码**，`git diff --stat` 只涉及 `docs/`。
+- 为什么没有版本号：仓库规范里「一次迭代」的登记要素包含版本号、构建与部署记录；本轮既没有构建也没有部署，把它按 patch 记一条会产生一个**从未发布过**的版本号，反而污染版本链。因此本轮**不改 8 处版本号**（`frontend/package.json`、`frontend/VERSION`、`backend/VERSION`、`backend/build.gradle.kts`、根 `README.md`、`layout.tsx` favicon 参数、`FaviconThemeSync.tsx`、可见 UI 版本），线上仍是 `0.1.51`（后端 jar 仍是 `paper-reader-backend-0.1.49.jar`）。分支名也刻意不用 `feature/v0.1.52`。
+- 分支：`feature/req-202609-0255-writer-roadmap`（基于 `main`）。合入方式见本轮推送后的实际记录；本轮**无部署、无线上验收**——因为没有任何线上行为发生变化，这一点不是遗漏。
+- 本轮核查出的关键事实（后续迭代要以此为起点，不要从旧文档推断）：手动创建的论文**无法保存正文** —— `PaperContentArea.tsx:27` 没给 `PaperEditor` 传 `onSave`，而保存按钮条件是 `{onSave && ...}`（`PaperEditor.tsx:57`），按钮根本不会渲染；`pr_papers` 从 V1 到 V15 没有 content/body/document 列；`PaperEditor.tsx:31` 拿 `abstractText` 当正文。详见 `docs/WRITER_ROADMAP.md` 第 2 节。
+- 结论摘要（避免误读）：没有任何开源论文编辑器可以整体嵌入本项目（它们要么是自带后端的完整应用，要么是没有编辑界面的排版引擎，要么是桌面软件）；正确做法是**分层复用** —— 编辑层用现有 Tiptap 3（MIT）+ 官方 MIT 扩展，导出层用 Typst（Apache-2.0）/ Pandoc（GPL-2.0）以独立进程调用，引用层用 CSL + `citation-js`（MIT），协作层用 Yjs + Hocuspocus（MIT，且必须先修 `/ws` 的 STOMP 身份债）。

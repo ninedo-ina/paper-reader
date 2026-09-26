@@ -366,6 +366,8 @@ User fills fields, clicks "Create"
 
 ## 7. Future Iterations
 
+> 本节已升级为独立路线图：`REQ-202609-0255` 把以下后续事项整理成 [WRITER_ROADMAP.md](WRITER_ROADMAP.md)（reader → writer 方向的需求归纳与迭代拆分）与 [PAPER_EDITOR_SELECTION.md](PAPER_EDITOR_SELECTION.md)（开源论文编辑器调研与选型）。**范围、优先级与版本号归属以路线图为准**，本节保留下面的原始列表作为出处。
+
 1. **Save content API**: `PUT /api/papers/:id` with editor HTML/markdown body (requires backend `content` or `body` column)
 2. **Auto-save**: Debounced `useEffect` (2s) calling save automatically
 3. **Formatting toolbar**: TipTap `BubbleMenu` or `FloatingMenu` extension for visible formatting controls
@@ -373,3 +375,10 @@ User fills fields, clicks "Create"
 5. **Version history**: Store revision snapshots of paper content
 6. **Citation manager**: Custom TipTap node for academic citations
 7. **Collaborative editing**: TipTap + Y.js + Hocuspocus for real-time co-authoring
+
+2026-09-26 更正与补充：
+
+- 第 4 条包名有误：**公开 npm 上不存在 `@tiptap/extension-markdown`**（实测 HTTP 404），Markdown 解析/序列化的正确包名是 **`@tiptap/markdown`**（MIT，实测 3.31.3）。本文成文于 v0.1.4 规划期，该包当时尚未发布，属正常的历史偏差，不要按旧包名写代码。
+- 第 1、2、3 条构成 writer 方向的最小闭环，建议合并为首个迭代交付（路线图中的 `v0.1.52`）；实现前需先补正文存储列（`pr_papers` 从 V1 到 V15 都没有 content/body 列）。
+- 第 7 条（协作）不是"接上 Y.js 就行"：现有 `/ws` 的 STOMP `senderId` 来自客户端、未绑定服务端身份（见 [PROJECT_STATUS.md](PROJECT_STATUS.md) 第 11 节），必须在协作编辑上线前先修复，否则等于给一个可伪造身份的实时通道接上文档写入。
+- 第 6 条（引用）建议不自建引文格式，改用 CSL 模板 + `citation-js`（MIT）+ 已有的 DOI/arXiv 元数据补全。
