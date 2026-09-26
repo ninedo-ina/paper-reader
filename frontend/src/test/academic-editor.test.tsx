@@ -1,7 +1,14 @@
+import { useState } from "react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 import { Editor } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
+import { withIntl } from "@/test/intl"
 import { academicExtensions } from "@/components/papers/PaperEditor/extensions"
+import {
+  AcademicToolbar,
+  type MathDialogState,
+} from "@/components/papers/PaperEditor/AcademicToolbar"
 import { BIBLIOGRAPHY_NODE, collectBibliography } from "@/lib/academic-numbering"
 import { paperToCslItem } from "@/lib/citations"
 import { insertCitation } from "@/components/papers/PaperEditor/extensions/Citation"
@@ -26,6 +33,7 @@ function createEditor(content = "<p>hello</p>") {
 }
 
 afterEach(() => {
+  cleanup()
   editor?.destroy()
   editor = null
 })
@@ -94,5 +102,92 @@ describe("academic extension wiring", () => {
 
     expect(collectBibliography(instance.state.doc).map((entry) => entry.id)).toEqual([second.id, first.id])
     expect(numbers()).toEqual([2, 1])
+  })
+})
+
+const LABELS = { formula: "式", table: "表", figure: "图", unknown: "引用失效" }
+
+/**
+ * 公式弹层的开关状态在 PaperEditor 手里（扩展的 onClick 也是在那儿配的），
+ * 这里用一个最小的宿主把它接起来，才能真的从按钮点进弹层再落回文档。
+ */
+function ToolbarHost({ instance }: { instance: Editor }) {
+  const [mathDialog, setMathDialog] = useState<MathDialogState | null>(null)
+  return (
+    <AcademicToolbar
+      editor={instance}
+      labels={LABELS}
+      mathDialog={mathDialog}
+      onOpenMathDialog={setMathDialog}
+    />
+  )
+}
+
+function renderToolbar(content = "<p>body</p>") {
+  const instance = createEditor(content)
+  render(withIntl(<ToolbarHost instance={instance} />))
+  return instance
+}
+
+const buttonNamed = (name: string) => screen.getByRole("button", { name })
+
+describe("academic toolbar", () => {
+  it("inserts a footnote written in the dialog and mirrors it into the endnote list", () => {
+    const instance = renderToolbar()
+
+    fireEvent.click(buttonNamed("插入脚注"))
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "见附录 A" } })
+    fireEvent.click(buttonNamed("插入"))
+
+    const html = instance.getHTML()
+    expect(html).toContain('data-footnote-number="1"')
+    expect(html).toContain('data-footnote-note="见附录 A"')
+    // 正文只有一个上标、导出里没有文末条目的话，脚注就等于丢了
+    expect(html).toContain('data-footnote-entry=')
+    expect(html).toContain("1. 见附录 A")
+  })
+
+  it("refuses an empty footnote instead of inserting a blank marker", () => {
+    const instance = renderToolbar()
+    const before = instance.getHTML()
+
+    fireEvent.click(buttonNamed("插入脚注"))
+    fireEvent.click(buttonNamed("插入"))
+
+    expect(screen.getByRole("alert")).toHaveTextContent("请输入脚注内容")
+    expect(instance.getHTML()).toBe(before)
+  })
+
+  it("renders the latex typed in the dialog so the editor and the export agree", () => {
+    const instance = renderToolbar()
+
+    fireEvent.click(buttonNamed("公式块"))
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "E = mc^2" } })
+    fireEvent.click(buttonNamed("插入"))
+
+    const html = instance.getHTML()
+    expect(html).toContain('data-type="block-math"')
+    expect(html).toContain('data-latex="E = mc^2"')
+    // 编辑器和导出读的是同一份 KaTeX DOM，少了它导出后公式是空的
+    expect(html).toMatch(/katex-(html|mathml)/)
+  })
+
+  it("inserts a cross-reference that points back at the numbered formula", () => {
+    const instance = renderToolbar()
+    instance.commands.insertBlockMath({ latex: "a=b" })
+
+    fireEvent.click(buttonNamed("交叉引用"))
+    fireEvent.click(screen.getByRole("button", { name: "式 (1)" }))
+
+    expect(instance.getHTML()).toContain('data-cross-ref-number="1"')
+    expect(instance.getHTML()).toContain('data-cross-ref-kind="formula"')
+  })
+
+  it("says so when there is nothing to cross-reference yet", () => {
+    renderToolbar()
+
+    fireEvent.click(buttonNamed("交叉引用"))
+
+    expect(screen.getByText("文档里还没有可引用的公式或表格")).toBeInTheDocument()
   })
 })
