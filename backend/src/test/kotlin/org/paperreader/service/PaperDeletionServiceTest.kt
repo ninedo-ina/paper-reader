@@ -7,6 +7,7 @@ import io.mockk.verify
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
+import org.paperreader.config.ExportProperties
 import org.paperreader.exception.ResourceNotFoundException
 import org.paperreader.exception.StorageOperationException
 import org.paperreader.model.AiChat
@@ -18,6 +19,7 @@ import org.paperreader.repository.AnnotationCommentRepository
 import org.paperreader.repository.AnnotationRepository
 import org.paperreader.repository.NoteRepository
 import org.paperreader.repository.PaperChunkRepository
+import org.paperreader.repository.PaperExportArtifactRepository
 import org.paperreader.repository.PaperRepository
 import org.paperreader.repository.PaperTagRepository
 import org.paperreader.repository.PaperVersionRepository
@@ -50,6 +52,9 @@ class PaperDeletionServiceTest {
     private lateinit var paperChunkRepository: PaperChunkRepository
 
     @MockK(relaxed = true)
+    private lateinit var paperExportArtifactRepository: PaperExportArtifactRepository
+
+    @MockK(relaxed = true)
     private lateinit var aiChatRepository: AiChatRepository
 
     @MockK(relaxed = true)
@@ -61,6 +66,8 @@ class PaperDeletionServiceTest {
     @MockK(relaxed = true)
     private lateinit var auditLogService: AuditLogService
 
+    private val exportProperties = ExportProperties()
+
     private val service by lazy {
         PaperDeletionService(
             paperRepository,
@@ -71,10 +78,12 @@ class PaperDeletionServiceTest {
             paperVersionRepository,
             paperTagRepository,
             paperChunkRepository,
+            paperExportArtifactRepository,
             aiChatRepository,
             aiMessageRepository,
             fileStorageService,
             auditLogService,
+            exportProperties,
         )
     }
 
@@ -114,6 +123,7 @@ class PaperDeletionServiceTest {
         verify { paperVersionRepository.deleteByPaperId(7) }
         verify { paperTagRepository.deleteByPaperId(7) }
         verify { paperChunkRepository.deleteByPaperId(7) }
+        verify { paperExportArtifactRepository.deleteByPaperId(7) }
         verify { paperRepository.delete(paper) }
         verify { paperRepository.flush() }
         verify(exactly = 0) { fileStorageService.delete(any()) }

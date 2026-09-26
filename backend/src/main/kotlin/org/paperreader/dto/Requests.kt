@@ -196,6 +196,48 @@ data class PaperVersionDto(
     val createdAt: Instant,
 )
 
+// ==== Paper Export / Import (W5) ====
+data class CreateExportRequest(
+    /** markdown / html / latex / bibtex / docx / pdf */
+    val format: String,
+    /** 关联的发布版本；为空表示导出当前草稿正文。 */
+    val versionId: Long? = null,
+)
+
+data class ExportArtifactDto(
+    val id: Long,
+    val paperId: Long,
+    val versionId: Long?,
+    val format: String,
+    val engine: String?,
+    val byteSize: Long?,
+    val contentVersion: Int?,
+    val status: String,
+    /** 二次下载地址（相对 API 前缀）。 */
+    val downloadUrl: String,
+    val createdAt: Instant,
+)
+
+data class ExportFormatDto(
+    val id: String,
+    val ext: String,
+    val available: Boolean,
+)
+
+data class ExportCapabilitiesDto(
+    val formats: List<ExportFormatDto>,
+    val importAvailable: Boolean,
+)
+
+data class ImportMarkdownRequest(
+    val markdown: String,
+)
+
+data class ImportResultDto(
+    val contentHtml: String,
+)
+
+
 // ==== Storage Config ====
 data class StorageConfigDto(
     val id: Long,

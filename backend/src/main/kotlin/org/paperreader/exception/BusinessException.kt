@@ -27,3 +27,23 @@ class TwoFactorRequiredException(message: String = "Two-factor authentication re
  */
 class ContentVersionConflictException(val currentVersion: Int) :
     BusinessException(1008, "内容已被其他会话更新", 409)
+
+/**
+ * 请求的导出格式所需的引擎（pandoc / typst）在服务端不可用（未安装或不可执行）。
+ * 用 503 表示这是服务端能力缺失，不是客户端参数错误；前端应先查 capabilities 接口禁用对应格式。
+ */
+class ExportUnavailableException(message: String) : BusinessException(1009, message, 503)
+
+/**
+ * 并发导出已达上限（app.export.max-concurrency）。导出引擎是独立进程、吃 CPU/内存，
+ * 必须有并发闸门，否则可被用户触发资源耗尽。用 429 让前端稍后重试。
+ */
+class ExportBusyException(message: String = "导出服务繁忙，请稍后重试") :
+    BusinessException(1010, message, 429)
+
+/**
+ * 导出引擎实际执行失败（非零退出 / 超时 / 产物为空）。对外只给通用文案，
+ * 具体 stderr、路径、堆栈只落服务端日志，不回显给客户端（错误脱敏，见风险条款）。
+ */
+class ExportFailedException(message: String = "导出失败，请稍后重试") :
+    BusinessException(1011, message, 502)
