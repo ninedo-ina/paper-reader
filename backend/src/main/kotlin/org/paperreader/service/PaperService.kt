@@ -23,10 +23,18 @@ class PaperService(
     private val paperParsingService: PaperParsingService,
     private val objectMapper: ObjectMapper,
     private val auditLogService: AuditLogService,
+    private val uploadQuotaService: UploadQuotaService,
 ) {
+    /**
+     * 上传 PDF。单文件大小与三个口径的额度都必须在上传动作之前判掉，落盘成功后才记台账。
+     * Spring 的 multipart 上限（10MB）是第一道防线，这里再判一次，保证任何入口都过同一套规则。
+     */
     @Transactional
     fun uploadPdf(file: MultipartFile, userId: Long, title: String?): PaperDetailDto {
         val fileSize = file.size
+        uploadQuotaService.checkFileSize(fileSize)
+        uploadQuotaService.checkQuota(userId, fileSize)
+
         val paperTitle = title ?: file.originalFilename?.removeSuffix(".pdf") ?: "Untitled"
 
         val paper = paperRepository.save(
@@ -41,14 +49,22 @@ class PaperService(
 
         val filePath = fileStorageService.store(file, userId, paper.id)
         val stored = paperRepository.save(paper.copy(filePath = filePath, parseStatus = "PENDING"))
+        uploadQuotaService.record(userId, stored.id, fileSize)
         paperParsingService.requestParse(stored)
         val result = stored.toDetailDto()
         auditLogService.log(userId, "上传论文", result.title)
         return result
     }
 
+    /**
+     * 从 URL 导入。大小要下载完才知道，所以额度判两次：下载前先按 0 字节探一次
+     * （已经超额就别浪费带宽去下），拿到实际大小后再判一次。
+     * 单文件 10MB 由 storeFromUrl 在下载过程中截断，不会把超大响应读进内存。
+     */
     @Transactional
     fun uploadFromUrl(request: UploadFromUrlRequest, userId: Long): PaperDetailDto {
+        uploadQuotaService.checkQuota(userId, 0)
+
         val paper = paperRepository.save(
             Paper(
                 userId = userId,
@@ -60,10 +76,15 @@ class PaperService(
             )
         )
 
-        val (filePath, pdfBytes) = fileStorageService.storeFromUrl(request.url, userId, paper.id)
-        val stored = paperRepository.save(
-            paper.copy(filePath = filePath, fileSize = pdfBytes.size.toLong(), parseStatus = "PENDING")
+        val (filePath, pdfBytes) = fileStorageService.storeFromUrl(
+            request.url, userId, paper.id, UploadQuotaService.MAX_FILE_BYTES,
         )
+        val fileSize = pdfBytes.size.toLong()
+        uploadQuotaService.checkQuota(userId, fileSize)
+        val stored = paperRepository.save(
+            paper.copy(filePath = filePath, fileSize = fileSize, parseStatus = "PENDING")
+        )
+        uploadQuotaService.record(userId, stored.id, fileSize)
         paperParsingService.requestParse(stored)
         val result = stored.toDetailDto()
         auditLogService.log(userId, "上传论文", result.title)

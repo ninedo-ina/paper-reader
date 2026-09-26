@@ -62,7 +62,11 @@
     "exitFullscreen": "Exit full screen",
     "enterFullscreen": "Full screen reading",
     "uploadHint": "Supports direct PDF links | local upload",
-    "urlTitleOptional": "Title (optional)"
+    "urlTitleOptional": "Title (optional)",
+    "fileLimitHint": "Up to {limit} per file",
+    "quotaRemaining": "{daily} left today, {total} left in total",
+    "fileTooLarge": "{size} exceeds the {limit} per-file limit",
+    "uploadFailed": "Upload failed, please try again"
   },
   "paper": {
     "basicInfo": "Basic Info",
