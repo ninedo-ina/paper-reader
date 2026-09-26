@@ -5,8 +5,14 @@ import { withIntl } from "@/test/intl"
 import type { PaperContentDto, PaperDetailDto } from "@/lib/api/types"
 
 const mocks = vi.hoisted(() => ({
-  // isActive 是工具栏选状态时要问编辑器的问题，桩里也得答得上来
-  editor: { getJSON: vi.fn(), getHTML: vi.fn(), isActive: vi.fn(() => false) },
+  // isActive 是工具栏选状态、getText 是字数统计、can 是撤销/重做按钮要问编辑器的问题，桩里都得答得上来
+  editor: {
+    getJSON: vi.fn(),
+    getHTML: vi.fn(),
+    getText: vi.fn(() => ""),
+    isActive: vi.fn(() => false),
+    can: vi.fn(() => ({ undo: () => false, redo: () => false })),
+  },
   editorOptions: {} as { content?: unknown; onUpdate?: () => void },
   getPaperContent: vi.fn(),
   updatePaperContent: vi.fn(),
