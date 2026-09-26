@@ -1,3 +1,16 @@
+## v0.1.57 编辑器基础格式工具栏与字数统计（W2）
+
+- 需求编号 `REQ-202609-0258`（**writer 路线图 W2**，见 [WRITER_ROADMAP.md](WRITER_ROADMAP.md) 第 4 节），分支 `feature/v0.1.57`，从**含 W3 的** `origin/main`（`6b8f573`）展开。**纯前端迭代，Kotlin 零改动、后端 jar 未重建**，`/api/health` **仍报 W3 的 `0.1.56`**（不是漏部署）。**判定前端线上版本用 favicon `?v=0.1.57` 与产物哈希，不要用 `/api/health`。W2 原分配 `v0.1.55`，因并行 W3 先合入 `v0.1.56` 而放弃、无线上版本。**
+- **W2 的格式文案目前只有 `zh` 和 `en`（24 个 key），其余 12 语言未补。** 这是有意为之：`mergeMessages` 以 `zh`（`DEFAULT_LOCALE`）为兜底底座，缺失 key 回退中文、不会缺字或报错。**完整本地化留给 W9**；在 W9 之前**不要**因为"非中文语言下工具栏显示中文"就当 bug 去改，也不要只给某一种语言补齐（要补就 12 种一起补，并对齐 `zh`/`en` 的 key 集合）。新增 W2 相关文案时 `zh` 与 `en` 必须同时加，否则英文站会露出中文。
+- **`text-align.ts` 不要改成自定义命令。** `@tiptap/core` 在 pnpm 布局下**未提升**，`declare module "@tiptap/core"` 的命令类型增强会编译失败；对齐一律走内置 typed `updateAttributes`（`updateAttributes(editor.isActive("heading") ? "heading" : "paragraph", { textAlign })`）。默认 `left` 渲染为 `{}`（不写 style），改这里要保证 `getHTML()` 里只有非默认对齐才出现内联 `style="text-align:…"`。
+- **W2 叠加在 W3 之上，别回退 W3。** `PaperEditor.tsx` 里 W3 的 `useAutosave` / `useUnsavedGuard` / `markDirty` / `onReloadConflict` 必须保留；W2 只加 `FormatToolbar` 渲染、`TextAlign` 扩展、`useEditorState` 字数统计块与页脚字数条。`FormatToolbar` 的按钮用 `onMouseDown` + `preventDefault` 保住选区（用 `onClick` 会先失焦，格式命令作用不到选中文本）。
+- 本轮实测测试基线：前端 **26 个测试文件 / 183 项**（v0.1.54 为 25 / 154），`pnpm exec tsc --noEmit`、`pnpm run build` 均 exit 0；后端 Kotlin 零改动、未重跑。线上 favicon `?v=0.1.57`、样式表 `_next/static/css/0748322fe6c9c60a.css` 含 `.format-toolbar` / `.format-toolbar-button` / `.format-toolbar-divider`。**无登录态浏览器端到端验收**，工具栏交互由 `format-toolbar.test.tsx` 在 jsdom 里用真实编辑器实例覆盖。以上是**期望值**，不是可放宽的上限。
+
+## v0.1.56 正文自动保存与草稿保护（W3，并行工作流 `REQ-202609-0259`）
+
+- `v0.1.56` 由并行工作流 `REQ-202609-0259` 交付（**W3**），不是 W2 迭代的产物；此处只留桥接提醒，**后端已在 v0.1.56 重建**，`/api/health` = `0.1.56`，详细注意事项以 `REQ-0259` 的 `docs/` 为准。
+- **保存路径以 W3 的 `useAutosave` 为准**：`content_version` 现在既记录又**校验**（W1 时只记录）——写入带 `baseVersion`，版本不匹配后端返 `1008` / HTTP 409（`ContentVersionConflictException`），前端进 `conflict` 态提示重新加载。改保存相关逻辑前先读 `useAutosave.ts` / `useUnsavedGuard.ts`，别绕开冲突检测直接 `PUT /content`。
+
 ## v0.1.54 学术写作能力（公式 / 表格 / 脚注 / 引用 / 交叉引用）
 
 - 需求编号 `REQ-202609-0260`（**writer 路线图 W4**，见 [WRITER_ROADMAP.md](WRITER_ROADMAP.md) 第 4 节），分支 `feature/v0.1.54`，从 v0.1.52 的发布提交 `239ca89` 展开。**本轮是纯前端迭代，Kotlin 零改动、没有新迁移、后端 jar 未重建、`paper-reader-backend` 未重启**，所以 `/api/health` **仍返回 `0.1.52`**——这是预期，不是漏部署。**判定前端线上版本请用 favicon `?v=0.1.54` 与构建产物哈希（`_next/static/chunks/...` 的 sha256），不要用 `/api/health`。**
@@ -6,7 +19,7 @@
 - **脚注是自研的，不是官方扩展。** npm 上 `@tiptap/extension-footnotes` 与 `@tiptap-pro/extension-footnotes` **都是 404**（不是"没装"，是不存在），Tiptap Pro 也没有对应产品；本轮**没走 spike、没买 Pro**，按自研路线实现：`Footnote.tsx` 里的行内 `FootnoteReference` 节点自己持有 `note` 文本，文末 `FootnoteList` 的 `entries` 由编号插件从正文**推导回写**。**改脚注时要同时维护"文末列表是派生物"这个不变式**，别让两处各自成为真相。
 - **公式的 LaTeX 源和渲染结果是两份东西，都要留。** `Mathematics.ts` 在 KaTeX 渲染结果旁边保留 `data-latex`：**只留渲染后的 DOM，HTML 再导入时公式就改不动了**（源丢了）。同理唯一 ID 由 `UniqueID.configure({ types: ["blockMath", "table"] })` 补 `data-id`，交叉引用靠它定位——**改这两处等于同时改导出与交叉引用**，改完必须跑学术测试。
 - **KaTeX 的 CSS 要在编辑器里引（`katex/dist/katex.min.css`）。** 不引的话 `getHTML()` 里照样有 `katex-html` 标记，但页面上公式是散的——"编辑器与导出一致"这条验收会以"看起来不一致"的形式挂掉，而单测**测不出来**（单测只看标记在不在）。
-- **工具栏是学术专用的，不是 W2 的格式工具栏。** `AcademicToolbar.tsx` 只放公式/表格/脚注/引用/交叉引用 + 表格内的行列表操作。**不要顺手把它扩成通用格式工具栏**——`W2`（标题层级、粗斜体、列表、链接、对齐、字符统计）与 `W3`（防抖自动保存、冲突检测）**都还没做**，它们该在自己的迭代里落地。本轮 `v0.1.54` 是**抢在 `v0.1.53` 前面做的**（两者无依赖），写作路线图第 5 节已注明顺序与原表不同。
+- **工具栏是学术专用的，不是 W2 的格式工具栏。** `AcademicToolbar.tsx` 只放公式/表格/脚注/引用/交叉引用 + 表格内的行列表操作。**不要顺手把它扩成通用格式工具栏**——`W2`（标题层级、粗斜体、列表、链接、对齐、字符统计）与 `W3`（防抖自动保存、冲突检测）在本条写下时都还没做（**后已分别由 `v0.1.56`（W3）与 `v0.1.57`（W2，独立的 `FormatToolbar`）落地**，见本文顶部两节）。本轮 `v0.1.54` 是**抢在 `v0.1.53` 前面做的**（两者无依赖），写作路线图第 5 节已注明顺序与原表不同。
 - **新增依赖只在 `frontend`**：`@tiptap/extension-mathematics` / `-table` / `-unique-id`（均 MIT）与 `katex`。部署时**必须先 `pnpm install --frozen-lockfile` 再 `pnpm run build`**，否则产物里找不到这些扩展、页面在新论文上直接报错。本轮实测 `pnpm install` 新增 6 个包。
 - 部署收尾沿用前端既有做法：`pnpm run build` → `pm2 restart paper-reader-frontend` → 探活 → `pm2 save`。**本轮不要重启后端**（无 Kotlin 改动，重启只会白担一次中断风险）。实测线上 favicon `?v=0.1.54`、学术编辑器所在 chunk 与服务端产物 sha256 一致。
 - 本轮实测测试基线：前端 **25 个测试文件 / 154 项**（v0.1.52 为 23 / 137），`pnpm exec tsc --noEmit`、`eslint`（改动面）、`pnpm run build` 均 exit 0。**后端本轮 Kotlin 零改动、未构建也未重跑**（`backend/build` 在本 worktree 里根本不存在），81 项是 v0.1.52 的基线、不是本轮实测。以上是**期望值**，不是可以放宽的上限。

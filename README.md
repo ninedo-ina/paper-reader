@@ -6,7 +6,25 @@ The repository contains the C-side product and its API. The administration conso
 
 > **Maintainer start here:** read the [documentation index](docs/README.md), then the [new maintainer guide](docs/NEW_MAINTAINER_GUIDE.md) and [complete project status](docs/PROJECT_STATUS.md). They record the real production topology, configuration rules, known risks, and release workflow without requiring previous chat context.
 
-## Current Iteration: v0.1.54
+## Current Iteration: v0.1.57
+
+- Branch: `feature/v0.1.57`
+- Requirement: `REQ-202609-0258` (writer roadmap **W2**, 「编辑器内核与基础体验」, child of `REQ-202609-0255`). After W1 gave the editor a body to hold and W4 added an *academic* toolbar (formulas, tables, footnotes, citations), the editor still had no **general formatting toolbar** and no character/word count. W2 fills that gap.
+- **Parallel-iteration note (why the version jumps 0.1.54 → 0.1.57)**: W2 was first cut on `feature/v0.1.55`, but the parallel W3 autosave work (`REQ-202609-0259`) merged to `main` first as **v0.1.56**. `feature/v0.1.55` was therefore abandoned (left on origin as a trace — not merged, not deleted) and W2 was re-cut as `feature/v0.1.57` from `origin/main` (which already contained W3) and layered **additively** on top of W3's autosave — `PaperEditor.tsx` keeps W3's `useAutosave` / `useUnsavedGuard` / `onReloadConflict` intact. There is no released v0.1.55; that skip is deliberate, not a broken chain.
+- Scope: a `FormatToolbar` (heading levels H1/H2/H3 + paragraph, bold/italic/underline/strike/inline-code, ordered & unordered lists, blockquote, code block, link/unlink, left/center/right alignment, undo/redo) driven by `useEditorState`; a lightweight `text-align.ts` extension that adds only a global `textAlign` attribute (no `addCommands`, no `declare module` augmentation — `@tiptap/core` is not hoisted under pnpm, so the augmentation would fail to compile — with alignment set through the built-in typed `updateAttributes`); and a CJK-aware `computeEditorStats` (CJK ideographs and kana counted per character, Latin/Hangul split on whitespace) rendered as a footer character/word count. All client-side; the backend is untouched.
+- i18n: 24 keys added to the `papers` namespace in `zh` and `en` only. `mergeMessages` uses `zh` (the `DEFAULT_LOCALE`) as the fallback base, so the other 12 locales resolve to Chinese rather than showing missing keys; full localization is deferred to W9 and noted in `docs/ATTENTION.md`.
+- Tests: `frontend/src/test/format-toolbar.test.tsx` (21 tests) drives a real headless `Editor` through an `it.each` command table (each format category writes its markup), an alignment-clear case, `computeEditorStats` units, and `FormatToolbar` rendering with the zh labels; `paper-content.test.tsx`'s hoisted mock editor gains `getText` and `can` (W3's mock lacked them and the stats selector / toolbar need them). The client is now at 26 test files and 183 tests, all green; `pnpm exec tsc --noEmit` and `pnpm run build` exit 0. The backend had zero Kotlin changes this round and was not re-run — it stays on W3's v0.1.56.
+- **Frontend-only change**: no migration, no API change, zero Kotlin. `backend/VERSION` and `backend/build.gradle.kts` were bumped to `0.1.57` per the release convention, but the backend jar was **not** rebuilt and `paper-reader-backend` was **not** restarted, so `/api/health` keeps reporting `0.1.56` (W3's build). Use the favicon `?v=` and served build-asset hashes to determine the deployed frontend version.
+- Status: released. Commits `3f1d059` (toolbar + word count + `text-align.ts` + `editor-stats.ts` + `globals.css` + zh/en strings), `72a0d64` (tests) and `adce9c2` (version bump to `0.1.57` across the six version files) on `feature/v0.1.57`, merged into `main` as the explicit `--no-ff` merge commit `0adc7d8` (parents `6b8f573` [W3's merge point] + `adce9c2`, 15 files, 549 insertions, 9 deletions), with `dev` fast-forwarded to it — no force-push, no history rewrite; a docs-only follow-up on the same branch is brought in by a second explicit `--no-ff` merge commit the same way. Deployed frontend-only: `pnpm run build`, then `pm2 restart paper-reader-frontend` (restart count → 4, pid 2387419) and `pm2 save`, with `paper-reader-backend` left alone (pid 2383738, still W3's v0.1.56 jar). Verified in production on 2026-09-26 UTC: the served stylesheet `_next/static/css/0748322fe6c9c60a.css` contains `.format-toolbar` / `.format-toolbar-button` / `.format-toolbar-divider` (proof the W2 toolbar actually deployed), the favicon reads `?v=0.1.57`, and `/api/health` still reports `0.1.56` both locally and publicly. Deployment detail is recorded in `docs/MAINTENANCE.md`.
+
+## Previous Iteration: v0.1.56
+
+- Branch: `feature/req-202609-0259-autosave` (merged to `main` as `6b8f573`)
+- Requirement: `REQ-202609-0259` (writer roadmap **W3**, 「自动保存与草稿保护」). Delivered by a **parallel workstream**; this entry is a bridge recorded by the v0.1.57 iteration to keep the changelog chain intact, and covers only what could be independently verified from the merged code and live state — detailed verification is owned by REQ-0259.
+- Scope: `frontend/src/hooks/useAutosave.ts` (debounced save, default 2000ms, status machine `idle | dirty | saving | saved | failed | conflict`, network-failure retry that also listens for the `online` event) and `useUnsavedGuard.ts` (leave-page guard); backend optimistic locking — `updatePaperContent` takes a `baseVersion` and a version mismatch raises `ContentVersionConflictException` (business code **1008 / HTTP 409**); `PaperContentServiceTest` grew from 8 to 11 tests. Five i18n keys were added across all 14 locales. **Real Kotlin changes — the backend jar was rebuilt**, so `/api/health` reports `0.1.56`.
+- Status: released to `main` as the explicit `--no-ff` merge `6b8f573`. As of the v0.1.57 cutover, REQ-0259 had not yet landed its own docs sync; if it does and duplicates this bridge entry, prefer the fuller record.
+
+## Previous Iteration: v0.1.54
 
 - Branch: `feature/v0.1.54`
 - Requirement: `REQ-202609-0260` (writer roadmap **W4**, 「学术写作能力」, child of `REQ-202609-0255`). The parent iteration made the editor able to *hold* a body; this one makes what it holds look like a paper rather than a blog post: formulas, tables, footnotes, citations with a bibliography, and cross-references that point at "Eq. (3)" without the author typing the number.
@@ -104,10 +122,10 @@ The repository contains the C-side product and its API. The administration conso
 
 - Default branch: `main`
 - Integration branch: `dev`
-- Released version branch: `feature/v0.1.54`
-- Client version: `0.1.54`
-- Production frontend: `0.1.54` (verified 2026-09-26 UTC)
-- Production backend: `0.1.52` — **not** restarted this round (frontend-only change, like v0.1.50 / v0.1.51), with Flyway at `V16`; `/api/health` reports `0.1.52`
+- Released version branch: `feature/v0.1.57`
+- Client version: `0.1.57`
+- Production frontend: `0.1.57` (verified 2026-09-26 UTC)
+- Production backend: `0.1.56` — rebuilt in v0.1.56 (W3, `REQ-202609-0259`) and **not** restarted again in v0.1.57 (frontend-only change), with Flyway at `V16`; `/api/health` reports `0.1.56`
 - Default locale: Simplified Chinese (`zh`)
 - Supported locales: Simplified Chinese (`zh`), Traditional Chinese (`zh-Hant`), English (`en`), Tibetan (`bo`), Uyghur (`ug`), German (`de`), Arabic (`ar`), Korean (`ko`), Japanese (`ja`), French (`fr`), Vietnamese (`vi`), Spanish (`es`), Italian (`it`) and Persian (`fa`) — Arabic, Persian and Uyghur render right-to-left
 - Production client: `https://paper.pilo.eu.cc`
