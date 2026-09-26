@@ -22,6 +22,25 @@
 
 验收标准（本轮）：两份新文档落库并被 `docs/README.md` 索引；三处既有文档的交叉引用可达；文档不含真实密码 / Token / 密钥；无代码改动、无版本号改动、无迁移、无部署。
 
+## 迭代：v0.1.57（已发布，W2 编辑器内核与基础体验）
+
+发布分支：`feature/v0.1.57`；类型：新功能（纯前端，编辑器基础体验）；需求编号：`REQ-202609-0258`（[WRITER_ROADMAP.md](WRITER_ROADMAP.md) 的 **W2「编辑器内核与基础体验」**）；状态：2026-09-26 UTC 已合并 `main`（显式 `--no-ff` 合并提交 `0adc7d8`，父提交 `6b8f573` + `adce9c2`，15 文件 / 549+ / 9-）并部署验收，随后仅文档同步提交又以第二个显式 `--no-ff` 合并提交带入 `main`，`dev` 已快进到该合并提交（发布记录见 `docs/MAINTENANCE.md`）。
+
+- **版本跳变**：W2 原分配 `v0.1.55`，因并行 W3（`REQ-202609-0259`）先合入成为 `v0.1.56`，`feature/v0.1.55` 被放弃（留在 origin，未合入未删除），W2 从含 W3 的 `origin/main`（`6b8f573`）重新展开为 `v0.1.57`，**以加法方式叠加在 W3 的自动保存之上**——`PaperEditor.tsx` 保留 W3 的 `useAutosave`/`useUnsavedGuard`/`onReloadConflict`，W2 只加 6 处正交改动。
+- **交付物**：`FormatToolbar`（标题层级 H1/H2/H3+正文、粗/斜/下划线/删除线/行内代码、有序无序列表、引用、代码块、链接/移除链接、左中右对齐、撤销重做，`useEditorState` 驱动状态）；轻量 `text-align.ts`（只提供全局 `textAlign` 属性，因 `@tiptap/core` 在 pnpm 布局下未提升、不能做模块增强，改用内置 `updateAttributes`）；CJK 感知 `computeEditorStats` 字符/词数统计（页脚展示）；`globals.css` 增补 `.format-toolbar*` 样式。
+- **i18n**：`zh`/`en` 各补 24 个 `papers` 文案；其余 12 语言靠 `mergeMessages` 回退中文，完整本地化留给 W9（见 `docs/ATTENTION.md`）。
+- **测试**：新增 `frontend/src/test/format-toolbar.test.tsx`（21 项，真实无头编辑器驱动每类格式写入 + 对齐清除 + `computeEditorStats` 单测 + 渲染）；`paper-content.test.tsx` 的 mock editor 补 `getText`/`can`。前端 **26 个测试文件 / 183 项全绿**（上一版 25/154）；`pnpm exec tsc --noEmit`、`pnpm run build` 退出码 0；后端 Kotlin 零改动、未重跑。
+- **部署与验收**：纯前端迭代，后端 jar 有意未重建（后端版本文件升到 `0.1.57`，但 `/api/health` 仍报 W3 的 `0.1.56`）。`/root/paper-reader/frontend` 执行 `pnpm run build` → `pm2 restart paper-reader-frontend`（→ pid 2387419）→ `pm2 save`。线上验收（`https://paper.pilo.eu.cc`）：favicon `?v=0.1.57`；样式表 `_next/static/css/0748322fe6c9c60a.css` 含 `.format-toolbar` / `.format-toolbar-button` / `.format-toolbar-divider`，证明 W2 已部署。**无登录态浏览器端到端**（生产只开管理员 GitHub 登录），工具栏交互由 jsdom 里的真实编辑器实例覆盖。
+
+## 迭代：v0.1.56（已发布，W3 自动保存 —— 并行工作流 `REQ-202609-0259`）
+
+> 本节为 v0.1.57 迭代补记的**桥接说明**，用于保持版本链不断档；`v0.1.56` 由并行工作流交付并自行验收，详细记录以其 `docs/` 为准，如后补重复以更完整者为准。
+
+发布分支：`feature/req-202609-0259-autosave`；需求编号：`REQ-202609-0259`（**W3「自动保存与草稿保护」**）；状态：以显式 `--no-ff` 合并提交 `6b8f573`（父提交 `a924db9` + `6a7535e`）合入 `main`。
+
+- **交付物（据已合入代码）**：`useAutosave.ts`（防抖 2000ms、状态机 `idle|dirty|saving|saved|failed|conflict`、断网重试 + `online` 补写）、`useUnsavedGuard.ts`（离开拦截）；后端 `updatePaperContent` 接受 `baseVersion`，冲突抛 `ContentVersionConflictException`（业务码 `1008` / HTTP 409）；`PaperContentServiceTest` 由 8 增至 11 项；14 语言各补 5 个文案。
+- **部署**：真实 Kotlin 改动、后端 jar 已重建，`/api/health` 现报 `0.1.56`（本地与公网一致，本迭代独立核实）。
+
 ## 迭代：v0.1.54（已发布）
 
 发布分支：`feature/v0.1.54`；类型：新功能（纯前端，编辑器能力）；需求编号：`REQ-202609-0260`（[WRITER_ROADMAP.md](WRITER_ROADMAP.md) 的 **W4「学术写作能力」**）；状态：2026-09-26 UTC 已合并 `main`（显式 `--no-ff` 合并提交 `fea5f8f`，父提交 `239ca89` + `2c0f5b1`）并部署验收，随后分支上追加的仅文档同步提交又以第二个显式 `--no-ff` 合并提交带入 `main`，`dev` 已快进到该合并提交（`main` 与 `dev` 同指，`feature/v0.1.54` 为其祖先；发布记录见 `docs/MAINTENANCE.md`）。
