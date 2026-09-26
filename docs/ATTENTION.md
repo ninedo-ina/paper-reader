@@ -1,3 +1,17 @@
+## v0.1.52 论文正文落库与 `/api/papers/{id}/content` 读写接口
+
+- 需求编号 `REQ-202609-0257`（**writer 路线图 W1**，见 [WRITER_ROADMAP.md](WRITER_ROADMAP.md) 第 4 节），分支 `feature/v0.1.52`，从 `27fa3e9` 展开。**本轮有真实 Kotlin 改动，后端 jar 已重建并重启**（与 v0.1.50 / v0.1.51 纯前端、有意不重启后端的情形不同）。
+- **迁移与实体必须同一轮到位，这是本轮最容易踩的坑。** `V16__paper_content.sql` 给 `pr_papers` 加了 `content_json TEXT` / `content_html TEXT` / `content_version INTEGER`；生产是 `ddl-auto: validate`，**只加迁移不加 `Paper.kt` 字段（或反之、或列名拼错）后端起不来**。反过来，后端单测跑在 H2 `create-drop` + `flyway.enabled: false` 上，**根本不执行 V16、也不校验实体↔列名**，所以「单测全绿」在这一层等于没测；真正的证据是生产启动成功那一次。改这类列时不要只看测试结果。
+- **`content_json` 是权威、`content_html` 是派生、`content_version` 每次保存自增。** 需要还原节点树（前端 TipTap）就读 JSON；需要预览/导出就重建 HTML。**不要反过来把 HTML 当权威再解析回 JSON**，那会把节点属性丢掉。`PUT` 是**整篇覆盖**，不合并；请求里省略 `contentHtml` 时该列存 `NULL`，这是预期行为，不是丢数据。
+- **元数据与正文是两条互不相干的路径，不要把两者合并回去。** 元数据走 `PATCH /api/papers/{id}`（`UpdatePaperRequest` 里**刻意没有任何 content 字段**，这就是「改摘要不会碰正文」的结构性保证）；正文走 `GET|PUT /api/papers/{id}/content`。**将来给 `UpdatePaperRequest`「顺手」加正文字段，会让元数据接口开始覆盖正文，直接毁掉本轮的验收项。**
+- 校验：`contentJson` 必须是 JSON **对象**，传字符串等非对象返回 `400` + `{"code":1003}`（`InvalidParameterException`）。写入按 `findByIdAndUserId` 定位，**别人的论文返回 404 而不是 403**（`code:1004`）；读取同理，这是有意的越权隐藏。
+- 删除论文**不需要**为本轮新增清理逻辑：正文是 `pr_papers` 自己的列，随该行一起删掉，所以 `PaperDeletionService` 只加了一句说明注释。**但如果以后把正文拆成独立表，必须同步在这里清理**（该文件的既有规矩是「新增任何引用论文的表都要同步评估」）。
+- **前端必须「先加载成功再挂载编辑器」。** `PaperContentArea` 加载失败时只显示文案（`papers.contentLoadFailed`），**绝不能挂载一个空白编辑器** —— 那样用户一按保存就把真实正文整篇覆盖成空。同理 `<PaperEditor key={paper.id} …>` 的 `key` 不能省，否则切换论文时编辑器不重挂载、显示的还是上一篇的正文。初始内容用已存 `contentJson`，**不再拿 `abstractText`（摘要）兜底**。
+- 新增两条文案 `papers.contentLoadFailed` / `papers.saveFailed`，**14 个语言包都要加**（缺键会退回中文，不会报错，所以漏了不容易发现）。
+- 部署收尾别踩既有的两个坑：后端 JAR 路径带版本号，`pm2 restart paper-reader-backend` 会继续跑旧 JAR，必须 `set -a && . ./.env && set +a` 后在**同一个 shell** 里 `pm2 delete` + `pm2 start`；探活与日志确认后再 `pm2 save`。本轮实测 Flyway `Successfully applied 1 migration … now at version v16`，`/api/health` 本地与公网均返回 `0.1.52`。
+- 本轮实测测试基线：前端 **23 个测试文件 / 137 项**（v0.1.51 为 22 / 129），后端 **81 项**（原 73）。均为**期望值**，不是可以放宽的上限。
+- 尚未覆盖：浏览器层面「刷新 / 重新登录后正文仍在」目前只有接口往返 + 直接查库 + 单测三方证据，**没有登录态下的截图式验收**；`content_version` 只记录、不校验，真正的乐观锁冲突检测留给 W3。
+
 ## v0.1.51 菜单栏计数回退为行内、侧栏角标保留
 
 - 需求编号仍是 `REQ-202609-0126`（是 v0.1.50 的**范围纠正**，不是新需求），分支 `feature/v0.1.51`，从 v0.1.50 的发布提交 `f2f708e` 展开。**「菜单栏」和「侧栏」是两个不同的组件，不要再混为一谈**：

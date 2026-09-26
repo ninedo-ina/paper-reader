@@ -257,9 +257,9 @@ Key design:
 - `immediatelyRender: false` — prevents SSR hydration mismatches
 - `next/dynamic({ ssr: false })` — TipTap is browser-only (needs document/window/getSelection)
 - Extensions: `StarterKit` (bold, italic, headings 1-3, lists, code, blockquote, history) + `Placeholder` ("Start writing your paper...")
-- Initial content: `paper.abstractText || ""`
+- Initial content: `paper.abstractText || ""` — **此条已在 v0.1.52 废弃**：正文改用已存 `contentJson`（见 `GET /api/papers/{id}/content`），摘要（`abstractText`）不再被当成正文
 - Styling: `prose prose-sm dark:prose-invert max-w-none` via `editorProps.attributes.class`
-- Header bar: paper title + manual Save button (placeholder for future PUT endpoint)
+- Header bar: paper title + manual Save button —— 曾经的 "placeholder for future PUT endpoint" 已在 v0.1.52 落地为 `PUT /api/papers/{id}/content`
 
 ### 4.6 Page Wiring
 
@@ -379,6 +379,6 @@ User fills fields, clicks "Create"
 2026-09-26 更正与补充：
 
 - 第 4 条包名有误：**公开 npm 上不存在 `@tiptap/extension-markdown`**（实测 HTTP 404），Markdown 解析/序列化的正确包名是 **`@tiptap/markdown`**（MIT，实测 3.31.3）。本文成文于 v0.1.4 规划期，该包当时尚未发布，属正常的历史偏差，不要按旧包名写代码。
-- 第 1、2、3 条构成 writer 方向的最小闭环，建议合并为首个迭代交付（路线图中的 `v0.1.52`）；实现前需先补正文存储列（`pr_papers` 从 V1 到 V15 都没有 content/body 列）。
+- 第 1、2、3 条构成 writer 方向的最小闭环，建议合并为首个迭代交付（路线图中的 `v0.1.52`）；实现前需先补正文存储列（`pr_papers` 从 V1 到 V15 都没有 content/body 列）。**该地基已于 2026-09-26（UTC）交付**：`V16__paper_content.sql` 补上 `content_json` / `content_html` / `content_version`，接口为 `GET|PUT /api/papers/{id}/content`；工具栏（第 1 条）、自动保存（第 2 条）与 `dynamic({ssr:false})` 取舍（第 3 条）仍未做，属 W2/W3。
 - 第 7 条（协作）不是"接上 Y.js 就行"：现有 `/ws` 的 STOMP `senderId` 来自客户端、未绑定服务端身份（见 [PROJECT_STATUS.md](PROJECT_STATUS.md) 第 11 节），必须在协作编辑上线前先修复，否则等于给一个可伪造身份的实时通道接上文档写入。
 - 第 6 条（引用）建议不自建引文格式，改用 CSL 模板 + `citation-js`（MIT）+ 已有的 DOI/arXiv 元数据补全。

@@ -6,7 +6,15 @@ The repository contains the C-side product and its API. The administration conso
 
 > **Maintainer start here:** read the [documentation index](docs/README.md), then the [new maintainer guide](docs/NEW_MAINTAINER_GUIDE.md) and [complete project status](docs/PROJECT_STATUS.md). They record the real production topology, configuration rules, known risks, and release workflow without requiring previous chat context.
 
-## Current Iteration: v0.1.51
+## Current Iteration: v0.1.52
+
+- Branch: `feature/v0.1.52`
+- Requirement: `REQ-202609-0257` (writer roadmap **W1**, 「正文数据模型与持久化」) — a manually created paper had no body at all: the editor fed `abstractText` (the abstract) into the document and there was no save endpoint, so anything typed was gone on refresh.
+- Scope: `pr_papers` gains `content_json` (authoritative editor node tree), `content_html` (derived, rebuildable) and `content_version` (incremented on every save so a later write can be noticed), applied as the new migration `V16__paper_content.sql`; V1–V15 are untouched. Two endpoints are added, `GET` and `PUT /api/papers/{id}/content`, backed by `PaperService.getPaperContent` / `updatePaperContent`. The body and the abstract are now **two separate paths by construction**: `UpdatePaperRequest` carries no content field, so `PATCH /api/papers/{id}` cannot touch the body, and the body lives on the `pr_papers` row, so deleting a paper removes it with no extra cleanup (`PaperDeletionService` needs no change). On the client, `PaperContentArea` loads the stored body before mounting the editor and, if that load fails, shows 「正文加载失败」 instead of a blank editor that would silently overwrite the real body on save.
+- Tests: `backend/src/test/kotlin/org/paperreader/service/PaperContentServiceTest.kt` (8 tests) covers the read/write round trip, per-user isolation, rejection of a non-document body, the version increment, and the metadata path leaving the body alone; `frontend/src/test/paper-content.test.tsx` (8 tests) locks the JSON-as-authority / HTML-as-derived contract, the abstract never being used as the body, the saved/failed states, the load-before-mount gate and the "no content request for an uploaded PDF" rule. The client is now at 23 test files and 137 tests, the backend at 81, all green; `pnpm exec tsc --noEmit`, `next lint` (only the pre-existing warnings) and `pnpm run build` all exit 0, and `./gradlew clean test bootJar` builds `paper-reader-backend-0.1.52.jar`.
+- Status: released. Commits `2f17465` (the content columns, the entity fields, the two endpoints and both test suites) and `a378297` (version bump to `0.1.52`) on `feature/v0.1.52`, merged into `main` as the explicit `--no-ff` merge commit `8d1d447` (parents `27fa3e9` + `a378297`), with `dev` fast-forwarded to it — no force-push, no history rewrite, and `main` and `dev` end up on the same commit; a docs-only follow-up on the same branch is brought in by a second explicit `--no-ff` merge commit the same way. **Unlike v0.1.50 / v0.1.51 this round has real Kotlin changes**, so the backend jar *was* rebuilt and restarted: Flyway reported `Successfully applied 1 migration to schema "public", now at version v16`, the app started under `ddl-auto: validate` (which is what proves the entity fields and the new columns agree), and `/api/health` reports `0.1.52` both locally and through `https://paper.pilo.eu.cc`; the favicon reads `?v=0.1.52`, the frontend was rebuilt and restarted, and the live round trip was exercised end to end — create a manual paper, `PUT` the body, read it back, confirm the row in PostgreSQL, change only the abstract through `PATCH` and watch the body stay put, then delete the paper and see the row gone. Deployment detail is recorded in `docs/MAINTENANCE.md`.
+
+## Previous Iteration: v0.1.51
 
 - Branch: `feature/v0.1.51`
 - Requirement: `REQ-202609-0126` as a **scope correction, not a new requirement** — v0.1.50 restyled *both* left panels, but only the second one was ever in scope.
@@ -87,10 +95,10 @@ The repository contains the C-side product and its API. The administration conso
 
 - Default branch: `main`
 - Integration branch: `dev`
-- Released version branch: `feature/v0.1.51`
-- Client version: `0.1.51`
-- Production frontend: `0.1.51` (verified 2026-09-17 UTC)
-- Production backend: `0.1.49` — deliberately not restarted for v0.1.50 / v0.1.51, both frontend-only releases with no Kotlin changes (`/api/health` therefore still reports `0.1.49`)
+- Released version branch: `feature/v0.1.52`
+- Client version: `0.1.52`
+- Production frontend: `0.1.52` (verified 2026-09-26 UTC)
+- Production backend: `0.1.52` — rebuilt and restarted this round (unlike the frontend-only v0.1.50 / v0.1.51), with Flyway at `V16`; `/api/health` reports `0.1.52`
 - Default locale: Simplified Chinese (`zh`)
 - Supported locales: Simplified Chinese (`zh`), Traditional Chinese (`zh-Hant`), English (`en`), Tibetan (`bo`), Uyghur (`ug`), German (`de`), Arabic (`ar`), Korean (`ko`), Japanese (`ja`), French (`fr`), Vietnamese (`vi`), Spanish (`es`), Italian (`it`) and Persian (`fa`) — Arabic, Persian and Uyghur render right-to-left
 - Production client: `https://paper.pilo.eu.cc`
@@ -164,6 +172,7 @@ paper-reader/
 ### Paper workspace
 
 - Upload PDF files, import papers from a URL, or create paper metadata manually.
+- Write and persist the body of a manually created paper: the editor's node tree is stored as the authoritative `content_json` with a derived `content_html` beside it, the abstract stays a separate field, and a body already saved survives a refresh or a new sign-in (v0.1.52).
 - Browse papers by library, source type, reading history, tags, and favorites.
 - View paper metadata, abstract, authors, DOI, publication details, extra fields, and GROBID output.
 - From the Reader metadata panel, resolve exact arXiv IDs and DOIs through arXiv, DataCite, and Crossref, preview field-level candidates, and apply only selected values.
@@ -391,9 +400,13 @@ V9__annotation_note_enhance.sql
 V10__note_position.sql
 V11__paper_content_context.sql
 V12__clean_known_paper_title_boilerplate.sql
+V13__paper_metadata_enrichment.sql
+V14__two_factor_and_trusted_devices.sql
+V15__widen_user_avatar.sql
+V16__paper_content.sql
 ```
 
-Add a new numbered migration for schema or controlled data changes. Do not edit an already-applied migration in a shared environment. V12 narrowly repairs stored titles beginning with one explicitly recognized Google permission statement; future imports use the same conservative cleanup in the TEI parser.
+Add a new numbered migration for schema or controlled data changes. Do not edit an already-applied migration in a shared environment. V12 narrowly repairs stored titles beginning with one explicitly recognized Google permission statement; future imports use the same conservative cleanup in the TEI parser. V16 adds `pr_papers.content_json` / `content_html` / `content_version` — all nullable, so it is a metadata-only change for existing rows and needs no backfill.
 
 ## API Surface
 
@@ -404,6 +417,7 @@ All business API routes are under `/api` and require the client token unless exp
 | Health | `/api/health` |
 | Authentication | `/api/auth` |
 | Papers and PDFs | `/api/papers` |
+| Paper body (read/write) | `/api/papers/{paperId}/content` |
 | Paper question context | `/api/papers/{paperId}/context` |
 | GROBID | `/api/papers/{paperId}/grobid` |
 | Versions | `/api/papers/{paperId}/versions` |
