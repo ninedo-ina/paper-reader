@@ -630,6 +630,35 @@
     "academicInsert": "Insert",
     "academicUpdate": "Update"
   },
+  "export": {
+    "openExport": "Export",
+    "exportDocument": "Export document",
+    "format": "Format",
+    "formatMarkdown": "Markdown",
+    "formatHtml": "HTML",
+    "formatLatex": "LaTeX",
+    "formatBibtex": "BibTeX",
+    "formatDocx": "Word",
+    "formatPdf": "PDF",
+    "unavailable": "Unavailable",
+    "unavailableHint": "The export engine for this format is not installed on the server",
+    "scope": "Scope",
+    "currentDraft": "Current draft",
+    "generate": "Generate & download",
+    "generating": "Generating...",
+    "history": "Export history",
+    "noArtifacts": "No exports yet",
+    "download": "Download"
+  },
+  "import": {
+    "importMarkdown": "Import Markdown",
+    "pasteHint": "Paste Markdown text or choose a .md file. The result loads into the editor for review; save once it looks right.",
+    "chooseFile": "Choose file",
+    "placeholder": "# Paste Markdown here...",
+    "empty": "Please enter or choose Markdown content to import",
+    "importing": "Converting...",
+    "preview": "Preview import"
+  },
   "forum": {
     "disciplines": "Disciplines",
     "selectDiscipline": "Select a discipline",

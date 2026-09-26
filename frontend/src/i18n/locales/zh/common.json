@@ -630,6 +630,35 @@
     "academicInsert": "插入",
     "academicUpdate": "更新"
   },
+  "export": {
+    "openExport": "导出",
+    "exportDocument": "导出文档",
+    "format": "格式",
+    "formatMarkdown": "Markdown",
+    "formatHtml": "HTML",
+    "formatLatex": "LaTeX",
+    "formatBibtex": "BibTeX",
+    "formatDocx": "Word",
+    "formatPdf": "PDF",
+    "unavailable": "不可用",
+    "unavailableHint": "服务器暂未安装该格式所需的导出引擎",
+    "scope": "导出范围",
+    "currentDraft": "当前草稿",
+    "generate": "生成并下载",
+    "generating": "生成中...",
+    "history": "历史导出",
+    "noArtifacts": "暂无导出记录",
+    "download": "下载"
+  },
+  "import": {
+    "importMarkdown": "导入 Markdown",
+    "pasteHint": "粘贴 Markdown 文本，或选择 .md 文件；导入后会加载进编辑器供你确认，确认无误再保存。",
+    "chooseFile": "选择文件",
+    "placeholder": "# 在此粘贴 Markdown...",
+    "empty": "请输入或选择要导入的 Markdown 内容",
+    "importing": "转换中...",
+    "preview": "预览导入"
+  },
   "forum": {
     "disciplines": "学科分类",
     "selectDiscipline": "选择一个学科",

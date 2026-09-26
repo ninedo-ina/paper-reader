@@ -7,10 +7,11 @@ import type { Editor, JSONContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import Placeholder from "@tiptap/extension-placeholder"
 import type { PaperDetailDto } from "@/lib/api/types"
-import { Save, Loader2, AlertTriangle, RotateCw } from "lucide-react"
+import { Save, Loader2, AlertTriangle, RotateCw, FileUp } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { useAutosave } from "@/hooks/useAutosave"
 import { useUnsavedGuard } from "@/hooks/useUnsavedGuard"
+import { ImportMarkdownDialog } from "@/components/papers/ImportMarkdownDialog"
 import "katex/dist/katex.min.css"
 import { academicExtensions } from "./extensions"
 import { AcademicToolbar, type MathDialogState } from "./AcademicToolbar"
@@ -33,14 +34,18 @@ export interface PaperEditorProps {
   onSave?: (payload: PaperContentPayload) => Promise<void>
   /** 冲突后重新加载最新正文；由调用方重挂编辑器以载入最新内容 */
   onReloadConflict?: () => Promise<void>
+  /** 导入 Markdown：把文本转成 HTML 片段返回，编辑器随即 setContent 供用户确认后保存 */
+  onImportMarkdown?: (markdown: string) => Promise<string>
 }
 
-export function PaperEditor({ paper, content, onSave, onReloadConflict }: PaperEditorProps) {
+export function PaperEditor({ paper, content, onSave, onReloadConflict, onImportMarkdown }: PaperEditorProps) {
   const t = useTranslations("papers")
   const tc = useTranslations("common")
+  const ti = useTranslations("import")
   const locale = useLocale()
   const [mathDialog, setMathDialog] = useState<MathDialogState | null>(null)
   const [reloading, setReloading] = useState(false)
+  const [showImport, setShowImport] = useState(false)
 
   // 编辑器与自动保存互相依赖：编辑器的 onUpdate 要 markDirty，而 autosave 取内容又要读编辑器。
   // 用 ref 打破这个环——autosave 通过 editorRef 读当前内容，编辑器创建时拿到稳定的 markDirty。
@@ -148,13 +153,29 @@ export function PaperEditor({ paper, content, onSave, onReloadConflict }: PaperE
     }
   }
 
+  // 导入成功后把 HTML 灌进编辑器并标脏（setContent 不一定触发 onUpdate），
+  // 让用户确认后再走正常保存；抛错则由弹层内部提示，不在这里吞掉。
+  const handleImportSubmit = async (markdown: string) => {
+    if (!onImportMarkdown) return
+    const html = await onImportMarkdown(markdown)
+    editor?.commands.setContent(html)
+    markDirty()
+  }
+
   return (
     <div className="flex flex-col h-full" style={{ background: "var(--bg-root)" }}>
       <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border-subtle)] glass-surface">
         <h2 className="text-sm font-semibold text-[var(--text-primary)] truncate">
           {paper.title}
         </h2>
-        {onSave && (
+        <div className="flex items-center gap-2">
+          {onImportMarkdown && (
+            <Button size="sm" variant="secondary" onClick={() => setShowImport(true)}>
+              <FileUp className="size-4" />
+              <span className="ml-1.5">{ti("importMarkdown")}</span>
+            </Button>
+          )}
+          {onSave && (
           <div className="flex items-center gap-2">
             {status === "saving" && (
               <span className="flex items-center gap-1 text-xs text-[var(--text-tertiary)]">
@@ -202,7 +223,8 @@ export function PaperEditor({ paper, content, onSave, onReloadConflict }: PaperE
               <span className="ml-1.5">{tc("save")}</span>
             </Button>
           </div>
-        )}
+          )}
+        </div>
       </div>
 
       <FormatToolbar editor={editor} />
@@ -222,6 +244,14 @@ export function PaperEditor({ paper, content, onSave, onReloadConflict }: PaperE
         <span>{t("editorCharCount", { count: stats?.characters ?? 0 })}</span>
         <span>{t("editorWordCount", { count: stats?.words ?? 0 })}</span>
       </div>
+
+      {onImportMarkdown && (
+        <ImportMarkdownDialog
+          open={showImport}
+          onClose={() => setShowImport(false)}
+          onSubmit={handleImportSubmit}
+        />
+      )}
     </div>
   )
 }

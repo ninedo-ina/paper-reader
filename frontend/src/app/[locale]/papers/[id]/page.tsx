@@ -9,8 +9,9 @@ import { getCategory } from "@/lib/paper-categories"
 import { listVersions } from "@/lib/api/versions"
 import type { PaperVersionDto, StorageConfigDto } from "@/lib/api/types"
 import { PublishDialog } from "@/components/papers/PublishDialog"
+import { ExportDialog } from "@/components/papers/ExportDialog"
 import { Button } from "@/components/ui/Button"
-import { ArrowLeft, Info, GitBranch, HardDrive, Upload, Loader2, Download } from "lucide-react"
+import { ArrowLeft, Info, GitBranch, HardDrive, Upload, Loader2, Download, FileDown } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import { downloadPdf } from "@/lib/api/papers"
 
@@ -39,9 +40,18 @@ export default function PaperDetailPage() {
   const t = useTranslations("paper")
   const tcat = useTranslations("categories")
   const tp = useTranslations("papers")
+  const tx = useTranslations("export")
   const [versions, setVersions] = useState<PaperVersionDto[]>([])
   const [isLoadingVersions, setIsLoadingVersions] = useState(false)
   const [showPublish, setShowPublish] = useState(false)
+  const [showExport, setShowExport] = useState(false)
+  // 打开导出弹层时预选的版本；null 表示导出当前草稿
+  const [exportVersionId, setExportVersionId] = useState<number | null>(null)
+
+  const openExport = useCallback((versionId: number | null) => {
+    setExportVersionId(versionId)
+    setShowExport(true)
+  }, [])
 
   useEffect(() => {
     if (paperId) {
@@ -137,10 +147,16 @@ export default function PaperDetailPage() {
                 <h1 className="text-2xl font-bold text-[var(--text-primary)] leading-snug">
                   {currentPaper.title}
                 </h1>
-                <Button onClick={() => setShowPublish(true)}>
-                  <Upload className="size-4 mr-1.5" />
-                  {t("publish")}
-                </Button>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button variant="secondary" onClick={() => openExport(null)}>
+                    <FileDown className="size-4 mr-1.5" />
+                    {tx("openExport")}
+                  </Button>
+                  <Button onClick={() => setShowPublish(true)}>
+                    <Upload className="size-4 mr-1.5" />
+                    {t("publish")}
+                  </Button>
+                </div>
               </div>
 
               <div className="flex flex-wrap gap-3 text-sm text-[var(--text-secondary)]">
@@ -270,6 +286,14 @@ export default function PaperDetailPage() {
                         )}
                         <p className="text-xs text-[var(--text-tertiary)] mt-2">{formatDate(v.createdAt)}</p>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => openExport(v.id)}
+                        className="inline-flex items-center gap-1 text-xs text-[var(--accent)] hover:underline shrink-0"
+                      >
+                        <FileDown className="size-3.5" />
+                        {tx("openExport")}
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -328,6 +352,14 @@ export default function PaperDetailPage() {
         paperId={paperId}
         onClose={() => setShowPublish(false)}
         onPublished={handlePublished}
+      />
+
+      <ExportDialog
+        open={showExport}
+        paperId={paperId}
+        paperTitle={currentPaper.title}
+        defaultVersionId={exportVersionId}
+        onClose={() => setShowExport(false)}
       />
     </div>
   )
