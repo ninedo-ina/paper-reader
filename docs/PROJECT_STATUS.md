@@ -22,6 +22,7 @@ PaperHelper 是面向用户的论文阅读工作台，本仓库同时包含 C �
 - GitHub 默认分支和生产主分支：`main`。
 - 集成分支：`dev`。
 - 当前发布分支：`feature/v0.1.51`（菜单栏计数回退为行内胶囊、仅侧栏 `TabBar` 保留角标，`REQ-202609-0126` 范围纠正，提交 `8331e47`/`f3ff2be`），从 v0.1.50 的发布提交 `f2f708e` 展开，以显式 `--no-ff` 合并提交 `cd46367` 合入 `main` 并部署，随后该分支上追加的仅文档同步提交又以第二个显式 `--no-ff` 合并提交带入 `main`；`dev` 从 `f2f708e` 快进到该第二个合并提交，`main` 与 `dev` 现同指，`feature/v0.1.51` 是其祖先，**当前没有在开发的下一迭代**。
+- 当前文档分支（**不产生版本**）：`feature/req-202609-0255-writer-roadmap`（writer 方向需求整理规划，`REQ-202609-0255`，2026-09-26 UTC）。本轮只新增/修改 `docs/` 下的文档，**无代码改动、无版本号变更、无迁移、无部署**，故 `docs/MAINTENANCE.md` 没有对应版本条目，线上仍是 `0.1.51`（后端 jar 仍是 `0.1.49`）。产物：`docs/WRITER_ROADMAP.md`、`docs/PAPER_EDITOR_SELECTION.md`。
 - 上一发布分支：`feature/v0.1.50`（侧栏书架四个 tab 的计数徽标改为标题角标，`REQ-202609-0126`，提交 `8f47696`/`fac6c9e`/`a616068`），以显式 `--no-ff` 合并提交 `658c3ba` 合入 `main`。**该轮对 `Sidebar.tsx`（菜单栏）的改造属越界，已被 v0.1.51 回退；只有 `TabBar.tsx`（侧栏）的角标保留。**
 - 上上发布分支：`feature/v0.1.49`（语言面板隐藏滚动条但保留滚动，`REQ-202609-0111` 收尾，提交 `dc6b9c6`/`6df5bd5`），已按 `dev -> main` 流程快进合并。
 - `0.1.34` ~ `0.1.51` 为一串连续的小版本迭代（阅读器交互、两步验证、信任设备、UI 打磨、接入通知中心、多语言与登录身份、侧栏徽标版式等），除 `0.1.50` 外均按 `feature/vX.Y.Z -> dev -> main` 发布，逐条记录见 `docs/MAINTENANCE.md`。本节此前停留在 `0.1.32`，属交接文档未随发布更新，已于 2026-09-15 校正。
@@ -149,7 +150,7 @@ Cloudflare 不是构建平台，项目也不是 Cloudflare Pages。Push 源码�
 | --- | --- | --- |
 | 认证 | 注册、密码登录、验证码登录接口、GitHub OAuth、access/refresh JWT | 验证码走通知中心投递（见第 5.3 节与 `docs/NOTIFICATION_TEMPLATES.md`）；未知邮箱密码登录会自动创建用户 |
 | 国际化 | 14 种语言（`zh` 默认 + 繁中/英/藏/维/德/阿/韩/日/法/越/西/意/波斯）、登录页与设置页语言切换、偏好设置同步、RTL | `zh`/`en` 手写，其余为机翻未逐条校对；仅覆盖 UI 文案，不含后端错误信息与用户内容；详见 `docs/I18N.md` |
-| 论文 | PDF 上传、URL 导入、手动创建、列表、详情、编辑、收藏、标签、分享文案、下载、删除 | URL 导入会由后端下载远程文件；手动记录可没有原文件 |
+| 论文 | PDF 上传、URL 导入、手动创建、列表、详情、编辑、收藏、标签、分享文案、下载、删除 | URL 导入会由后端下载远程文件；手动记录可没有原文件。**"编辑"仅指元数据**：手动创建的论文在详情页显示的是一个占位的富文本区域，正文既没有存储列也没有保存接口，刷新即丢（见第 11 节产品/实现债与 [WRITER_ROADMAP.md](WRITER_ROADMAP.md)） |
 | 元数据补全 | Reader 手动触发 arXiv/DOI 精确查询、候选预览、逐字段应用、来源与 provenance | `0.1.23` 已部署最小单篇闭环；无完整 manifestation/identifier 模型、历史批量刷新或收录判定 |
 | 阅读 | PDF 翻页、缩放、搜索、进度、选区、批注、笔记 | 扫描型 PDF 无 OCR；PDF.js 依赖项目 patch |
 | 解析 | GROBID 异步提取标题、作者、摘要、TEI 与 chunks | 状态 `PENDING -> PROCESSING -> READY/FAILED`；失败不阻断阅读 |
@@ -277,6 +278,7 @@ REST API 的真实认证依赖 `Authorization: Bearer <JWT>`。不要把同名 c
 - 文件系统与数据库删除不是分布式事务；保留文件会产生无法从 UI 重新关联的孤儿副本。
 - 旧 `components/ai` 与当前 `components/chat` 并存，增加误改风险，后续应确认无消费者后再清理。
 - 元数据 V13 当前把候选扩展字段放入 `extraFields`，尚未建立独立 manifestation/identifier 投影；正式卷期页、仓储 DOI 与正式 DOI 的长期模型仍需后续迁移设计。
+- **手动创建的论文无法保存正文 —— "可以自由编辑"目前是假象。** `PaperContentArea.tsx:27` 渲染 `<PaperEditor paper={paper} />` 时没有传 `onSave`，而保存按钮的渲染条件是 `{onSave && ...}`（`PaperEditor.tsx:57`），所以按钮根本不出现，编辑内容刷新即丢；`pr_papers` 从 V1 到 V15 没有任何 `content` / `body` / `document` 列，`PaperService.updatePaper()` 只覆盖元数据，正文无处可存；`PaperEditor.tsx:31` 还拿 `paper.abstractText` 当编辑器初始内容，把摘要与正文混为一谈。这是 writer 方向的第一块地基，规划见 [WRITER_ROADMAP.md](WRITER_ROADMAP.md)（`W1`），编辑器选型见 [PAPER_EDITOR_SELECTION.md](PAPER_EDITOR_SELECTION.md)。
 
 ## 12. 构建、测试和兼容约束
 

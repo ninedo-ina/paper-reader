@@ -1,3 +1,27 @@
+## 迭代：writer 方向需求整理规划（`REQ-202609-0255`，纯文档，无版本变更）
+
+发布分支：`feature/req-202609-0255-writer-roadmap`；类型：**文档迭代（需求整理与规划），不产生版本号**；需求编号：`REQ-202609-0255`；状态：2026-09-26 UTC 完成文档编写并合入 `main`。
+
+**本轮不是版本迭代。** 交付物是需求文档而不是代码：不改任何业务代码，不改 8 处版本号（`frontend/package.json`、`frontend/VERSION`、`backend/VERSION`、`backend/build.gradle.kts`、根 `README.md`、`layout.tsx` favicon 参数、`FaviconThemeSync.tsx`、可见 UI 版本），因此 `docs/MAINTENANCE.md` **没有新增版本条目**（该文档记录的是版本链，本轮无版本），线上**没有部署动作**。分支名刻意不用 `feature/v0.1.52`，避免让一个未发布的版本号提前出现在版本链里。
+
+用户要求（口述要点）：项目现在只聚焦 reader，要往后延伸到 writer；**创建出来的论文必须可以自由编辑**（要把编辑器做出来）；先调研有没有开源的最先进的论文编辑器，引入项目直接借用；把后续需求按这个方向归纳整理，**先把文档整理出来**放进项目文档。同步远程的方式用户稍后另行告知，本轮只做需求整理。
+
+本轮产出（两份新文档 + 三处既有文档同步）：
+
+- **新增 [WRITER_ROADMAP.md](WRITER_ROADMAP.md)**：把方向归纳成 W1-W9 九个主题（正文持久化 / 编辑器内核 / 自动保存 / 学术能力 / 导入导出 / 版本历史 / 协作 / AI 写作 / 平台合规），给出迭代拆分建议（`v0.1.52` 写作闭环最小可用 → `v0.1.53` 导入导出 → `v0.1.54` 学术能力 → `v0.1.55` 导出投稿 → `v0.1.56` 版本历史 → `v0.1.57` 协作 → `v0.2.0` 工作台整合），并列出不能承诺的边界与 7 个待产品负责人确认的问题。**版本号归属待产品负责人确认**（仓库规范：次版本必须由产品负责人明确提出）。
+- **新增 [PAPER_EDITOR_SELECTION.md](PAPER_EDITOR_SELECTION.md)**：以 GitHub API + npm registry 实测取数做候选对比（Tiptap 3 / Fidus Writer / Overleaf / TeXlyre / SwiftLaTeX / Typst / Pandoc / Quarto / citation-js / Zotero / Zettlr / Etherpad / HedgeDoc / ONLYOFFICE 等）、许可证风险表、推荐架构与 6 条 PoC 清单。
+- 同步 [README.md](README.md)（索引 + 阅读顺序 + 当前基线）、[CREATE_PAPER_FEATURE.md](CREATE_PAPER_FEATURE.md) 第 7 节（升级指向路线图，并更正包名 `@tiptap/extension-markdown` → `@tiptap/markdown`）、[PROJECT_STATUS.md](PROJECT_STATUS.md) 第 11 节（把「手动创建的论文无法保存正文」记为产品/实现债）。
+
+本轮核查出的**真实现状**（逐条对照当前代码与迁移核对，证据见 [WRITER_ROADMAP.md](WRITER_ROADMAP.md) 第 2 节）：
+
+- `PaperEditor` 是 `StarterKit` + `Placeholder` 的裸编辑器，没有工具栏、公式、表格、引用、脚注；
+- `PaperContentArea.tsx:27` 以 `<PaperEditor paper={paper} />` 渲染，**没有传 `onSave`**，而保存按钮的条件是 `{onSave && ...}`（`PaperEditor.tsx:57`）→ **保存按钮根本不会渲染**，编辑内容刷新即丢；
+- `pr_papers` 从 V1 到 V15 **没有任何 content/body/document 列**（全量 grep 无命中），`PaperService.updatePaper()` 只覆盖元数据 → 正文无处可存；
+- `PaperEditor.tsx:31` 用 `paper.abstractText` 当编辑器的初始内容 → 摘要被当成正文；
+- `PaperEditor/index.tsx` 的 `dynamic({ ssr: false })` 封装没有任何调用方（`PaperContentArea` 直接 import 组件本身）。
+
+验收标准（本轮）：两份新文档落库并被 `docs/README.md` 索引；三处既有文档的交叉引用可达；文档不含真实密码 / Token / 密钥；无代码改动、无版本号改动、无迁移、无部署。
+
 ## 迭代：v0.1.51（已发布）
 
 发布分支：`feature/v0.1.51`；类型：UI 回退（范围纠正）；需求编号：`REQ-202609-0126`（**不是新需求**，是 v0.1.50 的范围纠正）；状态：2026-09-17 UTC 已合并 `main`（显式 `--no-ff` 合并提交 `cd46367`，父提交 `f2f708e` + `f3ff2be`）并部署验收，随后分支上追加的仅文档同步提交又以第二个显式 `--no-ff` 合并提交带入 `main`，`dev` 已快进到该合并提交（`main` 与 `dev` 同指，`feature/v0.1.51` 为其祖先；发布记录见 `docs/MAINTENANCE.md`）。
@@ -400,6 +424,20 @@ v0.1.40 把两步验证补成闭环时，表单沿用了最朴素的排法：标
 - 构建、测试、重启和公网检查均通过。
 
 ## 后续计划
+
+### writer 方向（`REQ-202609-0255`，详见 [WRITER_ROADMAP.md](WRITER_ROADMAP.md)）
+
+这是当前**最大的一条后续线**：把项目从只做 reader 延伸到能做 writer。2026-09-26 已完成需求整理与选型调研，代码一行未动，立项时按下面顺序推进（**版本号归属待产品负责人确认**，此处列出的是建议顺序，不是已批准的排期）：
+
+1. **`v0.1.52` 写作闭环最小可用**：正文存储列（Flyway `V16`）+ 读写正文接口 + 工具栏 + 防抖自动保存 + 把 `onSave` 真正接上 + 摘要与正文分离。**这一轮是后面所有轮次的前置**，因为"创建出来的论文可以自由编辑"目前是假的（没有正文列、没有保存入口，见 [WRITER_ROADMAP.md](WRITER_ROADMAP.md) 第 2 节）。
+2. **`v0.1.53` 导入导出**：Markdown 导入导出（`@tiptap/markdown`）、图片插入与存储。
+3. **`v0.1.54` 学术能力**：公式（KaTeX）、表格、脚注（先 spike）、引用节点 + 参考文献列表（CSL）、交叉引用。
+4. **`v0.1.55` 导出与投稿**：Typst / Pandoc 服务端导出 PDF、DOCX、LaTeX/BibTeX（必须以独立进程 + 超时 + 并发上限运行）。
+5. **`v0.1.56` 版本历史**：正文快照、对比、回滚、手动打标签。
+6. **`v0.1.57` 协作**：**先修 `/ws` 的 STOMP 身份绑定**（见 [PROJECT_STATUS.md](PROJECT_STATUS.md) 第 11 节安全债），再上 Yjs + Hocuspocus 协作编辑。
+7. **`v0.2.0` 写作工作台整合**：AI 写作辅助 + 写作台整合 + 性能与合规收口。
+
+"引入开源论文编辑器"的实际形态是**分层复用**（编辑器内核 Tiptap 3 + 排版引擎 Typst/Pandoc + 引用生态 CSL），不是引入某个论文编辑器产品；理由与实测数据见 [PAPER_EDITOR_SELECTION.md](PAPER_EDITOR_SELECTION.md)。**`v0.1.53` 与 `v0.1.54` 彼此无依赖，可并行或调换顺序。**
 
 ### 后续候选（版本待产品负责人确认）
 
