@@ -6,6 +6,7 @@ import org.paperreader.service.PaperDeletionService
 import org.paperreader.service.PaperService
 import org.paperreader.service.PaperContextService
 import org.paperreader.service.MetadataService
+import org.paperreader.service.UploadQuotaService
 import org.springframework.core.io.Resource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -21,7 +22,18 @@ class PaperController(
     private val paperContextService: PaperContextService,
     private val paperDeletionService: PaperDeletionService,
     private val metadataService: MetadataService,
+    private val uploadQuotaService: UploadQuotaService,
 ) {
+    /**
+     * 当前用户的上传额度。字面量路径比 /{id} 更具体，Spring 会优先匹配到这里，
+     * 不会被当成 id="upload-quota"。
+     */
+    @GetMapping("/upload-quota")
+    fun uploadQuota(
+        @AuthenticationPrincipal principal: UserPrincipal,
+    ): ApiResponse<UploadQuotaDto> =
+        ApiResponse(data = uploadQuotaService.status(principal.userId))
+
     @PostMapping("/upload")
     fun upload(
         @RequestParam("file") file: MultipartFile,

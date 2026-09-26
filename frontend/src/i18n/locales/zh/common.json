@@ -62,7 +62,11 @@
     "exitFullscreen": "退出全屏",
     "enterFullscreen": "全屏阅读",
     "uploadHint": "支持 PDF 直链 | 本地上传",
-    "urlTitleOptional": "标题（可选）"
+    "urlTitleOptional": "标题（可选）",
+    "fileLimitHint": "单个文件不超过 {limit}",
+    "quotaRemaining": "今日剩余 {daily}，累计剩余 {total}",
+    "fileTooLarge": "文件 {size} 超过单文件上限 {limit}",
+    "uploadFailed": "上传失败，请稍后重试"
   },
   "paper": {
     "basicInfo": "基本信息",

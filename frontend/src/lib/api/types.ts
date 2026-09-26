@@ -262,6 +262,17 @@ export interface UploadFromUrlRequest {
   title?: string
 }
 
+/** 上传配额：限额和已用量（字节）都由服务端给，前端只负责显示 */
+export interface UploadQuotaDto {
+  fileLimitBytes: number
+  dailyLimitBytes: number
+  totalLimitBytes: number
+  dailyUsedBytes: number
+  totalUsedBytes: number
+  dailyRemainingBytes: number
+  totalRemainingBytes: number
+}
+
 export interface CreatePaperRequest {
   title: string
   authors?: string

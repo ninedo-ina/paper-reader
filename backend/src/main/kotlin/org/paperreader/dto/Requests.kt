@@ -181,6 +181,20 @@ data class SharePaperRequest(
     val description: String? = null,
 )
 
+/**
+ * 上传额度状态（REQ-202609-0267）。上限字段是写死在服务端的固定值，前端据此提示，
+ * 不要在前端另抄一份常量——否则两边一旦不同步，用户会看到"还有额度"却被拒。
+ */
+data class UploadQuotaDto(
+    val fileLimitBytes: Long,
+    val dailyLimitBytes: Long,
+    val totalLimitBytes: Long,
+    val dailyUsedBytes: Long,
+    val totalUsedBytes: Long,
+    val dailyRemainingBytes: Long,
+    val totalRemainingBytes: Long,
+)
+
 // ==== Paper Version ====
 data class CreateVersionRequest(
     val version: String,

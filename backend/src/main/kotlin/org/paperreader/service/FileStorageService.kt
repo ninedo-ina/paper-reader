@@ -1,5 +1,6 @@
 package org.paperreader.service
 
+import org.paperreader.exception.FileTooLargeException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.RequestEntity
@@ -46,8 +47,12 @@ class FileStorageService(
         }.also { logger.info("Stored file: {}", it) }
     }
 
-    fun storeFromUrl(url: String, userId: Long, paperId: Long): Pair<String, ByteArray> {
-        val bytes = downloadPdf(url)
+    /**
+     * 从 URL 下载并落盘。maxBytes 是硬上限：下载时就按它截断，超了直接抛 FileTooLargeException，
+     * 不能先读完整包再校验——URL 由用户给，不设上限就是一个"让服务器把任意大小文件读进内存"的口子。
+     */
+    fun storeFromUrl(url: String, userId: Long, paperId: Long, maxBytes: Long): Pair<String, ByteArray> {
+        val bytes = downloadPdf(url, maxBytes)
         val objectPath = "$userId/$paperId/${UUID.randomUUID()}.pdf"
 
         when (storageType) {
@@ -141,9 +146,21 @@ class FileStorageService(
         }
     }
 
-    private fun downloadPdf(url: String): ByteArray {
+    private fun downloadPdf(url: String, maxBytes: Long): ByteArray {
         return try {
-            URI(url).toURL().openStream().use { it.readAllBytes() }
+            URI(url).toURL().openStream().use { input ->
+                val buffer = ByteArray(64 * 1024)
+                val out = java.io.ByteArrayOutputStream()
+                while (true) {
+                    val read = input.read(buffer)
+                    if (read < 0) break
+                    out.write(buffer, 0, read)
+                    if (out.size() > maxBytes) throw FileTooLargeException(out.size().toLong(), maxBytes)
+                }
+                out.toByteArray()
+            }
+        } catch (e: FileTooLargeException) {
+            throw e
         } catch (e: Exception) {
             throw RuntimeException("Failed to download PDF from URL: ${e.message}")
         }

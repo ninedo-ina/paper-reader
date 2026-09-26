@@ -10,6 +10,7 @@ import type {
   UploadFromUrlRequest,
   CreatePaperRequest,
   UpdatePaperRequest,
+  UploadQuotaDto,
   PaperContentDto,
   UpdatePaperContentRequest,
   PaperTagDto,
@@ -54,6 +55,11 @@ export function uploadPdf(file: File): Promise<PaperDetailDto> {
 /** 从 URL 导入论文 */
 export function uploadFromUrl(data: UploadFromUrlRequest): Promise<PaperDetailDto> {
   return post<PaperDetailDto>("/papers/url", data)
+}
+
+/** 读取上传配额（限额以服务端为准，前端不重复硬编码） */
+export function getUploadQuota(): Promise<UploadQuotaDto> {
+  return get<UploadQuotaDto>("/papers/upload-quota")
 }
 
 /** 获取论文选区问答所需的有限上下文 */

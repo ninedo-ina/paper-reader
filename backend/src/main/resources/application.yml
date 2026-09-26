@@ -32,8 +32,10 @@ spring:
 
   servlet:
     multipart:
-      max-file-size: 50MB
-      max-request-size: 100MB
+      # 单文件 10MB 上传上限的第一道防线（业务侧 UploadQuotaService 还有一道，规则一致）。
+      # 超限时由 GlobalExceptionHandler 转成 1009/413，而不是 500。
+      max-file-size: 10MB
+      max-request-size: 12MB
 
 server:
   address: ${SERVER_ADDRESS:127.0.0.1}
@@ -51,6 +53,12 @@ app:
 
   dufs:
     url: ${DUFS_URL:http://localhost:8400}
+
+  upload:
+    # 全应用单日上传总量上限。当前是测试阶段额度 1GB；测试结束需要放开时改这个环境变量即可，
+    # 不必改代码。单文件 10MB / 单用户单日 100MB / 单用户累计 200MB 是固定值，写死在
+    # UploadQuotaService 里，不走配置。
+    app-daily-limit-bytes: ${APP_UPLOAD_DAILY_LIMIT_BYTES:1073741824}
 
   grobid:
     base-url: ${GROBID_BASE_URL:http://localhost:8070}

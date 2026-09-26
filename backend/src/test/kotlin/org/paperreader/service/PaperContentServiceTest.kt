@@ -38,6 +38,9 @@ class PaperContentServiceTest {
     @MockK
     private lateinit var auditLogService: AuditLogService
 
+    @MockK
+    private lateinit var uploadQuotaService: UploadQuotaService
+
     private val objectMapper = ObjectMapper()
 
     private val service by lazy {
@@ -48,6 +51,7 @@ class PaperContentServiceTest {
             paperParsingService,
             objectMapper,
             auditLogService,
+            uploadQuotaService,
         )
     }
 
