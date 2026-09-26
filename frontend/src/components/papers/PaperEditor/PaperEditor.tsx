@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useTranslations } from "next-intl"
+import { useCallback, useMemo, useState } from "react"
+import { useLocale, useTranslations } from "next-intl"
 import { useEditor, EditorContent } from "@tiptap/react"
 import type { JSONContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
@@ -9,6 +9,9 @@ import Placeholder from "@tiptap/extension-placeholder"
 import type { PaperDetailDto } from "@/lib/api/types"
 import { Save, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/Button"
+import "katex/dist/katex.min.css"
+import { academicExtensions } from "./extensions"
+import { AcademicToolbar, type MathDialogState } from "./AcademicToolbar"
 
 export interface PaperContentPayload {
   /** 权威内容：编辑器节点树 */
@@ -27,28 +30,74 @@ export interface PaperEditorProps {
 export function PaperEditor({ paper, content, onSave }: PaperEditorProps) {
   const t = useTranslations("papers")
   const tc = useTranslations("common")
+  const locale = useLocale()
   const [isSaving, setIsSaving] = useState(false)
   const [status, setStatus] = useState<"idle" | "saved" | "failed">("idle")
+  const [mathDialog, setMathDialog] = useState<MathDialogState | null>(null)
 
-  const editor = useEditor({
-    extensions: [
+  const footnoteTitle = t("footnoteListTitle")
+  const bibliographyTitle = t("bibliographyTitle")
+  const crossRefFormula = t("crossRefFormula")
+  const crossRefTable = t("crossRefTable")
+  const crossRefFigure = t("crossRefFigure")
+  const crossRefUnknown = t("crossReferenceUnknown")
+
+  const labels = useMemo(
+    () => ({
+      formula: crossRefFormula,
+      table: crossRefTable,
+      figure: crossRefFigure,
+      unknown: crossRefUnknown,
+    }),
+    [crossRefFormula, crossRefTable, crossRefFigure, crossRefUnknown],
+  )
+
+  // 公式的点击回调要稳定：它进的是扩展选项，身份一变就得多重建一次编辑器
+  const onMathClick = useCallback(
+    (kind: MathDialogState["kind"], latex: string, pos: number) => setMathDialog({ kind, latex, pos }),
+    [],
+  )
+
+  /**
+   * 扩展列表在编辑器创建时就固化了，每轮渲染重建一份没有意义、也没法在运行时替换，
+   * 所以按真正会进扩展选项的这几处文案做 memo。
+   */
+  const extensions = useMemo(
+    () => [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
       }),
       Placeholder.configure({
         placeholder: t("editorPlaceholder"),
       }),
+      ...academicExtensions({
+        locale,
+        footnoteTitle,
+        bibliographyTitle,
+        crossReferenceLabels: labels,
+        onMathClick,
+      }),
     ],
-    content: content ?? "",
-    editorProps: {
-      attributes: {
-        class: "prose prose-sm dark:prose-invert max-w-none focus:outline-none",
+    // t 每次渲染都是新对象，依赖它反而会让 memo 失效；真正相关的只有下面这几项
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [locale, footnoteTitle, bibliographyTitle, labels, onMathClick],
+  )
+
+  const editor = useEditor(
+    {
+      extensions,
+      content: content ?? "",
+      editorProps: {
+        attributes: {
+          class: "prose prose-sm dark:prose-invert max-w-none focus:outline-none",
+        },
       },
+      // 改动后立刻撤掉「已保存」，避免提示落后于实际内容。
+      onUpdate: () => setStatus("idle"),
+      immediatelyRender: false,
     },
-    // 改动后立刻撤掉「已保存」，避免提示落后于实际内容。
-    onUpdate: () => setStatus("idle"),
-    immediatelyRender: false,
-  })
+    [extensions],
+  )
 
   const handleSave = async () => {
     if (!editor || !onSave) return
@@ -85,6 +134,13 @@ export function PaperEditor({ paper, content, onSave }: PaperEditorProps) {
           </div>
         )}
       </div>
+
+      <AcademicToolbar
+        editor={editor}
+        labels={labels}
+        mathDialog={mathDialog}
+        onOpenMathDialog={setMathDialog}
+      />
 
       <div className="flex-1 overflow-y-auto px-8 py-6">
         <EditorContent editor={editor} />
