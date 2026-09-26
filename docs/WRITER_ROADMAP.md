@@ -2,8 +2,9 @@
 
 > 需求编号：`REQ-202609-0255`「项目需求整理规划」（提出人：Rick Smith / lengendxing，2026-09-26）
 > 文档性质：**需求整理与路线图**。本轮不含任何代码改动、不涉及版本号变更、不触发生产部署。
-> 现状基线：前端 `0.1.51` / 后端 `paper-reader-backend-0.1.49.jar`，生产 `https://paper.pilo.eu.cc`（核验日 2026-09-17 UTC）
+> 现状基线（编写时）：前端 `0.1.51` / 后端 `paper-reader-backend-0.1.49.jar`，生产 `https://paper.pilo.eu.cc`（核验日 2026-09-17 UTC）
 > 编写日期：2026-09-26（UTC）
+> **最新基线（2026-09-26 UTC）：前端 `0.1.52` / 后端 `0.1.52`，Flyway 到 `V16`，生产 `https://paper.pilo.eu.cc`。本文档的 `W1` 已由 `0.1.52` 落地，见下表与第 4 节 W1 小节。**
 > 配套文档：[开源论文编辑器调研与选型](PAPER_EDITOR_SELECTION.md)、[论文创建](CREATE_PAPER_FEATURE.md)、[当前计划](PLAN.md)
 
 ---
@@ -29,17 +30,19 @@
 | --- | --- | --- |
 | 手动创建论文记录 | **已实现**。`source_type = MANUAL`，可以没有原文件 | `backend/.../db/migration/V3__create_paper.sql:1-2`（`file_path` 允许为空、新增 `participants`）；`frontend/src/components/papers/CreatePaperDialog.tsx` |
 | 手动论文的详情页 | **已实现**，但只展示元数据（标题、作者、摘要、分类等），没有正文 | `frontend/src/app/[locale]/papers/[id]/page.tsx`（`abstractText` 渲染块、下载按钮按 `sourceType !== "MANUAL"` 隐藏） |
-| 手动论文的"编辑区" | **只有占位，不是编辑器**。`MANUAL` 时渲染 `PaperEditor` | `frontend/src/components/papers/PaperContentArea.tsx:26-28` |
-| `PaperEditor` 的本体 | **StarterKit + Placeholder 的裸编辑器**：只有标题 1-3 级、加粗斜体、列表、引用、代码块等内置节点；**没有工具栏、没有浮动菜单、没有公式、没有表格、没有引用、没有脚注** | `frontend/src/components/papers/PaperEditor/PaperEditor.tsx:22-38` |
-| 编辑器的保存 | **保存按钮根本不会渲染**。`PaperContentArea` 调用 `<PaperEditor paper={paper} />` 时**没有传 `onSave`**，而 `PaperEditor` 的保存按钮条件是 `{onSave && ...}` | `PaperContentArea.tsx:27` + `PaperEditor.tsx:57` |
-| 编辑器的初始内容 | 用 `paper.abstractText` 当正文 → **摘要被当成正文**，编辑摘要与编辑正文在语义上混为一谈 | `PaperEditor.tsx:31` |
-| 正文存储 | **不存在**。`pr_papers` 从 V1 到 V15 没有任何 `content` / `body` / `document` 列（全量 grep 无命中），实体 `Paper.kt` 也没有对应字段 | `backend/.../db/migration/*.sql`；`backend/.../model/Paper.kt` |
-| 正文保存接口 | **不存在**。`PATCH /api/papers/{id}` 只覆盖元数据（title/authors/participants/abstractText/category/extraFields/doi/year/journal） | `backend/.../dto/Requests.kt`（`UpdatePaperRequest`）、`PaperService.updatePaper()` |
+| 手动论文的"编辑区" | 编写时**只有占位**。`MANUAL` 时渲染 `PaperEditor`；**`0.1.52` 起改为先加载已存正文、加载失败不挂载编辑器** | `frontend/src/components/papers/PaperContentArea.tsx:26-28` |
+| `PaperEditor` 的本体 | **StarterKit + Placeholder 的裸编辑器**：只有标题 1-3 级、加粗斜体、列表、引用、代码块等内置节点；**没有工具栏、没有浮动菜单、没有公式、没有表格、没有引用、没有脚注**（`W2` 未做，状态不变） | `frontend/src/components/papers/PaperEditor/PaperEditor.tsx:22-38` |
+| 编辑器的保存 | 编写时**保存按钮根本不会渲染**：`PaperContentArea` 调用 `<PaperEditor paper={paper} />` 时**没有传 `onSave`**，而条件是 `{onSave && ...}`。**`0.1.52` 已修复，`onSave` 接上并打通保存链路** | `PaperContentArea.tsx:27` + `PaperEditor.tsx:57` |
+| 编辑器的初始内容 | 编写时用 `paper.abstractText` 当正文 → **摘要被当成正文**。**`0.1.52` 已修复，改为用已存 `contentJson`，与摘要彻底分离** | `PaperEditor.tsx:31` |
+| 正文存储 | 编写时**不存在**。`pr_papers` 从 V1 到 V15 没有任何 `content` / `body` / `document` 列。**`0.1.52` 新增 `V16`：`content_json` / `content_html` / `content_version`** | `backend/.../db/migration/V16__paper_content.sql`；`backend/.../model/Paper.kt` |
+| 正文保存接口 | 编写时**不存在**。`PATCH /api/papers/{id}` 只覆盖元数据（title/authors/participants/abstractText/category/extraFields/doi/year/journal），**`0.1.52` 起仍只覆盖元数据但不再影响正文；正文改走 `GET\|PUT /api/papers/{id}/content`** | `backend/.../dto/Requests.kt`、`backend/.../controller/PaperController.kt` |
 | 动态加载封装 | 有一个 `dynamic({ ssr: false })` 的 barrel，**但没人用**——`PaperContentArea` 直接 import 了组件本身 | `frontend/src/components/papers/PaperEditor/index.tsx:4-5` 对比 `PaperContentArea.tsx:5` |
 | 编辑器引擎依赖 | **已经在依赖里**：`@tiptap/react`、`@tiptap/starter-kit`、`@tiptap/extension-placeholder`、`@tiptap/pm`，锁文件解析为 **3.27.3** | `frontend/package.json`、`pnpm-lock.yaml:41-105` |
 | 可复用的既有资产 | 元数据补全（arXiv/Crossref/DataCite/DBLP，`/api/papers/{id}/metadata/*`）、GROBID chunks（`pr_paper_chunks`）、通知中心邮件、14 语言 i18n（含 RTL）、审计日志、版本记录占位（`pr_paper_versions` + `PublishDialog`） | 见 [PROJECT_STATUS.md](PROJECT_STATUS.md) 第 6、10 节 |
 
-**一句话结论：**"创建出来的论文可以自由编辑"目前是**假的**——点进手动创建的论文，看到的确实是一个可输入的区域（看着像编辑器），但没有保存入口、没有正文存储字段，刷新即丢。这是 writer 方向的第一块地基，也是唯一一块必须先补的地基。
+**一句话结论（编写时）：**"创建出来的论文可以自由编辑"当时是**假的**——点进手动创建的论文，看到的确实是一个可输入的区域（看着像编辑器），但没有保存入口、没有正文存储字段，刷新即丢。这是 writer 方向的第一块地基，也是唯一一块必须先补的地基。
+
+**`0.1.52` 更新：**这块地基已经补上（`REQ-202609-0257`，即下表的 `W1`）。手动论文现在有真正的正文、有保存入口、刷新与重登都不丢，正文与摘要彻底分离。**"可以编辑"这一条从此为真，但"编辑器好用"仍不成立**——裸编辑器没有工具栏/公式/表格/引用，属 `W2` 及以后。
 
 ---
 
@@ -64,6 +67,7 @@
 
 ### W1 正文数据模型与持久化（地基，其余全部依赖它）
 
+- **状态：已落地（`v0.1.52`，`REQ-202609-0257`，2026-09-26 UTC）** —— 按本节建议方案（`content_json` 权威 + `content_html` 派生 + `content_version`）实现，接口为 `GET|PUT /api/papers/{id}/content`，迁移 `V16__paper_content.sql`。
 - **目标**：手动创建的论文有真正的正文，且刷新/换设备不丢。
 - **交付物**：新增 `pr_papers` 正文存储（建议新增列而非新表，详见下）；`PUT /api/papers/{id}/content` 读写接口；正文与 `abstractText`（摘要）彻底分离。
 - **关键设计选择（需要产品负责人拍板）**：存**编辑器 JSON**（可无损还原节点，前端 TipTap 用）还是存 **HTML/Markdown**（可读、可迁移、可被搜索引擎/导出直接消费）？建议**两者都存**：`content_json`（权威） + `content_html`（派生，便于导出与预览），派生字段可重建。
@@ -148,15 +152,18 @@
 
 | 迭代 | 主题 | 范围 | 明确不在范围内 | 前置 |
 | --- | --- | --- | --- | --- |
-| `v0.1.52` | **写作闭环最小可用**（W1 + W2 + W3） | 正文列（Flyway V16）+ 读正文接口 + 保存接口 + 工具栏 + 防抖自动保存 + `onSave` 接上 + 摘要与正文分离 | 公式、引用、导出、协作、多文档 | 无 |
-| `v0.1.53` | **导入导出**（W5 的 Markdown 部分 + 图片） | Markdown 导入导出、图片插入与存储、导出预览 | PDF/DOCX 导出、投稿模板 | v0.1.52 |
-| `v0.1.54` | **学术能力**（W4） | 公式（KaTeX）、表格、脚注（先 spike）、引用节点 + 参考文献列表（CSL）、交叉引用 | 端到端投稿套模板 | v0.1.52 |
-| `v0.1.55` | **导出与投稿**（W5 剩余） | Typst/Pandoc 服务端导出 PDF、DOCX、LaTeX/BibTeX、导出回挂版本记录 | 在线期刊模板库 | v0.1.53、v0.1.54 |
-| `v0.1.56` | **版本历史**（W6） | 正文快照、对比、回滚、手动打标签 | 协作 | v0.1.52 |
-| `v0.1.57` | **协作前置与协作**（W7 + 安全债） | `/ws` 身份绑定修复、Yjs 协作编辑、评论批注、只读分享 | 大规模并发压测 | v0.1.52-v0.1.53 |
-| `v0.2.0` | **写作工作台整合**（W8 + W9 + 全局整合） | AI 写作辅助、写作台整合（大纲/多文档/模板/专注模式）、全文检索联动、性能与合规收口 | —— | 以上全部 |
+| ~~`v0.1.52`~~ **已发布** | ~~**写作闭环最小可用**（W1 + W2 + W3）~~ **实际只交付了 W1** | 已交付：正文列（Flyway V16）+ 读/写正文接口 + `onSave` 接上 + 摘要与正文分离。**未交付**：工具栏（W2）、防抖自动保存（W3） | 公式、引用、导出、协作、多文档 | 无 |
+| `v0.1.53`（建议） | **编辑器内核与手动保存**（W2）+ **自动保存**（W3） | 工具栏/浮动菜单、字符统计、`dynamic({ssr:false})` barrel 取舍、防抖自动保存、基于 `content_version` 的乐观锁冲突检测 | 公式、引用、导出、协作 | `v0.1.52` 已满足 |
+| `v0.1.54`（建议） | **导入导出**（W5 的 Markdown 部分 + 图片） | Markdown 导入导出、图片插入与存储、导出预览 | PDF/DOCX 导出、投稿模板 | W2 |
+| `v0.1.55`（建议） | **学术能力**（W4） | 公式（KaTeX）、表格、脚注（先 spike）、引用节点 + 参考文献列表（CSL）、交叉引用 | 端到端投稿套模板 | W2 |
+| `v0.1.56`（建议） | **导出与投稿**（W5 剩余） | Typst/Pandoc 服务端导出 PDF、DOCX、LaTeX/BibTeX、导出回挂版本记录 | 在线期刊模板库 | 上两条 |
+| `v0.1.57`（建议） | **版本历史**（W6） | 正文快照、对比、回滚、手动打标签 | 协作 | W2 |
+| `v0.2.0`（建议） | **协作前置与协作**（W7 + 安全债） | `/ws` 身份绑定修复、Yjs 协作编辑、评论批注、只读分享 | 大规模并发压测 | W2 |
+| `v0.2.x`（建议） | **写作工作台整合**（W8 + W9 + 全局整合） | AI 写作辅助、写作台整合（大纲/多文档/模板/专注模式）、全文检索联动、性能与合规收口 | —— | 以上全部 |
 
 说明：
+
+- **`v0.1.52` 实际只交付 W1**（正文数据模型与持久化），原计划"W1+W2+W3 一个 patch 打完"没有照做——地基单独上线可先行验收，编辑器体验与自动保存顺延。上表 `v0.1.53` 起为**建议版本号，尚未确认**，以产品负责人最终要求为准。
 
 - 把 W7（协作）排在后段不是因为它不重要，而是**它被现有 `/ws` 身份债阻塞**，且它对该架构的侵入性最大（常驻房间状态、持久化 CRDT）。
 - `v0.1.53` / `v0.1.54` 只依赖 `v0.1.52`，彼此**无依赖，可并行或调换顺序**。

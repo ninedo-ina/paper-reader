@@ -22,7 +22,28 @@
 
 验收标准（本轮）：两份新文档落库并被 `docs/README.md` 索引；三处既有文档的交叉引用可达；文档不含真实密码 / Token / 密钥；无代码改动、无版本号改动、无迁移、无部署。
 
-## 迭代：v0.1.51（已发布）
+## 迭代：v0.1.52（已发布）
+
+发布分支：`feature/v0.1.52`；类型：新功能（数据模型 + 接口 + 前端接入）；需求编号：`REQ-202609-0257`（[WRITER_ROADMAP.md](WRITER_ROADMAP.md) 的 **W1「正文数据模型与持久化」**，是 W2-W9 全部依赖的地基）；状态：2026-09-26 UTC 已合并 `main`（显式 `--no-ff` 合并提交 `8d1d447`，父提交 `27fa3e9` + `a378297`），`dev` 已快进到该合并提交（`main` 与 `dev` 同指，`feature/v0.1.52` 为其祖先；发布记录见 `docs/MAINTENANCE.md`）。
+
+目标：**手动创建的论文有真正的正文，且刷新 / 换设备不丢。** 起因是 [WRITER_ROADMAP.md](WRITER_ROADMAP.md) 第 2 节核查出的四条现状缺陷（`PaperContentArea.tsx:27` 渲染编辑器时没传 `onSave`，保存按钮根本不渲染；`PaperEditor.tsx:31` 拿 `paper.abstractText` 当编辑器初始内容，摘要被当成正文；`pr_papers` 从 V1 到 V15 没有任何 content/body 列；没有保存接口）——本轮解决的是「无处可存」这一条。
+
+- **数据模型**：`pr_papers` 新增三列（**新增列而非新表**，正文是论文自身的一部分，一行论文一行正文，拆表只会多一次 join 和多一套生命周期）：
+  - `content_json` —— **权威内容**，编辑器（Tiptap）序列化后的节点树，保留结构，可无损还原；
+  - `content_html` —— **派生内容**，由 JSON 渲染，供预览 / 导出用，可随时重建，不是真相来源；
+  - `content_version` —— 每次保存自增，供前端判断并发覆盖（后写覆盖时能察觉自己写的是第几版）。
+  
+  三列**全部可空、无默认值**，对已有行是元数据级变更（PG 11+ 加可空列不重写表），**不需要回填**。
+- **迁移**：新增 `backend/src/main/resources/db/migration/V16__paper_content.sql`，只做上述三列的 `ALTER TABLE`。**已应用的 V1-V15 一个字都不改**（仓库规范）。`V13`-`V15` 分别是 metadata enrichment、两步验证/信任设备、头像列加宽，线上早已应用。
+- **接口**：`GET /api/papers/{id}/content` 与 `PUT /api/papers/{id}/content`（`PaperController` 里插在 `PATCH /{id}` 与 `PUT /{id}/favorite` 之间），实现落在 `PaperService.getPaperContent` / `updatePaperContent`。`PUT` 是**整篇覆盖**：请求体 `{contentJson, contentHtml?}`，`contentJson` 必填且必须是 JSON object（否则 `InvalidParameterException` → 1003/400），保存时 `contentVersion = (contentVersion ?: 0) + 1` 并刷新 `updatedAt`，同时写审计「保存正文」；读用 `findByIdAndUserId`、写用 `findForUpdateByIdAndUserId`，**按 `userId` 隔离**，别人的论文一律 404。
+- **正文与摘要彻底分离（本轮的核心约束）**：`UpdatePaperRequest` **不含任何 content 字段**，所以 `PATCH /api/papers/{id}`（元数据）在类型上就不可能在碰正文——这不是靠约定，是靠「那个接口根本没有这个入参」。摘要仍然只由 PATCH 元数据接口维护，编辑器的初始内容一律取 `/content` 返回的 `contentJson`，**永远不再用 `abstractText`**。
+- **删除**：正文是 `pr_papers` 的列，随论文行一起删除，`PaperDeletionService` **无需任何额外清理**（只补了一行注释说明为什么不用清理）。
+- **前端**：`PaperContentArea` 先调 `getPaperContent` 把已落库的正文读回来，**读完才挂载编辑器**（`isLoading` 期间显示 `common.loadingEditor`）；**读失败时显示「正文加载失败」且不挂载编辑器**——如果退化成空编辑器，用户会在空白里继续写，一保存就把真实正文覆盖掉。保存改走 `updatePaperContent`（原先是元数据那条路）。`key={paper.id}` 保证换论文时重建编辑器实例，不会沿用上一篇的内容。14 种语言的 `common.json` 各补 `papers.contentLoadFailed` / `papers.saveFailed` 两条文案。
+- **测试**：后端 `PaperContentServiceTest.kt`（8 项）——读写往返、按用户隔离、非文档正文被拒、版本号 4→5 自增、**元数据更新后正文纹丝不动**等；前端 `paper-content.test.tsx`（8 项）——保存时以编辑器 JSON 为权威、HTML 只作派生副本；打开编辑器用的是已存正文而**不是摘要**；保存成功显示「已保存」、内容再变则撤掉该标记；保存失败显式提示而不是静默；读失败时不给空白编辑器（断言保存按钮不存在）；上传型 PDF 不去读 `/content`。前端 23 个测试文件 / 137 项、后端 81 项，全绿。
+- **构建**：`pnpm exec tsc --noEmit`、`next lint`（仅既有告警）、`pnpm run build` 全绿；`./gradlew clean test bootJar` 产出 `paper-reader-backend-0.1.52.jar`。
+- **部署与验收**：本轮**有真实 Kotlin 改动**，所以后端 jar **重建并重启**（与 v0.1.50 / v0.1.51 纯前端、有意不重启不同）。Flyway 日志 `Successfully applied 1 migration to schema "public", now at version v16`；应用在 `ddl-auto: validate` 下正常启动——**这正是「实体字段与新列对得上」的证明**（`validate` 模式下列名对不上会直接拒绝启动，而 H2 单测跑的是 `create-drop` + `flyway.enabled: false`，覆盖不到这一层）。线上 `/api/health` 返回 `0.1.52`（本地与 `https://paper.pilo.eu.cc` 一致），favicon 为 `?v=0.1.52`，前端重建重启、`pm2 save` 完成。端到端实测：新建手动论文 → `PUT` 正文 → `GET` 读回一致 → **直接查库**看到 `content_json` / `content_html` / `content_version` 落盘 → 用 `PATCH` 只改摘要后正文与版本号不变 → 第二版保存版本号 1→2 → 非法正文（字符串）被拒 400/1003 → 删除论文后该行及其正文一并消失。验收用的临时论文与临时凭证已在验完即清除。
+
+## 上一迭代：v0.1.51（已发布）
 
 发布分支：`feature/v0.1.51`；类型：UI 回退（范围纠正）；需求编号：`REQ-202609-0126`（**不是新需求**，是 v0.1.50 的范围纠正）；状态：2026-09-17 UTC 已合并 `main`（显式 `--no-ff` 合并提交 `cd46367`，父提交 `f2f708e` + `f3ff2be`）并部署验收，随后分支上追加的仅文档同步提交又以第二个显式 `--no-ff` 合并提交带入 `main`，`dev` 已快进到该合并提交（`main` 与 `dev` 同指，`feature/v0.1.51` 为其祖先；发布记录见 `docs/MAINTENANCE.md`）。
 
