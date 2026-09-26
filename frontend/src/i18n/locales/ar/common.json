@@ -530,6 +530,8 @@
     "noOriginalFile": "لا يوجد ملف أصلي مرفوع لهذه الورقة؛ سيتم فقط حذف سجل الورقة والبيانات المرتبطة به من PaperHelper.",
     "deleting": "جارٍ الحذف...",
     "deleteSuccess": "تم حذف الورقة",
+    "contentLoadFailed": "تعذر تحميل نص الورقة",
+    "saveFailed": "فشل حفظ النص",
     "deleteFailed": "فشل حذف الورقة",
     "addTag": "إضافة وسم",
     "tagPlaceholder": "أدخل اسم الوسم",

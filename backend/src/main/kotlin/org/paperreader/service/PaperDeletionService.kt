@@ -51,6 +51,7 @@ class PaperDeletionService(
         paperTagRepository.deleteByPaperId(paper.id)
         paperChunkRepository.deleteByPaperId(paper.id)
 
+        // 正文（content_json / content_html）是 pr_papers 的列，随本行一起删除，无需单独清理。
         paperRepository.delete(paper)
         auditLogService.log(
             userId,

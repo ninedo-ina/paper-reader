@@ -530,6 +530,8 @@
     "noOriginalFile": "这篇论文没有上传的原文件，只会删除 PaperHelper 中的论文记录和关联数据。",
     "deleting": "删除中...",
     "deleteSuccess": "论文已删除",
+    "contentLoadFailed": "正文加载失败",
+    "saveFailed": "正文保存失败",
     "deleteFailed": "删除论文失败",
     "addTag": "添加标签",
     "tagPlaceholder": "输入标签名称",

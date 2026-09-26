@@ -2,6 +2,7 @@ package org.paperreader.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.paperreader.dto.*
+import org.paperreader.exception.InvalidParameterException
 import org.paperreader.exception.ResourceNotFoundException
 import org.paperreader.model.Paper
 import org.paperreader.model.PaperTag
@@ -165,6 +166,41 @@ class PaperService(
         return saved.toDetailDto(tags)
     }
 
+    /**
+     * 读取正文。正文与元数据是两条独立的路径：这里只动 content_* 列，
+     * abstractText（摘要）永远不会被这里的返回或写入影响。
+     */
+    fun getPaperContent(id: Long, userId: Long): PaperContentDto {
+        val paper = paperRepository.findByIdAndUserId(id, userId)
+            ?: throw ResourceNotFoundException("Paper", id)
+        return paper.toContentDto()
+    }
+
+    /**
+     * 保存正文（PUT 语义：整篇覆盖）。加悲观锁，避免并发保存下后写者读到陈旧版本号。
+     * contentVersion 每次保存自增，供前端判断自己写的是第几版（冲突提示留在 W3）。
+     */
+    @Transactional
+    fun updatePaperContent(id: Long, userId: Long, request: UpdatePaperContentRequest): PaperContentDto {
+        val body = request.contentJson
+        if (body == null || !body.isObject) {
+            throw InvalidParameterException("contentJson must be a JSON object")
+        }
+        val paper = paperRepository.findForUpdateByIdAndUserId(id, userId)
+            ?: throw ResourceNotFoundException("Paper", id)
+
+        val saved = paperRepository.save(
+            paper.copy(
+                contentJson = body.toString(),
+                contentHtml = request.contentHtml,
+                contentVersion = (paper.contentVersion ?: 0) + 1,
+                updatedAt = Instant.now(),
+            )
+        )
+        auditLogService.log(userId, "保存正文", saved.title)
+        return saved.toContentDto()
+    }
+
     @Transactional
     fun toggleFavorite(id: Long, userId: Long, favorite: Boolean): PaperDetailDto {
         val paper = paperRepository.findForUpdateByIdAndUserId(id, userId)
@@ -239,6 +275,14 @@ class PaperService(
         parseError = parseError,
         tags = tags,
         createdAt = createdAt,
+        updatedAt = updatedAt,
+    )
+
+    private fun Paper.toContentDto() = PaperContentDto(
+        paperId = id,
+        contentJson = contentJson?.let { objectMapper.readTree(it) },
+        contentHtml = contentHtml,
+        contentVersion = contentVersion ?: 0,
         updatedAt = updatedAt,
     )
 

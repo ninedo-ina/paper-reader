@@ -530,6 +530,8 @@
     "noOriginalFile": "이 논문에는 업로드된 원본 파일이 없으며 PaperHelper의 논문 기록과 관련 데이터만 삭제됩니다.",
     "deleting": "삭제 중...",
     "deleteSuccess": "논문이 삭제되었습니다",
+    "contentLoadFailed": "본문을 불러오지 못했습니다",
+    "saveFailed": "본문 저장에 실패했습니다",
     "deleteFailed": "논문 삭제에 실패했습니다",
     "addTag": "태그 추가",
     "tagPlaceholder": "태그 이름 입력",

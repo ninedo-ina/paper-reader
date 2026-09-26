@@ -530,6 +530,8 @@
     "noOriginalFile": "這篇論文沒有上傳的原始檔案，只會刪除 PaperHelper 中的論文記錄和關聯資料。",
     "deleting": "刪除中...",
     "deleteSuccess": "論文已刪除",
+    "contentLoadFailed": "正文載入失敗",
+    "saveFailed": "正文儲存失敗",
     "deleteFailed": "刪除論文失敗",
     "addTag": "新增標籤",
     "tagPlaceholder": "輸入標籤名稱",
