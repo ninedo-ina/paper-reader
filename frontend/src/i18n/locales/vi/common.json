@@ -530,6 +530,8 @@
     "noOriginalFile": "Bài báo này không có tệp gốc đã tải lên, chỉ xóa bản ghi bài báo và dữ liệu liên quan trong PaperHelper.",
     "deleting": "Đang xóa...",
     "deleteSuccess": "Đã xóa bài báo",
+    "contentLoadFailed": "Không tải được nội dung",
+    "saveFailed": "Lưu nội dung thất bại",
     "deleteFailed": "Xóa bài báo thất bại",
     "addTag": "Thêm thẻ",
     "tagPlaceholder": "Nhập tên thẻ",

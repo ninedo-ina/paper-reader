@@ -3,6 +3,7 @@
 // =============================================================================
 
 import type { AppLocale } from "@/i18n/locales"
+import type { JSONContent } from "@tiptap/react"
 
 // --- 通用响应封装 ---
 
@@ -504,6 +505,24 @@ export interface UpdatePaperRequest {
   doi?: string
   year?: string
   journal?: string
+}
+
+// --- Paper Content（正文，与 abstractText 摘要彻底分离）---
+
+export interface PaperContentDto {
+  paperId: number
+  /** 权威内容：编辑器节点树，可无损还原 */
+  contentJson: JSONContent | null
+  /** 派生内容：由 contentJson 渲染，便于预览/导出，可随时重建 */
+  contentHtml: string | null
+  /** 每次保存自增，供前端判断自己写的是第几版 */
+  contentVersion: number
+  updatedAt: string
+}
+
+export interface UpdatePaperContentRequest {
+  contentJson: JSONContent
+  contentHtml?: string
 }
 
 export interface PaperTagDto {

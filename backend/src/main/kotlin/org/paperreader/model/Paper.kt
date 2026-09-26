@@ -72,6 +72,16 @@ data class Paper(
     @Column(nullable = false)
     val fileSize: Long = 0,
 
+    // 正文（与 abstractText 摘要彻底分离，见 V16__paper_content.sql）
+    @Column(name = "content_json", columnDefinition = "TEXT")
+    val contentJson: String? = null,
+
+    @Column(name = "content_html", columnDefinition = "TEXT")
+    val contentHtml: String? = null,
+
+    @Column(name = "content_version")
+    val contentVersion: Int? = null,
+
     @Column(nullable = false)
     val createdAt: Instant = Instant.now(),
 

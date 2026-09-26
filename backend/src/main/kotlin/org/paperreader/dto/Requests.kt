@@ -1,6 +1,7 @@
 package org.paperreader.dto
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.JsonNode
 import java.time.Instant
 
 // ==== Paper ====
@@ -130,6 +131,25 @@ data class UpdatePaperRequest(
     val doi: String? = null,
     val year: String? = null,
     val journal: String? = null,
+)
+
+/**
+ * 正文（REQ-202609-0257）。正文与 abstractText（摘要）是两件独立的事：
+ * 摘要只走 PATCH /api/papers/{id}，正文只走 /api/papers/{id}/content。
+ * contentJson 是权威内容（编辑器节点树，可无损还原），contentHtml 是由它派生的
+ * 只读呈现（便于预览与导出，随时可重建）。
+ */
+data class PaperContentDto(
+    val paperId: Long,
+    val contentJson: JsonNode?,
+    val contentHtml: String?,
+    val contentVersion: Int,
+    val updatedAt: Instant,
+)
+
+data class UpdatePaperContentRequest(
+    val contentJson: JsonNode? = null,
+    val contentHtml: String? = null,
 )
 
 data class ToggleFavoriteRequest(

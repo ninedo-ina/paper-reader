@@ -530,6 +530,8 @@
     "noOriginalFile": "Aucun fichier original n’a été importé pour cet article ; seuls l’enregistrement de l’article et les données associées dans PaperHelper seront supprimés.",
     "deleting": "Suppression...",
     "deleteSuccess": "Article supprimé",
+    "contentLoadFailed": "Échec du chargement du contenu",
+    "saveFailed": "Échec de l'enregistrement du contenu",
     "deleteFailed": "Échec de la suppression de l’article",
     "addTag": "Ajouter une étiquette",
     "tagPlaceholder": "Saisir le nom de l’étiquette",

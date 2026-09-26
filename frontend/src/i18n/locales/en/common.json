@@ -530,6 +530,8 @@
     "noOriginalFile": "This paper has no uploaded original file. Only its PaperHelper record and related data will be deleted.",
     "deleting": "Deleting...",
     "deleteSuccess": "Paper deleted",
+    "contentLoadFailed": "Failed to load the content",
+    "saveFailed": "Failed to save the content",
     "deleteFailed": "Failed to delete paper",
     "addTag": "Add Tag",
     "tagPlaceholder": "Enter tag name",

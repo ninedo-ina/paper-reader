@@ -530,6 +530,8 @@
     "noOriginalFile": "Questo articolo non ha un file originale caricato: verranno eliminati solo il record dell'articolo in PaperHelper e i dati associati.",
     "deleting": "Eliminazione in corso...",
     "deleteSuccess": "Articolo eliminato",
+    "contentLoadFailed": "Caricamento del contenuto non riuscito",
+    "saveFailed": "Salvataggio del contenuto non riuscito",
     "deleteFailed": "Eliminazione dell'articolo non riuscita",
     "addTag": "Aggiungi tag",
     "tagPlaceholder": "Inserisci il nome del tag",

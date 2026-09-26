@@ -530,6 +530,8 @@
     "noOriginalFile": "Este artículo no tiene un archivo original subido; solo se eliminarán el registro del artículo y los datos asociados en PaperHelper.",
     "deleting": "Eliminando...",
     "deleteSuccess": "Artículo eliminado",
+    "contentLoadFailed": "No se pudo cargar el contenido",
+    "saveFailed": "No se pudo guardar el contenido",
     "deleteFailed": "No se pudo eliminar el artículo",
     "addTag": "Añadir etiqueta",
     "tagPlaceholder": "Introduce el nombre de la etiqueta",

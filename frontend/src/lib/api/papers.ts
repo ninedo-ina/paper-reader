@@ -10,6 +10,8 @@ import type {
   UploadFromUrlRequest,
   CreatePaperRequest,
   UpdatePaperRequest,
+  PaperContentDto,
+  UpdatePaperContentRequest,
   PaperTagDto,
   SharePaperResponse,
   PaperContextDto,
@@ -67,6 +69,18 @@ export function createPaper(data: CreatePaperRequest): Promise<PaperDetailDto> {
 /** 更新论文元数据 */
 export function updatePaper(id: number, data: UpdatePaperRequest): Promise<PaperDetailDto> {
   return patch<PaperDetailDto>(`/papers/${id}`, data)
+}
+
+// ---- 正文（与上面的元数据是两条独立路径，见 REQ-202609-0257）----
+
+/** 读取论文正文 */
+export function getPaperContent(id: number): Promise<PaperContentDto> {
+  return get<PaperContentDto>(`/papers/${id}/content`)
+}
+
+/** 保存论文正文（整篇覆盖，contentJson 为权威内容） */
+export function updatePaperContent(id: number, data: UpdatePaperContentRequest): Promise<PaperContentDto> {
+  return put<PaperContentDto>(`/papers/${id}/content`, data)
 }
 
 /** Resolve exact arXiv/DOI metadata into an expiring preview. */

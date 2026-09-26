@@ -530,6 +530,8 @@
     "noOriginalFile": "この論文にはアップロード済みの元ファイルがないため、PaperHelper 内の論文記録と関連データのみが削除されます。",
     "deleting": "削除中...",
     "deleteSuccess": "論文を削除しました",
+    "contentLoadFailed": "本文の読み込みに失敗しました",
+    "saveFailed": "本文の保存に失敗しました",
     "deleteFailed": "論文の削除に失敗しました",
     "addTag": "タグを追加",
     "tagPlaceholder": "タグ名を入力",

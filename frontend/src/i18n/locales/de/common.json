@@ -530,6 +530,8 @@
     "noOriginalFile": "Für dieses Paper wurde keine Originaldatei hochgeladen; es werden nur der Paper-Eintrag in PaperHelper und zugehörige Daten gelöscht.",
     "deleting": "Wird gelöscht...",
     "deleteSuccess": "Paper gelöscht",
+    "contentLoadFailed": "Der Text konnte nicht geladen werden",
+    "saveFailed": "Der Text konnte nicht gespeichert werden",
     "deleteFailed": "Paper konnte nicht gelöscht werden",
     "addTag": "Tag hinzufügen",
     "tagPlaceholder": "Tag-Namen eingeben",

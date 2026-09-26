@@ -115,6 +115,21 @@ class PaperController(
     ): ApiResponse<PaperDetailDto> =
         ApiResponse(data = paperService.updatePaper(id, principal.userId, request))
 
+    @GetMapping("/{id}/content")
+    fun getContent(
+        @PathVariable id: Long,
+        @AuthenticationPrincipal principal: UserPrincipal,
+    ): ApiResponse<PaperContentDto> =
+        ApiResponse(data = paperService.getPaperContent(id, principal.userId))
+
+    @PutMapping("/{id}/content")
+    fun updateContent(
+        @PathVariable id: Long,
+        @RequestBody request: UpdatePaperContentRequest,
+        @AuthenticationPrincipal principal: UserPrincipal,
+    ): ApiResponse<PaperContentDto> =
+        ApiResponse(data = paperService.updatePaperContent(id, principal.userId, request))
+
     @PutMapping("/{id}/favorite")
     fun toggleFavorite(
         @PathVariable id: Long,
