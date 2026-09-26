@@ -1,3 +1,17 @@
+## v0.1.54 学术写作能力（公式 / 表格 / 脚注 / 引用 / 交叉引用）
+
+- 需求编号 `REQ-202609-0260`（**writer 路线图 W4**，见 [WRITER_ROADMAP.md](WRITER_ROADMAP.md) 第 4 节），分支 `feature/v0.1.54`，从 v0.1.52 的发布提交 `239ca89` 展开。**本轮是纯前端迭代，Kotlin 零改动、没有新迁移、后端 jar 未重建、`paper-reader-backend` 未重启**，所以 `/api/health` **仍返回 `0.1.52`**——这是预期，不是漏部署。**判定前端线上版本请用 favicon `?v=0.1.54` 与构建产物哈希（`_next/static/chunks/...` 的 sha256），不要用 `/api/health`。**
+- **导出的编号必须回写到节点属性，否则 `getHTML()` 会漏号。** `editor.getHTML()` 走的是 schema 的 `renderHTML`（`DOMSerializer.fromSchema`），**不读 NodeView 的实时 DOM**。因此所有"推导出来的编号"（脚注序号、引用序号、交叉引用指向的编号、文末列表条目）都由 `AcademicNumbering` 插件在 `appendTransaction` 里算完**用 `tr.setNodeMarkup` 写回 `attrs`**。**新增任何"显示时才计算"的编号时，不要只算在 NodeView 里**——编辑器里看着对，导出/保存后就是错的。
+- **参考文献表的顺序就是引用编号。** 编号不落库、由 `Bibliography` 节点的 `entries` 顺序推导（`collectBibliography`），所以"在文献表里上移一条"必须让正文里的 `[n]` 跟着重排——这正是 W4 验收里"真引用系统 vs 手打编号"的分水岭，由 `frontend/src/test/academic-numbering.test.ts` 与 `academic-editor.test.tsx` 各锁一遍。**不要把编号直接写进正文文本。**
+- **脚注是自研的，不是官方扩展。** npm 上 `@tiptap/extension-footnotes` 与 `@tiptap-pro/extension-footnotes` **都是 404**（不是"没装"，是不存在），Tiptap Pro 也没有对应产品；本轮**没走 spike、没买 Pro**，按自研路线实现：`Footnote.tsx` 里的行内 `FootnoteReference` 节点自己持有 `note` 文本，文末 `FootnoteList` 的 `entries` 由编号插件从正文**推导回写**。**改脚注时要同时维护"文末列表是派生物"这个不变式**，别让两处各自成为真相。
+- **公式的 LaTeX 源和渲染结果是两份东西，都要留。** `Mathematics.ts` 在 KaTeX 渲染结果旁边保留 `data-latex`：**只留渲染后的 DOM，HTML 再导入时公式就改不动了**（源丢了）。同理唯一 ID 由 `UniqueID.configure({ types: ["blockMath", "table"] })` 补 `data-id`，交叉引用靠它定位——**改这两处等于同时改导出与交叉引用**，改完必须跑学术测试。
+- **KaTeX 的 CSS 要在编辑器里引（`katex/dist/katex.min.css`）。** 不引的话 `getHTML()` 里照样有 `katex-html` 标记，但页面上公式是散的——"编辑器与导出一致"这条验收会以"看起来不一致"的形式挂掉，而单测**测不出来**（单测只看标记在不在）。
+- **工具栏是学术专用的，不是 W2 的格式工具栏。** `AcademicToolbar.tsx` 只放公式/表格/脚注/引用/交叉引用 + 表格内的行列表操作。**不要顺手把它扩成通用格式工具栏**——`W2`（标题层级、粗斜体、列表、链接、对齐、字符统计）与 `W3`（防抖自动保存、冲突检测）**都还没做**，它们该在自己的迭代里落地。本轮 `v0.1.54` 是**抢在 `v0.1.53` 前面做的**（两者无依赖），写作路线图第 5 节已注明顺序与原表不同。
+- **新增依赖只在 `frontend`**：`@tiptap/extension-mathematics` / `-table` / `-unique-id`（均 MIT）与 `katex`。部署时**必须先 `pnpm install --frozen-lockfile` 再 `pnpm run build`**，否则产物里找不到这些扩展、页面在新论文上直接报错。本轮实测 `pnpm install` 新增 6 个包。
+- 部署收尾沿用前端既有做法：`pnpm run build` → `pm2 restart paper-reader-frontend` → 探活 → `pm2 save`。**本轮不要重启后端**（无 Kotlin 改动，重启只会白担一次中断风险）。实测线上 favicon `?v=0.1.54`、学术编辑器所在 chunk 与服务端产物 sha256 一致。
+- 本轮实测测试基线：前端 **25 个测试文件 / 154 项**（v0.1.52 为 23 / 137），`pnpm exec tsc --noEmit`、`eslint`（改动面）、`pnpm run build` 均 exit 0。**后端本轮 Kotlin 零改动、未构建也未重跑**（`backend/build` 在本 worktree 里根本不存在），81 项是 v0.1.52 的基线、不是本轮实测。以上是**期望值**，不是可以放宽的上限。
+- 尚未覆盖：**没有登录态下的浏览器端到端验收**（学术编辑器只在手动论文详情页出现，需要登录；C 端线上登录受登录方式开关限制，见既有记录）。线上证据是「favicon 版本 + 构建产物哈希与本地逐字节一致 + 学术 chunk 确实在部署产物里」，功能正确性由本地测试与构建保证。
+
 ## v0.1.52 论文正文落库与 `/api/papers/{id}/content` 读写接口
 
 - 需求编号 `REQ-202609-0257`（**writer 路线图 W1**，见 [WRITER_ROADMAP.md](WRITER_ROADMAP.md) 第 4 节），分支 `feature/v0.1.52`，从 `27fa3e9` 展开。**本轮有真实 Kotlin 改动，后端 jar 已重建并重启**（与 v0.1.50 / v0.1.51 纯前端、有意不重启后端的情形不同）。
