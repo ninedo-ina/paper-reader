@@ -299,6 +299,52 @@ export interface PaperVersionDto {
   createdAt: string
 }
 
+// --- 导入 / 导出（W5）---
+
+/** 单一导出格式及其在当前服务端是否可用（引擎缺失时 available=false）。 */
+export interface ExportFormatDto {
+  /** markdown / html / latex / bibtex / docx / pdf */
+  id: string
+  /** 文件扩展名，如 md / tex / bib / docx / pdf */
+  ext: string
+  available: boolean
+}
+
+export interface ExportCapabilitiesDto {
+  formats: ExportFormatDto[]
+  importAvailable: boolean
+}
+
+export interface CreateExportRequest {
+  format: string
+  /** 关联的发布版本；省略表示导出当前草稿正文。 */
+  versionId?: number | null
+}
+
+/** 一次导出的产物记录，回挂在 pr_paper_versions 上，可二次下载。 */
+export interface ExportArtifactDto {
+  id: number
+  paperId: number
+  versionId: number | null
+  format: string
+  engine: string | null
+  byteSize: number | null
+  contentVersion: number | null
+  status: string
+  /** 二次下载地址（含 /api 前缀，前端下载时改用相对 API 的路径）。 */
+  downloadUrl: string
+  createdAt: string
+}
+
+export interface ImportMarkdownRequest {
+  markdown: string
+}
+
+export interface ImportResultDto {
+  /** 转换后的正文 HTML 片段，供编辑器 setContent 预览、由用户确认保存。 */
+  contentHtml: string
+}
+
 // --- 存储配置 ---
 
 export interface StorageConfigDto {

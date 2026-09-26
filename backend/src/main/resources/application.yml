@@ -67,6 +67,17 @@ app:
     parse-max-pool-size: ${GROBID_PARSE_MAX_POOL_SIZE:4}
     parse-queue-capacity: ${GROBID_PARSE_QUEUE_CAPACITY:20}
 
+  # 文档导出/导入引擎（W5）。引擎以独立进程执行，闸门参数见 ExportProperties。
+  export:
+    pandoc-path: ${EXPORT_PANDOC_PATH:/usr/bin/pandoc}
+    typst-path: ${EXPORT_TYPST_PATH:/usr/local/bin/typst}
+    timeout-ms: ${EXPORT_TIMEOUT_MS:30000}
+    max-concurrency: ${EXPORT_MAX_CONCURRENCY:3}
+    acquire-timeout-ms: ${EXPORT_ACQUIRE_TIMEOUT_MS:2000}
+    max-input-bytes: ${EXPORT_MAX_INPUT_BYTES:2000000}
+    output-dir: ${EXPORT_OUTPUT_DIR:./uploads/exports}
+    pdf-font-family: ${EXPORT_PDF_FONT_FAMILY:Noto Serif CJK SC}
+
   mail:
     from: ${MAIL_FROM:noreply@paperreader.local}
 

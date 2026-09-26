@@ -7,6 +7,7 @@ import { PDFViewer } from "@/components/reader/PDFViewer"
 import { PaperEditor } from "@/components/papers/PaperEditor/PaperEditor"
 import type { PaperContentPayload } from "@/components/papers/PaperEditor/PaperEditor"
 import * as papersApi from "@/lib/api/papers"
+import { importMarkdown as importMarkdownApi } from "@/lib/api/export"
 import type { PaperDetailDto } from "@/lib/api/types"
 
 interface PaperContentAreaProps {
@@ -76,6 +77,16 @@ export function PaperContentArea({ paper, onUploadClick }: PaperContentAreaProps
     setReloadSeq((n) => n + 1)
   }, [paperId])
 
+  /** Markdown 导入：转换为编辑器可加载的 HTML 片段，交回编辑器 setContent 供用户确认后保存。 */
+  const handleImportMarkdown = useCallback(
+    async (markdown: string): Promise<string> => {
+      if (paperId === null) return ""
+      const dto = await importMarkdownApi(paperId, markdown)
+      return dto.contentHtml
+    },
+    [paperId],
+  )
+
   if (!paper) {
     return (
       <div className="flex-1 flex items-center justify-center" style={{ background: "var(--bg-root)" }}>
@@ -112,6 +123,7 @@ export function PaperContentArea({ paper, onUploadClick }: PaperContentAreaProps
         content={content}
         onSave={handleSave}
         onReloadConflict={handleReloadConflict}
+        onImportMarkdown={handleImportMarkdown}
       />
     )
   }
