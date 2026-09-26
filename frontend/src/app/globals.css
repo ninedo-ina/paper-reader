@@ -242,6 +242,51 @@ html[lang="ug"] {
   border-left: 1px solid var(--border-subtle);
 }
 
+/* 基础排版工具栏：和学术工具栏同一套观感，但按钮多、要能换行，并且带高亮态 */
+.format-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface-2);
+}
+
+.format-toolbar-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  transition: background-color 150ms, color 150ms;
+}
+
+.format-toolbar-button:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.format-toolbar-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 当前光标所在处已应用该格式时点亮，让用户一眼看出加粗/对齐等状态 */
+.format-toolbar-button[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+}
+
+.format-toolbar-divider {
+  width: 1px;
+  height: 18px;
+  margin: 0 3px;
+  background: var(--border-subtle);
+}
+
 /* --- 公式 --- */
 
 .academic-math-block,

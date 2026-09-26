@@ -379,6 +379,6 @@ User fills fields, clicks "Create"
 2026-09-26 更正与补充：
 
 - 第 4 条包名有误：**公开 npm 上不存在 `@tiptap/extension-markdown`**（实测 HTTP 404），Markdown 解析/序列化的正确包名是 **`@tiptap/markdown`**（MIT，实测 3.31.3）。本文成文于 v0.1.4 规划期，该包当时尚未发布，属正常的历史偏差，不要按旧包名写代码。
-- 第 1、2、3 条构成 writer 方向的最小闭环，建议合并为首个迭代交付（路线图中的 `v0.1.52`）；实现前需先补正文存储列（`pr_papers` 从 V1 到 V15 都没有 content/body 列）。**该地基已于 2026-09-26（UTC）交付**：`V16__paper_content.sql` 补上 `content_json` / `content_html` / `content_version`，接口为 `GET|PUT /api/papers/{id}/content`。**自动保存（第 2 条）已于同日由 `v0.1.56` 交付**（2 秒防抖 + 保存状态指示/重试 + 离开拦截 + 并发冲突 `409`/`1008`，见 [WRITER_ROADMAP.md](WRITER_ROADMAP.md) 的 `W3`）；**工具栏（第 1 条）与 `dynamic({ssr:false})` 取舍（第 3 条）仍未做**，属 `W2`，由并行迭代 `feature/v0.1.55` 推进。
+- 第 1、2、3 条构成 writer 方向的最小闭环，建议合并为首个迭代交付（路线图中的 `v0.1.52`）；实现前需先补正文存储列（`pr_papers` 从 V1 到 V15 都没有 content/body 列）。**该地基已于 2026-09-26（UTC）交付**：`V16__paper_content.sql` 补上 `content_json` / `content_html` / `content_version`，接口为 `GET|PUT /api/papers/{id}/content`。**自动保存（第 2 条）已于同日由 `v0.1.56` 交付**（2 秒防抖 + 保存状态指示/重试 + 离开拦截 + 并发冲突 `409`/`1008`，见 [WRITER_ROADMAP.md](WRITER_ROADMAP.md) 的 `W3`）；**工具栏（第 1 条）也已交付**：`W2` 于 **`v0.1.57`** 补上通用格式工具栏与字符/词数统计（见 [WRITER_ROADMAP.md](WRITER_ROADMAP.md) 的 `W2`）；**`dynamic({ssr:false})` 取舍（第 3 条）仍未做**，属后续清理。
 - 第 7 条（协作）不是"接上 Y.js 就行"：现有 `/ws` 的 STOMP `senderId` 来自客户端、未绑定服务端身份（见 [PROJECT_STATUS.md](PROJECT_STATUS.md) 第 11 节），必须在协作编辑上线前先修复，否则等于给一个可伪造身份的实时通道接上文档写入。
 - 第 6 条（引用）建议不自建引文格式，改用 CSL 模板 + `citation-js`（MIT）+ 已有的 DOI/arXiv 元数据补全。

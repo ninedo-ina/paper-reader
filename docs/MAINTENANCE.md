@@ -839,10 +839,19 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
   - 核对线上 chunk 时注意：**中文 UI 文案不在 JS chunk 里**（在 next-intl 的 message JSON 中），grep「插入脚注」这类中文标签会一无所获；应改成 grep i18n key（本轮用 `academicToolbar`），本地与线上两侧各命中 1 处。
 - 遗留与人工事项：① **没有登录态下的浏览器端到端验收**——生产只开着管理员 GitHub 登录、C 端测试账号密码未记录，取不到真实会话；本轮线上验证只做到「产物哈希一致 + 页面可取」，编辑器交互由 `academic-editor.test.tsx` 在 jsdom 里驱动真实编辑器实例覆盖。② **导出侧完全未做**：公式/表格的**服务端渲染**、导出 PDF 的排版引擎属 W5；本轮全部能力都是客户端的，编号只在编辑器内推导，不参与服务端导出。③ `AcademicToolbar` 是**学术专用**工具栏（公式/表格/脚注/引用/交叉引用），**不是 W2 要求的通用格式工具栏**（标题层级、粗斜体、链接、对齐、撤销重做、字符统计仍缺）；`dynamic({ssr:false})` barrel 依旧没人用、也未删。④ 保存仍是手动点按钮，没有防抖自动保存与冲突提示（W3）。⑤ v0.1.48 ~ v0.1.52 的其余遗留（机翻未校对、中文 AI 提示词与后端 `message` 有意保留、`ug` 下侧栏 tab 被裁、侧栏折叠态未验收、`content_version` 只记录未校验）不变。
 
+### 无版本号说明：`v0.1.55` 撞号被放弃（并行迭代，2026-09-26 UTC）
+
+这一条**不是版本记录**（`0.1.55` 从未发布、也不会发布），列在这里是为了让版本链不断档，避免后续维护者去追一个不存在的 `v0.1.55` 线上版本。
+
+- 背景：`REQ-202609-0258`（W2 编辑器内核与基础体验）与 `REQ-202609-0259`（W3 正文自动保存）由两条并行工作流同时开发。W2 最初分配到 `feature/v0.1.55`（提交 `ade65b6` feat、`d9bef13` test、`b40ebcb` 版本号 0.1.55，均已推送到 origin），但 **W3 先一步合入 `main` 成为 `v0.1.56`**（见下条）。
+- 处理：`v0.1.55` 的版本号是在旧 `main`（`a924db9`）之上分配的，W3 落地后它已落后、且会与 W3 对 `PaperEditor.tsx` 的自动保存改写冲突——**继续用会得到一个从未部署、且回退了 W3 的版本**。因此**放弃 `feature/v0.1.55`**（分支仍留在 origin 作为痕迹，未合入、未删除），把 W2 以**加法方式**重做在 W3 的 `v0.1.56` 之上，版本号顺延为 **`v0.1.57`**。
+- 结论：版本链是 `v0.1.54 → v0.1.56（W3）→ v0.1.57（W2）`，**没有 `v0.1.55` 这一环**是有意为之，不是断档。
+
+
 ### v0.1.56 正文自动保存与草稿保护（2026-09-26 UTC）
 
 - 需求（`REQ-202609-0259` = `docs/WRITER_ROADMAP.md` 的 **W3「自动保存」**，父需求 `REQ-202609-0255`）：W1 让正文能存、W4 让正文像论文，但**存的动作一直是人手点的**——写了一半关标签页、断网后继续写、两个标签页同时开同一篇，都会静默丢掉其中一份。W3 的四项交付物：① 停止输入约 2 秒后自动保存；② 保存状态指示（保存中 / 已保存 / 保存失败 + 重试）；③ 离开页面拦截（`beforeunload` + 站内路由跳转二次确认）；④ **并发/多标签页冲突必须显式报出来，绝不允许静默后写覆盖先写**。
-- **版本号取 `0.1.56` 而不是 `0.1.55`**：`0.1.55` 已被并行进行的姊妹迭代 **W2（编辑器内核，`REQ-202609-0258`，worktree `/root/paper-reader.wt-req-202609-0258`，分支 `feature/v0.1.55`）** 预留，两个迭代同时动 `PaperEditor.tsx`、`en/zh common.json` 与 `paper-content.test.tsx`。若两轮都发 `0.1.55`，版本链会出现两个不同的 `0.1.55`，回滚时无法判断线上是哪一份。本条目记录的选择是**跳到 `0.1.56`**，`0.1.55` 留给 W2；W3 从 `main`（`a924db9`，即 v0.1.54 的文档同步合并提交）展开，因此它不依赖 W2，W2 落地时也不依赖本轮的改动（两者都要改 `common.json`，届时需按文件冲突逐条解决）。
+- **版本号取 `0.1.56` 而不是 `0.1.55`**：`0.1.55` 原本留给并行进行的姊妹迭代 **W2（编辑器内核，`REQ-202609-0258`）**——两个迭代都要动 `PaperEditor.tsx`、`en/zh common.json` 与 `paper-content.test.tsx`，若都发 `0.1.55`，版本链里会出现两个不同的 `0.1.55`，回滚时无法判断线上是哪一份。W3 从 `main`（`a924db9`，即 v0.1.54 的文档同步合并提交）展开、**不依赖 W2**，因此先一步合入并占用了 `0.1.56`；W2 随后放弃 `feature/v0.1.55`（留在 origin 作痕迹，未合入未删除），从含本轮的 `origin/main`（`6b8f573`）重切为 `feature/v0.1.57`，以**加法方式**叠加在本轮的自动保存之上。**所以版本链是 `v0.1.54 → v0.1.56 → v0.1.57`，没有 `v0.1.55` 是有意为之**，详见上一条与下一条。
 - **后端（本轮唯一的 Kotlin 改动，乐观锁的"锁"这一半）**：
   - `UpdatePaperContentRequest` 新增**可选**入参 `baseVersion: Int?`。为空时**跳过校验**（老客户端、老调用方行为一字不变，向后兼容）；不为空且与库里当前 `contentVersion` 不符，说明**另一个会话在自己读到之后已经写过**，直接拒绝。
   - 新增 `ContentVersionConflictException(currentVersion)`，业务码 **`1008`**、HTTP **`409`**（`BusinessException(code, message, httpStatus)`）。走的是既有 `GlobalExceptionHandler` —— 它用 `ex.httpStatus` 定响应状态、用 `ex.code` 定响应体里的业务码，前端 `client.ts` 据此抛出带 `.code` 的 `ApiError`，因此「409 / 1008」这条路不需要任何新的错误管道。
@@ -862,4 +871,25 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
   - **构建产物逐字节一致**：`_next/static/chunks/app/[locale]/page-9b6eab91cd7c5161.js`（本轮的自动保存逻辑与 `baseVersion` 传递就在这个 chunk 里）线上 sha256 `32377b21acaf7292ce281812e66d7e4cfab9b69a4958e6a2e49cf3b812f43247`，论文详情页 chunk `_next/static/chunks/app/[locale]/papers/[id]/page-e46de9225dcdbf4f.js` 线上 sha256 `58f43c1e3d74ba6436a24486da0d1cfa98dc00b1362cb585d48ed18609190a31`，两者与本地 `.next` 均完全相同。
   - 新增的 `PUT /api/papers/{id}/content` 校验路径在线上可达：**未带凭据请求得到 `401` / `code 1001`**（而不是 404），说明线上后端确实已经是带冲突校验的 `0.1.56`。
   - 后端启动日志无缺配置报错（`Started PaperReaderApplicationKt in 8.643 seconds`、Tomcat 8080、`/api/health` 正常应答）；**Flyway 仍停在 `V16`**，本轮未新增迁移。
-- 遗留与人工事项：① **没有登录态下的浏览器端到端验收**，与 v0.1.52 / v0.1.54 同因——生产只开着管理员 GitHub 登录、C 端测试账号密码未记录，取不到真实会话。因此「断网→停手→恢复网络自动落库」「两个标签页抢写时后写者看到『内容已被更新』」「带未保存改动关标签页弹浏览器原生确认」这三条**验收标准是在前端测试里以真实组件 + 假定时器钉住的，未在真实浏览器里人工走一遍**；冲突那条的**服务端半边**另有后端单测与线上 401 探测作证。② 冲突检测只在调用方**传了 `baseVersion`** 时生效，字段为空即跳过校验（有意保留的向后兼容）；将来若有第三方直接调 `PUT`，它仍可能整篇覆盖，服务端不会替它拦。③ `content_version` 现在**参与校验了**（v0.1.52 遗留的第 ③ 条到此关闭），但**没有历史版本**——冲突时只能「加载最新」，不能看差异、也不能回滚，那属 W6。④ **W2（编辑器内核：通用格式工具栏、字符统计、`dynamic({ssr:false})` barrel 取舍）仍未做**，由并行迭代 `feature/v0.1.55` 推进；本次自动保存是挂在裸编辑器上的，工具栏落地后 `useAutosave` 不需要改。⑤ v0.1.48 ~ v0.1.54 的其余遗留（机翻未校对、中文 AI 提示词与后端 `message` 有意保留、`ug` 下侧栏 tab 被裁、侧栏折叠态未验收、导出侧 W5 未做）不变。
+- 遗留与人工事项：① **没有登录态下的浏览器端到端验收**，与 v0.1.52 / v0.1.54 同因——生产只开着管理员 GitHub 登录、C 端测试账号密码未记录，取不到真实会话。因此「断网→停手→恢复网络自动落库」「两个标签页抢写时后写者看到『内容已被更新』」「带未保存改动关标签页弹浏览器原生确认」这三条**验收标准是在前端测试里以真实组件 + 假定时器钉住的，未在真实浏览器里人工走一遍**；冲突那条的**服务端半边**另有后端单测与线上 401 探测作证。② 冲突检测只在调用方**传了 `baseVersion`** 时生效，字段为空即跳过校验（有意保留的向后兼容）；将来若有第三方直接调 `PUT`，它仍可能整篇覆盖，服务端不会替它拦。③ `content_version` 现在**参与校验了**（v0.1.52 遗留的第 ③ 条到此关闭），但**没有历史版本**——冲突时只能「加载最新」，不能看差异、也不能回滚，那属 W6。④ **W2（编辑器内核：通用格式工具栏、字符统计）已由 `v0.1.57` 落地**（见下条）：W2 对本轮的 `PaperEditor.tsx` 只做加法，`useAutosave` / `useUnsavedGuard` / `onReloadConflict` 一行未改——自动保存是挂在编辑器外层的通用保存器，工具栏落地不影响它；`dynamic({ssr:false})` barrel 的取舍仍未定。⑤ v0.1.48 ~ v0.1.54 的其余遗留（机翻未校对、中文 AI 提示词与后端 `message` 有意保留、`ug` 下侧栏 tab 被裁、侧栏折叠态未验收、导出侧 W5 未做）不变。
+
+### v0.1.57 编辑器基础格式工具栏与字数统计（`REQ-202609-0258` / W2，2026-09-26 UTC）
+
+- 需求（`REQ-202609-0258` = `docs/WRITER_ROADMAP.md` 的 **W2「编辑器内核与基础体验」**，父需求 `REQ-202609-0255`）：`v0.1.52`（W1）之后编辑器仍是 StarterKit + Placeholder 的裸编辑器，`v0.1.54`（W4）加的是**学术专用**工具栏（公式/表格/脚注/引用），**通用格式工具栏与字数统计仍缺**。W2 交付物：标题层级（H1/H2/H3/正文）、粗体/斜体/下划线/删除线/行内代码、有序与无序列表、引用、代码块、链接/移除链接、左/中/右对齐、撤销/重做，以及**字符/词数统计**；格式操作既要有可见效果又要能持久化。
+- **本轮与并行 W3 的关系（关键背景）**：W2 原分配 `v0.1.55`，但 W3 先合入成为 `v0.1.56`（见上两条）。W2 因此**放弃 `feature/v0.1.55`，从 `origin/main`（`6b8f573`，含 W3）新建 `feature/v0.1.57`，把 W2 以加法方式叠加在 W3 的自动保存之上**：`PaperEditor.tsx` 保留 W3 的 `useAutosave` / `useUnsavedGuard` / `markDirty` / `onReloadConflict`，W2 只加 6 处正交改动（`useEditorState` + 3 个新组件 import、`TextAlign` 扩展、`useEditorState` 字数统计块、`<FormatToolbar>` 渲染、页脚字数条）。
+- 新增代码（`frontend/src/components/papers/PaperEditor/`，**纯前端，后端零改动**）：
+  - `FormatToolbar.tsx` —— 通用格式工具栏，`useEditorState` 订阅编辑器状态驱动按钮高亮/禁用；按钮 `onMouseDown` 里 `preventDefault` 以保住选区；分组：撤销/重做 | H1/H2/H3/正文 | 粗/斜/下划线/删除线/行内代码 | 列表/引用/代码块 | 左/中/右对齐 | 链接/移除链接。
+  - `text-align.ts` —— 轻量对齐扩展，**只提供全局 `textAlign` 属性**（不加 `addCommands`、不做 `declare module` 增强，因为 `@tiptap/core` 在 pnpm 布局下未提升，增强会编译失败），对齐通过内置 typed `updateAttributes` 设置，`renderHTML` 输出内联 `style="text-align: X"`，默认 `left` 渲染为 `{}`。
+  - `editor-stats.ts` —— `computeEditorStats(text)`：**CJK 感知**统计，CJK 表意字与假名按字计、拉丁/谚文按空白切分；字符数为去空白后的长度。
+  - `frontend/src/app/globals.css` 增补 `.format-toolbar` / `.format-toolbar-button`（28×28）/ `:hover` / `:disabled` / `[aria-pressed="true"]`（accent 底色）/ `.format-toolbar-divider`。
+- **本轮的坑**：① `@tiptap/core` 未提升 → 自定义命令的模块增强会编译失败，改用内置 `updateAttributes` 设对齐；② `useEditorState` selector 收到的 `{ editor }` 可空，字数统计与工具栏都要判空；③ 字数只在**纯文本变化**时重算（selector 取 `getText()`），避免每个 transaction 都重算。
+- i18n：在 `zh` 与 `en` 的 `papers` 命名空间补 **24 个 key**（格式/撤销/重做/标题 1-3/正文/加粗/斜体/下划线/删除线/行内代码/无序列表/有序列表/引用/代码块/左中右对齐/链接/移除链接/输入链接地址/`{count} 词`/`{count} 字符`）。**其余 12 种语言本轮未补**——`mergeMessages` 以 `zh`（`DEFAULT_LOCALE`）为兜底，缺失 key 回退中文、不缺字；完整本地化留给 W9，已记入 `docs/ATTENTION.md`。
+- 测试：新增 `frontend/src/test/format-toolbar.test.tsx`（21 项）—— 用**真实无头编辑器实例**（`new Editor([StarterKit, TextAlign])`）驱动 `it.each` 命令表逐类断言「每种格式都写进内容」、对齐清除、`computeEditorStats` 单测、`FormatToolbar` 渲染（zh 文案）；并把 `paper-content.test.tsx` 的 hoisted mock editor 补上 `getText` 与 `can`（W3 的 mock 缺这两个，本轮字数统计 selector 与工具栏需要）。本轮实测：前端 **26 个测试文件 / 183 项全绿**（上一版 25 / 154，已含 W3 合入后的增量）；`pnpm exec tsc --noEmit`、`pnpm run build` 均退出码 0。**后端本轮 Kotlin 零改动、未重跑**，线上后端仍是 W3 的 `0.1.56`。
+- 版本链：`3f1d059`（feat：基础格式工具栏 + 字数统计 + `text-align.ts` + `editor-stats.ts` + `globals.css` + zh/en 文案）→ `72a0d64`（test）→ `adce9c2`（版本号统一升到 `0.1.57`，恰 6 个文件：`backend/VERSION`、`backend/build.gradle.kts`、`frontend/VERSION`、`frontend/package.json`、`frontend/src/app/layout.tsx`、`frontend/src/components/layout/FaviconThemeSync.tsx`），均在 `feature/v0.1.57` 并推送；以**显式 `--no-ff` 合并提交** `0adc7d8`（父提交 `6b8f573`【W3 的合并点】+ `adce9c2`，15 文件、549 insertions、9 deletions）合入 `main` 并推送，随后把 `dev` **快进**到 `0adc7d8`（非强推、未改写历史）；本文档同步等仅文档提交在 `feature/v0.1.57` 上继续追加，再以**第二个显式 `--no-ff` 合并提交**带入 `main`，`dev` 一并快进，至此 `main` 与 `dev` 同指该提交、`feature/v0.1.57` 为其祖先。
+- 构建与部署：**纯前端迭代，后端 jar 有意未重建、`paper-reader-backend` 未重启**（后端版本文件仍随发布规范升到 `0.1.57`，但 jar 未重建，故 `/api/health` 仍是 W3 的 `0.1.56`）。前端在 `/root/paper-reader/frontend` 执行 `pnpm run build` → `pm2 restart paper-reader-frontend`（进程 id 0，重启计数 → 4，pid 2387419）→ 探活通过 → `pm2 save`；后端进程 id 3（pid 2383738）自 W3 起未动。
+- 线上验收（2026-09-26 UTC，`https://paper.pilo.eu.cc`）：
+  - favicon 为 `…favicon-light.svg?v=0.1.57`（登录页 HTML 中出现，HTTP 200）——判定前端线上版本以此与产物哈希为准。
+  - 线上样式表 `_next/static/css/0748322fe6c9c60a.css` 含 `.format-toolbar` / `.format-toolbar-button` / `.format-toolbar-divider`，**证明 W2 工具栏样式确已部署**（不只是版本号）。
+  - `/api/health` 仍是 `0.1.56`（本机与公网一致）——后端未重启的证据，非遗漏；判定前端版本**不要用 `/api/health`**。
+- 遗留与人工事项：① **没有登录态下的浏览器端到端验收**（生产只开着管理员 GitHub 登录、C 端测试账号密码未记录），工具栏交互由 `format-toolbar.test.tsx` 在 jsdom 里用真实编辑器实例覆盖。② 除 `zh`/`en` 外 **12 种语言的 W2 文案未补**，靠回退中文，完整本地化属 W9。③ `AcademicToolbar`（W4，学术）与 `FormatToolbar`（W2，通用）**目前是两条并列工具栏**，是否合并/如何分区留给后续 UX 迭代。④ `feature/v0.1.55` 作为撞号被放弃的痕迹仍留在 origin（未合入、未删除）。⑤ `v0.1.56` 的 `docs/` 同步若由 `REQ-0259` 后补，可能与本轮的 `v0.1.56` 桥接补记重叠，以更完整者为准。⑥ v0.1.48 ~ v0.1.56 的其余遗留（机翻未校对、中文 AI 提示词与后端 `message` 有意保留、`ug` 侧栏 tab 被裁、侧栏折叠态未验收）不变。
+
