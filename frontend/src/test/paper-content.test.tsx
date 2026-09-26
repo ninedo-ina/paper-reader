@@ -152,6 +152,8 @@ describe("论文正文的读写", () => {
       expect(mocks.updatePaperContent).toHaveBeenCalledWith(7, {
         contentJson: body,
         contentHtml: "<p>真实正文</p>",
+        // 带上本地已知版本号，服务端才能判断这次写入是不是「后写覆盖」
+        baseVersion: 0,
       }),
     )
   })
@@ -170,5 +172,190 @@ describe("论文正文的读写", () => {
 
     expect(screen.getByTestId("pdf-viewer")).toBeInTheDocument()
     expect(mocks.getPaperContent).not.toHaveBeenCalled()
+  })
+})
+
+/** 改内容后不点保存，等防抖窗口过去就该自己落库（W3 自动保存） */
+describe("正文自动保存", () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    mocks.editor.getJSON.mockReturnValue(body)
+    mocks.editor.getHTML.mockReturnValue("<p>真实正文</p>")
+    mocks.editorOptions = {}
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.clearAllMocks()
+    vi.useRealTimers()
+  })
+
+  it("saves by itself a couple of seconds after the typing stops", async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    render(withIntl(<PaperEditor paper={manualPaper} content={body} onSave={onSave} />))
+
+    act(() => (mocks.editorOptions.onUpdate as () => void)())
+    // 防抖窗口内不动：还不该发请求，避免每敲一个字都写一次库
+    expect(onSave).not.toHaveBeenCalled()
+
+    await act(async () => {
+      vi.advanceTimersByTime(2000)
+    })
+
+    expect(onSave).toHaveBeenCalledTimes(1)
+    expect(onSave).toHaveBeenCalledWith({ contentJson: body, contentHtml: "<p>真实正文</p>" })
+    // 假定时器下 waitFor 的轮询不会前进，这里直接断言已经落到「已保存」
+    expect(screen.getByText("已保存")).toBeInTheDocument()
+  })
+
+  it("keeps retrying in the background when the save fails", async () => {
+    const onSave = vi.fn().mockRejectedValue(new Error("网络不可用"))
+    render(withIntl(<PaperEditor paper={manualPaper} content={body} onSave={onSave} />))
+
+    act(() => (mocks.editorOptions.onUpdate as () => void)())
+    await act(async () => {
+      vi.advanceTimersByTime(2000)
+    })
+    expect(onSave).toHaveBeenCalledTimes(1)
+    // 断网不能让改动悄悄丢掉：给出失败提示，并留一个手动重试入口
+    expect(screen.getByText("正文保存失败")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /重试/ })).toBeInTheDocument()
+
+    await act(async () => {
+      vi.advanceTimersByTime(5000)
+    })
+    expect(onSave).toHaveBeenCalledTimes(2)
+  })
+})
+
+/** 两个标签页同时写同一篇正文时，后保存的一方必须被明确告知，而不是静默覆盖 */
+describe("正文并发冲突", () => {
+  const conflictError = Object.assign(new Error("内容已被其他会话更新"), { code: 1008 })
+
+  beforeEach(() => {
+    mocks.editor.getJSON.mockReturnValue(body)
+    mocks.editor.getHTML.mockReturnValue("<p>真实正文</p>")
+    mocks.editorOptions = {}
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.clearAllMocks()
+  })
+
+  it("reports the overwrite instead of silently clobbering the other tab", async () => {
+    const onSave = vi.fn().mockRejectedValue(conflictError)
+    render(withIntl(<PaperEditor paper={manualPaper} content={body} onSave={onSave} />))
+
+    fireEvent.click(saveButton())
+
+    expect(await screen.findByText("内容已被其他会话更新")).toBeInTheDocument()
+    // 冲突不是「未保存」，也不该被判成可重试的失败——重试仍然是覆盖别人的内容
+    expect(screen.queryByText("正文保存失败")).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /重试/ })).not.toBeInTheDocument()
+  })
+
+  it("reloads the other tab's version when the user asks for the latest", async () => {
+    const latest: JSONContent = {
+      type: "doc",
+      content: [{ type: "paragraph", content: [{ type: "text", text: "另一个标签页写的" }] }],
+    }
+    mocks.getPaperContent
+      .mockResolvedValueOnce(contentDto({ contentJson: body, contentVersion: 3 }))
+      .mockResolvedValueOnce(contentDto({ contentJson: latest, contentVersion: 5 }))
+    mocks.updatePaperContent.mockRejectedValue(conflictError)
+
+    render(withIntl(<PaperContentArea paper={manualPaper} />))
+    await waitFor(() => expect(mocks.editorOptions.content).toEqual(body))
+
+    fireEvent.click(saveButton())
+    await screen.findByText("内容已被其他会话更新")
+
+    // baseVersion 用的是读到的 3，而不是硬编码的 0
+    expect(mocks.updatePaperContent).toHaveBeenCalledWith(7, expect.objectContaining({ baseVersion: 3 }))
+
+    fireEvent.click(screen.getByRole("button", { name: /加载最新/ }))
+
+    await waitFor(() => expect(mocks.editorOptions.content).toEqual(latest))
+    expect(mocks.getPaperContent).toHaveBeenCalledTimes(2)
+  })
+
+  it("stops offering retry-but-overwrite once the conflict is known", async () => {
+    // 保存失败 ≠ 冲突：只有冲突才隐藏重试入口（见上一个用例），这里确认普通失败仍给重试
+    mocks.updatePaperContent.mockRejectedValue(new Error("网络不可用"))
+    mocks.getPaperContent.mockResolvedValue(contentDto({ contentJson: body, contentVersion: 1 }))
+
+    render(withIntl(<PaperContentArea paper={manualPaper} />))
+    await waitFor(() => expect(mocks.editorOptions.content).toEqual(body))
+
+    fireEvent.click(saveButton())
+
+    expect(await screen.findByRole("button", { name: /重试/ })).toBeInTheDocument()
+  })
+})
+
+/** 有未保存改动时离开页面要被拦下（W3 草稿保护） */
+describe("未保存改动的离开拦截", () => {
+  const dispatchBeforeUnload = () => {
+    const event = new Event("beforeunload", { cancelable: true })
+    window.dispatchEvent(event)
+    return event
+  }
+
+  beforeEach(() => {
+    mocks.editor.getJSON.mockReturnValue(body)
+    mocks.editor.getHTML.mockReturnValue("<p>真实正文</p>")
+    mocks.editorOptions = {}
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.clearAllMocks()
+  })
+
+  it("raises the browser-native confirm once the body is dirty", () => {
+    render(withIntl(<PaperEditor paper={manualPaper} content={body} onSave={vi.fn()} />))
+
+    // 还没改动：不该打扰用户
+    expect(dispatchBeforeUnload().defaultPrevented).toBe(false)
+
+    act(() => (mocks.editorOptions.onUpdate as () => void)())
+    expect(dispatchBeforeUnload().defaultPrevented).toBe(true)
+  })
+
+  it("stops blocking the way out after the changes are saved", async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    render(withIntl(<PaperEditor paper={manualPaper} content={body} onSave={onSave} />))
+
+    act(() => (mocks.editorOptions.onUpdate as () => void)())
+    expect(dispatchBeforeUnload().defaultPrevented).toBe(true)
+
+    fireEvent.click(saveButton())
+    await screen.findByText("已保存")
+
+    expect(dispatchBeforeUnload().defaultPrevented).toBe(false)
+  })
+
+  it("asks before following an in-app link while the body is dirty", () => {
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false)
+    render(withIntl(<PaperEditor paper={manualPaper} content={body} onSave={vi.fn()} />))
+
+    const link = document.createElement("a")
+    link.href = "/papers/8"
+    link.textContent = "另一篇"
+    document.body.appendChild(link)
+    try {
+      act(() => (mocks.editorOptions.onUpdate as () => void)())
+
+      const click = new MouseEvent("click", { bubbles: true, cancelable: true })
+      link.dispatchEvent(click)
+
+      expect(confirmSpy).toHaveBeenCalled()
+      // 用户选择留下 → 这次跳转必须被取消
+      expect(click.defaultPrevented).toBe(true)
+    } finally {
+      link.remove()
+      confirmSpy.mockRestore()
+    }
   })
 })

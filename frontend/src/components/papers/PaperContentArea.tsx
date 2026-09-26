@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useTranslations } from "next-intl"
 import type { JSONContent } from "@tiptap/react"
 import { PDFViewer } from "@/components/reader/PDFViewer"
@@ -24,6 +24,10 @@ export function PaperContentArea({ paper, onUploadClick }: PaperContentAreaProps
   const [content, setContent] = useState<JSONContent | null>(null)
   const [loadFailed, setLoadFailed] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  // 冲突后重新加载时递增，逼编辑器重建以载入最新正文（编辑器只在挂载时读一次 content）。
+  const [reloadSeq, setReloadSeq] = useState(0)
+  // 本地已知的正文版本号，每次保存都带上去。服务端据此判断后写覆盖，冲突时回 409/1008。
+  const versionRef = useRef(0)
 
   useEffect(() => {
     if (paperId === null || !isManual) return
@@ -34,7 +38,9 @@ export function PaperContentArea({ paper, onUploadClick }: PaperContentAreaProps
     papersApi
       .getPaperContent(paperId)
       .then((dto) => {
-        if (!cancelled) setContent(dto.contentJson)
+        if (cancelled) return
+        versionRef.current = dto.contentVersion
+        setContent(dto.contentJson)
       })
       .catch(() => {
         // 读取失败时不能退化成空编辑器：用户会在空白里继续写，保存即覆盖真实正文。
@@ -51,10 +57,24 @@ export function PaperContentArea({ paper, onUploadClick }: PaperContentAreaProps
   const handleSave = useCallback(
     async (payload: PaperContentPayload) => {
       if (paperId === null) return
-      await papersApi.updatePaperContent(paperId, payload)
+      const dto = await papersApi.updatePaperContent(paperId, {
+        // 版本冲突时这里会抛出 code=1008 的错误，交由 useAutosave 判成 conflict 并提示用户。
+        ...payload,
+        baseVersion: versionRef.current,
+      })
+      versionRef.current = dto.contentVersion
     },
     [paperId],
   )
+
+  /** 冲突后拉取服务端最新正文，并重建编辑器；本地未保存的改动随之丢弃（用户是主动选择「加载最新」）。 */
+  const handleReloadConflict = useCallback(async () => {
+    if (paperId === null) return
+    const dto = await papersApi.getPaperContent(paperId)
+    versionRef.current = dto.contentVersion
+    setContent(dto.contentJson)
+    setReloadSeq((n) => n + 1)
+  }, [paperId])
 
   if (!paper) {
     return (
@@ -83,8 +103,17 @@ export function PaperContentArea({ paper, onUploadClick }: PaperContentAreaProps
       )
     }
 
-    // key 按论文区分：换论文必须重建编辑器实例，否则会沿用上一篇的内容。
-    return <PaperEditor key={paper.id} paper={paper} content={content} onSave={handleSave} />
+    // key 按论文 + 重载序号区分：换论文或冲突后重载都必须重建编辑器实例，
+    // 否则会沿用上一篇 / 冲突前的旧内容。
+    return (
+      <PaperEditor
+        key={`${paper.id}-${reloadSeq}`}
+        paper={paper}
+        content={content}
+        onSave={handleSave}
+        onReloadConflict={handleReloadConflict}
+      />
+    )
   }
 
   return (

@@ -20,3 +20,10 @@ class InvalidCredentialsException(message: String) : BusinessException(1006, mes
 /** The second factor is required but was not (or could not be) presented. */
 class TwoFactorRequiredException(message: String = "Two-factor authentication required") :
     BusinessException(1007, message, 401)
+
+/**
+ * 保存正文时，客户端所基于的版本号已落后于服务端当前版本——说明有别的会话已经写过。
+ * 用 409 拒绝这次「后写覆盖」，`currentVersion` 让前端知道最新是第几版，可提示并重新加载。
+ */
+class ContentVersionConflictException(val currentVersion: Int) :
+    BusinessException(1008, "内容已被其他会话更新", 409)

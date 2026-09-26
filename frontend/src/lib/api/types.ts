@@ -523,6 +523,8 @@ export interface PaperContentDto {
 export interface UpdatePaperContentRequest {
   contentJson: JSONContent
   contentHtml?: string
+  /** 本次保存所基于的正文版本号；服务端据此拒绝陈旧的后写覆盖（返回 409），null 则不校验 */
+  baseVersion?: number
 }
 
 export interface PaperTagDto {
