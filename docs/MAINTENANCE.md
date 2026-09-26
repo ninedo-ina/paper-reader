@@ -799,6 +799,6 @@ v0.1.19 已完成构建并部署，PM2 实际启动参数也指向 `paper-reader
 
 - 性质：**纯文档迭代**。新增 `docs/WRITER_ROADMAP.md`（reader → writer 的需求归纳、现状差距、W1-W9 主题、迭代拆分与待确认问题）与 `docs/PAPER_EDITOR_SELECTION.md`（开源论文编辑器/排版引擎/引用生态的实测对比与选型建议），并同步 `docs/README.md`、`docs/PLAN.md`、`docs/PROJECT_STATUS.md`、`docs/CREATE_PAPER_FEATURE.md`。**未改任何业务代码**，`git diff --stat` 只涉及 `docs/`。
 - 为什么没有版本号：仓库规范里「一次迭代」的登记要素包含版本号、构建与部署记录；本轮既没有构建也没有部署，把它按 patch 记一条会产生一个**从未发布过**的版本号，反而污染版本链。因此本轮**不改 8 处版本号**（`frontend/package.json`、`frontend/VERSION`、`backend/VERSION`、`backend/build.gradle.kts`、根 `README.md`、`layout.tsx` favicon 参数、`FaviconThemeSync.tsx`、可见 UI 版本），线上仍是 `0.1.51`（后端 jar 仍是 `paper-reader-backend-0.1.49.jar`）。分支名也刻意不用 `feature/v0.1.52`。
-- 分支：`feature/req-202609-0255-writer-roadmap`（基于 `main`）。合入方式见本轮推送后的实际记录；本轮**无部署、无线上验收**——因为没有任何线上行为发生变化，这一点不是遗漏。
+- 分支与合入：`feature/req-202609-0255-writer-roadmap`（基于 `main` 的 `42f3fa9`），文档提交 `3c67a92`，以显式 `--no-ff` 合并提交 `0316cff` 合入 `main` 并推送；`dev` 由 `42f3fa9` 快进到同一合并提交，两个长期分支重新对齐。本轮**无部署、无线上验收**——因为没有任何线上行为发生变化，这一点不是遗漏。
 - 本轮核查出的关键事实（后续迭代要以此为起点，不要从旧文档推断）：手动创建的论文**无法保存正文** —— `PaperContentArea.tsx:27` 没给 `PaperEditor` 传 `onSave`，而保存按钮条件是 `{onSave && ...}`（`PaperEditor.tsx:57`），按钮根本不会渲染；`pr_papers` 从 V1 到 V15 没有 content/body/document 列；`PaperEditor.tsx:31` 拿 `abstractText` 当正文。详见 `docs/WRITER_ROADMAP.md` 第 2 节。
 - 结论摘要（避免误读）：没有任何开源论文编辑器可以整体嵌入本项目（它们要么是自带后端的完整应用，要么是没有编辑界面的排版引擎，要么是桌面软件）；正确做法是**分层复用** —— 编辑层用现有 Tiptap 3（MIT）+ 官方 MIT 扩展，导出层用 Typst（Apache-2.0）/ Pandoc（GPL-2.0）以独立进程调用，引用层用 CSL + `citation-js`（MIT），协作层用 Yjs + Hocuspocus（MIT，且必须先修 `/ws` 的 STOMP 身份债）。
