@@ -22,7 +22,23 @@
 
 验收标准（本轮）：两份新文档落库并被 `docs/README.md` 索引；三处既有文档的交叉引用可达；文档不含真实密码 / Token / 密钥；无代码改动、无版本号改动、无迁移、无部署。
 
-## 迭代：v0.1.52（已发布）
+## 迭代：v0.1.54（已发布）
+
+发布分支：`feature/v0.1.54`；类型：新功能（纯前端，编辑器能力）；需求编号：`REQ-202609-0260`（[WRITER_ROADMAP.md](WRITER_ROADMAP.md) 的 **W4「学术写作能力」**）；状态：2026-09-26 UTC 已合并 `main`（显式 `--no-ff` 合并提交 `fea5f8f`，父提交 `239ca89` + `2c0f5b1`）并部署验收，随后分支上追加的仅文档同步提交又以第二个显式 `--no-ff` 合并提交带入 `main`，`dev` 已快进到该合并提交（`main` 与 `dev` 同指，`feature/v0.1.54` 为其祖先；发布记录见 `docs/MAINTENANCE.md`）。
+
+目标：**写出来的是论文，不是博客。** 给手动创建的论文正文补上"论文区别于普通文档"的那几样东西，并让它们**在编辑器里和在导出结果里是同一份**。
+
+- **公式**：官方 `@tiptap/extension-mathematics`（MIT）+ KaTeX，行内与公式块两种。**LaTeX 源与渲染结果同时保留**——`data-latex` 存源、KaTeX 生成的 DOM 作为 `renderHTML` 的子节点进 HTML，因此 `getHTML()` 里既能看到源、也能看到渲染结果，导出不会只剩空壳。`katex/dist/katex.min.css` 在编辑器里引入，否则页面上的公式是散的。
+- **表格**：官方 `@tiptap/extension-table`（MIT，用 `TableKit` 一次装齐），工具栏在光标位于表格内时切换成行/列/删除表格这组操作。
+- **脚注（自研）**：npm 上 `@tiptap/extension-footnotes` 与 `@tiptap-pro/extension-footnotes` **都是 404**（不是未安装，是不存在），Tiptap Pro 亦无对应产品，因此**没走 spike、没买 Pro**，按路线图"自研 Node"那条实现：行内 `FootnoteReference` 节点自己持有注释文本，文末 `FootnoteList` 的 `entries` 由编号插件**从正文推导后回写**——文末列表是派生物，不是第二份真相。
+- **引用与参考文献**：行内 `Citation` 节点持有 CSL-JSON 条目（由 `paperToCslItem` 从已有的论文元数据转换，`doi:` 前缀可直接点回 `https://doi.org/…`），文末 `Bibliography` 节点持有有序条目表。**文献表顺序即引用编号**，编号不落库，由顺序推导。
+- **交叉引用**：`@tiptap/extension-unique-id`（MIT）给公式块与表格补稳定的 `data-id`，`CrossReference` 节点存"指向哪个 id + 显示成什么"，文案由 `crossReferenceText(labels, kind, number)` 生成（"见式 (1)"），文档里还没有可引用对象时明确提示而不是插入空引用。
+- **编号内核 `AcademicNumbering`（本轮最容易踩的坑）**：所有推导出来的编号集中在**一个** ProseMirror 插件里，在 `appendTransaction` 时重算并**用 `tr.setNodeMarkup` 写回节点属性**。原因是 `editor.getHTML()` 走 schema 的 `renderHTML`（`DOMSerializer.fromSchema`），**不读 NodeView 的实时 DOM**——只算给界面看的话，编辑器里是对的，保存与导出全是漏号的。
+- **测试**：`frontend/src/test/academic-numbering.test.ts`（8 项，纯函数层：脚注编号、引用编号、交叉引用解析、文献表重排、失效引用）+ `frontend/src/test/academic-editor.test.tsx`（9 项，真实 Tiptap 编辑器驱动：LaTeX 源与唯一 ID 在 `getHTML()` 里都在、KaTeX 标记在导出里在、脚注镜像进文末列表、**重排文献表后正文编号 `[1,2]` → `[2,1]`**，以及从工具栏经真实弹层走通脚注/公式/交叉引用、空脚注被拒、无可引用对象时给提示）。前端总计 25 个测试文件 / 154 项全绿；**后端本轮 Kotlin 零改动、未构建也未重跑**（`backend/build` 不存在），81 项是 v0.1.52 的基线。
+- **构建**：`pnpm exec tsc --noEmit`、`eslint`（改动面）、`pnpm run build` 均 exit 0。
+- **部署与验收**：**本轮为纯前端迭代，Kotlin 零改动、无新迁移**，因此后端 jar **有意未重建、`paper-reader-backend` 未重启**，`/api/health` 仍返回 `0.1.52`（与 v0.1.50 / v0.1.51 同类，与 v0.1.52 不同）。前端 `pnpm install --frozen-lockfile`（新增 6 个包）→ `rm -rf .next` → `pnpm run build` → `pm2 restart paper-reader-frontend` → `pm2 save`。线上验收：favicon 为 `?v=0.1.54`；服务端产物中学术编辑器所在 chunk 与本地产物 **sha256 逐字节一致**；`/api/health` 本地与公网一致仍为 `0.1.52`（证明后端确实未被触碰）。**没有登录态下的浏览器端到端验收**（学术编辑器只在手动论文详情页出现，需要登录），可在 `ATTENTION.md` 的 v0.1.54 条目读到这一限制。
+
+## 上一迭代：v0.1.52（已发布）
 
 发布分支：`feature/v0.1.52`；类型：新功能（数据模型 + 接口 + 前端接入）；需求编号：`REQ-202609-0257`（[WRITER_ROADMAP.md](WRITER_ROADMAP.md) 的 **W1「正文数据模型与持久化」**，是 W2-W9 全部依赖的地基）；状态：2026-09-26 UTC 已合并 `main`（显式 `--no-ff` 合并提交 `8d1d447`，父提交 `27fa3e9` + `a378297`），`dev` 已快进到该合并提交（`main` 与 `dev` 同指，`feature/v0.1.52` 为其祖先；发布记录见 `docs/MAINTENANCE.md`）。
 
@@ -450,15 +466,16 @@ v0.1.40 把两步验证补成闭环时，表单沿用了最朴素的排法：标
 
 这是当前**最大的一条后续线**：把项目从只做 reader 延伸到能做 writer。2026-09-26 已完成需求整理与选型调研，代码一行未动，立项时按下面顺序推进（**版本号归属待产品负责人确认**，此处列出的是建议顺序，不是已批准的排期）：
 
-1. **`v0.1.52` 写作闭环最小可用**：正文存储列（Flyway `V16`）+ 读写正文接口 + 工具栏 + 防抖自动保存 + 把 `onSave` 真正接上 + 摘要与正文分离。**这一轮是后面所有轮次的前置**，因为"创建出来的论文可以自由编辑"目前是假的（没有正文列、没有保存入口，见 [WRITER_ROADMAP.md](WRITER_ROADMAP.md) 第 2 节）。
-2. **`v0.1.53` 导入导出**：Markdown 导入导出（`@tiptap/markdown`）、图片插入与存储。
-3. **`v0.1.54` 学术能力**：公式（KaTeX）、表格、脚注（先 spike）、引用节点 + 参考文献列表（CSL）、交叉引用。
-4. **`v0.1.55` 导出与投稿**：Typst / Pandoc 服务端导出 PDF、DOCX、LaTeX/BibTeX（必须以独立进程 + 超时 + 并发上限运行）。
-5. **`v0.1.56` 版本历史**：正文快照、对比、回滚、手动打标签。
-6. **`v0.1.57` 协作**：**先修 `/ws` 的 STOMP 身份绑定**（见 [PROJECT_STATUS.md](PROJECT_STATUS.md) 第 11 节安全债），再上 Yjs + Hocuspocus 协作编辑。
-7. **`v0.2.0` 写作工作台整合**：AI 写作辅助 + 写作台整合 + 性能与合规收口。
+1. ~~**`v0.1.52` 写作闭环最小可用**~~ **已发布，实际只交付了 W1（正文持久化）**：正文存储列（Flyway `V16`）+ 读写正文接口 + `onSave` 接上 + 摘要与正文分离。**工具栏（W2）与防抖自动保存（W3）没有跟着这一轮做**。
+2. **`v0.1.53` 编辑器内核（W2）与自动保存（W3）**：工具栏/浮动菜单、字符统计、`dynamic({ssr:false})` barrel 取舍、防抖自动保存、基于 `content_version` 的乐观锁冲突检测。**这是现在最该补的一轮**——学术能力（W4）已经能写，但保存仍是手动点按钮、没有自动保存与冲突提示。
+3. ~~**`v0.1.54` 学术能力**~~ **已发布，实际交付的就是这一条（W4）**：公式（KaTeX，保留 LaTeX 源）、表格、脚注（**未走 spike、未买 Pro，直接自研**）、引用节点 + 参考文献列表（CSL-JSON，编号=文献表顺序）、交叉引用（`UniqueID` 稳定 ID）+ 统一编号插件 `AcademicNumbering`。**原表把这一条排在这里，实际先于 `v0.1.53` 做了**——两者只依赖 `v0.1.52`、彼此无依赖，顺序调换成立。
+4. **`v0.1.55` 导入导出（W5 的 Markdown 部分 + 图片）**：Markdown 导入导出（`@tiptap/markdown`）、图片插入与存储。
+5. **`v0.1.56` 导出与投稿（W5 剩余）**：Typst / Pandoc 服务端导出 PDF、DOCX、LaTeX/BibTeX（必须以独立进程 + 超时 + 并发上限运行）。
+6. **`v0.1.57` 版本历史（W6）**：正文快照、对比、回滚、手动打标签。
+7. **`v0.2.0` 协作（W7 + 安全债）**：**先修 `/ws` 的 STOMP 身份绑定**（见 [PROJECT_STATUS.md](PROJECT_STATUS.md) 第 11 节安全债），再上 Yjs + Hocuspocus 协作编辑。
+8. **`v0.2.x` 写作工作台整合（W8 + W9）**：AI 写作辅助 + 写作台整合 + 性能与合规收口。
 
-"引入开源论文编辑器"的实际形态是**分层复用**（编辑器内核 Tiptap 3 + 排版引擎 Typst/Pandoc + 引用生态 CSL），不是引入某个论文编辑器产品；理由与实测数据见 [PAPER_EDITOR_SELECTION.md](PAPER_EDITOR_SELECTION.md)。**`v0.1.53` 与 `v0.1.54` 彼此无依赖，可并行或调换顺序。**
+"引入开源论文编辑器"的实际形态是**分层复用**（编辑器内核 Tiptap 3 + 排版引擎 Typst/Pandoc + 引用生态 CSL），不是引入某个论文编辑器产品；理由与实测数据见 [PAPER_EDITOR_SELECTION.md](PAPER_EDITOR_SELECTION.md)。**这一条在 `v0.1.54` 上已经验证过一次：学术能力用的是 Tiptap 官方 MIT 扩展，"借用"的粒度是扩展而不是产品。**
 
 ### 后续候选（版本待产品负责人确认）
 
