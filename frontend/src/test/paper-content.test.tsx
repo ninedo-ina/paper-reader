@@ -5,21 +5,29 @@ import { withIntl } from "@/test/intl"
 import type { PaperContentDto, PaperDetailDto } from "@/lib/api/types"
 
 const mocks = vi.hoisted(() => ({
-  editor: { getJSON: vi.fn(), getHTML: vi.fn() },
+  // isActive 是工具栏选状态时要问编辑器的问题，桩里也得答得上来
+  editor: { getJSON: vi.fn(), getHTML: vi.fn(), isActive: vi.fn(() => false) },
   editorOptions: {} as { content?: unknown; onUpdate?: () => void },
   getPaperContent: vi.fn(),
   updatePaperContent: vi.fn(),
 }))
 
-// 真 Tiptap 依赖大量浏览器布局能力，jsdom 里跑不稳；这里换成桩，
+// 真 Tiptap 依赖大量浏览器布局能力，jsdom 里跑不稳；这里只桩掉编辑器生命周期，
 // 用 editorOptions 抓住「编辑器拿到的是什么」、用 editor 抓住「保存时发出去的是什么」。
-vi.mock("@tiptap/react", () => ({
-  useEditor: (options: { content?: unknown }) => {
-    mocks.editorOptions = options
-    return mocks.editor
-  },
-  EditorContent: () => <div data-testid="editor" />,
-}))
+// Extension/Node 这类构造器必须保留真实实现：学术扩展要用它们建 schema。
+vi.mock("@tiptap/react", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tiptap/react")>()
+  return {
+    ...actual,
+    useEditor: (options: { content?: unknown; onUpdate?: () => void }) => {
+      mocks.editorOptions = options
+      return mocks.editor
+    },
+    useEditorState: ({ selector }: { selector: (context: unknown) => unknown }) =>
+      selector({ editor: mocks.editor }),
+    EditorContent: () => <div data-testid="editor" />,
+  }
+})
 
 vi.mock("@/lib/api/papers", () => ({
   getPaperContent: mocks.getPaperContent,

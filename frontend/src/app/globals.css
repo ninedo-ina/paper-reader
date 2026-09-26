@@ -196,3 +196,279 @@ html[lang="ug"] {
 .pdf-reader-dark .react-pdf__Page__canvas {
   filter: invert(1) hue-rotate(180deg);
 }
+
+/* ---------------------------------------------------------------------------
+   W4 学术写作：公式 / 表格 / 脚注 / 引用 / 交叉引用
+   这些类名会同时出现在编辑器 DOM 和 `getHTML()` 的导出结果里 —— 一份样式管两处，
+   导出 PDF 的观感才和编辑器一致，不用再单独维护一套打印样式表。
+--------------------------------------------------------------------------- */
+
+.academic-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface-2);
+}
+
+.academic-toolbar-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  transition: background-color 150ms, color 150ms;
+}
+
+.academic-toolbar-button:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.academic-toolbar-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.academic-toolbar-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 4px;
+  padding-left: 6px;
+  border-left: 1px solid var(--border-subtle);
+}
+
+/* --- 公式 --- */
+
+.academic-math-block,
+.tiptap-mathematics-render[data-type="block-math"] {
+  display: block;
+  margin: 1em 0;
+  padding: 0.25em 0;
+  overflow-x: auto;
+  text-align: center;
+}
+
+.academic-math-inline,
+.tiptap-mathematics-render[data-type="inline-math"] {
+  display: inline;
+}
+
+/* 非法 LaTeX 时官方 NodeView 会加这两个类并把原文当文本显示，给个提示色 */
+.block-math-error,
+.inline-math-error,
+.academic-math-block + .block-math-error {
+  color: #dc2626;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* --- 表格 --- */
+
+.tiptap table {
+  width: 100%;
+  margin: 1em 0;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.tiptap th,
+.tiptap td {
+  position: relative;
+  min-width: 1em;
+  padding: 6px 10px;
+  border: 1px solid var(--border-color);
+  vertical-align: top;
+}
+
+.tiptap th {
+  background: var(--surface-2);
+  font-weight: 600;
+  text-align: left;
+}
+
+.tiptap .selectedCell::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: var(--accent-soft);
+  pointer-events: none;
+}
+
+/* --- 脚注 --- */
+
+.academic-footnote-ref {
+  line-height: 0;
+}
+
+.academic-footnote-marker {
+  padding: 0 2px;
+  border-radius: 4px;
+  color: var(--accent);
+  font-size: 0.75em;
+  vertical-align: super;
+  cursor: pointer;
+}
+
+.academic-footnote-marker:hover {
+  background: var(--accent-soft);
+}
+
+/* --- 文末小节（脚注表 / 参考文献表共用） --- */
+
+.academic-endnote-block {
+  margin-top: 2em;
+  padding-top: 1em;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.academic-section-title {
+  margin-bottom: 0.5em;
+  font-size: 0.95em;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.academic-empty {
+  color: var(--text-tertiary);
+  font-size: 0.85em;
+}
+
+.academic-footnote-list,
+.academic-reference-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.academic-footnote-entry,
+.academic-reference-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.85em;
+  line-height: 1.5;
+}
+
+.academic-entry-number {
+  flex: none;
+  min-width: 1.5em;
+  color: var(--text-tertiary);
+  text-align: right;
+}
+
+.academic-note-input {
+  flex: 1;
+  padding: 4px 6px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  resize: vertical;
+}
+
+.academic-note-input:hover {
+  border-color: var(--border-subtle);
+}
+
+.academic-note-input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.academic-reference-text {
+  flex: 1;
+  color: var(--text-secondary);
+  word-break: break-word;
+}
+
+.academic-reference-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--border-color);
+  text-underline-offset: 2px;
+}
+
+.academic-reference-link:hover {
+  color: var(--accent);
+}
+
+.academic-entry-actions {
+  display: flex;
+  flex: none;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 150ms;
+}
+
+.academic-footnote-entry:hover .academic-entry-actions,
+.academic-reference-entry:hover .academic-entry-actions,
+.academic-entry-actions:focus-within {
+  opacity: 1;
+}
+
+.academic-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  color: var(--text-tertiary);
+  transition: background-color 150ms, color 150ms;
+}
+
+.academic-icon-button:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.academic-icon-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* --- 引用与交叉引用 --- */
+
+.academic-citation,
+.academic-cross-ref {
+  line-height: 0;
+}
+
+.academic-citation-marker,
+.academic-cross-ref-marker {
+  padding: 0 2px;
+  border-radius: 4px;
+  color: var(--accent);
+  font-size: 0.9em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.academic-citation-marker:hover,
+.academic-cross-ref-marker:hover {
+  background: var(--accent-soft);
+}
+
+.academic-cross-ref.is-unresolved .academic-cross-ref-marker {
+  color: #dc2626;
+  text-decoration: underline wavy;
+}
+
+/* --- 跳转反馈 --- */
+
+@keyframes academic-flash {
+  0%, 100% { background-color: transparent; }
+  30% { background-color: var(--accent-soft); }
+}
+
+.academic-flash {
+  animation: academic-flash 1.2s ease-in-out;
+}
