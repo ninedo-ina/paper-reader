@@ -1,3 +1,15 @@
+## 迭代：v0.1.58（已发布，上传论文限额）
+
+发布分支：`feature/req-202609-0267-upload-quota`；类型：新功能（后端配额校验 + 迁移，前端提示）；需求编号：`REQ-202609-0267`；状态：2026-09-26 UTC 已合并 `main`（显式 `--no-ff` 合并提交 `c4c880b`，父提交 `7dff17d` + `71e32f5`）并部署验收，随后仅文档同步提交又以第二个显式 `--no-ff` 合并提交带入 `main`，`dev` 已快进到该合并提交（发布记录见 `docs/MAINTENANCE.md`）。
+
+- **需求原文四条**：① 所有上传入口加文件大小限制，不允许超过 **10MB**；② 单用户单日不允许超过 **100MB**；③ 单用户总量不允许超过 **200MB**，且明确是"固定的，不会随着测试还是上线会变化"；④ 测试阶段全场单日上传不允许超过 **1GB**（当前阶段就要加）。
+- **可配置性分层**（这是本轮最容易做错的地方）：单文件 10MB / 单用户单日 100MB / 单用户累计 200MB 是**产品硬限制，写死在 `UploadQuotaService` 常量里**，不走环境变量；只有应用单日 1GB 走 `APP_UPLOAD_DAILY_LIMIT_BYTES`（默认 `1073741824`），上线放开时改环境变量重启即可。依据见 `docs/ATTENTION.md`。
+- **交付物**：新增 `UploadQuotaService`（四档校验 + 台账累加 + `Asia/Shanghai` 自然日边界）；新增实体 `UploadRecord` 与迁移 `V17__upload_quota.sql`（`pr_upload_records` 只增台账，`paper_id` 不建外键，删论文不退配额）；`BusinessException` 增 `FileTooLargeException`（`1009`/`413`）与 `UploadQuotaExceededException`（`1010`/`429`）；`GlobalExceptionHandler` 把 `MaxUploadSizeExceededException` 翻成 `1009`/`413`；`PaperService.uploadPdf` / `uploadFromUrl` 接入校验与记账，`FileStorageService.downloadPdf` 增流式 `maxBytes` 上限（URL 导入绕过 multipart，必须边下边数）；新增 `GET /api/papers/upload-quota` + `UploadQuotaDto`；`application.yml` 设 `max-file-size: 10MB` / `max-request-size: 12MB`；前端 `UploadDialog.tsx` 增本地 10MB 预检与剩余额度提示。
+- **测试**：后端 **16 个测试类 / 102 项 / 0 失败**（新增 `UploadQuotaServiceTest` 等，`MockMultipartFile` 驱动）；前端新增 `upload-quota.test.tsx`（6 项），全量 **27 个测试文件 / 189 项**（上一版 26/183）；`tsc --noEmit`、`pnpm run build` 退出码 0。
+- **部署与验收**：本轮有真实 Kotlin 改动，后端 jar 已重建为 `paper-reader-backend-0.1.58.jar` 并**以 `pm2 delete` + `pm2 start`（同 shell 先 `. ./.env`）重启**，PM2 id 由 3 变 4、`restart_time=0`；前端重建并 `pm2 restart`（重启计数 4 → 5）。线上验收：`/api/health` 本机与公网均报 `0.1.58`；favicon `?v=0.1.58`；三个 chunk 与本地 `.next` sha256 逐字节一致；**Flyway `V16` → `V17`** 且 `ddl-auto: validate` 下启动成功。**注意：未带凭据探测新路由返回 `401` 不构成"路由存在"的证据**（不存在的路径同样 `401`），路由存在由后端单测与线上产物中的 `quotaRemaining` 证明。
+- **并行撞号（待办）**：W5「文档导入导出与投稿产物」（`REQ-202609-0261`）的分支同样叫 `feature/v0.1.58`（提交 `f8101d4`，基于 `7dff17d`，已推送未改版本文件），合入时**必须顺延到下一个空闲版本号**，同 `0.1.55` → `0.1.57` 先例。
+- **遗留**：① 无登录态浏览器端到端验收（"超 10MB 被拦"等由测试钉住）；② 合并后整跑 `pnpm test` 首跑 1 项失败（`paper-content.test.tsx:342`，属 W3），重跑及单文件连跑三次均通过，判为他人迭代测试的全量并发偶发，已定性未修；③ 台账只增不减，无清理/回收机制，配额口径与实际存储会随时间偏离。
+
 ## 迭代：writer 方向需求整理规划（`REQ-202609-0255`，纯文档，无版本变更）
 
 发布分支：`feature/req-202609-0255-writer-roadmap`；类型：**文档迭代（需求整理与规划），不产生版本号**；需求编号：`REQ-202609-0255`；状态：2026-09-26 UTC 完成文档编写并合入 `main`。

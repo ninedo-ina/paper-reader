@@ -6,7 +6,23 @@ The repository contains the C-side product and its API. The administration conso
 
 > **Maintainer start here:** read the [documentation index](docs/README.md), then the [new maintainer guide](docs/NEW_MAINTAINER_GUIDE.md) and [complete project status](docs/PROJECT_STATUS.md). They record the real production topology, configuration rules, known risks, and release workflow without requiring previous chat context.
 
-## Current Iteration: v0.1.57
+## Current Iteration: v0.1.58
+
+- Branch: `feature/req-202609-0267-upload-quota`
+- Requirement: `REQ-202609-0267` — 「上传论文限制（文件上传）」. Every upload entry point now enforces a file-size ceiling and three quotas; two of them are **hard-coded product limits** that must live in the application code (not in deploy-time configuration), because they do not change between test and production.
+- Scope:
+  - **Single file ≤ 10MB** — enforced twice: `spring.servlet.multipart.max-file-size: 10MB` rejects oversized bodies before the controller runs (`MaxUploadSizeExceededException` → code `1009`, HTTP 413), and `UploadQuotaService.checkFileSize` rejects at the service layer so a request that slips past multipart (or an oversized **remote** PDF pulled in by URL import) gets the same answer.
+  - **Per-user per-day ≤ 100MB**, **per-user lifetime ≤ 200MB** — hard-coded in `UploadQuotaService` (`USER_DAILY_BYTES`, `USER_TOTAL_BYTES`) and checked before the file is stored.
+  - **Application-wide per-day ≤ 1GB** — the test-phase cap. It is a *deploy-time* value (`app.upload.app-daily-limit-bytes`, env `APP_UPLOAD_DAILY_LIMIT_BYTES`, default `1073741824`) so the 1GB test ceiling can be raised at launch without a rebuild; the two per-user limits deliberately stay in code.
+  - Quota is computed from an **append-only ledger** (`pr_upload_records`, `V17`), not from the live `pr_papers` rows — otherwise deleting a paper would refund quota and the cap would be trivially bypassable. `paper_id` therefore carries **no** foreign key: the row must survive the paper.
+  - `GET /api/papers/upload-quota` returns the caller's remaining daily/total bytes; the upload dialog shows it as a hint line. A client-side copy of the 10MB check short-circuits obviously-too-large picks before a wasted round-trip — the server remains the authority.
+  - URL import is covered too: `FileStorageService.downloadPdf` streams through a size ceiling and aborts mid-download rather than buffering an unbounded remote file first.
+- Failure codes: `1009` file too large (413), `1010` quota exceeded (429). Both surface through the normal `ApiResponse` envelope, so the frontend shows the server's own message (`describeFailure` prefers `message`) and keeps the dialog open.
+- Tests: backend `102 tests` across `16` classes, 0 failures (`PaperContentServiceTest` gains the new collaborator; `UploadQuotaService` is covered through the service paths). Frontend `upload-quota.test.tsx` (6 tests) pins the displayed remaining quota, the local 10MB block with no request issued, that exactly 10MB passes, the server-rejection path, the URL-import path, and that a failed quota fetch only drops one hint line without blocking upload. Client total: 27 files / 189 tests.
+- Status: released. Commits `d28f313` (feature), `0f47ae4` (tests) and `71e32f5` (version bump to `0.1.58` across the six version files) on `feature/req-202609-0267-upload-quota`, merged into `main` as the explicit `--no-ff` merge commit `c4c880b` (parents `7dff17d` + `71e32f5`), with `dev` fast-forwarded `7dff17d → c4c880b` — no force-push, no history rewrite. Both halves were deployed: backend rebuilt (`paper-reader-backend-0.1.58.jar`) and restarted under PM2 (id `3` → `4`, `restart_time=0`), frontend rebuilt (`pnpm run build`) and restarted (restart count `4` → `5`). Verified in production on 2026-09-26 UTC: `/api/health` reports `0.1.58` both locally and publicly, the served login HTML carries the `?v=0.1.58` favicon cache-buster, and the served JS chunks `app/[locale]/page-8de85af55e54c2bf.js`, `223-c53ed69ac544f6da.js` and `920-4ec0d00615a32288.js` are byte-identical (sha256) to the local `.next` build — the first of them is the chunk that locally and remotely contains `quotaRemaining`, which is the direct proof the new dialog shipped. Flyway applied `V16 → V17` on a real startup under `ddl-auto: validate`. Deployment detail is recorded in `docs/MAINTENANCE.md`.
+- **Parallel-iteration note (version collision)**: the W5 document export/import work (`REQ-202609-0261`, branch `feature/v0.1.58`, commit `f8101d4`, based on `7dff17d`, pushed but with no version-file bump) was cut before this requirement took `0.1.58`. Whichever lands second must take the next free number rather than reusing `0.1.58` — the same resolution already applied to the v0.1.55/v0.1.57 pair above. Recorded in `docs/ATTENTION.md`.
+
+## Previous Iteration: v0.1.57
 
 - Branch: `feature/v0.1.57`
 - Requirement: `REQ-202609-0258` (writer roadmap **W2**, 「编辑器内核与基础体验」, child of `REQ-202609-0255`). After W1 gave the editor a body to hold and W4 added an *academic* toolbar (formulas, tables, footnotes, citations), the editor still had no **general formatting toolbar** and no character/word count. W2 fills that gap.
@@ -125,10 +141,10 @@ The repository contains the C-side product and its API. The administration conso
 
 - Default branch: `main`
 - Integration branch: `dev`
-- Released version branch: `feature/v0.1.57`
-- Client version: `0.1.57`
-- Production frontend: `0.1.57` (verified 2026-09-26 UTC)
-- Production backend: `0.1.56` — rebuilt in v0.1.56 (W3, `REQ-202609-0259`) and **not** restarted again in v0.1.57 (frontend-only change), with Flyway at `V16`; `/api/health` reports `0.1.56`
+- Released version branch: `feature/req-202609-0267-upload-quota`
+- Client version: `0.1.58`
+- Production frontend: `0.1.58` (verified 2026-09-26 UTC)
+- Production backend: `0.1.58` — rebuilt and restarted in v0.1.58 (`REQ-202609-0267`, upload quotas), superseding the frontend-only v0.1.57 release; Flyway is now at `V17`; `/api/health` reports `0.1.58`
 - Default locale: Simplified Chinese (`zh`)
 - Supported locales: Simplified Chinese (`zh`), Traditional Chinese (`zh-Hant`), English (`en`), Tibetan (`bo`), Uyghur (`ug`), German (`de`), Arabic (`ar`), Korean (`ko`), Japanese (`ja`), French (`fr`), Vietnamese (`vi`), Spanish (`es`), Italian (`it`) and Persian (`fa`) — Arabic, Persian and Uyghur render right-to-left
 - Production client: `https://paper.pilo.eu.cc`
@@ -296,6 +312,7 @@ The complete template is in [backend/.env.example](backend/.env.example). The im
 | JWT | `JWT_SECRET`, `JWT_ACCESS_EXPIRATION`, `JWT_REFRESH_EXPIRATION` | Token signing and TTL |
 | Storage | `STORAGE_TYPE`, `STORAGE_LOCAL_PATH`, `DUFS_URL` | PDF and artifact storage |
 | Parsing | `GROBID_BASE_URL`, `GROBID_TIMEOUT` | GROBID integration |
+| Upload | `APP_UPLOAD_DAILY_LIMIT_BYTES` | Application-wide per-day upload ceiling, default `1073741824` (1GB, the test-phase cap). The per-user limits (100MB/day, 200MB total) and the 10MB single-file ceiling are **not** configurable — they are product rules hard-coded in `UploadQuotaService` and `application.yml`. Raising the 1GB cap at launch is a config change, not a rebuild |
 | Login | `MAIL_FROM`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | Email and GitHub auth |
 | AI | `OPENAI_*`, `CLAUDE_*`, `DEEPSEEK_*`, `QWEN_*` | Optional model providers |
 
@@ -436,9 +453,10 @@ V13__paper_metadata_enrichment.sql
 V14__two_factor_and_trusted_devices.sql
 V15__widen_user_avatar.sql
 V16__paper_content.sql
+V17__upload_quota.sql
 ```
 
-Add a new numbered migration for schema or controlled data changes. Do not edit an already-applied migration in a shared environment. V12 narrowly repairs stored titles beginning with one explicitly recognized Google permission statement; future imports use the same conservative cleanup in the TEI parser. V16 adds `pr_papers.content_json` / `content_html` / `content_version` — all nullable, so it is a metadata-only change for existing rows and needs no backfill.
+Add a new numbered migration for schema or controlled data changes. Do not edit an already-applied migration in a shared environment. V12 narrowly repairs stored titles beginning with one explicitly recognized Google permission statement; future imports use the same conservative cleanup in the TEI parser. V16 adds `pr_papers.content_json` / `content_html` / `content_version` — all nullable, so it is a metadata-only change for existing rows and needs no backfill. V17 adds `pr_upload_records`, the append-only upload ledger the quotas are computed from (plus two indexes on `(user_id, created_at)` and `created_at`); it is additive and needs no backfill — uploads made before V17 simply have no ledger row, so their bytes do not count against anyone's quota. `paper_id` is intentionally **not** a foreign key, so deleting a paper cannot remove ledger rows and refund quota.
 
 ## API Surface
 
@@ -449,6 +467,7 @@ All business API routes are under `/api` and require the client token unless exp
 | Health | `/api/health` |
 | Authentication | `/api/auth` |
 | Papers and PDFs | `/api/papers` |
+| Upload quota | `/api/papers/upload-quota` (the literal path is declared before `/{id}`, so it never resolves as a paper id) |
 | Paper body (read/write) | `/api/papers/{paperId}/content` |
 | Paper question context | `/api/papers/{paperId}/context` |
 | GROBID | `/api/papers/{paperId}/grobid` |
