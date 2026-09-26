@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useRef, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
-import { useEditor, EditorContent } from "@tiptap/react"
+import { useEditor, useEditorState, EditorContent } from "@tiptap/react"
 import type { Editor, JSONContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import Placeholder from "@tiptap/extension-placeholder"
@@ -14,6 +14,9 @@ import { useUnsavedGuard } from "@/hooks/useUnsavedGuard"
 import "katex/dist/katex.min.css"
 import { academicExtensions } from "./extensions"
 import { AcademicToolbar, type MathDialogState } from "./AcademicToolbar"
+import { FormatToolbar } from "./FormatToolbar"
+import { TextAlign } from "./text-align"
+import { computeEditorStats } from "./editor-stats"
 
 export interface PaperContentPayload {
   /** 权威内容：编辑器节点树 */
@@ -94,6 +97,8 @@ export function PaperEditor({ paper, content, onSave, onReloadConflict }: PaperE
       Placeholder.configure({
         placeholder: t("editorPlaceholder"),
       }),
+      // 对齐属性挂在标题/段落上，导出的 HTML 用行内 style 承载，脱离编辑器也能还原
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
       ...academicExtensions({
         locale,
         footnoteTitle,
@@ -125,6 +130,13 @@ export function PaperEditor({ paper, content, onSave, onReloadConflict }: PaperE
   editorRef.current = editor
 
   const isSaving = status === "saving"
+
+  // 字数统计随内容实时更新；用 useEditorState 订阅，只在纯文本变化时才重算
+  const stats = useEditorState({
+    editor,
+    selector: ({ editor: instance }) =>
+      instance ? computeEditorStats(instance.getText()) : { words: 0, characters: 0 },
+  })
 
   const handleReload = async () => {
     if (!onReloadConflict) return
@@ -193,6 +205,8 @@ export function PaperEditor({ paper, content, onSave, onReloadConflict }: PaperE
         )}
       </div>
 
+      <FormatToolbar editor={editor} />
+
       <AcademicToolbar
         editor={editor}
         labels={labels}
@@ -202,6 +216,11 @@ export function PaperEditor({ paper, content, onSave, onReloadConflict }: PaperE
 
       <div className="flex-1 overflow-y-auto px-8 py-6">
         <EditorContent editor={editor} />
+      </div>
+
+      <div className="flex items-center justify-end gap-3 px-8 py-1.5 border-t border-[var(--border-subtle)] text-xs text-[var(--text-tertiary)]">
+        <span>{t("editorCharCount", { count: stats?.characters ?? 0 })}</span>
+        <span>{t("editorWordCount", { count: stats?.words ?? 0 })}</span>
       </div>
     </div>
   )
