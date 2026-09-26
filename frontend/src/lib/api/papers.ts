@@ -10,6 +10,8 @@ import type {
   UploadFromUrlRequest,
   CreatePaperRequest,
   UpdatePaperRequest,
+  PaperContentDto,
+  UpdatePaperContentRequest,
   PaperTagDto,
   SharePaperResponse,
   PaperContextDto,
@@ -67,6 +69,16 @@ export function createPaper(data: CreatePaperRequest): Promise<PaperDetailDto> {
 /** 更新论文元数据 */
 export function updatePaper(id: number, data: UpdatePaperRequest): Promise<PaperDetailDto> {
   return patch<PaperDetailDto>(`/papers/${id}`, data)
+}
+
+/** 读取论文正文（W1 内容模型；从未保存时 contentJson 为 null） */
+export function getPaperContent(id: number): Promise<PaperContentDto> {
+  return get<PaperContentDto>(`/papers/${id}/content`)
+}
+
+/** 保存论文正文（contentJson 权威，contentHtml 为派生预览/导出用） */
+export function updatePaperContent(id: number, data: UpdatePaperContentRequest): Promise<PaperContentDto> {
+  return put<PaperContentDto>(`/papers/${id}/content`, data)
 }
 
 /** Resolve exact arXiv/DOI metadata into an expiring preview. */

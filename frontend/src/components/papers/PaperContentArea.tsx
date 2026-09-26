@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl"
 import { PDFViewer } from "@/components/reader/PDFViewer"
-import { PaperEditor } from "@/components/papers/PaperEditor/PaperEditor"
+import { ManualPaperEditor } from "@/components/papers/ManualPaperEditor"
 import type { PaperDetailDto } from "@/lib/api/types"
 
 interface PaperContentAreaProps {
@@ -24,7 +24,7 @@ export function PaperContentArea({ paper, onUploadClick }: PaperContentAreaProps
   }
 
   if (paper.sourceType === "MANUAL") {
-    return <PaperEditor paper={paper} />
+    return <ManualPaperEditor paper={paper} />
   }
 
   return (

@@ -3,6 +3,7 @@
 // =============================================================================
 
 import type { AppLocale } from "@/i18n/locales"
+import type { JSONContent } from "@tiptap/react"
 
 // --- 通用响应封装 ---
 
@@ -178,6 +179,23 @@ export interface PaperDetailDto {
   tags?: string[]
   createdAt: string
   updatedAt: string
+}
+
+// --- Paper body content (W1: GET|PUT /api/papers/{id}/content) ---
+
+export interface PaperContentDto {
+  paperId: number
+  /** Authoritative editor document. `null` when the body has never been saved. */
+  contentJson: JSONContent | null
+  /** Derived HTML, for preview/export. */
+  contentHtml: string | null
+  contentVersion: number
+  updatedAt: string
+}
+
+export interface UpdatePaperContentRequest {
+  contentJson: JSONContent
+  contentHtml?: string
 }
 
 // --- External metadata enrichment ---
