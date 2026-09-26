@@ -1,14 +1,16 @@
 "use client"
 
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useMemo, useRef, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { useEditor, EditorContent } from "@tiptap/react"
-import type { JSONContent } from "@tiptap/react"
+import type { Editor, JSONContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import Placeholder from "@tiptap/extension-placeholder"
 import type { PaperDetailDto } from "@/lib/api/types"
-import { Save, Loader2 } from "lucide-react"
+import { Save, Loader2, AlertTriangle, RotateCw } from "lucide-react"
 import { Button } from "@/components/ui/Button"
+import { useAutosave } from "@/hooks/useAutosave"
+import { useUnsavedGuard } from "@/hooks/useUnsavedGuard"
 import "katex/dist/katex.min.css"
 import { academicExtensions } from "./extensions"
 import { AcademicToolbar, type MathDialogState } from "./AcademicToolbar"
@@ -24,16 +26,38 @@ export interface PaperEditorProps {
   paper: PaperDetailDto
   /** 已落库的正文；调用方保证加载完成后才挂载本组件 */
   content: JSONContent | null
+  /** 保存正文；版本冲突时应抛出带 code===1008 的错误（后写覆盖被拒） */
   onSave?: (payload: PaperContentPayload) => Promise<void>
+  /** 冲突后重新加载最新正文；由调用方重挂编辑器以载入最新内容 */
+  onReloadConflict?: () => Promise<void>
 }
 
-export function PaperEditor({ paper, content, onSave }: PaperEditorProps) {
+export function PaperEditor({ paper, content, onSave, onReloadConflict }: PaperEditorProps) {
   const t = useTranslations("papers")
   const tc = useTranslations("common")
   const locale = useLocale()
-  const [isSaving, setIsSaving] = useState(false)
-  const [status, setStatus] = useState<"idle" | "saved" | "failed">("idle")
   const [mathDialog, setMathDialog] = useState<MathDialogState | null>(null)
+  const [reloading, setReloading] = useState(false)
+
+  // 编辑器与自动保存互相依赖：编辑器的 onUpdate 要 markDirty，而 autosave 取内容又要读编辑器。
+  // 用 ref 打破这个环——autosave 通过 editorRef 读当前内容，编辑器创建时拿到稳定的 markDirty。
+  const editorRef = useRef<Editor | null>(null)
+
+  const autosave = useAutosave<PaperContentPayload>({
+    getPayload: () => {
+      const ed = editorRef.current
+      if (!ed || !onSave) return null
+      return { contentJson: ed.getJSON(), contentHtml: ed.getHTML() }
+    },
+    save: async (payload) => {
+      if (!onSave) return
+      await onSave(payload)
+    },
+  })
+  const { status, isDirty, markDirty, saveNow } = autosave
+
+  // 有未保存改动时拦截离开：关闭标签页走浏览器原生确认，应用内跳转走自定义确认。
+  useUnsavedGuard(isDirty, t("unsavedLeaveConfirm"))
 
   const footnoteTitle = t("footnoteListTitle")
   const bibliographyTitle = t("bibliographyTitle")
@@ -92,24 +116,23 @@ export function PaperEditor({ paper, content, onSave }: PaperEditorProps) {
           class: "prose prose-sm dark:prose-invert max-w-none focus:outline-none",
         },
       },
-      // 改动后立刻撤掉「已保存」，避免提示落后于实际内容。
-      onUpdate: () => setStatus("idle"),
+      // 内容一变就标脏并安排防抖自动保存；「已保存」标记随之撤下，避免落后于实际内容。
+      onUpdate: () => markDirty(),
       immediatelyRender: false,
     },
     [extensions],
   )
+  editorRef.current = editor
 
-  const handleSave = async () => {
-    if (!editor || !onSave) return
-    setIsSaving(true)
-    setStatus("idle")
+  const isSaving = status === "saving"
+
+  const handleReload = async () => {
+    if (!onReloadConflict) return
+    setReloading(true)
     try {
-      await onSave({ contentJson: editor.getJSON(), contentHtml: editor.getHTML() })
-      setStatus("saved")
-    } catch {
-      setStatus("failed")
+      await onReloadConflict()
     } finally {
-      setIsSaving(false)
+      setReloading(false)
     }
   }
 
@@ -121,9 +144,44 @@ export function PaperEditor({ paper, content, onSave }: PaperEditorProps) {
         </h2>
         {onSave && (
           <div className="flex items-center gap-2">
+            {status === "saving" && (
+              <span className="flex items-center gap-1 text-xs text-[var(--text-tertiary)]">
+                <Loader2 className="size-3 animate-spin" />
+                {t("saving")}
+              </span>
+            )}
             {status === "saved" && <span className="text-xs text-green-500">{t("saved")}</span>}
-            {status === "failed" && <span className="text-xs text-red-500">{t("saveFailed")}</span>}
-            <Button size="sm" onClick={handleSave} disabled={isSaving}>
+            {status === "failed" && (
+              <span className="flex items-center gap-1 text-xs text-red-500">
+                {t("saveFailed")}
+                <button
+                  type="button"
+                  onClick={() => saveNow()}
+                  className="inline-flex items-center gap-0.5 underline underline-offset-2 hover:opacity-80"
+                >
+                  <RotateCw className="size-3" />
+                  {t("saveRetry")}
+                </button>
+              </span>
+            )}
+            {status === "conflict" && (
+              <span className="flex items-center gap-1 text-xs text-amber-500">
+                <AlertTriangle className="size-3" />
+                {t("autosaveConflict")}
+                {onReloadConflict && (
+                  <button
+                    type="button"
+                    onClick={handleReload}
+                    disabled={reloading}
+                    className="inline-flex items-center gap-0.5 underline underline-offset-2 hover:opacity-80 disabled:opacity-50"
+                  >
+                    {reloading ? <Loader2 className="size-3 animate-spin" /> : <RotateCw className="size-3" />}
+                    {t("reloadLatest")}
+                  </button>
+                )}
+              </span>
+            )}
+            <Button size="sm" onClick={() => saveNow()} disabled={isSaving}>
               {isSaving ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (

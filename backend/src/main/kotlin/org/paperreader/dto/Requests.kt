@@ -150,6 +150,12 @@ data class PaperContentDto(
 data class UpdatePaperContentRequest(
     val contentJson: JsonNode? = null,
     val contentHtml: String? = null,
+    /**
+     * 本次保存所基于的正文版本号（保存前读到的 contentVersion）。为 null 时不做冲突检查，
+     * 兼容不关心并发的调用方；非 null 且与服务端当前版本不一致时，说明有别的会话已经写过，
+     * 服务端拒绝这次「后写覆盖」并返回 409，让前端明确告知用户而不是静默盖掉别人的改动。
+     */
+    val baseVersion: Int? = null,
 )
 
 data class ToggleFavoriteRequest(

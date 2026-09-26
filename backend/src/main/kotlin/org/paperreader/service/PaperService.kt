@@ -2,6 +2,7 @@ package org.paperreader.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.paperreader.dto.*
+import org.paperreader.exception.ContentVersionConflictException
 import org.paperreader.exception.InvalidParameterException
 import org.paperreader.exception.ResourceNotFoundException
 import org.paperreader.model.Paper
@@ -178,7 +179,9 @@ class PaperService(
 
     /**
      * 保存正文（PUT 语义：整篇覆盖）。加悲观锁，避免并发保存下后写者读到陈旧版本号。
-     * contentVersion 每次保存自增，供前端判断自己写的是第几版（冲突提示留在 W3）。
+     * contentVersion 每次保存自增，供前端判断自己写的是第几版。
+     * 若请求带了 baseVersion（保存前读到的版本），且已落后于当前版本，说明有别的会话
+     * 已经写过——拒绝这次后写覆盖并抛 409，让前端明确告知用户而不是静默盖掉别人的改动。
      */
     @Transactional
     fun updatePaperContent(id: Long, userId: Long, request: UpdatePaperContentRequest): PaperContentDto {
@@ -189,11 +192,16 @@ class PaperService(
         val paper = paperRepository.findForUpdateByIdAndUserId(id, userId)
             ?: throw ResourceNotFoundException("Paper", id)
 
+        val currentVersion = paper.contentVersion ?: 0
+        if (request.baseVersion != null && request.baseVersion != currentVersion) {
+            throw ContentVersionConflictException(currentVersion)
+        }
+
         val saved = paperRepository.save(
             paper.copy(
                 contentJson = body.toString(),
                 contentHtml = request.contentHtml,
-                contentVersion = (paper.contentVersion ?: 0) + 1,
+                contentVersion = currentVersion + 1,
                 updatedAt = Instant.now(),
             )
         )

@@ -14,6 +14,7 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.paperreader.dto.UpdatePaperContentRequest
 import org.paperreader.dto.UpdatePaperRequest
+import org.paperreader.exception.ContentVersionConflictException
 import org.paperreader.exception.InvalidParameterException
 import org.paperreader.exception.ResourceNotFoundException
 import org.paperreader.model.Paper
@@ -143,6 +144,56 @@ class PaperContentServiceTest {
         val result = service.updatePaperContent(7, 42, UpdatePaperContentRequest(contentJson = body))
 
         assertEquals(5, result.contentVersion)
+    }
+
+    @Test
+    fun `rejects a stale save whose base version has fallen behind the current version`() {
+        stubbedSave()
+        every { paperRepository.findForUpdateByIdAndUserId(7, 42) } returns Paper(
+            id = 7,
+            userId = 42,
+            title = "Draft",
+            sourceType = "MANUAL",
+            contentVersion = 5,
+        )
+
+        // 另一个会话已经把版本推到了 5，而这次保存还基于 3 —— 必须被拒，不能静默覆盖。
+        val ex = assertThrows<ContentVersionConflictException> {
+            service.updatePaperContent(7, 42, UpdatePaperContentRequest(contentJson = body, baseVersion = 3))
+        }
+        assertEquals(5, ex.currentVersion)
+    }
+
+    @Test
+    fun `accepts a save whose base version matches the current version`() {
+        stubbedSave()
+        every { paperRepository.findForUpdateByIdAndUserId(7, 42) } returns Paper(
+            id = 7,
+            userId = 42,
+            title = "Draft",
+            sourceType = "MANUAL",
+            contentVersion = 5,
+        )
+
+        val result = service.updatePaperContent(7, 42, UpdatePaperContentRequest(contentJson = body, baseVersion = 5))
+
+        assertEquals(6, result.contentVersion)
+    }
+
+    @Test
+    fun `skips the conflict check when no base version is supplied`() {
+        stubbedSave()
+        every { paperRepository.findForUpdateByIdAndUserId(7, 42) } returns Paper(
+            id = 7,
+            userId = 42,
+            title = "Draft",
+            sourceType = "MANUAL",
+            contentVersion = 5,
+        )
+
+        val result = service.updatePaperContent(7, 42, UpdatePaperContentRequest(contentJson = body))
+
+        assertEquals(6, result.contentVersion)
     }
 
     @Test
