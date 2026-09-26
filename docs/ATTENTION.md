@@ -1,3 +1,15 @@
+## v0.1.59 导入、导出与投稿（W5：Markdown 导入 + PDF/DOCX/LaTeX/BibTeX/Markdown/HTML 导出，`REQ-202609-0261`）
+
+- **本轮有真实 Kotlin 改动、新增迁移 `V18`、后端 jar 已重建并重启**，`/api/health` 本机与公网均返回 `0.1.59`，是有效版本依据；favicon `?v=0.1.59`。生产前端/后端均 `0.1.59`，Flyway 到 `V18`。
+- **导出引擎是"用户可触发的独立服务端进程"，五道安全闸门缺一不可——不要为图省事去掉任何一道。** ① 输入大小上限 `app.export.max-input-bytes`（2MB）→ `400`；② 并发上限 `Semaphore(max-concurrency=3)` + `acquire-timeout-ms=2000` → `429`/`1012`；③ 引擎探活 → `503`/`1011`（`isExecutable` 缓存）；④ 单进程 `timeout-ms=30000` 超时 `destroyForcibly`；⑤ 临时/产物目录隔离 + 错误脱敏 → `502`/`1013`。**命令注入防线**：`DocumentExportEngine` 只用 `ProcessBuilder` 数组参数 + pandoc/typst 绝对路径，绝不拼 shell 字符串——新增任何引擎调用都照此办理。
+- **业务码 `1011`/`1012`/`1013` 属导出，`1009`/`1010` 属上传限额，别复用、别混号。** 迁移是 `V18__paper_export_artifacts.sql`。
+- **导出产物必须回挂 `pr_paper_versions`（`version_id`），不另起并行体系**——这是需求硬条款；表 `pr_paper_export_artifacts` 的 `file_path` 相对 `app.export.output-dir`（默认 `./uploads/exports`，按 `paperId` 分目录），不是相对 backend 根目录，清理产物时注意这一点（本轮验收后清理时就先踩过一次相对路径的坑）。
+- **Markdown 导入是非破坏性的**：`POST /api/papers/{id}/import/markdown` 只回 `contentHtml`、**不落库**，交编辑器让用户确认后再走正常保存链路。不要把它改成直接覆盖正文。
+- **许可**：Pandoc（GPL-2.0）以独立二进制进程调用、不链接，不传染本项目；typst（Apache-2.0）。两者**只装服务端、不随发行物分发**（随包分发 GPL 二进制才有 GPL 义务）。CJK 字体 `Noto Serif CJK SC` 必须在服务端可被 typst 找到，否则中文 PDF 会掉字。
+- **部署收尾同样不能 `pm2 restart paper-reader-backend`**（复用旧版本 jar 路径）：`. ./.env` 后在同一 shell 里 `pm2 delete` + `pm2 start`。本轮后端 PM2 id `4` → `5`、`restart_time=0`、jar `paper-reader-backend-0.1.59.jar`；前端重启计数 `5` → `6`。
+- **本轮做到了无登录 e2e 之外的真实鉴权实测**：以自签 HS512 令牌调生产接口把含中文论文导出全 6 格式均 `success`（PDF 内嵌 `NotoSerifCJK`/`Identity-H`），验收产物随后已清理、生产回到干净状态。但**真实浏览器人工点一遍仍未做**（C 端登录受限），六格式与闸门主要靠后端测试 + 该次 API 实测钉住。
+- **版本链**：`v0.1.54 → v0.1.56（W3）→ v0.1.57（W2）→ v0.1.58（上传限额）→ v0.1.59（W5）`。至此 writer 路线图 **W1-W5 全部完成**。
+
 ## v0.1.58 上传论文限额（单文件 10MB / 单用户单日 100MB / 单用户累计 200MB / 应用单日 1GB）
 
 - 需求编号 `REQ-202609-0267`，分支 `feature/req-202609-0267-upload-quota`，从 `main` 的 `7dff17d`（v0.1.57 的文档同步合并提交）展开。**本轮有真实 Kotlin 改动、新增迁移、后端 jar 已重建并重启**，所以 `/api/health` **这次真的是版本依据**（本机与公网都返回 `0.1.58`），与上一轮 v0.1.57「纯前端、后端未重启、只能看 favicon」相反。
@@ -9,7 +21,7 @@
 - **配额查询失败不能让上传功能连带变哑。** `UploadDialog` 里取 `getUploadQuota()` 的 `useEffect` **故意吞掉异常**：拿不到就少显示一行"剩余"提示，上传照常可用（服务端仍会校验）。`upload-quota.test.tsx` 里专门钉了这条。别"顺手"把失败改成把整个对话框置灰。
 - **拒绝文件后要清 `e.target.value`。** 否则用户重新选同一个文件时 `change` 事件不触发，看起来像"点了没反应"。提示块放在 tabs 外面而不是每个 tab 里，因为 URL 导入同样会把 PDF 落到服务端、同样受限。
 - **验收时别用 `401` vs `404` 去判断新路由是否存在。** 实测未带凭据的 `GET /api/papers/upload-quota` 返回 `401`/`code 1001`，但**不存在的路径同样返回 `401`**——Spring Security 的过滤器跑在路由之前，这个对照实验**不能**证明路由存在。路由存在由后端单测、以及线上产物里能搜到 `quotaRemaining` 来证明。
-- **版本号 `0.1.58` 曾被并行迭代撞过（现已顺延为 `0.1.59`）。** W5「文档导入导出与投稿产物」（`REQ-202609-0261`）的分支原也取名 `feature/v0.1.58`（提交 `f8101d4`，基于 `7dff17d`）。**2026-09-26 UTC 已确认 W5 顺延到 `0.1.59`**（分支 `feature/v0.1.59`，提交 `a6c435d`，基于本轮的合并提交 `c4c880b`，尚未推送），原 `feature/v0.1.58` 留在 origin 作痕迹（未合入、未删除），处理方式同 `0.1.55` → `0.1.57` 先例；**不要复用 `0.1.58`**，两轮都要碰 `PaperService` / `PaperController`，共号会让版本链歧义。
+- **版本号 `0.1.58` 曾被并行迭代撞过（现已顺延为 `0.1.59`）。** W5「文档导入导出与投稿产物」（`REQ-202609-0261`）的分支原也取名 `feature/v0.1.58`（提交 `f8101d4`，基于 `7dff17d`）。**2026-09-26 UTC 已确认 W5 顺延到 `0.1.59`**（分支 `feature/v0.1.59`，代码合并提交 `a1c2ed0`〔父 `772dc58` + `e7d9416`〕，2026-09-26 UTC **已发布**，详见本文件顶部 v0.1.59 条），原 `feature/v0.1.58` 留在 origin 作痕迹（未合入、未删除），处理方式同 `0.1.55` → `0.1.57` 先例；**不要复用 `0.1.58`**，两轮都要碰 `PaperService` / `PaperController`，共号会让版本链歧义。
 - 部署收尾同样**不能图省事用 `pm2 restart paper-reader-backend`**：JAR 路径带版本号，restart 会继续加载旧路径。必须 `set -a; . ./.env; set +a` 后在**同一个 shell** 里连续 `pm2 delete` + `pm2 start`，探活通过再 `pm2 save`。本轮实测后端 PM2 **id 由 3 变 4**、pid 2452851、`restart_time=0`、jar 为 `paper-reader-backend-0.1.58.jar`（78,401,919 字节）；前端 PM2 id 0、重启计数 4 → 5。`/api/health` = `0.1.58`，favicon `?v=0.1.58`，`app/[locale]/page-8de85af55e54c2bf.js` 等三个 chunk 与本地 `.next` **sha256 逐字节一致**；**Flyway 由 `V16` 升到 `V17`**，在 `ddl-auto: validate` 下启动成功即证明实体与建表语句一致。
 - 本轮实测测试基线：后端 **16 个测试类 / 102 项 / 0 失败**，前端 **27 个测试文件 / 189 项**（v0.1.57 为 26 / 183），`tsc --noEmit`、`pnpm run build` 均 exit 0。均为**期望值**，不是可以放宽的上限。
 - 尚未覆盖：① **没有登录态下的浏览器端到端验收**（同前几轮，生产登录方式受限），所以"超 10MB 被拦"、"单日 100MB／累计 200MB 被拒"这几条**验收标准是在测试里以真实组件 + 后端单测钉住的**，未在真实浏览器里人工走一遍。② 合并后首次整跑 `pnpm test` 出现 1 项失败（`paper-content.test.tsx:342`，属 W3 的「未保存改动的离开拦截」），**重跑即通过、该文件单独连跑三次也通过**，判定为**他人迭代测试在全量并发下的偶发**，已定性未修（超出本需求范围）。③ 台账只增不减，**没有任何清理/回收机制**，长期会持续增长；配额口径与实际占用存储会随时间偏离，需要回收策略时单独立项。

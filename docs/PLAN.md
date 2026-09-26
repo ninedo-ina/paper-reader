@@ -1,3 +1,16 @@
+## 迭代：v0.1.59（已发布，W5 导入、导出与投稿）
+
+发布分支：`feature/v0.1.59`；类型：新功能（后端导出/导入引擎 + 迁移，前端导出/导入弹窗）；需求编号：`REQ-202609-0261`（writer 路线图 **W5**，`REQ-202609-0255` 的子项）；状态：2026-09-26 UTC 已合并 `main`（代码段显式 `--no-ff` 合并提交 `a1c2ed0`，父提交 `772dc58` + `e7d9416`）并部署验收，随后文档同步以第二个显式 `--no-ff` 合并提交带入 `main`，`dev` 已快进（发布记录见 `docs/MAINTENANCE.md`）。
+
+- **版本跳变**：W5 原按路线图排 `v0.1.58`，但 `0.1.58` 被并行的上传限额需求（`REQ-202609-0267`）先占用，故 W5 顺延为 **`0.1.59`**，原 `feature/v0.1.58`（提交 `f8101d4`）留在 origin 作痕迹；处理方式同 `0.1.55` → `0.1.57` 先例（见 `docs/ATTENTION.md`）。**W5 一轮整条交付**，不再拆成"Markdown 部分"与"导出投稿"两版。
+- **交付物（后端）**：`DocumentExportEngine`（以独立进程调用 pandoc/typst，参数以数组传、无 shell，杜绝命令注入）；`PaperExportService`（生成即落库两段式）；`PaperExportController`（`/api/papers/{id}` 下 `GET /export/capabilities`、`POST /export`、`GET /export/artifacts`、`GET /export/artifacts/{id}/download`、`POST /import/markdown`）；`ExportProperties`（`app.export` 配置）；实体 `PaperExportArtifact` + 迁移 `V18__paper_export_artifacts.sql`（`pr_paper_export_artifacts`，`version_id` 回挂 `pr_paper_versions`，**非并行体系**）；`BusinessException` 增 `1011`/`1012`/`1013`（`1009`/`1010` 属上传限额，不复用）；`PaperDeletionService` 同步清理导出产物与文件。
+- **五道安全闸门**（W5 风险条款要求，导出引擎是可被用户触发的资源面）：① 输入大小上限 `max-input-bytes` 2MB → `400`；② 并发上限 `Semaphore(max-concurrency=3)` + `acquire-timeout-ms=2000` → `429`/`1012`（`ExportBusyException`）；③ 引擎探活（pandoc/typst 不可执行）→ `503`/`1011`（`ExportUnavailableException`）；④ 单进程 `timeout-ms=30000` 超时 `destroyForcibly`；⑤ 临时/产物目录隔离（`output-dir`）+ 错误脱敏 → `502`/`1013`（`ExportFailedException`）。
+- **交付物（前端）**：`ExportDialog`（选格式、触发导出、列历史产物、二次下载）、`ImportMarkdownDialog`（Markdown → 编辑器确认后再保存，导入本身不改正文）、`PaperEditor` 接线、`lib/api/export.ts`；六处版本号升至 `0.1.59`。
+- **引擎与许可**：PDF 用 **Typst 0.13.1**（Apache-2.0，`pandoc --pdf-engine=/usr/local/bin/typst`）、DOCX/LaTeX/BibTeX/Markdown/HTML 用 **Pandoc 3.1.3**（GPL-2.0，以独立二进制调用不构成链接；仅装在服务端、不随包分发）。CJK 字体 `Noto Serif CJK SC`（typst 可见）。
+- **测试**：后端 `./gradlew clean test bootJar` **19 个测试类 / 127 项 / 0 失败**（新增 `DocumentExportEngineTest`、`DocumentExportEngineIntegrationTest`〔4 项、`skipped=0`、真实调用 pandoc/typst〕、`PaperExportServiceTest`），产出 `paper-reader-backend-0.1.59.jar`（78,910,419 字节）；前端新增 `export-dialog.test.tsx`（5）、`import-markdown-dialog.test.tsx`（4），全量 **29 个测试文件 / 198 项全绿**，`tsc --noEmit`、`pnpm run build` 退出码 0。
+- **部署与验收**（2026-09-26 UTC，`https://paper.pilo.eu.cc`）：本轮有真实 Kotlin 改动，后端 jar 重建后按老规矩 `pm2 delete` + `pm2 start`（同 shell `. ./.env`，不用 `pm2 restart`），PM2 id `4` → `5`、`restart_time=0`；前端 `rm -rf .next && pnpm run build` 后 `pm2 restart`（重启计数 `5` → `6`）、`pm2 save`。`/api/health` 本机与公网均报 `0.1.59`；favicon `?v=0.1.59`；papers/[id] chunk `page-9b0f1750f67828d6.js` 线上 sha256 与本地 `.next` 逐字节一致且含 `export/artifacts`/`import/markdown`（新 UI 确已上线）；**Flyway `V17` → `V18`**（`ddl-auto: validate` 下 18 个迁移校验通过）。真实鉴权下把一篇含中文的论文导出为全部 6 种格式均 `success`（PDF `%PDF`、内嵌 `NotoSerifCJK`/`Identity-H`，DOCX 为 `PK` zip），Markdown 导入回填标题/加粗/表格；验收产物随后清理。
+- **遗留**：① 无登录态浏览器端到端验收（六格式与并发/超时闸门由后端测试 + 上述真实鉴权 API 验收覆盖，未在真实浏览器人工点一遍）；② 图片插入与存储、在线期刊模板库不在本轮（属后续）；③ `dynamic({ssr:false})` barrel 取舍仍未做（属 W2 遗留）。
+
 ## 迭代：v0.1.58（已发布，上传论文限额）
 
 发布分支：`feature/req-202609-0267-upload-quota`；类型：新功能（后端配额校验 + 迁移，前端提示）；需求编号：`REQ-202609-0267`；状态：2026-09-26 UTC 已合并 `main`（显式 `--no-ff` 合并提交 `c4c880b`，父提交 `7dff17d` + `71e32f5`）并部署验收，随后仅文档同步提交又以第二个显式 `--no-ff` 合并提交带入 `main`，`dev` 已快进到该合并提交（发布记录见 `docs/MAINTENANCE.md`）。
@@ -7,7 +20,7 @@
 - **交付物**：新增 `UploadQuotaService`（四档校验 + 台账累加 + `Asia/Shanghai` 自然日边界）；新增实体 `UploadRecord` 与迁移 `V17__upload_quota.sql`（`pr_upload_records` 只增台账，`paper_id` 不建外键，删论文不退配额）；`BusinessException` 增 `FileTooLargeException`（`1009`/`413`）与 `UploadQuotaExceededException`（`1010`/`429`）；`GlobalExceptionHandler` 把 `MaxUploadSizeExceededException` 翻成 `1009`/`413`；`PaperService.uploadPdf` / `uploadFromUrl` 接入校验与记账，`FileStorageService.downloadPdf` 增流式 `maxBytes` 上限（URL 导入绕过 multipart，必须边下边数）；新增 `GET /api/papers/upload-quota` + `UploadQuotaDto`；`application.yml` 设 `max-file-size: 10MB` / `max-request-size: 12MB`；前端 `UploadDialog.tsx` 增本地 10MB 预检与剩余额度提示。
 - **测试**：后端 **16 个测试类 / 102 项 / 0 失败**（新增 `UploadQuotaServiceTest` 等，`MockMultipartFile` 驱动）；前端新增 `upload-quota.test.tsx`（6 项），全量 **27 个测试文件 / 189 项**（上一版 26/183）；`tsc --noEmit`、`pnpm run build` 退出码 0。
 - **部署与验收**：本轮有真实 Kotlin 改动，后端 jar 已重建为 `paper-reader-backend-0.1.58.jar` 并**以 `pm2 delete` + `pm2 start`（同 shell 先 `. ./.env`）重启**，PM2 id 由 3 变 4、`restart_time=0`；前端重建并 `pm2 restart`（重启计数 4 → 5）。线上验收：`/api/health` 本机与公网均报 `0.1.58`；favicon `?v=0.1.58`；三个 chunk 与本地 `.next` sha256 逐字节一致；**Flyway `V16` → `V17`** 且 `ddl-auto: validate` 下启动成功。**注意：未带凭据探测新路由返回 `401` 不构成"路由存在"的证据**（不存在的路径同样 `401`），路由存在由后端单测与线上产物中的 `quotaRemaining` 证明。
-- **并行撞号（已解决）**：W5「文档导入导出与投稿产物」（`REQ-202609-0261`）的分支原也叫 `feature/v0.1.58`（提交 `f8101d4`，基于 `7dff17d`）。**2026-09-26 UTC 确认 W5 已顺延为 `0.1.59`**（分支 `feature/v0.1.59`，提交 `a6c435d`，基于本轮合并提交 `c4c880b`，尚未推送），原 `feature/v0.1.58` 留在 origin 作痕迹；处理方式同 `0.1.55` → `0.1.57` 先例。
+- **并行撞号（已解决）**：W5「文档导入导出与投稿产物」（`REQ-202609-0261`）的分支原也叫 `feature/v0.1.58`（提交 `f8101d4`，基于 `7dff17d`）。**2026-09-26 UTC 确认 W5 已顺延为 `0.1.59`**（分支 `feature/v0.1.59`，代码合并提交 `a1c2ed0`，2026-09-26 UTC 已发布），原 `feature/v0.1.58` 留在 origin 作痕迹；处理方式同 `0.1.55` → `0.1.57` 先例。
 - **遗留**：① 无登录态浏览器端到端验收（"超 10MB 被拦"等由测试钉住）；② 合并后整跑 `pnpm test` 首跑 1 项失败（`paper-content.test.tsx:342`，属 W3），重跑及单文件连跑三次均通过，判为他人迭代测试的全量并发偶发，已定性未修；③ 台账只增不减，无清理/回收机制，配额口径与实际存储会随时间偏离。
 
 ## 迭代：writer 方向需求整理规划（`REQ-202609-0255`，纯文档，无版本变更）
@@ -506,8 +519,8 @@ v0.1.40 把两步验证补成闭环时，表单沿用了最朴素的排法：标
 2. ~~**`v0.1.53` 编辑器内核（W2）与自动保存（W3）**~~ **已拆成两轮、且都不是 `0.1.53`**：自动保存（W3）由 **`v0.1.56`** 交付、编辑器内核（W2）由 **`v0.1.57`** 交付（见本文件上文的两个条目）。两轮都要动 `PaperEditor.tsx` 与 `common.json`，W3 先合入并占用 `0.1.56`，W2 于是放弃预分配的 `0.1.55`、从含 W3 的 `main`（`6b8f573`）重切为 `0.1.57`，**以加法方式**叠加在自动保存之上（W3 的 `useAutosave` / `useUnsavedGuard` / `onReloadConflict` 一行未改）。**仍未定**：`dynamic({ssr:false})` barrel 的取舍。
 3. ~~**`v0.1.54` 学术能力**~~ **已发布，实际交付的就是这一条（W4）**：公式（KaTeX，保留 LaTeX 源）、表格、脚注（**未走 spike、未买 Pro，直接自研**）、引用节点 + 参考文献列表（CSL-JSON，编号=文献表顺序）、交叉引用（`UniqueID` 稳定 ID）+ 统一编号插件 `AcademicNumbering`。**原表把这一条排在这里，实际先于 `v0.1.53` 做了**——两者只依赖 `v0.1.52`、彼此无依赖，顺序调换成立。
 4. ~~**`v0.1.56` 导出与投稿（W5 剩余）**~~ **该号已被自动保存（W3）占用**：W3 与 W5 无依赖，且"写了一半会丢"比"导出格式"更痛，因此 `0.1.56` 先发 W3（见本文件上文的 v0.1.56 条目）；紧接着 `0.1.57` 又给了 W2（W2 原先要的 `0.1.55` 已作废）。**W5（导入导出 + 导出与投稿）顺延到 `v0.1.58` 起**，[WRITER_ROADMAP.md](WRITER_ROADMAP.md) 第 5 节的迭代表已按新号重排。
-5. **`v0.1.58` 导入导出（W5 的 Markdown 部分 + 图片）**：Markdown 导入导出（`@tiptap/markdown`）、图片插入与存储。
-6. **`v0.1.59` 导出与投稿（W5 剩余）**：Typst / Pandoc 服务端导出 PDF、DOCX、LaTeX/BibTeX（必须以独立进程 + 超时 + 并发上限运行）。
+5. ~~**`v0.1.58` 导入导出（W5 的 Markdown 部分 + 图片）**~~ **`0.1.58` 已被并行的上传论文限额需求（`REQ-202609-0267`）占用，不属 W5**：W5 未按原表拆成"Markdown 部分"单独一版；图片插入与存储顺延到后续。
+6. ~~**`v0.1.59` 导出与投稿（W5 剩余）**~~ **已发布，实际把 W5 整条一次交付**：Markdown 导入 + 导出 PDF（Typst）/ DOCX（Pandoc）/ LaTeX / BibTeX / Markdown，均以独立进程 + 五道安全闸门（大小上限 / 并发上限 / 引擎探活 / 超时 / 目录隔离+脱敏）运行，导出产物回挂 `pr_paper_versions`（Flyway `V18`）。详见本文件上文 v0.1.59 条目。**至此 W1-W5 全部落地。**
 7. **`v0.1.60` 版本历史（W6）**：正文快照、对比、回滚、手动打标签。**W3 落地后这条更值得做**——冲突现在只解决"谁的写入算数"，没有历史版本、不能看差异也不能回滚。
 8. **`v0.2.0` 协作（W7 + 安全债）**：**先修 `/ws` 的 STOMP 身份绑定**（见 [PROJECT_STATUS.md](PROJECT_STATUS.md) 第 11 节安全债），再上 Yjs + Hocuspocus 协作编辑。
 9. **`v0.2.x` 写作工作台整合（W8 + W9）**：AI 写作辅助 + 写作台整合 + 性能与合规收口。
