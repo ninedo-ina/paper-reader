@@ -32,16 +32,21 @@
 - **测试**：新增 `frontend/src/test/format-toolbar.test.tsx`（21 项，真实无头编辑器驱动每类格式写入 + 对齐清除 + `computeEditorStats` 单测 + 渲染）；`paper-content.test.tsx` 的 mock editor 补 `getText`/`can`。前端 **26 个测试文件 / 183 项全绿**（上一版 25/154）；`pnpm exec tsc --noEmit`、`pnpm run build` 退出码 0；后端 Kotlin 零改动、未重跑。
 - **部署与验收**：纯前端迭代，后端 jar 有意未重建（后端版本文件升到 `0.1.57`，但 `/api/health` 仍报 W3 的 `0.1.56`）。`/root/paper-reader/frontend` 执行 `pnpm run build` → `pm2 restart paper-reader-frontend`（→ pid 2387419）→ `pm2 save`。线上验收（`https://paper.pilo.eu.cc`）：favicon `?v=0.1.57`；样式表 `_next/static/css/0748322fe6c9c60a.css` 含 `.format-toolbar` / `.format-toolbar-button` / `.format-toolbar-divider`，证明 W2 已部署。**无登录态浏览器端到端**（生产只开管理员 GitHub 登录），工具栏交互由 jsdom 里的真实编辑器实例覆盖。
 
-## 迭代：v0.1.56（已发布，W3 自动保存 —— 并行工作流 `REQ-202609-0259`）
+## 迭代：v0.1.56（已发布）
 
-> 本节为 v0.1.57 迭代补记的**桥接说明**，用于保持版本链不断档；`v0.1.56` 由并行工作流交付并自行验收，详细记录以其 `docs/` 为准，如后补重复以更完整者为准。
+发布分支：`feature/req-202609-0259-autosave`；类型：新功能（前端自动保存 + 后端乐观锁校验）；需求编号：`REQ-202609-0259`（[WRITER_ROADMAP.md](WRITER_ROADMAP.md) 的 **W3「自动保存与草稿保护」**）；状态：2026-09-26 UTC 已合并 `main`（显式 `--no-ff` 合并提交 `6b8f573`，父提交 `a924db9` + `6a7535e`）并部署验收，随后分支上追加的仅文档同步提交又以第二个显式 `--no-ff` 合并提交带入 `main`，`dev` 已快进到该合并提交（`main` 与 `dev` 同指，`feature/req-202609-0259-autosave` 为其祖先；发布记录见 `docs/MAINTENANCE.md`）。
 
-发布分支：`feature/req-202609-0259-autosave`；需求编号：`REQ-202609-0259`（**W3「自动保存与草稿保护」**）；状态：以显式 `--no-ff` 合并提交 `6b8f573`（父提交 `a924db9` + `6a7535e`）合入 `main`。
+目标：**写了一半的内容不许静默丢。** W1 让正文能存、W4 让正文像论文，但"存"这个动作一直靠人手点保存按钮——写一半关标签页、断网后继续写、两个标签页开同一篇，都会丢掉其中一份且没人知道。本轮把保存变成默认行为，并让并发写入**显式报错而不是后写覆盖先写**。
 
-- **交付物（据已合入代码）**：`useAutosave.ts`（防抖 2000ms、状态机 `idle|dirty|saving|saved|failed|conflict`、断网重试 + `online` 补写）、`useUnsavedGuard.ts`（离开拦截）；后端 `updatePaperContent` 接受 `baseVersion`，冲突抛 `ContentVersionConflictException`（业务码 `1008` / HTTP 409）；`PaperContentServiceTest` 由 8 增至 11 项；14 语言各补 5 个文案。
-- **部署**：真实 Kotlin 改动、后端 jar 已重建，`/api/health` 现报 `0.1.56`（本地与公网一致，本迭代独立核实）。
+- **版本号取 `0.1.56` 而不是 `0.1.55`**：`0.1.55` 原本留给并行进行的姊妹迭代 **W2（编辑器内核，`REQ-202609-0258`）**，两者同时改 `PaperEditor.tsx`、`en/zh common.json`、`paper-content.test.tsx`；两个迭代都发 `0.1.55` 会让版本链出现两个不同的 `0.1.55`，回滚时无法判断线上是哪一份。W3 从 `main`（`a924db9`）展开、不依赖 W2，因此先合入并占用 `0.1.56`；W2 放弃 `feature/v0.1.55` 后从含本轮的 `origin/main`（`6b8f573`）重切为 `feature/v0.1.57`，以加法方式叠加在本轮的自动保存之上。**版本链为 `v0.1.54 → v0.1.56 → v0.1.57`，无 `v0.1.55` 线上版本。**
+- **自动保存**：新增通用防抖保存器 `frontend/src/hooks/useAutosave.ts`（不依赖 Tiptap），停止输入约 2 秒后落库；保存期间又发生编辑则**回到待保存并重新排期**，不会把"已保存"错报给已经变化的文档。失败每 5 秒重试，并在 `online` 事件后立刻重试。
+- **状态指示**：编辑器头部直接显示保存中 / 已保存 / 保存失败（带重试按钮）；手动保存按钮改为调用同一个 `saveNow()`，**旧的本地 `isSaving` 状态被删掉**——同一件事只留一个真相。
+- **离开拦截**：新增 `frontend/src/hooks/useUnsavedGuard.ts`，`beforeunload` 触发浏览器原生确认弹窗，并捕获阶段拦站内 `<a>` 跳转（跳过已 `preventDefault`、非左键、带修饰键、`#` 锚点、`_blank`、`download`、指向当前地址的链接）。**只拦跳转，不拦保存**。
+- **并发冲突（本轮的后端半边）**：`PUT /api/papers/{paperId}/content` 新增**可选**入参 `baseVersion`，与库里 `contentVersion` 不符即抛新增的 `ContentVersionConflictException`（HTTP `409` / 业务码 `1008`），比较与自增在同一次**悲观锁读取之内**完成。前端把冲突当作状态而不是失败——**不排重试、不在 `online` 里自动重试**（静默重试等于替用户决定覆盖别人），提示「内容已被其他会话更新」并给「加载最新」按钮。字段为空时跳过校验，老调用方行为一字不变。
+- **测试**：后端 `PaperContentServiceTest` 新增 3 项（过期 `baseVersion` 被拒且异常带当前版本号 / 一致时保存并自增 / 不传时跳过校验），实测 **84 项全绿**（上一版 81）；前端 `paper-content.test.tsx` 由 8 项扩到 16 项（自动保存、并发冲突、离开拦截三组），实测 **25 个测试文件 / 162 项全绿**（上一版 25 / 154）。14 种语言 `common.json` 各新增 5 个 `papers` 键，纯新增、各语言键集合一致（87 个）。
+- **部署与验收**：**本轮有真实 Kotlin 改动，后端 jar 重建并重启**（与 v0.1.54 纯前端有意不重启不同），按 `DEPLOY.md` 在同一个 shell 内 `pm2 delete` + `pm2 start`（**不能用 `pm2 restart`**，它会继续加载旧 JAR 路径）。线上：`/api/health` 本机与公网均为 `0.1.56`、favicon `?v=0.1.56`、自动保存所在 chunk 与论文详情页 chunk 均与本地 `.next` **sha256 逐字节一致**、未带凭据 `PUT` 得 `401`/`1001`（说明校验路由线上可达）、Flyway 仍 `V16`（本轮无新迁移）。**没有登录态下的浏览器端到端验收**（同 v0.1.52 / v0.1.54），三条验收标准钉在前端测试里，见 `docs/ATTENTION.md` 与 `docs/MAINTENANCE.md` 的 `v0.1.56` 条目。**边界**：无历史版本、不能看差异也不能回滚（属 `W6`）；不传 `baseVersion` 的调用方仍会整篇覆盖。
 
-## 迭代：v0.1.54（已发布）
+## 上一迭代：v0.1.54（已发布）
 
 发布分支：`feature/v0.1.54`；类型：新功能（纯前端，编辑器能力）；需求编号：`REQ-202609-0260`（[WRITER_ROADMAP.md](WRITER_ROADMAP.md) 的 **W4「学术写作能力」**）；状态：2026-09-26 UTC 已合并 `main`（显式 `--no-ff` 合并提交 `fea5f8f`，父提交 `239ca89` + `2c0f5b1`）并部署验收，随后分支上追加的仅文档同步提交又以第二个显式 `--no-ff` 合并提交带入 `main`，`dev` 已快进到该合并提交（`main` 与 `dev` 同指，`feature/v0.1.54` 为其祖先；发布记录见 `docs/MAINTENANCE.md`）。
 
@@ -486,13 +491,14 @@ v0.1.40 把两步验证补成闭环时，表单沿用了最朴素的排法：标
 这是当前**最大的一条后续线**：把项目从只做 reader 延伸到能做 writer。2026-09-26 已完成需求整理与选型调研，代码一行未动，立项时按下面顺序推进（**版本号归属待产品负责人确认**，此处列出的是建议顺序，不是已批准的排期）：
 
 1. ~~**`v0.1.52` 写作闭环最小可用**~~ **已发布，实际只交付了 W1（正文持久化）**：正文存储列（Flyway `V16`）+ 读写正文接口 + `onSave` 接上 + 摘要与正文分离。**工具栏（W2）与防抖自动保存（W3）没有跟着这一轮做**。
-2. **`v0.1.53` 编辑器内核（W2）与自动保存（W3）**：工具栏/浮动菜单、字符统计、`dynamic({ssr:false})` barrel 取舍、防抖自动保存、基于 `content_version` 的乐观锁冲突检测。**这是现在最该补的一轮**——学术能力（W4）已经能写，但保存仍是手动点按钮、没有自动保存与冲突提示。
+2. ~~**`v0.1.53` 编辑器内核（W2）与自动保存（W3）**~~ **已拆成两轮、且都不是 `0.1.53`**：自动保存（W3）由 **`v0.1.56`** 交付、编辑器内核（W2）由 **`v0.1.57`** 交付（见本文件上文的两个条目）。两轮都要动 `PaperEditor.tsx` 与 `common.json`，W3 先合入并占用 `0.1.56`，W2 于是放弃预分配的 `0.1.55`、从含 W3 的 `main`（`6b8f573`）重切为 `0.1.57`，**以加法方式**叠加在自动保存之上（W3 的 `useAutosave` / `useUnsavedGuard` / `onReloadConflict` 一行未改）。**仍未定**：`dynamic({ssr:false})` barrel 的取舍。
 3. ~~**`v0.1.54` 学术能力**~~ **已发布，实际交付的就是这一条（W4）**：公式（KaTeX，保留 LaTeX 源）、表格、脚注（**未走 spike、未买 Pro，直接自研**）、引用节点 + 参考文献列表（CSL-JSON，编号=文献表顺序）、交叉引用（`UniqueID` 稳定 ID）+ 统一编号插件 `AcademicNumbering`。**原表把这一条排在这里，实际先于 `v0.1.53` 做了**——两者只依赖 `v0.1.52`、彼此无依赖，顺序调换成立。
-4. **`v0.1.55` 导入导出（W5 的 Markdown 部分 + 图片）**：Markdown 导入导出（`@tiptap/markdown`）、图片插入与存储。
-5. **`v0.1.56` 导出与投稿（W5 剩余）**：Typst / Pandoc 服务端导出 PDF、DOCX、LaTeX/BibTeX（必须以独立进程 + 超时 + 并发上限运行）。
-6. **`v0.1.57` 版本历史（W6）**：正文快照、对比、回滚、手动打标签。
-7. **`v0.2.0` 协作（W7 + 安全债）**：**先修 `/ws` 的 STOMP 身份绑定**（见 [PROJECT_STATUS.md](PROJECT_STATUS.md) 第 11 节安全债），再上 Yjs + Hocuspocus 协作编辑。
-8. **`v0.2.x` 写作工作台整合（W8 + W9）**：AI 写作辅助 + 写作台整合 + 性能与合规收口。
+4. ~~**`v0.1.56` 导出与投稿（W5 剩余）**~~ **该号已被自动保存（W3）占用**：W3 与 W5 无依赖，且"写了一半会丢"比"导出格式"更痛，因此 `0.1.56` 先发 W3（见本文件上文的 v0.1.56 条目）；紧接着 `0.1.57` 又给了 W2（W2 原先要的 `0.1.55` 已作废）。**W5（导入导出 + 导出与投稿）顺延到 `v0.1.58` 起**，[WRITER_ROADMAP.md](WRITER_ROADMAP.md) 第 5 节的迭代表已按新号重排。
+5. **`v0.1.58` 导入导出（W5 的 Markdown 部分 + 图片）**：Markdown 导入导出（`@tiptap/markdown`）、图片插入与存储。
+6. **`v0.1.59` 导出与投稿（W5 剩余）**：Typst / Pandoc 服务端导出 PDF、DOCX、LaTeX/BibTeX（必须以独立进程 + 超时 + 并发上限运行）。
+7. **`v0.1.60` 版本历史（W6）**：正文快照、对比、回滚、手动打标签。**W3 落地后这条更值得做**——冲突现在只解决"谁的写入算数"，没有历史版本、不能看差异也不能回滚。
+8. **`v0.2.0` 协作（W7 + 安全债）**：**先修 `/ws` 的 STOMP 身份绑定**（见 [PROJECT_STATUS.md](PROJECT_STATUS.md) 第 11 节安全债），再上 Yjs + Hocuspocus 协作编辑。
+9. **`v0.2.x` 写作工作台整合（W8 + W9）**：AI 写作辅助 + 写作台整合 + 性能与合规收口。
 
 "引入开源论文编辑器"的实际形态是**分层复用**（编辑器内核 Tiptap 3 + 排版引擎 Typst/Pandoc + 引用生态 CSL），不是引入某个论文编辑器产品；理由与实测数据见 [PAPER_EDITOR_SELECTION.md](PAPER_EDITOR_SELECTION.md)。**这一条在 `v0.1.54` 上已经验证过一次：学术能力用的是 Tiptap 官方 MIT 扩展，"借用"的粒度是扩展而不是产品。**
 

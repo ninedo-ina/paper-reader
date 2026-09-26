@@ -22,7 +22,7 @@
 | AI 对话 | [AI_CHAT_TECHNICAL_SOLUTION.md](AI_CHAT_TECHNICAL_SOLUTION.md) | Provider、响应兼容、会话隔离、reasoning、论文上下文 |
 | PDF 渲染 | [PDF_RENDERING_PIPELINE.md](PDF_RENDERING_PIPELINE.md) | PDF.js、文本层、选区、批注与渲染兼容 |
 | 论文创建 | [CREATE_PAPER_FEATURE.md](CREATE_PAPER_FEATURE.md) | 手动创建、字段模型和编辑器 |
-| 写作方向规划 | [WRITER_ROADMAP.md](WRITER_ROADMAP.md) | reader → writer 的需求归纳、现状差距、W1-W9 主题与迭代拆分（**W1 正文持久化已由 v0.1.52 落地，W4 学术能力已由 v0.1.54 落地；W2 编辑器内核与 W3 自动保存仍未做**） |
+| 写作方向规划 | [WRITER_ROADMAP.md](WRITER_ROADMAP.md) | reader → writer 的需求归纳、现状差距、W1-W9 主题与迭代拆分（**W1 正文持久化已由 v0.1.52 落地，W4 学术能力已由 v0.1.54 落地，W3 自动保存已由 v0.1.56 落地，W2 编辑器内核与基础体验已由 v0.1.57 落地——W1-W4 全部完成**） |
 | 编辑器选型 | [PAPER_EDITOR_SELECTION.md](PAPER_EDITOR_SELECTION.md) | 开源论文编辑器/排版引擎/引用生态的实测对比、许可证风险、推荐方案与 PoC 清单 |
 | 元数据补全 | [EXTERNAL_METADATA_ENRICHMENT.md](EXTERNAL_METADATA_ENRICHMENT.md) | arXiv/DOI 标识、外部 Provider、字段来源、冲突、已实现边界与后续计划 |
 | 通知邮件 | [NOTIFICATION_TEMPLATES.md](NOTIFICATION_TEMPLATES.md) | 通知中心对接契约、`template`/`template_data` 字段、灰度模板要求与验收标准 |
@@ -40,12 +40,12 @@
 
 ## 当前基线
 
-- 当前发布版本：`0.1.54`（学术写作能力：公式、表格、脚注、引用与参考文献、交叉引用，`REQ-202609-0260` = writer 路线图 W4，2026-09-26 UTC 已发布）
-- 当前发布版本分支：`feature/v0.1.54`；**生产前端 `0.1.54`、后端 `0.1.52`**（2026-09-26 UTC 已核验）。**本轮为纯前端迭代，后端 jar 未重建、`paper-reader-backend` 未重启**（Kotlin 零改动），Flyway 仍是 `V16`，`/api/health` 仍返回 `0.1.52`——与 v0.1.50 / v0.1.51 同类，与 v0.1.52 不同。判定前端线上版本请用 favicon `?v=` 与构建产物哈希，**不要用 `/api/health`**
-- 开发中版本：无（`0.1.54` 已发布，下一迭代尚未开始）
-- 长期分支：`dev`（集成）、`main`（默认/生产）。本轮 `feature/v0.1.54 -> dev -> main`（显式 `--no-ff` 合并提交），随后该分支上追加的仅文档同步提交再以**第二个显式 `--no-ff` 合并提交**带入 `main`，`dev` 快进对齐；分支保留，未强推、未改写历史
+- 当前发布版本：`0.1.57`（编辑器基础格式工具栏与字数统计：`REQ-202609-0258` = writer 路线图 W2，2026-09-26 UTC 已发布）；上一发布版本 `0.1.56`（正文自动保存与草稿保护：2 秒防抖自动保存、保存状态指示与重试、离开页面拦截、并发冲突显式报出，`REQ-202609-0259` = writer 路线图 W3）
+- 当前发布版本分支：`feature/v0.1.57`（W2，纯前端）；上一发布分支 `feature/req-202609-0259-autosave`（W3，有真实 Kotlin 改动、后端 jar 已重建）。**生产前端 `0.1.57`、后端 `0.1.56`**（2026-09-26 UTC 已核验：favicon `?v=0.1.57`、线上样式表含 `.format-toolbar*`；`/api/health` 报 `0.1.56` 因为是 W3 重建的后端，**判定前端线上版本请用 favicon `?v=` 与产物哈希，不要用 `/api/health`**）。Flyway 仍是 `V16`（两轮都未新增迁移）
+- 开发中版本：无（`0.1.57` 已发布，writer 方向 W1-W4 全部落地，下一迭代尚未开始）。**版本链是 `v0.1.54 → v0.1.56（W3）→ v0.1.57（W2）`**：`0.1.55` 原分配给 W2，因并行的 W3 先合入 `0.1.56` 而被放弃（分支 `feature/v0.1.55` 留在 origin，未合入、未删除），W2 顺延为 `0.1.57` 并以加法方式叠加在 W3 之上——**没有 `0.1.55` 线上版本是有意为之**
+- 长期分支：`dev`（集成）、`main`（默认/生产）。`v0.1.57` 之后，本文档由 `REQ-202609-0259`（W3）的**第二个显式 `--no-ff` 合并提交**带入 `main`（W3 的代码合并与文档同步分两次合入，是本仓库的既有做法），`dev` 快进对齐；分支保留，未强推、未改写历史
 - 生产域名：`https://paper.pilo.eu.cc`
 - 文档核对日期：2026-09-26（UTC）
-- 2026-09-26（UTC）新增写作方向规划文档（`REQ-202609-0255`）：[WRITER_ROADMAP.md](WRITER_ROADMAP.md) 与 [PAPER_EDITOR_SELECTION.md](PAPER_EDITOR_SELECTION.md)。该轮为纯文档迭代（不含代码改动、不涉及版本号变更、不触发生产部署）；其 **W1** 随后由 v0.1.52 落地、**W4** 由 v0.1.54 落地，详见 [WRITER_ROADMAP.md](WRITER_ROADMAP.md)。
+- 2026-09-26（UTC）新增写作方向规划文档（`REQ-202609-0255`）：[WRITER_ROADMAP.md](WRITER_ROADMAP.md) 与 [PAPER_EDITOR_SELECTION.md](PAPER_EDITOR_SELECTION.md)。该轮为纯文档迭代（不含代码改动、不涉及版本号变更、不触发生产部署）；其 **W1** 随后由 v0.1.52 落地、**W4** 由 v0.1.54 落地、**W3** 由 v0.1.56 落地、**W2** 由 v0.1.57 落地（W1-W4 至此全部完成），详见 [WRITER_ROADMAP.md](WRITER_ROADMAP.md)。
 
 如果这里的版本低于根目录 `frontend/VERSION` 或 `backend/VERSION`，说明交接文档没有随发布更新，应在继续开发前先核实并修正文档。

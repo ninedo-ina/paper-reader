@@ -6,10 +6,22 @@
 - **W2 叠加在 W3 之上，别回退 W3。** `PaperEditor.tsx` 里 W3 的 `useAutosave` / `useUnsavedGuard` / `markDirty` / `onReloadConflict` 必须保留；W2 只加 `FormatToolbar` 渲染、`TextAlign` 扩展、`useEditorState` 字数统计块与页脚字数条。`FormatToolbar` 的按钮用 `onMouseDown` + `preventDefault` 保住选区（用 `onClick` 会先失焦，格式命令作用不到选中文本）。
 - 本轮实测测试基线：前端 **26 个测试文件 / 183 项**（v0.1.54 为 25 / 154），`pnpm exec tsc --noEmit`、`pnpm run build` 均 exit 0；后端 Kotlin 零改动、未重跑。线上 favicon `?v=0.1.57`、样式表 `_next/static/css/0748322fe6c9c60a.css` 含 `.format-toolbar` / `.format-toolbar-button` / `.format-toolbar-divider`。**无登录态浏览器端到端验收**，工具栏交互由 `format-toolbar.test.tsx` 在 jsdom 里用真实编辑器实例覆盖。以上是**期望值**，不是可放宽的上限。
 
-## v0.1.56 正文自动保存与草稿保护（W3，并行工作流 `REQ-202609-0259`）
+## v0.1.56 正文自动保存与草稿保护（防抖自动保存 / 状态指示 / 离开拦截 / 并发冲突）
 
-- `v0.1.56` 由并行工作流 `REQ-202609-0259` 交付（**W3**），不是 W2 迭代的产物；此处只留桥接提醒，**后端已在 v0.1.56 重建**，`/api/health` = `0.1.56`，详细注意事项以 `REQ-0259` 的 `docs/` 为准。
-- **保存路径以 W3 的 `useAutosave` 为准**：`content_version` 现在既记录又**校验**（W1 时只记录）——写入带 `baseVersion`，版本不匹配后端返 `1008` / HTTP 409（`ContentVersionConflictException`），前端进 `conflict` 态提示重新加载。改保存相关逻辑前先读 `useAutosave.ts` / `useUnsavedGuard.ts`，别绕开冲突检测直接 `PUT /content`。
+- 需求编号 `REQ-202609-0259`（**writer 路线图 W3**，见 [WRITER_ROADMAP.md](WRITER_ROADMAP.md) 第 4 节），分支 `feature/req-202609-0259-autosave`，从 `main` 的 `a924db9`（v0.1.54 的文档同步合并提交）展开。**本轮有真实 Kotlin 改动，后端 jar 已重建并重启**，所以 `/api/health` **这次真的是版本依据**（本机与公网都返回 `0.1.56`）——这与紧邻下一节的 **v0.1.54「纯前端、后端有意未重启、`/api/health` 落后于前端」** 是相反的情形，别把两轮的判定方式套错。
+- **版本号跳过了 `0.1.55`，那是撞号后被放弃的，不是漏发。** `0.1.55` 原分配给姊妹迭代 **W2（编辑器内核，`REQ-202609-0258`）**，但本迭代（W3）先合入占用了 `0.1.56`，W2 遂放弃 `0.1.55`（分支 `feature/v0.1.55` 留在 origin 作痕迹，未合入、未删除），重切为 **`feature/v0.1.57`** 并以**加法方式**叠加在本轮的自动保存之上——`useAutosave` / `useUnsavedGuard` / `onReloadConflict` 一行未改。两轮都改 `PaperEditor.tsx`、`en/zh common.json`、`paper-content.test.tsx`，共用一个版本号会让版本链歧义。**看到版本链里没有 `0.1.55` 不代表漏发**，`docs/PROJECT_STATUS.md` 已注明。
+- **冲突不是失败，别给它加自动重试。** `useAutosave` 命中 `err.code === 1008`（`CONTENT_CONFLICT_CODE`）时状态置为 `conflict`，**既不排 5 秒重试、也不在 `online` 事件里重试** —— 静默重试等于替用户决定覆盖别人的写入，正是 W3 要禁止的行为。将来任何"顺手补一个重试"的改动都会直接推翻本轮的核心验收项。此时只能靠用户点「加载最新」。
+- **失败重试和冲突是两条互斥的路径。** 前端 `paper-content.test.tsx` 里专门钉了「冲突态下『保存失败』文案与重试按钮都不出现」；如果新增状态把它们揉在一起，这条测试会挂——那是保护，不是碍事。
+- **`baseVersion` 是可选的，空即跳过校验 —— 这是有意保留的向后兼容。** 服务端的乐观锁**只在调用方传了 `baseVersion` 时生效**（`UpdatePaperContentRequest.baseVersion: Int?`）。**新增任何调用 `PUT /api/papers/{id}/content` 的地方，必须把读到的 `contentVersion` 作为 `baseVersion` 传过去**，否则它仍会整篇覆盖别人的编辑，服务端不会替它拦。比较与自增在同一次悲观锁读取之内完成（`PaperService.updatePaperContent`），**不要把比较挪到加锁之前**。
+- **"绝不被静默覆盖"这条守了两遍**：前端冲突态不给重试，服务端在用户硬点保存时照样用过期 `baseVersion` 返回 `409`/`1008`。删任何一边都还有另一边，但两边都别删。
+- **`useAutosave` 用编辑序号判断"我保存完时文档有没有又变"。** 保存成功时比对回包时的 `editSeqRef.current` 与发起时的序号：期间又改过就回到待保存并重新排期，**不会把"已保存"错报给已经变化的文档**。**不要为了省一个 ref 把它改成"调用返回即已保存"** —— 那是"显示已保存但磁盘上不是最新"的经典 bug。
+- **`PaperEditor.tsx` 里的 `editorRef` 是拿来打断循环依赖的，不是多余的缓存。** `getPayload` 通过 ref 读 `editor.getJSON()`/`getHTML()`，`onUpdate` 只调 `markDirty()`，从而避免"编辑器依赖 autosave、autosave 又依赖编辑器"的重建循环。`PaperEditor` 的手动保存按钮改为调 `saveNow()`、按 `status === "saving"` 禁用，**本轮把旧的本地 `isSaving`/`status` 状态与 `handleSave` 一并删掉了 —— 同一件事只留一个真相，不要新加第二个保存状态。**
+- **离开拦截只拦跳转，不拦保存。** `useUnsavedGuard` 的站内 `<a>` 捕获阶段拦截**故意跳过**已 `preventDefault` 的、非左键、带修饰键、`#` 锚点、`_blank`、`download`、以及指向当前地址的链接。`beforeunload` 里 `preventDefault` + `returnValue = ""` 两个都要写，浏览器原生确认才会弹。改这里前先想清楚"哪些点击不该被打断"。
+- **改 `common.json` 会和 W2 冲突。** 本轮 14 个语言包各新增 5 个 `papers` 键（`saving` / `saveRetry` / `autosaveConflict` / `reloadLatest` / `unsavedLeaveConfirm`），纯新增、各语言键集合一致（87 个）。W2 也要动同一批文件，**合并时按文件逐条解决，不要整体覆盖某一侧**（覆盖会丢文案且不会报错，缺键只是退回中文）。
+- **类型检查请直接调 `./node_modules/.bin/tsc`，不要在仓库里跑 `pnpm exec tsc`** —— 后者会顺手触发一次 `pnpm install`（输出里能看到 lockfile 策略检查与 "Done in … using pnpm v12.4.2"）。理由与 `docs/ATTENTION.md` 后文记的 `npx` 触发 pnpm install 是同一条。测试里用 `vi.useFakeTimers()` 时注意：`findBy*`/`waitFor` 的内部轮询在假定时器下不会推进、会直接超时，应在 `act` 里 `vi.advanceTimersByTime` 之后用同步的 `getBy*` 断言。
+- 部署收尾**不能图省事用 `pm2 restart paper-reader-backend`**：JAR 路径带版本号，restart 会继续加载旧路径（本轮之前的旧 jar 是 `0.1.52`）。必须 `set -a; . ./.env; set +a` 后在**同一个 shell** 里连续 `pm2 delete` + `pm2 start`（重建后的 PM2 项不继承被删进程的应用环境变量），探活通过再 `pm2 save`。本轮实测后端 PM2 **id 由 2 变 3**、pid 2383738、`restart_time=0`，前端 pid 2383821、重启计数 2 → 3；`/api/health` = `0.1.56`，favicon `?v=0.1.56`，自动保存所在 chunk 与论文详情页 chunk 均与本地 `.next` **sha256 逐字节一致**，未带凭据 `PUT /api/papers/1/content` 得 `401`/`1001`（证明线上是带校验的后端，不是 404）。**Flyway 仍停在 `V16`**：本轮只加请求字段与业务码，无新迁移。
+- 本轮实测测试基线：前端 **25 个测试文件 / 162 项**（v0.1.54 为 25 / 154），后端 **84 项**（v0.1.52 / v0.1.54 基线为 81）。均为**期望值**，不是可以放宽的上限。
+- 尚未覆盖：① **没有登录态下的浏览器端到端验收**（同 v0.1.52 / v0.1.54 的原因，生产登录方式受限），所以「断网→停手→恢复网络自动落库」「两个标签页抢写时后写者看到『内容已被更新』」「带未保存改动关标签页弹浏览器原生确认」这三条**验收标准是在前端测试里以真实组件 + 假定时器钉住的**，未在真实浏览器里人工走一遍；冲突的服务端半边另有后端单测 + 线上 `401` 探测作证。② 冲突只解决"谁的写入算数"，**没有历史版本、不能看差异也不能回滚**（属 `W6`）。③ W2（编辑器内核）仍未做，本轮自动保存是挂在裸编辑器上的，工具栏落地后 `useAutosave` 不需要改。
 
 ## v0.1.54 学术写作能力（公式 / 表格 / 脚注 / 引用 / 交叉引用）
 
@@ -37,7 +49,7 @@
 - 新增两条文案 `papers.contentLoadFailed` / `papers.saveFailed`，**14 个语言包都要加**（缺键会退回中文，不会报错，所以漏了不容易发现）。
 - 部署收尾别踩既有的两个坑：后端 JAR 路径带版本号，`pm2 restart paper-reader-backend` 会继续跑旧 JAR，必须 `set -a && . ./.env && set +a` 后在**同一个 shell** 里 `pm2 delete` + `pm2 start`；探活与日志确认后再 `pm2 save`。本轮实测 Flyway `Successfully applied 1 migration … now at version v16`，`/api/health` 本地与公网均返回 `0.1.52`。
 - 本轮实测测试基线：前端 **23 个测试文件 / 137 项**（v0.1.51 为 22 / 129），后端 **81 项**（原 73）。均为**期望值**，不是可以放宽的上限。
-- 尚未覆盖：浏览器层面「刷新 / 重新登录后正文仍在」目前只有接口往返 + 直接查库 + 单测三方证据，**没有登录态下的截图式验收**；`content_version` 只记录、不校验，真正的乐观锁冲突检测留给 W3。
+- 尚未覆盖：浏览器层面「刷新 / 重新登录后正文仍在」目前只有接口往返 + 直接查库 + 单测三方证据，**没有登录态下的截图式验收**；`content_version` 只记录、不校验，真正的乐观锁冲突检测留给 W3（**已于 `v0.1.56` 落地：`PUT` 支持可选 `baseVersion`，不符即 `409`/业务码 `1008`，见本文档 v0.1.56 条目**）。
 
 ## v0.1.51 菜单栏计数回退为行内、侧栏角标保留
 
