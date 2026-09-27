@@ -15,6 +15,8 @@ import { ImportMarkdownDialog } from "@/components/papers/ImportMarkdownDialog"
 import "katex/dist/katex.min.css"
 import { academicExtensions } from "./extensions"
 import { AcademicToolbar, type MathDialogState } from "./AcademicToolbar"
+import { AiWritingPanel } from "./AiWritingPanel"
+import { AiWritingToolbar, type AiWritingRequest } from "./AiWritingToolbar"
 import { FormatToolbar } from "./FormatToolbar"
 import { TextAlign } from "./text-align"
 import { computeEditorStats } from "./editor-stats"
@@ -56,6 +58,8 @@ export function PaperEditor({
   const [mathDialog, setMathDialog] = useState<MathDialogState | null>(null)
   const [reloading, setReloading] = useState(false)
   const [showImport, setShowImport] = useState(false)
+  // AI 写作建议面板的当前请求；为 null 时面板不挂载，避免空跑一次生成
+  const [writingRequest, setWritingRequest] = useState<AiWritingRequest | null>(null)
   const [showHistory, setShowHistory] = useState(false)
 
   // 编辑器与自动保存互相依赖：编辑器的 onUpdate 要 markDirty，而 autosave 取内容又要读编辑器。
@@ -261,6 +265,8 @@ export function PaperEditor({
         onOpenMathDialog={setMathDialog}
       />
 
+      <AiWritingToolbar editor={editor} onRun={setWritingRequest} />
+
       <div className="flex-1 overflow-y-auto px-8 py-6">
         <EditorContent editor={editor} />
       </div>
@@ -275,6 +281,15 @@ export function PaperEditor({
           open={showImport}
           onClose={() => setShowImport(false)}
           onSubmit={handleImportSubmit}
+        />
+      )}
+
+      {editor && writingRequest && (
+        <AiWritingPanel
+          editor={editor}
+          request={writingRequest}
+          onClose={() => setWritingRequest(null)}
+          onApplied={markDirty}
         />
       )}
 

@@ -12,6 +12,11 @@ const mocks = vi.hoisted(() => ({
     isActive: vi.fn(() => false),
     can: vi.fn(() => ({ undo: () => false, redo: () => false })),
     commands: { setContent: vi.fn() },
+    // AI 写作工具栏要从 state 里读选区（textBetween）和参考文献表（descendants）
+    state: {
+      selection: { from: 1, to: 1, empty: true },
+      doc: { textBetween: () => "", descendants: () => undefined },
+    },
   },
   editorOptions: {} as { content?: unknown },
   getPaperContent: vi.fn(),

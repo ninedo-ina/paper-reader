@@ -287,6 +287,223 @@ html[lang="ug"] {
   background: var(--border-subtle);
 }
 
+/* ---------------------------------------------------------------------------
+   W8 AI 写作：工具栏入口 + 建议面板
+   入口跟学术工具栏同一套观感；面板里的披露块常驻，用户随时能看到「发了什么、发给谁」。
+--------------------------------------------------------------------------- */
+
+.ai-writing-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface-2);
+}
+
+.ai-writing-anchor {
+  position: relative;
+}
+
+.ai-writing-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  transition: background-color 150ms, color 150ms;
+}
+
+.ai-writing-trigger:hover:not(:disabled),
+.ai-writing-trigger[aria-expanded="true"] {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.ai-writing-trigger:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ai-writing-note {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.ai-writing-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 50;
+  min-width: 240px;
+  padding: 4px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--surface-0);
+  box-shadow: var(--shadow-lg);
+}
+
+.ai-writing-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 13px;
+  text-align: left;
+  transition: background-color 150ms;
+}
+
+.ai-writing-menu-item:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.ai-writing-menu-item:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ai-writing-menu-hint {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.ai-writing-panel {
+  display: flex;
+  flex-direction: column;
+  width: min(680px, 100%);
+  max-height: min(80vh, 720px);
+}
+
+.ai-writing-disclosure {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-hover);
+}
+
+.ai-writing-disclosure-title {
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.ai-writing-disclosure-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ai-writing-disclosure-note {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.ai-writing-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-height: 120px;
+  padding: 16px 20px;
+  overflow-y: auto;
+}
+
+.ai-writing-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.ai-writing-select {
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--surface-0);
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.ai-writing-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.ai-writing-hint {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.ai-writing-report {
+  padding: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: var(--surface-0);
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ai-writing-reference-line {
+  display: flex;
+  gap: 8px;
+  white-space: normal;
+}
+
+.ai-writing-reference-number {
+  flex: none;
+  min-width: 20px;
+  color: var(--text-tertiary);
+}
+
+.ai-writing-suggestion-input {
+  width: 100%;
+  min-height: 200px;
+  flex: 1;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--surface-0);
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.7;
+  resize: vertical;
+}
+
+.ai-writing-suggestion-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.ai-writing-error {
+  padding: 8px 20px;
+  color: #dc2626;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
 /* --- 公式 --- */
 
 .academic-math-block,
