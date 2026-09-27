@@ -665,7 +665,14 @@
     "aiWritingReferenceParseFailed": "مدل دادهٔ معتبر منبع را برنگرداند. لطفاً دوباره تلاش کنید.",
     "aiWritingReferenceIdMismatch": "شناسهٔ مدخلهای بازگشتی با فهرست کنونی همخوان نیست؛ برای اینکه ارجاعهای متن بیاعتبار نشوند، نوشتن رد شد.",
     "editorContentTooLarge": "حجم متن {size} است و از سقف {limit} برای هر مقاله فراتر رفته. پیش از ذخیره آن را کوتاه یا تقسیم کنید.",
-    "saveRejected": "سرور این ذخیره را رد کرد؛ تلاش خودکار متوقف شد."
+    "saveRejected": "سرور این ذخیره را رد کرد؛ تلاش خودکار متوقف شد.",
+    "collabConnecting": "در حال اتصال به نشست همکاری…",
+    "collabLoadFailed": "بارگذاری نشست همکاری ناموفق بود",
+    "collabOnline": "متصل",
+    "collabOffline": "قطع‌شده",
+    "comments": "نظرات",
+    "manageCollab": "همکاری و اشتراک‌گذاری",
+    "sharedWithMe": "به‌اشتراک‌گذاشته‌شده با من"
   },
   "export": {
     "openExport": "برون‌بری",
@@ -1326,5 +1333,42 @@
   "notifications": {
     "welcomeTitle": "معرفی قابلیت‌های سیستم",
     "welcomeMessage": "به PaperHelper خوش آمدید! برای مشاهده ویژگی‌های نسخه فعلی کلیک کنید"
+  },
+  "comments": {
+    "title": "نظرات",
+    "close": "بستن",
+    "empty": "هنوز نظری وجود ندارد",
+    "someone": "شخصی",
+    "resolve": "علامت‌گذاری به‌عنوان حل‌شده",
+    "reopen": "بازگشایی",
+    "delete": "حذف",
+    "placeholder": "نظری بنویسید…",
+    "send": "ارسال"
+  },
+  "collab": {
+    "title": "همکاری و اشتراک‌گذاری",
+    "collaborators": "همکاران",
+    "noCollaborators": "هنوز همکاری وجود ندارد",
+    "role_OWNER": "نویسنده",
+    "role_EDITOR": "قابل ویرایش",
+    "role_VIEWER": "فقط خواندنی",
+    "removeCollaborator": "حذف",
+    "emailPlaceholder": "برای دعوت همکار، ایمیل را وارد کنید",
+    "add": "افزودن",
+    "shareLinks": "پیوندهای اشتراک‌گذاری فقط‌خواندنی",
+    "createLink": "ایجاد پیوند",
+    "noShareLinks": "هنوز پیوند اشتراک‌گذاری وجود ندارد",
+    "revoked": "لغو شد",
+    "copyLink": "کپی پیوند",
+    "revoke": "لغو",
+    "copied": "پیوند کپی شد",
+    "copyFailed": "کپی ناموفق بود"
+  },
+  "share": {
+    "invalidTitle": "پیوند نامعتبر یا منقضی شده است",
+    "invalidHint": "ممکن است این پیوند اشتراک‌گذاری لغو شده یا منقضی شده باشد.",
+    "readOnlyBadge": "اشتراک‌گذاری فقط‌خواندنی",
+    "abstract": "چکیده",
+    "empty": "این مقاله هنوز محتوایی ندارد."
   }
 }

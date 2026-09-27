@@ -665,7 +665,14 @@
     "aiWritingReferenceParseFailed": "モデルが返したのは有効な参考文献データではありません。再試行してください。",
     "aiWritingReferenceIdMismatch": "返された項目 ID が現在の参考文献表と一致しないため、本文中の引用が無効にならないよう書き込みを拒否しました。",
     "editorContentTooLarge": "本文が {size} で1件あたりの上限 {limit} を超えています。内容を削るか分割してから保存してください。",
-    "saveRejected": "サーバーが保存を拒否しました。自動再試行を停止しました。"
+    "saveRejected": "サーバーが保存を拒否しました。自動再試行を停止しました。",
+    "collabConnecting": "共同編集セッションに接続中…",
+    "collabLoadFailed": "共同編集セッションの読み込みに失敗しました",
+    "collabOnline": "接続済み",
+    "collabOffline": "未接続",
+    "comments": "コメント",
+    "manageCollab": "共同編集と共有",
+    "sharedWithMe": "自分と共有中"
   },
   "export": {
     "openExport": "エクスポート",
@@ -1326,5 +1333,42 @@
   "notifications": {
     "welcomeTitle": "システム機能の紹介",
     "welcomeMessage": "PaperHelperへようこそ！クリックして現在のバージョンの機能をご覧ください"
+  },
+  "comments": {
+    "title": "コメント",
+    "close": "閉じる",
+    "empty": "まだコメントはありません",
+    "someone": "誰か",
+    "resolve": "解決済みにする",
+    "reopen": "再開",
+    "delete": "削除",
+    "placeholder": "コメントを書く…",
+    "send": "送信"
+  },
+  "collab": {
+    "title": "共同編集と共有",
+    "collaborators": "共同編集者",
+    "noCollaborators": "まだ共同編集者はいません",
+    "role_OWNER": "著者",
+    "role_EDITOR": "編集可能",
+    "role_VIEWER": "閲覧のみ",
+    "removeCollaborator": "削除",
+    "emailPlaceholder": "メールアドレスを入力して共同編集者を招待",
+    "add": "追加",
+    "shareLinks": "閲覧専用の共有リンク",
+    "createLink": "リンクを作成",
+    "noShareLinks": "まだ共有リンクはありません",
+    "revoked": "取り消し済み",
+    "copyLink": "リンクをコピー",
+    "revoke": "取り消す",
+    "copied": "リンクをコピーしました",
+    "copyFailed": "コピーに失敗しました"
+  },
+  "share": {
+    "invalidTitle": "リンクが無効または期限切れです",
+    "invalidHint": "この共有リンクは取り消されたか、有効期限が切れている可能性があります。",
+    "readOnlyBadge": "閲覧専用の共有",
+    "abstract": "要約",
+    "empty": "この論文にはまだ本文がありません。"
   }
 }

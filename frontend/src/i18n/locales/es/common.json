@@ -665,7 +665,14 @@
     "aiWritingReferenceParseFailed": "El modelo no devolvió datos de referencias válidos. Inténtalo de nuevo.",
     "aiWritingReferenceIdMismatch": "Los identificadores devueltos no coinciden con la lista actual; se rechazó la escritura para no invalidar las citas del texto.",
     "editorContentTooLarge": "El contenido ocupa {size} y supera el límite de {limit} por artículo. Redúcelo o divídelo antes de guardar.",
-    "saveRejected": "El servidor rechazó este guardado; se detuvieron los reintentos automáticos."
+    "saveRejected": "El servidor rechazó este guardado; se detuvieron los reintentos automáticos.",
+    "collabConnecting": "Conectando a la sesión de colaboración…",
+    "collabLoadFailed": "No se pudo cargar la sesión de colaboración",
+    "collabOnline": "Conectado",
+    "collabOffline": "Desconectado",
+    "comments": "Comentarios",
+    "manageCollab": "Colaboración y uso compartido",
+    "sharedWithMe": "Compartido conmigo"
   },
   "export": {
     "openExport": "Exportar",
@@ -1326,5 +1333,42 @@
   "notifications": {
     "welcomeTitle": "Introducción a las funciones del sistema",
     "welcomeMessage": "¡Bienvenido a PaperHelper! Haz clic para ver las características de la versión actual"
+  },
+  "comments": {
+    "title": "Comentarios",
+    "close": "Cerrar",
+    "empty": "Aún no hay comentarios",
+    "someone": "Alguien",
+    "resolve": "Marcar como resuelto",
+    "reopen": "Reabrir",
+    "delete": "Eliminar",
+    "placeholder": "Escribe un comentario…",
+    "send": "Enviar"
+  },
+  "collab": {
+    "title": "Colaboración y uso compartido",
+    "collaborators": "Colaboradores",
+    "noCollaborators": "Aún no hay colaboradores",
+    "role_OWNER": "Autor",
+    "role_EDITOR": "Puede editar",
+    "role_VIEWER": "Solo lectura",
+    "removeCollaborator": "Quitar",
+    "emailPlaceholder": "Introduce un correo para invitar a un colaborador",
+    "add": "Añadir",
+    "shareLinks": "Enlaces para compartir de solo lectura",
+    "createLink": "Crear enlace",
+    "noShareLinks": "Aún no hay enlaces para compartir",
+    "revoked": "Revocado",
+    "copyLink": "Copiar enlace",
+    "revoke": "Revocar",
+    "copied": "Enlace copiado",
+    "copyFailed": "No se pudo copiar"
+  },
+  "share": {
+    "invalidTitle": "Enlace no válido o caducado",
+    "invalidHint": "Es posible que este enlace para compartir haya sido revocado o haya caducado.",
+    "readOnlyBadge": "Compartición de solo lectura",
+    "abstract": "Resumen",
+    "empty": "Este artículo aún no tiene contenido."
   }
 }

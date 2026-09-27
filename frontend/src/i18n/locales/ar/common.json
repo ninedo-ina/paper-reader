@@ -665,7 +665,14 @@
     "aiWritingReferenceParseFailed": "لم يُعِد الطراز بيانات مراجع صالحة. يرجى المحاولة مرة أخرى.",
     "aiWritingReferenceIdMismatch": "معرّفات المدخلات المُعادة لا تطابق القائمة الحالية، فرُفضت الكتابة حتى لا تتعطل الإحالات في النص.",
     "editorContentTooLarge": "حجم النص {size} ويتجاوز الحد الأقصى {limit} لكل ورقة. يرجى اختصاره أو تقسيمه قبل الحفظ.",
-    "saveRejected": "رفض الخادم هذا الحفظ؛ تم إيقاف إعادة المحاولة التلقائية."
+    "saveRejected": "رفض الخادم هذا الحفظ؛ تم إيقاف إعادة المحاولة التلقائية.",
+    "collabConnecting": "جارٍ الاتصال بجلسة التعاون…",
+    "collabLoadFailed": "فشل تحميل جلسة التعاون",
+    "collabOnline": "متصل",
+    "collabOffline": "غير متصل",
+    "comments": "التعليقات",
+    "manageCollab": "التعاون والمشاركة",
+    "sharedWithMe": "تمت مشاركته معي"
   },
   "export": {
     "openExport": "تصدير",
@@ -1326,5 +1333,42 @@
   "notifications": {
     "welcomeTitle": "تعريف بميزات النظام",
     "welcomeMessage": "مرحباً بك في PaperHelper! انقر لعرض ميزات الإصدار الحالي"
+  },
+  "comments": {
+    "title": "التعليقات",
+    "close": "إغلاق",
+    "empty": "لا توجد تعليقات بعد",
+    "someone": "شخص ما",
+    "resolve": "وضع علامة كمحلول",
+    "reopen": "إعادة الفتح",
+    "delete": "حذف",
+    "placeholder": "اكتب تعليقًا…",
+    "send": "إرسال"
+  },
+  "collab": {
+    "title": "التعاون والمشاركة",
+    "collaborators": "المتعاونون",
+    "noCollaborators": "لا يوجد متعاونون بعد",
+    "role_OWNER": "المؤلف",
+    "role_EDITOR": "يمكنه التحرير",
+    "role_VIEWER": "للقراءة فقط",
+    "removeCollaborator": "إزالة",
+    "emailPlaceholder": "أدخل بريدًا إلكترونيًا لدعوة متعاون",
+    "add": "إضافة",
+    "shareLinks": "روابط مشاركة للقراءة فقط",
+    "createLink": "إنشاء رابط",
+    "noShareLinks": "لا توجد روابط مشاركة بعد",
+    "revoked": "تم الإلغاء",
+    "copyLink": "نسخ الرابط",
+    "revoke": "إلغاء",
+    "copied": "تم نسخ الرابط",
+    "copyFailed": "فشل النسخ"
+  },
+  "share": {
+    "invalidTitle": "الرابط غير صالح أو منتهي الصلاحية",
+    "invalidHint": "ربما تم إلغاء رابط المشاركة هذا أو انتهت صلاحيته.",
+    "readOnlyBadge": "مشاركة للقراءة فقط",
+    "abstract": "الملخص",
+    "empty": "لا يحتوي هذا البحث على محتوى بعد."
   }
 }

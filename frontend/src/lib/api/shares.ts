@@ -24,7 +24,7 @@ export function revokeShareLink(paperId: number, shareId: number): Promise<null>
   return del<null>(`/papers/${paperId}/shares/${shareId}`)
 }
 
-/** 免登录：凭 token 读取只读正文。无效/撤销/过期都会抛 code=1014 的错误。 */
+/** 免登录：凭 token 读取只读正文。无效/撤销/过期都会抛 code=1015 的错误。 */
 export function resolveSharedPaper(token: string): Promise<PublicSharePaperDto> {
   return get<PublicSharePaperDto>(`/share/${encodeURIComponent(token)}`)
 }

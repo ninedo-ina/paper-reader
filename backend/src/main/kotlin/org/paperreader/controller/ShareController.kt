@@ -41,7 +41,7 @@ class ShareController(
         return ApiResponse(message = "Revoked")
     }
 
-    /** 免登录：凭 token 读取只读正文。无效 / 撤销 / 过期 → 1014/404（不区分原因）。 */
+    /** 免登录：凭 token 读取只读正文。无效 / 撤销 / 过期 → 1015/404（不区分原因）。 */
     @GetMapping("/api/share/{token}")
     fun resolve(@PathVariable token: String): ApiResponse<PublicSharePaperDto> =
         ApiResponse(data = shareService.resolvePublic(token))

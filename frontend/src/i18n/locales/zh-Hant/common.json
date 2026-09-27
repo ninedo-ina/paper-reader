@@ -665,7 +665,14 @@
     "aiWritingReferenceParseFailed": "模型回傳的不是有效的參考文獻資料，請重試",
     "aiWritingReferenceIdMismatch": "回傳的條目標識與當前文獻表不一致，已拒絕寫入，以免正文引用失效",
     "editorContentTooLarge": "正文體積 {size} 超過單篇上限 {limit}，請精簡或拆分後再儲存",
-    "saveRejected": "儲存被伺服器拒絕，已停止自動重試"
+    "saveRejected": "儲存被伺服器拒絕，已停止自動重試",
+    "collabConnecting": "正在連線協作工作階段…",
+    "collabLoadFailed": "協作工作階段載入失敗",
+    "collabOnline": "已連線",
+    "collabOffline": "未連線",
+    "comments": "批註",
+    "manageCollab": "協作與分享",
+    "sharedWithMe": "與我協作"
   },
   "export": {
     "openExport": "匯出",
@@ -1326,5 +1333,42 @@
   "notifications": {
     "welcomeTitle": "系統功能介紹",
     "welcomeMessage": "歡迎使用 PaperHelper！點選查看目前版本的功能特色"
+  },
+  "comments": {
+    "title": "批註",
+    "close": "關閉",
+    "empty": "還沒有批註",
+    "someone": "某人",
+    "resolve": "標記已解決",
+    "reopen": "重新開啟",
+    "delete": "刪除",
+    "placeholder": "寫下批註…",
+    "send": "傳送"
+  },
+  "collab": {
+    "title": "協作與分享",
+    "collaborators": "協作者",
+    "noCollaborators": "還沒有協作者",
+    "role_OWNER": "作者",
+    "role_EDITOR": "可編輯",
+    "role_VIEWER": "唯讀",
+    "removeCollaborator": "移除",
+    "emailPlaceholder": "輸入電子郵件邀請協作者",
+    "add": "新增",
+    "shareLinks": "唯讀分享連結",
+    "createLink": "建立連結",
+    "noShareLinks": "還沒有分享連結",
+    "revoked": "已撤銷",
+    "copyLink": "複製連結",
+    "revoke": "撤銷",
+    "copied": "連結已複製",
+    "copyFailed": "複製失敗"
+  },
+  "share": {
+    "invalidTitle": "連結無效或已失效",
+    "invalidHint": "這個分享連結可能已被撤銷或過期。",
+    "readOnlyBadge": "唯讀分享",
+    "abstract": "摘要",
+    "empty": "這篇論文還沒有內文。"
   }
 }

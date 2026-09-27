@@ -665,7 +665,14 @@
     "aiWritingReferenceParseFailed": "Il modello non ha restituito dati di riferimenti validi. Riprova.",
     "aiWritingReferenceIdMismatch": "Gli identificatori restituiti non corrispondono all'elenco attuale; la scrittura è stata rifiutata per non invalidare le citazioni nel testo.",
     "editorContentTooLarge": "Il contenuto è di {size} e supera il limite di {limit} per articolo. Riducilo o dividilo prima di salvare.",
-    "saveRejected": "Il server ha rifiutato il salvataggio; i tentativi automatici sono stati interrotti."
+    "saveRejected": "Il server ha rifiutato il salvataggio; i tentativi automatici sono stati interrotti.",
+    "collabConnecting": "Connessione alla sessione di collaborazione…",
+    "collabLoadFailed": "Impossibile caricare la sessione di collaborazione",
+    "collabOnline": "Connesso",
+    "collabOffline": "Disconnesso",
+    "comments": "Commenti",
+    "manageCollab": "Collaborazione e condivisione",
+    "sharedWithMe": "Condivisi con me"
   },
   "export": {
     "openExport": "Esporta",
@@ -1326,5 +1333,42 @@
   "notifications": {
     "welcomeTitle": "Introduzione alle funzionalità",
     "welcomeMessage": "Benvenuto in PaperHelper! Clicca per visualizzare le funzionalità della versione corrente"
+  },
+  "comments": {
+    "title": "Commenti",
+    "close": "Chiudi",
+    "empty": "Ancora nessun commento",
+    "someone": "Qualcuno",
+    "resolve": "Segna come risolto",
+    "reopen": "Riapri",
+    "delete": "Elimina",
+    "placeholder": "Scrivi un commento…",
+    "send": "Invia"
+  },
+  "collab": {
+    "title": "Collaborazione e condivisione",
+    "collaborators": "Collaboratori",
+    "noCollaborators": "Ancora nessun collaboratore",
+    "role_OWNER": "Autore",
+    "role_EDITOR": "Può modificare",
+    "role_VIEWER": "Sola lettura",
+    "removeCollaborator": "Rimuovi",
+    "emailPlaceholder": "Inserisci un'email per invitare un collaboratore",
+    "add": "Aggiungi",
+    "shareLinks": "Link di condivisione in sola lettura",
+    "createLink": "Crea link",
+    "noShareLinks": "Ancora nessun link di condivisione",
+    "revoked": "Revocato",
+    "copyLink": "Copia link",
+    "revoke": "Revoca",
+    "copied": "Link copiato",
+    "copyFailed": "Copia non riuscita"
+  },
+  "share": {
+    "invalidTitle": "Link non valido o scaduto",
+    "invalidHint": "Questo link di condivisione potrebbe essere stato revocato o scaduto.",
+    "readOnlyBadge": "Condivisione in sola lettura",
+    "abstract": "Abstract",
+    "empty": "Questo articolo non ha ancora contenuto."
   }
 }

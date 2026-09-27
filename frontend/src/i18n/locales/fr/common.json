@@ -665,7 +665,14 @@
     "aiWritingReferenceParseFailed": "Le modèle n'a pas renvoyé de données de références valides. Veuillez réessayer.",
     "aiWritingReferenceIdMismatch": "Les identifiants renvoyés ne correspondent pas à la liste actuelle ; l'écriture a été refusée pour ne pas invalider les citations du texte.",
     "editorContentTooLarge": "Le contenu fait {size}, au-delà de la limite de {limit} par article. Allégez-le ou scindez-le avant d'enregistrer.",
-    "saveRejected": "Le serveur a refusé cet enregistrement ; les tentatives automatiques sont arrêtées."
+    "saveRejected": "Le serveur a refusé cet enregistrement ; les tentatives automatiques sont arrêtées.",
+    "collabConnecting": "Connexion à la session de collaboration…",
+    "collabLoadFailed": "Échec du chargement de la session de collaboration",
+    "collabOnline": "Connecté",
+    "collabOffline": "Déconnecté",
+    "comments": "Commentaires",
+    "manageCollab": "Collaboration et partage",
+    "sharedWithMe": "Partagé avec moi"
   },
   "export": {
     "openExport": "Exporter",
@@ -1326,5 +1333,42 @@
   "notifications": {
     "welcomeTitle": "Présentation des fonctionnalités du système",
     "welcomeMessage": "Bienvenue dans PaperHelper ! Cliquez pour découvrir les fonctionnalités de la version actuelle"
+  },
+  "comments": {
+    "title": "Commentaires",
+    "close": "Fermer",
+    "empty": "Aucun commentaire pour l'instant",
+    "someone": "Quelqu'un",
+    "resolve": "Marquer comme résolu",
+    "reopen": "Rouvrir",
+    "delete": "Supprimer",
+    "placeholder": "Écrire un commentaire…",
+    "send": "Envoyer"
+  },
+  "collab": {
+    "title": "Collaboration et partage",
+    "collaborators": "Collaborateurs",
+    "noCollaborators": "Aucun collaborateur pour l'instant",
+    "role_OWNER": "Auteur",
+    "role_EDITOR": "Peut modifier",
+    "role_VIEWER": "Lecture seule",
+    "removeCollaborator": "Retirer",
+    "emailPlaceholder": "Saisissez un e-mail pour inviter un collaborateur",
+    "add": "Ajouter",
+    "shareLinks": "Liens de partage en lecture seule",
+    "createLink": "Créer un lien",
+    "noShareLinks": "Aucun lien de partage pour l'instant",
+    "revoked": "Révoqué",
+    "copyLink": "Copier le lien",
+    "revoke": "Révoquer",
+    "copied": "Lien copié",
+    "copyFailed": "Échec de la copie"
+  },
+  "share": {
+    "invalidTitle": "Lien invalide ou expiré",
+    "invalidHint": "Ce lien de partage a peut-être été révoqué ou a expiré.",
+    "readOnlyBadge": "Partage en lecture seule",
+    "abstract": "Résumé",
+    "empty": "Cet article n'a pas encore de contenu."
   }
 }
