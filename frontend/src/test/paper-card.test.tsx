@@ -53,7 +53,8 @@ describe("PaperCard actions", () => {
 
     expect(card).toHaveAttribute("aria-current", "page")
     expect(card).toHaveClass("border-[var(--paper-active-border)]")
-    expect(indicator).toHaveClass("left-[5px]", "top-3", "bottom-3", "w-0.5", "rounded-full")
+    // 逻辑属性：RTL 下指示条要贴到右边（内联方向的起点）
+    expect(indicator).toHaveClass("start-[5px]", "top-3", "bottom-3", "w-0.5", "rounded-full")
     expect(indicator).toHaveStyle({ background: "var(--paper-active-indicator)", opacity: "1" })
   })
 })

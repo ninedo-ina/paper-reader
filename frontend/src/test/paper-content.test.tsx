@@ -2,7 +2,8 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { JSONContent } from "@tiptap/react"
 import { withIntl } from "@/test/intl"
-import type { PaperContentDto, PaperDetailDto } from "@/lib/api/types"
+import { resetContentLimitsCache } from "@/hooks/useContentLimits"
+import type { PaperContentDto, PaperDetailDto, ContentLimitsDto } from "@/lib/api/types"
 
 const mocks = vi.hoisted(() => ({
   // isActive 是工具栏选状态、getText 是字数统计、can 是撤销/重做按钮要问编辑器的问题，桩里都得答得上来
@@ -12,10 +13,17 @@ const mocks = vi.hoisted(() => ({
     getText: vi.fn(() => ""),
     isActive: vi.fn(() => false),
     can: vi.fn(() => ({ undo: () => false, redo: () => false })),
+    // AI 写作工具栏要从 state 里读选区（textBetween）和参考文献表（descendants）
+    state: {
+      selection: { from: 1, to: 1, empty: true },
+      doc: { textBetween: () => "", descendants: () => undefined },
+    },
   },
   editorOptions: {} as { content?: unknown; onUpdate?: () => void },
   getPaperContent: vi.fn(),
   updatePaperContent: vi.fn(),
+  // 显式标出返回值类型，否则只从初值推出 Promise<null>，用例里再给限额就过不了类型检查
+  getContentLimits: vi.fn<() => Promise<ContentLimitsDto | null>>(() => Promise.resolve(null)),
 }))
 
 // 真 Tiptap 依赖大量浏览器布局能力，jsdom 里跑不稳；这里只桩掉编辑器生命周期，
@@ -38,6 +46,8 @@ vi.mock("@tiptap/react", async (importOriginal) => {
 vi.mock("@/lib/api/papers", () => ({
   getPaperContent: mocks.getPaperContent,
   updatePaperContent: mocks.updatePaperContent,
+  // 默认拿不到限额：编辑器退回「全靠服务端拦」，用例要自检时再单独给值
+  getContentLimits: mocks.getContentLimits,
 }))
 
 vi.mock("@/components/reader/PDFViewer", () => ({
@@ -319,8 +329,10 @@ describe("未保存改动的离开拦截", () => {
     vi.clearAllMocks()
   })
 
-  it("raises the browser-native confirm once the body is dirty", () => {
+  it("raises the browser-native confirm once the body is dirty", async () => {
     render(withIntl(<PaperEditor paper={manualPaper} content={body} onSave={vi.fn()} />))
+    // 编辑器挂载后会去读一次正文体积上限；这一拍不落定，卸载后的 setState 会报警告
+    await act(async () => {})
 
     // 还没改动：不该打扰用户
     expect(dispatchBeforeUnload().defaultPrevented).toBe(false)
@@ -342,9 +354,11 @@ describe("未保存改动的离开拦截", () => {
     expect(dispatchBeforeUnload().defaultPrevented).toBe(false)
   })
 
-  it("asks before following an in-app link while the body is dirty", () => {
+  it("asks before following an in-app link while the body is dirty", async () => {
     const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false)
     render(withIntl(<PaperEditor paper={manualPaper} content={body} onSave={vi.fn()} />))
+    // 同上：等体积上限那次读取落定
+    await act(async () => {})
 
     const link = document.createElement("a")
     link.href = "/papers/8"
@@ -363,5 +377,92 @@ describe("未保存改动的离开拦截", () => {
       link.remove()
       confirmSpy.mockRestore()
     }
+  })
+})
+
+/**
+ * 写放大控制（W9）：同一份正文别反复写上去，注定被拒的正文也别重试到天荒地老。
+ * 一份 8MB 的正文每 2 秒重发一次的代价是实打实的，这里把三道闸门钉住。
+ */
+describe("自动保存的写放大控制", () => {
+  const tooLarge = Object.assign(new Error("正文体积超过单篇上限，请精简或拆分后再保存"), { code: 1014 })
+
+  beforeEach(() => {
+    // 限额走的是进程内缓存，用例之间必须清掉，否则前一个用例的限额会漏到这里
+    resetContentLimitsCache()
+    mocks.editor.getJSON.mockReturnValue(body)
+    mocks.editor.getHTML.mockReturnValue("<p>真实正文</p>")
+    mocks.editorOptions = {}
+  })
+
+  afterEach(() => {
+    cleanup()
+    mocks.getContentLimits.mockImplementation(() => Promise.resolve(null))
+    vi.clearAllMocks()
+    vi.useRealTimers()
+  })
+
+  it("内容与上次落库的一模一样时，不再重复提交", async () => {
+    vi.useFakeTimers()
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    render(withIntl(<PaperEditor paper={manualPaper} content={body} onSave={onSave} />))
+
+    act(() => (mocks.editorOptions.onUpdate as () => void)())
+    await act(async () => {
+      vi.advanceTimersByTime(2000)
+    })
+    expect(onSave).toHaveBeenCalledTimes(1)
+
+    // 又动了一下编辑器，但内容与已落库的逐字节一致（撤销、键入又删掉）：不该再写一次库
+    act(() => (mocks.editorOptions.onUpdate as () => void)())
+    await act(async () => {
+      vi.advanceTimersByTime(2000)
+    })
+
+    expect(onSave).toHaveBeenCalledTimes(1)
+    expect(screen.getByText("已保存")).toBeInTheDocument()
+  })
+
+  it("正文超出单篇上限时一个请求都不发，直接请用户精简", async () => {
+    mocks.getContentLimits.mockResolvedValueOnce({
+      maxJsonBytes: 10,
+      maxHtmlBytes: 10,
+      maxReadableBytes: 100,
+      maxSnapshotCount: 5,
+      maxSnapshotAgeDays: 30,
+    })
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    render(withIntl(<PaperEditor paper={manualPaper} content={body} onSave={onSave} />))
+
+    // 限额是异步读回来的；没读到就不自检，所以先等它落地
+    await act(async () => {})
+
+    fireEvent.click(saveButton())
+
+    await waitFor(() => expect(screen.getByTestId("autosave-rejected")).toBeInTheDocument())
+    expect(onSave).not.toHaveBeenCalled()
+    // 提示要说清「多大 / 上限多少」，否则用户不知道该删多少
+    const message = screen.getByTestId("autosave-rejected").textContent ?? ""
+    expect(message).toContain("超过单篇上限")
+    expect(message).toContain("10 B")
+  })
+
+  it("服务端判超限后停止重试，不再空转", async () => {
+    vi.useFakeTimers()
+    const onSave = vi.fn().mockRejectedValue(tooLarge)
+    render(withIntl(<PaperEditor paper={manualPaper} content={body} onSave={onSave} />))
+
+    fireEvent.click(saveButton())
+    await act(async () => {})
+    expect(onSave).toHaveBeenCalledTimes(1)
+
+    expect(screen.getByTestId("autosave-rejected")).toHaveTextContent(tooLarge.message)
+    // 与断网不同：重试一百次发出去的还是同一份超限正文，不该给重试入口
+    expect(screen.queryByRole("button", { name: /重试/ })).not.toBeInTheDocument()
+
+    await act(async () => {
+      vi.advanceTimersByTime(5000)
+    })
+    expect(onSave).toHaveBeenCalledTimes(1)
   })
 })

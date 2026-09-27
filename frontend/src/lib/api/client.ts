@@ -75,6 +75,10 @@ function errorMessage(code: number, fallback: string): string {
     case 1003: return t("badRequest")
     case 1004: return t("notFound")
     case 1005: return t("fileDeleteFailed")
+    // 正文体积超限（1014/413）。带具体字节数的提示由编辑器自己渲染
+    // （papers.editorContentTooLarge）；这条是不带数字的兜底，别把服务端的中文原文
+    // 直接漏到其他语言的界面上。
+    case 1014: return t("contentTooLarge")
     default: return fallback
   }
 }

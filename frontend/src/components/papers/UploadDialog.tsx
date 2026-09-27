@@ -162,7 +162,7 @@ export function UploadDialog({ open, onClose, onUploaded }: UploadDialogProps) {
             }`}
             onClick={() => setTab("file")}
           >
-            <Upload className="size-4 inline mr-1.5" />
+            <Upload className="size-4 inline me-1.5" />
             PDF File
           </button>
           <button
@@ -174,7 +174,7 @@ export function UploadDialog({ open, onClose, onUploaded }: UploadDialogProps) {
             }`}
             onClick={() => setTab("url")}
           >
-            <Link className="size-4 inline mr-1.5" />
+            <Link className="size-4 inline me-1.5" />
             URL
           </button>
         </div>
@@ -246,7 +246,7 @@ export function UploadDialog({ open, onClose, onUploaded }: UploadDialogProps) {
             <Button type="submit" disabled={isUploading || !url} className="w-full">
               {isUploading ? (
                 <>
-                  <Loader2 className="size-4 mr-2 animate-spin" />
+                  <Loader2 className="size-4 me-2 animate-spin" />
                   {c("loading")}
                 </>
               ) : (

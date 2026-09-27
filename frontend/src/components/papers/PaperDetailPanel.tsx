@@ -132,7 +132,7 @@ export function PaperDetailPanel({ paper, onSaved }: PaperDetailPanelProps) {
             ) : (
               <Save className="size-3.5" />
             )}
-            <span className="ml-1.5">{tc("save")}</span>
+            <span className="ms-1.5">{tc("save")}</span>
           </Button>
         </div>
       </div>

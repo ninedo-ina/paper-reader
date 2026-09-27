@@ -501,7 +501,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
           </Button>
         </div>
 
-        <div className="flex items-center gap-0.5 ml-2">
+        <div className="flex items-center gap-0.5 ms-2">
           <Button
             variant="ghost"
             size="sm"
@@ -531,7 +531,7 @@ export function PDFReader({ paper }: PDFReaderProps) {
           <Button variant="ghost" size="sm" onClick={() => { setLayoutOpen((open) => !open); revealChrome() }} title={t("pageLayout")} aria-label={t("pageLayout")}>
             <LayoutGrid className="size-4" />
           </Button>
-          {layoutOpen && <div className="absolute right-0 top-full z-50 mt-1 flex gap-1 rounded-lg border border-[var(--border-color)] bg-[var(--surface-0)] p-1 shadow-xl">
+          {layoutOpen && <div className="absolute end-0 top-full z-50 mt-1 flex gap-1 rounded-lg border border-[var(--border-color)] bg-[var(--surface-0)] p-1 shadow-xl">
             {([1, 2, 3, 4, 6] as PdfLayout[]).map((value) => (
               <button key={value} type="button" onClick={() => { setLayout(value); setLayoutOpen(false); revealChrome() }} className={cn("rounded px-2 py-1 text-xs whitespace-nowrap hover:bg-[var(--bg-hover)]", layout === value && "bg-[var(--accent)] text-[var(--surface-0)]")}>
                 {t(PDF_LAYOUTS[value].labelKey)}

@@ -73,14 +73,14 @@ export function PaperCard({ paper, isActive, onClick, onDelete, onTag, onShare }
       <div
         aria-hidden="true"
         data-testid="paper-card-indicator"
-        className="pointer-events-none absolute left-[5px] top-3 bottom-3 w-0.5 rounded-full transition-[background-color,opacity] duration-200"
+        className="pointer-events-none absolute start-[5px] top-3 bottom-3 w-0.5 rounded-full transition-[background-color,opacity] duration-200"
         style={{
           background: isActive ? "var(--paper-active-indicator)" : accentColor,
           opacity: isActive ? 1 : 0.72,
         }}
       />
 
-      <div className="flex items-start gap-3 py-3.5 pl-3.5 pr-3">
+      <div className="flex items-start gap-3 py-3.5 ps-3.5 pe-3">
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Title row */}

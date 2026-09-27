@@ -584,6 +584,62 @@ export interface UpdatePaperContentRequest {
   baseVersion?: number
 }
 
+// --- 正文快照（W6，REQ-202609-0262）---
+// 注意与上面的 PaperVersionDto 区分：那个是「发布记录 / storage push 状态」，
+// 本组是「正文在某时刻长什么样」，两张表、两条接口。
+
+/** 快照来源：用户手动创建 / 回滚前自动留下的当前态。 */
+export type ContentSnapshotSource = "MANUAL" | "ROLLBACK"
+
+export interface ContentSnapshotSummaryDto {
+  id: number
+  paperId: number
+  /** 手动标签（「初稿」「投稿版」）；null = 未打标签 */
+  label: string | null
+  source: ContentSnapshotSource
+  /** 快照时刻的正文版本号，可与 Timeline 上的保存记录对齐 */
+  contentVersion: number
+  createdAt: string
+}
+
+/** 取单条时才带正文；列表接口不带，避免把整篇正文都传一遍。 */
+export interface ContentSnapshotDetailDto extends ContentSnapshotSummaryDto {
+  contentJson: JSONContent | null
+  contentHtml: string | null
+}
+
+export interface CreateContentSnapshotRequest {
+  label?: string | null
+}
+
+export interface RenameContentSnapshotRequest {
+  label?: string | null
+}
+
+export interface RestoreContentSnapshotRequest {
+  /** 同 UpdatePaperContentRequest.baseVersion：落后于服务端当前版本时拒绝回滚（409/1008） */
+  baseVersion?: number
+}
+
+/**
+ * 正文体积上限与快照保留策略（W9）。
+ *
+ * 服务端是权威判定（超限返回 1014/413），这份数据只用来在提交前本地先拦一次，
+ * 避免把注定被拒的正文反复发上去。字段含义见后端 ContentProperties。
+ */
+export interface ContentLimitsDto {
+  /** 单篇正文（contentJson）字节上限，UTF-8 计 */
+  maxJsonBytes: number
+  /** 单篇渲染结果（contentHtml）字节上限 */
+  maxHtmlBytes: number
+  /** 单个请求体读取上限，超出直接在过滤器层被拒 */
+  maxReadableBytes: number
+  /** 每篇保留的历史快照份数上限 */
+  maxSnapshotCount: number
+  /** 历史快照保留天数上限 */
+  maxSnapshotAgeDays: number
+}
+
 export interface PaperTagDto {
   id: number
   paperId: number

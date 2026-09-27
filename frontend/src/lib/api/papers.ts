@@ -11,6 +11,7 @@ import type {
   CreatePaperRequest,
   UpdatePaperRequest,
   UploadQuotaDto,
+  ContentLimitsDto,
   PaperContentDto,
   UpdatePaperContentRequest,
   PaperTagDto,
@@ -60,6 +61,11 @@ export function uploadFromUrl(data: UploadFromUrlRequest): Promise<PaperDetailDt
 /** 读取上传配额（限额以服务端为准，前端不重复硬编码） */
 export function getUploadQuota(): Promise<UploadQuotaDto> {
   return get<UploadQuotaDto>("/papers/upload-quota")
+}
+
+/** 读取正文体积上限与快照保留策略（W9）；同样以服务端为准，前端只做提交前自检 */
+export function getContentLimits(): Promise<ContentLimitsDto> {
+  return get<ContentLimitsDto>("/papers/content-limits")
 }
 
 /** 获取论文选区问答所需的有限上下文 */

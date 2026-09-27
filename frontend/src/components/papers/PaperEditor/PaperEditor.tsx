@@ -10,18 +10,24 @@ import Collaboration from "@tiptap/extension-collaboration"
 import CollaborationCaret from "@tiptap/extension-collaboration-caret"
 import type { Doc } from "yjs"
 import type { StompYjsProvider } from "@/lib/collab/stompYjsProvider"
-import type { PaperDetailDto } from "@/lib/api/types"
-import { Save, Loader2, AlertTriangle, RotateCw, FileUp } from "lucide-react"
+import type { PaperContentDto, PaperDetailDto } from "@/lib/api/types"
+import { Save, Loader2, AlertTriangle, RotateCw, FileUp, History } from "lucide-react"
 import { Button } from "@/components/ui/Button"
-import { useAutosave } from "@/hooks/useAutosave"
+import { CONTENT_TOO_LARGE_CODE, useAutosave } from "@/hooks/useAutosave"
+import { useContentLimits } from "@/hooks/useContentLimits"
 import { useUnsavedGuard } from "@/hooks/useUnsavedGuard"
 import { ImportMarkdownDialog } from "@/components/papers/ImportMarkdownDialog"
+import { checkContentSize } from "@/lib/content-limits"
+import { formatFileSize } from "@/lib/utils"
 import "katex/dist/katex.min.css"
 import { academicExtensions } from "./extensions"
 import { AcademicToolbar, type MathDialogState } from "./AcademicToolbar"
+import { AiWritingPanel } from "./AiWritingPanel"
+import { AiWritingToolbar, type AiWritingRequest } from "./AiWritingToolbar"
 import { FormatToolbar } from "./FormatToolbar"
 import { TextAlign } from "./text-align"
 import { computeEditorStats } from "./editor-stats"
+import { ContentHistoryDialog } from "./ContentHistoryDialog"
 
 export interface PaperContentPayload {
   /** 权威内容：编辑器节点树 */
@@ -54,11 +60,21 @@ export interface PaperEditorProps {
   onReloadConflict?: () => Promise<void>
   /** 导入 Markdown：把文本转成 HTML 片段返回，编辑器随即 setContent 供用户确认后保存 */
   onImportMarkdown?: (markdown: string) => Promise<string>
+  /** 回滚到某条正文快照后交回覆盖后的正文，由调用方同步版本号并重挂编辑器 */
+  onContentReplaced?: (dto: PaperContentDto) => void
   /** 传入即启用实时协作（Yjs over STOMP） */
   collab?: CollabConfig
 }
 
-export function PaperEditor({ paper, content, onSave, onReloadConflict, onImportMarkdown, collab }: PaperEditorProps) {
+export function PaperEditor({
+  paper,
+  content,
+  onSave,
+  onReloadConflict,
+  onImportMarkdown,
+  onContentReplaced,
+  collab,
+}: PaperEditorProps) {
   const t = useTranslations("papers")
   const tc = useTranslations("common")
   const ti = useTranslations("import")
@@ -66,10 +82,18 @@ export function PaperEditor({ paper, content, onSave, onReloadConflict, onImport
   const [mathDialog, setMathDialog] = useState<MathDialogState | null>(null)
   const [reloading, setReloading] = useState(false)
   const [showImport, setShowImport] = useState(false)
+  // AI 写作建议面板的当前请求；为 null 时面板不挂载，避免空跑一次生成
+  const [writingRequest, setWritingRequest] = useState<AiWritingRequest | null>(null)
+  const [showHistory, setShowHistory] = useState(false)
 
   // 编辑器与自动保存互相依赖：编辑器的 onUpdate 要 markDirty，而 autosave 取内容又要读编辑器。
   // 用 ref 打破这个环——autosave 通过 editorRef 读当前内容，编辑器创建时拿到稳定的 markDirty。
   const editorRef = useRef<Editor | null>(null)
+
+  // 体积上限只在提交前自检用，拿不到就不拦（服务端照样会判）
+  const limits = useContentLimits()
+  const limitsRef = useRef(limits)
+  limitsRef.current = limits
 
   const autosave = useAutosave<PaperContentPayload>({
     getPayload: () => {
@@ -81,8 +105,9 @@ export function PaperEditor({ paper, content, onSave, onReloadConflict, onImport
       if (!onSave) return
       await onSave(payload)
     },
+    guard: (payload) => checkContentSize(payload, limitsRef.current),
   })
-  const { status, isDirty, markDirty, saveNow } = autosave
+  const { status, isDirty, rejection, markDirty, saveNow } = autosave
 
   // 有未保存改动时拦截离开：关闭标签页走浏览器原生确认，应用内跳转走自定义确认。
   useUnsavedGuard(isDirty, t("unsavedLeaveConfirm"))
@@ -181,6 +206,18 @@ export function PaperEditor({ paper, content, onSave, onReloadConflict, onImport
 
   const isSaving = status === "saving"
 
+  /**
+   * 保存被拒后显示什么：本地自检拦下的知道具体体积，能说清「多大 / 上限多少」；
+   * 服务端才发现的只有业务码，退回服务端那句（已在 API 层按界面语言本地化）。
+   */
+  const rejectedText =
+    rejection?.code === CONTENT_TOO_LARGE_CODE && rejection.size != null && rejection.limit != null
+      ? t("editorContentTooLarge", {
+          size: formatFileSize(rejection.size),
+          limit: formatFileSize(rejection.limit),
+        })
+      : (rejection?.message ?? t("saveRejected"))
+
   // 字数统计随内容实时更新；用 useEditorState 订阅，只在纯文本变化时才重算
   const stats = useEditorState({
     editor,
@@ -207,6 +244,16 @@ export function PaperEditor({ paper, content, onSave, onReloadConflict, onImport
     markDirty()
   }
 
+  /**
+   * 回滚成功后调用方会重挂编辑器（本组件随之卸载），这里只需把结果交上去。
+   * 回滚前本地必须无未保存改动，否则那份改动会在重挂后被自动保存盖掉回滚结果 ——
+   * 弹层据此禁用回滚按钮，所以这里不再拦截。
+   */
+  const handleContentReplaced = (dto: PaperContentDto) => {
+    autosave.reset()
+    onContentReplaced?.(dto)
+  }
+
   return (
     <div className="flex flex-col h-full" style={{ background: "var(--bg-root)" }}>
       <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border-subtle)] glass-surface">
@@ -217,9 +264,13 @@ export function PaperEditor({ paper, content, onSave, onReloadConflict, onImport
           {onImportMarkdown && (
             <Button size="sm" variant="secondary" onClick={() => setShowImport(true)}>
               <FileUp className="size-4" />
-              <span className="ml-1.5">{ti("importMarkdown")}</span>
+              <span className="ms-1.5">{ti("importMarkdown")}</span>
             </Button>
           )}
+          <Button size="sm" variant="secondary" onClick={() => setShowHistory(true)}>
+            <History className="size-4" />
+            <span className="ml-1.5">{t("openContentHistory")}</span>
+          </Button>
           {onSave && (
           <div className="flex items-center gap-2">
             {status === "saving" && (
@@ -240,6 +291,12 @@ export function PaperEditor({ paper, content, onSave, onReloadConflict, onImport
                   <RotateCw className="size-3" />
                   {t("saveRetry")}
                 </button>
+              </span>
+            )}
+            {status === "rejected" && (
+              <span className="flex items-center gap-1 text-xs text-red-500" data-testid="autosave-rejected">
+                <AlertTriangle className="size-3" />
+                {rejectedText}
               </span>
             )}
             {status === "conflict" && (
@@ -265,7 +322,7 @@ export function PaperEditor({ paper, content, onSave, onReloadConflict, onImport
               ) : (
                 <Save className="size-4" />
               )}
-              <span className="ml-1.5">{tc("save")}</span>
+              <span className="ms-1.5">{tc("save")}</span>
             </Button>
           </div>
           )}
@@ -280,6 +337,8 @@ export function PaperEditor({ paper, content, onSave, onReloadConflict, onImport
         mathDialog={mathDialog}
         onOpenMathDialog={setMathDialog}
       />
+
+      <AiWritingToolbar editor={editor} onRun={setWritingRequest} />
 
       <div className="flex-1 overflow-y-auto px-8 py-6">
         <EditorContent editor={editor} />
@@ -297,6 +356,24 @@ export function PaperEditor({ paper, content, onSave, onReloadConflict, onImport
           onSubmit={handleImportSubmit}
         />
       )}
+
+      {editor && writingRequest && (
+        <AiWritingPanel
+          editor={editor}
+          request={writingRequest}
+          onClose={() => setWritingRequest(null)}
+          onApplied={markDirty}
+        />
+      )}
+
+      <ContentHistoryDialog
+        open={showHistory}
+        onClose={() => setShowHistory(false)}
+        paperId={paper.id}
+        getCurrentContent={() => editorRef.current?.getJSON() ?? content}
+        dirty={isDirty}
+        onRestored={handleContentReplaced}
+      />
     </div>
   )
 }

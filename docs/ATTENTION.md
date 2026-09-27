@@ -1,3 +1,50 @@
+## v0.1.61 平台、运维与合规（W9：体积上限/写放大控制/导出资源闸门复核/14 语言文案含 RTL/删除不留残余/「保存正文」审计，`REQ-202609-0265`）
+
+- **本轮有真实 Kotlin 改动、后端 jar 已重建并重启**（PM2 id `6` → `7`），`/api/health` 本机与公网均返回 `0.1.61`，favicon `?v=0.1.61`，是有效版本依据。**无新迁移，Flyway 仍为 `V19`**——不要因为版本涨了就去找 `V20`。
+- **体积上限是配置项，不是常量；改上限请走 `CONTENT_MAX_*` 环境变量，不要改代码里的默认值。** 三道闸门各管一段，**任何一道都不替代另一道**：`maxJsonBytes` 2 MB 管编辑器 JSON 写入、`maxHtmlBytes` 4 MB 管渲染 HTML 写入、`maxReadableBytes` 16 MB 是单篇正文读写硬上限。默认值就是需求侧定的口径，调它等于改产品约束。
+- **`ContentPayloadSizeFilter` 那道「反序列化之前」的校验不许删，也不许换成纯服务层校验。** 服务层拿到 DTO 时 Jackson 已经把整个 body 读进堆了——一个误操作/恶意的大 body 会在触发校验之前先吃掉内存。过滤器拦 `Content-Length` 已知的请求，走 chunked 的放行给服务层按 UTF-8 字节兜底，**两道是刻意的重复**。
+- **错误码 `1014` 现在有主了：正文体积超限（HTTP `413`）。** 它在 W6 时是刻意空着的（W6 文档写的是「`1014` stays free」），本轮取用它表示体积超限；前端 `useAutosave` 的 `NON_RETRYABLE_CODES` 里同时含 `1014`（**别把 `1014` 从那张表里去掉**——否则超限会被当瞬时错误反复重发同一个大 body）。`1009`/`1010` 属上传限额、`1011`/`1012`/`1013` 属导出、`1008` 是版本冲突，都不许动。
+- **「内容没变就不写」有两道，两道都要留。** 服务端把 body 转 JSON **一次**后与库里 `contentJson`/`contentHtml` 做**字节比较**，相同即早退：**不 UPDATE、不加 `content_version`、不写审计**。客户端 `fingerprint` 让重复内容连包都不发，但它**可能因编辑器重新序列化（键序/空格）而失效**，所以服务端那道是最终真相，不能只留客户端。
+- **审计只记「改动」，不记「按了一次保存」。** `auditLogService.log(userId, "保存正文", title)` 必须在**真正写入**的分支上；如果给幂等早退也加审计，2 秒防抖的自动保存会把审计日志刷满。改这段时 `PaperContentServiceTest` 里的 `verify` 会拦你。
+- **`pruneSnapshots()` 的调用点只有两处，少一处就出错**：`createSnapshot` 之后（否则快照无限涨）、`restoreSnapshot` 之后（否则回滚路径漏清）。回滚路径**必须把「新建的前置快照 id」和「回滚目标 id」都 keep 住**，否则刚写进去的两条会在同一轮被裁掉，直接破坏 W6 的「回滚本身可再回滚」验收。**带 `label` 的快照永远不删**（用户显式表达的保留意愿），**清理挂在写入路径、没有定时任务**——不要为了"更干净"去加调度器。
+- **`useContentLimits` 拿不到限额时必须放行，不能拒绝。** 限额是**上限保护**，不是**准入条件**：接口抖动一次就让用户写不了字，是不可接受的。失败缓存成 `null` 且不重试是刻意的。
+- **RTL 的正确做法是逻辑属性，`rtl:rotate-180` 只是方向性图标的补丁。** 本轮把 17 个组件从物理属性（`ml-*`/`pl-*`/`left-*`/`float: left`/`text-align: left`）迁到逻辑属性（`ms-*`/`me-*`/`ps-*`/`start-*`/`text-start`、`float: inline-start`），覆盖验收标准点名的**学术工具栏**与**引用弹层**。**遇到新的方向问题先想逻辑属性，别上来就 `rtl:` 硬掰。**
+- **14 语言的键集合现在是强约束：新增任何一个 i18n 键都必须 14 种语言一起加**（不能再沿用 W8 那种"只补 `zh`/`en`、其余回退中文"的做法）。`frontend/src/test/locale-coverage.test.ts` 会按语言求键集合并断言「对 `zh` 的差为空」，还会拒绝非中文语言复用中文原文；`ar`/`fa`/`ug` 的 `contentHistory`(41 键) 与 `aiWriting`(34 键) 齐全也被钉住。当前基线：**14 种语言各 870 键**。
+- **交付物「服务端导出进程的资源闸门」是 W5（`REQ-202609-0257`）就已经交付的，W9 一行没写、只做复核。** 别把它算成 W9 的产出，也别在 W9 之后重复实现一遍：`ExportProperties` 的超时/并发/输入上限 + `DocumentExportEngine` 的信号量与 `destroyForcibly` 都在 `app.export.*`。
+- **「删除论文不留残余」现在是构建级约束。** `PaperDeletionInvariantTest` 扫描 `V*.sql` 里所有指向 `pr_papers(id)` 的外键，要求每张表要么 `ON DELETE CASCADE`、要么在清理白名单里且有 `deleteByPaperId`。**将来加挂 `pr_papers` 的子表时必须同步处理，否则 `./gradlew test` 直接红。** 协作房间表属 W7、本轮尚不存在，测试里已注明 W7 落地后须并入白名单。
+- **部署收尾照旧不能 `pm2 restart paper-reader-backend`**（会复用旧版本 jar 路径）：同一 shell 里 `set -a; . ./.env; set +a` 后 `pm2 delete` + `pm2 start --name paper-reader-backend --cwd /root/paper-reader/backend java -- -jar <绝对路径 jar>`，最后 `pm2 save`。本轮后端 id `6` → `7`（pid 2639134、`restart_time=0`），前端重启计数 `8` → `9`。
+- **本轮线上实测做到了「真实鉴权 + 真实拒绝」**：`GET /api/papers/content-limits` → `200`（返回五项上限）、`GET /api/papers/7/content` → `200`、**17,825,792 字节的 `PUT /api/papers/7/content` → `413` + code `1014`**，且事后核对论文 7 **未被改动**（`content_version=1`、`length(content_json)=1860`、`updated_at` 未变）——证明拒绝发生在写入之前。探测用的自签令牌与临时大 body **均未回显、未落盘、验完即删**。
+- **未验证，别当成已验过**：① **没有登录态浏览器端到端人工验收**（生产只开管理员 GitHub 登录、C 端测试账号密码未记录），因此验收标准「**RTL 语言下工具栏与引用弹层方向正确**」目前**只有逻辑属性改造 + `locale-coverage.test.ts` 的 RTL 断言**支撑，**没在真实浏览器里人工看过**，建议补一次点检；② 生产只做了只读 + 一次「必定被拒」的写入探测，**没有在线上跑过「超限被拒 → 编辑器停重试」的完整交互**，也**没在生产触发过快照裁剪**（会改动用户数据，仅由后端单测覆盖）；③ 快照上限 20 条 / 90 天是**本轮选定的默认值**，用户写满后的取舍（是否提供"保留这条"的显式操作）待有真实数据再定。
+- **版本链（并修正 W8 文档中的错误表述）**：`v0.1.54 → v0.1.56（W3）→ v0.1.57（W2）→ v0.1.58（上传限额）→ v0.1.59（W5）→ v0.1.60（W6）→ v0.1.62（W8）→ v0.1.61（W9，本轮）`。**落地顺序（W6 → W8 → W9）与版本号顺序刻意不一致**：号是各并行 worktree 开工时按 `origin` 上空闲号预定的，先做完先合，所以 `0.1.61` 在 `0.1.62` 之后上线是预期的。**判线上版本一律以版本文件、`/api/health`、favicon `?v=` 与产物哈希为准。** 上文 `## v0.1.62` 段里「`0.1.61` 是并行非 writer 需求占用的号、与 writer 路线图无关、没有线上版本」这句**已不成立**（`0.1.61` 正是 writer 路线图 **W9** 且已有线上版本），以本段为准。至此 writer 路线图 **W1–W6、W8、W9 完成，只剩 W7（协作，被 `/ws` 身份债阻塞）**。
+
+## v0.1.62 AI 辅助写作（W8：选区续写/改写/翻译/降重、摘要生成、参考文献格式化建议、语法与学术用语检查，`REQ-202609-0264`）
+
+- **本轮是纯前端迭代：Kotlin 零改动、无新迁移、无新端点、无新依赖、后端 jar 有意未重建**，因此 **`/api/health` 仍报 `0.1.60`（上一轮 W6 的后端版本），这不是漏部署**。**判本轮线上版本请用 favicon `?v=0.1.62` 与编辑器 chunk 的 sha256**，不要用 `/api/health`（与 v0.1.59 那种"有真实 Kotlin 改动、health 就是版本依据"的情形相反）。Flyway 停在 `V19`（W6 的 `pr_paper_content_versions`）。
+- **"不能直接改用户的字"是代码守卫，不是文案，改这里等于推翻验收标准。** AI 结果一律先落进 `AiWritingPanel` 的**可编辑建议框**，用户点「写入正文」才落笔；写入前必须过两道校验：文本结果过 `isAiWritingRangeStale(editor, range, sourceText)`（生成期间选区已被用户改掉就拒写并提示 `aiWritingStaleRange`），参考文献结果过 `sameCslIdSet(current, proposed)`（id 集合必须与原表**完全一致**才允许 `replaceBibliographyEntries`）。任何"顺手把结果直接 apply 到 doc"的改动都是回退。
+- **"发往 Provider 的内容要有告知"同样落在代码上：必须在发请求之前渲染。** `describeAiWritingDisclosure()` 按动作算出发送范围（仅文献表 / 全文 / 选区）与字符数，面板先渲染清单再 `requestAiWriting()`。把这段改成"请求返回后再显示"或塞进 toast，就违反了 W8 的第二条验收标准。全文只发首 16000 + 尾 8000 字符（`clipDocumentText`），**不要为了"更完整"把上限去掉**——全文类动作（`grammar`/`abstract`）本来就把长文送第三方。
+- **红线沿用，别在本轮新开一个例外**：用户选区与全文都可能进 Prompt，**日志、错误提示、URL、提交里都不得出现 Prompt、选区原文与正文**。`describeAiWritingError()` 已经过 `redactProviderErrorText` 抹掉 API Key，`cleanAiWritingText()` 也只剥掉整段包裹的代码围栏——新增日志或错误透出时照这条办。
+- **必须复用既有 Provider 主链路，不得在服务端再建一套模型配置。** Provider 与 API Key 仍在浏览器 `pr-preferences`，请求仍走 `requestAiChatCompletion`（先直连、失败回落 JWT 保护的 `/api/provider-relay/*`）；`ChatPanel.tsx` / `chat-store.ts` / relay 路由本轮**一行未改**。要加新的 AI 动作就往 `AI_WRITING_ACTIONS` 里加一条 + 补提示词，**不要**去动服务端那套旧 `/api/ai-chats`。
+- **`lib/ai-writing.ts` 保持无 store 依赖**（只接 `{baseUrl, apiKey, model}` 参数）——这是本仓库的分层约定：`lib/*` 不 import `@/stores/*`。组件侧才从 `usePreferencesStore` 取 Provider。
+- **参考文献是"建议"不是"事实"**：模型返回的 JSON 走白名单过滤（未知 `type` 降级 `article`、无 id 条目丢弃、按 id 去重），**没有联网查证条目真伪**。别把这里的解析放宽成"信任模型输出"，也别在 UI 上把它描述成"已核对"。
+- **文案只补了 `zh` / `en`（各 34 个 `aiWriting*` 键），其余 12 语言回退中文**——沿用 `mergeMessages` 以 `zh` 兜底的既有做法，完整本地化留给 W9。**在 W9 之前不要因为"非中文语言下看到中文"就去单独补某一种语言**（要补就 12 种一起补）；新增键时 `zh` 与 `en` 必须同时加。
+- **并行撞号**：本轮开工时同仓库有四个 BACS 工作流并行（`git worktree list` 可见）。`0.1.61`（`REQ-202609-0265`）与 `0.1.63`（`REQ-202609-0263`）是**并行的非 writer 需求占用的号，与 writer 路线图无关**〔**此判断已过时，见顶部 `## v0.1.61` 段**：`REQ-202609-0265` 就是 writer 路线图的 **W9**，且 `0.1.61` 已于 2026-09-27 UTC 发布上线〕；`0.1.60` 是并行的 W6（`REQ-202609-0262`，有真实 Kotlin 改动 + 迁移 `V19`，后端已重启）。开发期间 W6 先进了 `main`，本轮按仓库先例**把 `main` 合并进需求分支**（提交 `de31eae`，不 rebase、不强推），六处版本号文件取本分支的 `0.1.62`、`PaperEditor.tsx` 手工做加法合并（本轮的 `writingRequest`/`AiWritingPanel` 与 W6 的 `showHistory`/`ContentHistoryDialog` 都保留）。**不要复用 `0.1.61`/`0.1.63`**。
+- **本轮顺手修了 W6 新增测试 `content-history-wiring.test.tsx`**：其 hoisted mock editor 缺少 `state`，而本轮的 `AiWritingToolbar` 要从 `editor.state` 读选区，导致 2 项失败。修法是给 mock 补 `state` 桩（`selection` + `doc.textBetween`/`doc.descendants`），**没有**在生产代码里加 `instance.state?` 之类的防御分支——真实的 Tiptap `Editor` 必然有 `state`，为迁就 mock 而加分支是错的方向。
+- **测试**：前端新增 `src/test/ai-writing.test.tsx`（30 项），本分支 **30 个文件 / 228 项**全绿；合并 `main` 带入 W6 的 3 个文件 / 27 项后为 **33 个文件 / 255 项**，同样全绿；`./node_modules/.bin/tsc --noEmit` 与 `pnpm run build` 退出码 0。**后端本轮零改动、未重跑**。以上是**期望值**，不是可放宽的上限。（跑检查用 `./node_modules/.bin/tsc`、`./node_modules/.bin/vitest`，**不要用 `npx` / `pnpm exec`**——会触发 pnpm 解析/安装。）
+- **未验证，别当成已验过**：单测全程 `vi.stubGlobal("fetch", ...)` mock 掉 Provider，**从未跑过真实模型**，"七个动作的提示词在真实 Provider 上产出可用结果"没有证据；也**没有登录态下的真实浏览器人工点击**（生产只开管理员 GitHub 登录）。其余边界：无并发/取消（关面板不 abort）、`grammar`/`abstract` 会发全文且只有一次性告知无逐次二次确认、参考文献不联网查证、其余 12 语言文案回退中文。
+- **版本链**：`v0.1.54 → v0.1.56（W3）→ v0.1.57（W2）→ v0.1.58（上传限额）→ v0.1.59（W5）→ v0.1.60（W6，并行交付）→ v0.1.62（W8）`；`0.1.61`/`0.1.63` 是并行非 writer 需求占用的号，**没有线上版本**〔**此句已被顶部 `## v0.1.61` 段修正**：`0.1.61` = W9，已发布；`0.1.63` = W7，仍未发布〕。至此 writer 路线图 **W1-W6 与 W8 完成，只剩 W7（协作，被 `/ws` 身份债阻塞）与 W9（平台合规与多语言完整本地化）**。
+
+## v0.1.60 版本历史与快照（W6：正文快照 / 时间线 / 对比 / 回滚 / 手动标签，`REQ-202609-0262`）
+
+- **本轮有真实 Kotlin 改动、新增迁移 `V19`、后端 jar 已重建并重启**，`/api/health` 本机与公网均返回 `0.1.60`，是有效版本依据；favicon `?v=0.1.60`。生产前端/后端均 `0.1.60`，Flyway 到 `V19`。
+- **正文快照必须存在新表 `pr_paper_content_versions`，绝不复用 `pr_paper_versions`。** `pr_paper_versions` 的既有语义是「storage push 状态」（发布记录，W5 的导出产物还 `version_id` 回挂着它），需求明确禁止把正文快照塞进它的行里——改造它的语义是破坏性的、要单独评估。两个表名字只差一个词，改代码/写迁移时**看清楚是哪个**：正文快照的迁移是 `V19__paper_content_versions.sql`。
+- **回滚动作本身必须留下快照，否则回滚不可逆、验收直接不过。** `PaperContentVersionService.restoreSnapshot` 在一个事务里的顺序是：**先**把当前正文存成一条 `source=ROLLBACK`、`label` 为空的前置快照，**再**把论文正文替换成目标快照的内容并把 `content_version` 加一。别为了「少一条记录」省掉前置快照——那会让用户回滚之后再回滚不回来。
+- **`baseVersion` 冲突必须继续走 `409`/`1008`，不要新造错误码。** 回滚复用 W3 自动保存那套乐观锁语义（`ContentVersionConflictException`，`1008`）；本轮共用的既有码是 `1003` 参数非法（400）、`1004` 找不到（404）、`1008` 版本冲突（409），**`1014` 仍空闲**（`1009`/`1010` 属上传限额、`1011`/`1012`/`1013` 属导出）。
+- **`POST …/content-versions`（建快照）是纯读操作，不能写 `pr_papers`。** 单测里用 `verify(exactly = 0) { paperRepository.save(any()) }` 钉住了这条：建快照只插快照行、不动正文，也不该顺带 bump `content_version`。
+- **前端在编辑器有未保存改动时禁用回滚**（`disabled={dirty}` 并有 `dirtyHint` 提示）：回滚走的是另一条写路径，和 2 秒防抖的自动保存并发时会被 `1008` 顶掉，让用户在界面上先保存或丢弃改动比事后弹冲突更清楚。回滚成功后要 `autosave.reset()` 并把返回的 `contentVersion` 写回编辑器的 `versionRef`，否则下一次自动保存会立刻报冲突。
+- **本轮实测了线上真实鉴权接口**：以自签 HS512 访问令牌（`sub` = 用户 id、无 `did` 声明，`JwtAuthFilter` 对无设备声明的令牌按 legacy 放行）调生产 `GET /api/papers/7/content-versions` 得 `200`/空数组，调不存在的快照与跨用户论文均得 `404`/`1004`——**只做了只读验证，没有在生产上跑写回滚**，写路径由后端单测钉住。
+- **版本号**：`0.1.61`/`0.1.62`/`0.1.63` 已被三个并行 worktree（`-202609-0263`/`-0264`/`-0265`，同一基线 `29b4158`）预定，W6 取的是当时 `origin` 上仍空闲的 `0.1.60`。**若后续任一并行分支要用 `0.1.60`，先确认本分支已合入**，否则按既有先例顺延、不要共号。
+- **版本链**：`v0.1.54 → v0.1.56（W3）→ v0.1.57（W2）→ v0.1.58（上传限额）→ v0.1.59（W5）→ v0.1.60（W6）`。至此 writer 路线图 **W1-W6 全部完成**，余 W7（协作）/W8（AI 写作辅助）/W9（写作工作台整合）。
+
 ## v0.1.59 导入、导出与投稿（W5：Markdown 导入 + PDF/DOCX/LaTeX/BibTeX/Markdown/HTML 导出，`REQ-202609-0261`）
 
 - **本轮有真实 Kotlin 改动、新增迁移 `V18`、后端 jar 已重建并重启**，`/api/health` 本机与公网均返回 `0.1.59`，是有效版本依据；favicon `?v=0.1.59`。生产前端/后端均 `0.1.59`，Flyway 到 `V18`。

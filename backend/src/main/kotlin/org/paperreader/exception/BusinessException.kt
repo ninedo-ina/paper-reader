@@ -72,7 +72,22 @@ class ExportFailedException(message: String = "导出失败，请稍后重试") 
     BusinessException(1013, message, 502)
 
 /**
+ * 正文（contentJson / contentHtml）超过单篇体积上限（app.content.*）。
+ *
+ * 与 1009 上传超限同义、同用 413：这次提交的内容本身太大，原样重试一定还是失败，
+ * 所以前端拿到 1014 必须停止自动保存重试，提示用户精简或拆分（见 useAutosave 的可重试判定）。
+ * 1009/1010 上传限额、1011-1013 导出已占用，正文闸门顺延至 1014。
+ */
+class ContentTooLargeException(val actualBytes: Long, val limitBytes: Long, field: String) :
+    BusinessException(
+        1014,
+        "$field 大小 ${formatBytes(actualBytes)} 超过单篇上限 ${formatBytes(limitBytes)}",
+        413,
+    )
+
+/**
  * 只读分享 token 无效（不存在 / 已撤销 / 已过期）。W7，见 V19__collaboration.sql。
  * 统一用 404 而不区分「不存在」和「已失效」，避免泄露某篇论文是否存在或曾被分享过。
+ * 注：1014 已被正文体积闸门（REQ-202609-0265 / W9）占用，本轮分享错误码顺延至 1015。
  */
-class ShareLinkInvalidException : BusinessException(1014, "分享链接无效或已失效", 404)
+class ShareLinkInvalidException : BusinessException(1015, "分享链接无效或已失效", 404)

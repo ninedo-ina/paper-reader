@@ -10,7 +10,7 @@ import { CollaborativeEditor } from "@/components/papers/CollaborativeEditor"
 import * as papersApi from "@/lib/api/papers"
 import { importMarkdown as importMarkdownApi } from "@/lib/api/export"
 import { useUserStore } from "@/stores/user-store"
-import type { PaperDetailDto } from "@/lib/api/types"
+import type { PaperContentDto, PaperDetailDto } from "@/lib/api/types"
 
 interface PaperContentAreaProps {
   paper: PaperDetailDto | null
@@ -76,14 +76,18 @@ export function PaperContentArea({ paper, onUploadClick }: PaperContentAreaProps
     [paperId],
   )
 
-  /** 冲突后拉取服务端最新正文，并重建编辑器；本地未保存的改动随之丢弃（用户是主动选择「加载最新」）。 */
-  const handleReloadConflict = useCallback(async () => {
-    if (paperId === null) return
-    const dto = await papersApi.getPaperContent(paperId)
+  /** 把一份服务端正文整个换进来：同步版本号 + 重建编辑器（编辑器只在挂载时读一次 content）。 */
+  const applyContent = useCallback((dto: PaperContentDto) => {
     versionRef.current = dto.contentVersion
     setContent(dto.contentJson)
     setReloadSeq((n) => n + 1)
-  }, [paperId])
+  }, [])
+
+  /** 冲突后拉取服务端最新正文，并重建编辑器；本地未保存的改动随之丢弃（用户是主动选择「加载最新」）。 */
+  const handleReloadConflict = useCallback(async () => {
+    if (paperId === null) return
+    applyContent(await papersApi.getPaperContent(paperId))
+  }, [paperId, applyContent])
 
   /** Markdown 导入：转换为编辑器可加载的 HTML 片段，交回编辑器 setContent 供用户确认后保存。 */
   const handleImportMarkdown = useCallback(
@@ -137,6 +141,7 @@ export function PaperContentArea({ paper, onUploadClick }: PaperContentAreaProps
         onSave={handleSave}
         onReloadConflict={handleReloadConflict}
         onImportMarkdown={handleImportMarkdown}
+        onContentReplaced={applyContent}
       />
     )
   }
