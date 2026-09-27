@@ -255,6 +255,31 @@ export function upsertBibliographyEntry(editor: ReactNodeViewProps["editor"], it
   editor.view.dispatch(state.tr.setNodeMarkup(pos, undefined, { ...node.attrs, entries: next }))
 }
 
+/**
+ * 整体替换参考文献表的条目，供 AI 格式化建议回写用。条目 id 由调用方保证不变 ——
+ * 正文里的引用标记按 id 找落点，换了 id 会让标记变成问号。
+ */
+export function replaceBibliographyEntries(
+  editor: ReactNodeViewProps["editor"],
+  items: CslItem[],
+): boolean {
+  const state = editor.state
+  const pos = bibliographyPosition(state.doc)
+  if (pos == null) return false
+
+  const node = state.doc.nodeAt(pos)
+  if (!node) return false
+
+  const next = uniqueCslItems(items)
+  const entries = (Array.isArray(node.attrs.entries) ? node.attrs.entries : []) as CslItem[]
+  if (next.length === entries.length && next.every((item, index) => item === entries[index])) {
+    return false
+  }
+
+  editor.view.dispatch(state.tr.setNodeMarkup(pos, undefined, { ...node.attrs, entries: next }))
+  return true
+}
+
 export function insertCitation(editor: ReactNodeViewProps["editor"], item: CslItem): void {
   upsertBibliographyEntry(editor, item)
   editor
