@@ -134,6 +134,14 @@ class PaperController(
     ): ApiResponse<PaperContentDto> =
         ApiResponse(data = paperService.getPaperContent(id, principal.userId))
 
+    /**
+     * 正文体积上限与快照保留策略（W9）。与 upload-quota 同理：字面量路径比 /{id} 更具体，
+     * 不会被当成 id="content-limits"；前端据此在本地先拦一次超限保存（服务端仍会再判一遍）。
+     */
+    @GetMapping("/content-limits")
+    fun contentLimits(): ApiResponse<ContentLimitsDto> =
+        ApiResponse(data = paperService.contentLimits())
+
     @PutMapping("/{id}/content")
     fun updateContent(
         @PathVariable id: Long,

@@ -158,6 +158,21 @@ data class UpdatePaperContentRequest(
     val baseVersion: Int? = null,
 )
 
+/**
+ * 正文的体积上限与快照保留策略（W9），由 GET /api/papers/content-limits 下发。
+ *
+ * 服务端是唯一权威（超限一律 1014/413），下发的用途是让前端能在本地先拦一次：
+ * 自动保存是防抖后整篇覆盖，若客户端明知超限还发请求，只是白白放大写流量并换来一个必然失败的响应。
+ * [maxSnapshotCount] / [maxSnapshotAgeDays] 是 W6 快照表的保留契约，此处先固定下来。
+ */
+data class ContentLimitsDto(
+    val maxJsonBytes: Long,
+    val maxHtmlBytes: Long,
+    val maxReadableBytes: Long,
+    val maxSnapshotCount: Int,
+    val maxSnapshotAgeDays: Int,
+)
+
 data class ToggleFavoriteRequest(
     val favorite: Boolean,
 )

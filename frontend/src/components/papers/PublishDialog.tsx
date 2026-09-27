@@ -107,12 +107,12 @@ export function PublishDialog({ open, paperId, onClose, onPublished }: PublishDi
           <Button type="button" onClick={handlePublish} disabled={isPublishing || !version.trim()}>
             {isPublishing ? (
               <>
-                <Loader2 className="size-4 mr-1.5 animate-spin" />
+                <Loader2 className="size-4 me-1.5 animate-spin" />
                 {t("publishing")}
               </>
             ) : (
               <>
-                <Upload className="size-4 mr-1.5" />
+                <Upload className="size-4 me-1.5" />
                 {t("publish")}
               </>
             )}

@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
+import org.paperreader.config.ContentProperties
 import org.paperreader.dto.UploadFromUrlRequest
 import org.paperreader.exception.FileTooLargeException
 import org.paperreader.exception.UploadQuotaExceededException
@@ -64,6 +65,7 @@ class PaperUploadQuotaTest {
             objectMapper,
             auditLogService,
             quotaService,
+            ContentProperties(),
         )
     }
 

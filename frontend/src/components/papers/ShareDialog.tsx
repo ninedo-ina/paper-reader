@@ -83,12 +83,12 @@ export function ShareDialog({ open, paperId, onClose }: ShareDialogProps) {
           <Button size="sm" onClick={handleConfirm} disabled={isLoading}>
             {isLoading ? (
               <>
-                <Loader2 className="size-3.5 mr-1 animate-spin" />
+                <Loader2 className="size-3.5 me-1 animate-spin" />
                 {tc("loading")}
               </>
             ) : (
               <>
-                <Copy className="size-3.5 mr-1" />
+                <Copy className="size-3.5 me-1" />
                 {t("shareConfirm")}
               </>
             )}

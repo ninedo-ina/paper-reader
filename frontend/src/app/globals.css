@@ -174,7 +174,7 @@ html[lang="ug"] {
 .tiptap p.is-editor-empty:first-child::before {
   color: var(--text-placeholder);
   content: attr(data-placeholder);
-  float: left;
+  float: inline-start;
   height: 0;
   pointer-events: none;
 }
@@ -237,9 +237,10 @@ html[lang="ug"] {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  margin-left: 4px;
-  padding-left: 6px;
-  border-left: 1px solid var(--border-subtle);
+  /* 逻辑属性：RTL 下分隔线自动移到右侧，工具栏分组方向才正确 */
+  margin-inline-start: 4px;
+  padding-inline-start: 6px;
+  border-inline-start: 1px solid var(--border-subtle);
 }
 
 /* 基础排版工具栏：和学术工具栏同一套观感，但按钮多、要能换行，并且带高亮态 */
@@ -549,7 +550,7 @@ html[lang="ug"] {
 .tiptap th {
   background: var(--surface-2);
   font-weight: 600;
-  text-align: left;
+  text-align: start;
 }
 
 .tiptap .selectedCell::after {
@@ -622,7 +623,7 @@ html[lang="ug"] {
   flex: none;
   min-width: 1.5em;
   color: var(--text-tertiary);
-  text-align: right;
+  text-align: end;
 }
 
 .academic-note-input {

@@ -70,3 +70,17 @@ class ExportBusyException(message: String = "导出服务繁忙，请稍后重�
  */
 class ExportFailedException(message: String = "导出失败，请稍后重试") :
     BusinessException(1013, message, 502)
+
+/**
+ * 正文（contentJson / contentHtml）超过单篇体积上限（app.content.*）。
+ *
+ * 与 1009 上传超限同义、同用 413：这次提交的内容本身太大，原样重试一定还是失败，
+ * 所以前端拿到 1014 必须停止自动保存重试，提示用户精简或拆分（见 useAutosave 的可重试判定）。
+ * 1009/1010 上传限额、1011-1013 导出已占用，正文闸门顺延至 1014。
+ */
+class ContentTooLargeException(val actualBytes: Long, val limitBytes: Long, field: String) :
+    BusinessException(
+        1014,
+        "$field 大小 ${formatBytes(actualBytes)} 超过单篇上限 ${formatBytes(limitBytes)}",
+        413,
+    )

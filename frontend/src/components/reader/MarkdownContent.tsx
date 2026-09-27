@@ -35,7 +35,7 @@ export function MarkdownContent({ content, images, className }: MarkdownContentP
             )
           },
           blockquote: ({ children }) => (
-            <blockquote className="border-l-2 border-[var(--accent)] pl-3 my-2 text-[var(--text-secondary)] text-sm">
+            <blockquote className="border-s-2 border-[var(--accent)] ps-3 my-2 text-[var(--text-secondary)] text-sm">
               {children}
             </blockquote>
           ),
@@ -45,7 +45,7 @@ export function MarkdownContent({ content, images, className }: MarkdownContentP
             </div>
           ),
           th: ({ children }) => (
-            <th className="border border-[var(--border-subtle)] px-2 py-1 bg-[var(--bg-hover)] font-medium text-left">{children}</th>
+            <th className="border border-[var(--border-subtle)] px-2 py-1 bg-[var(--bg-hover)] font-medium text-start">{children}</th>
           ),
           td: ({ children }) => (
             <td className="border border-[var(--border-subtle)] px-2 py-1">{children}</td>

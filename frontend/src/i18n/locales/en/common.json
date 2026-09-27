@@ -663,7 +663,9 @@
     "aiWritingEmpty": "The model returned nothing. Please try again.",
     "aiWritingStaleRange": "The document changed while generating, so the original selection is gone. Select it again and retry.",
     "aiWritingReferenceParseFailed": "The model did not return valid reference data. Please try again.",
-    "aiWritingReferenceIdMismatch": "Returned entry ids do not match the current reference list — the write was rejected to keep in-text citations from breaking."
+    "aiWritingReferenceIdMismatch": "Returned entry ids do not match the current reference list — the write was rejected to keep in-text citations from breaking.",
+    "editorContentTooLarge": "The content is {size}, over the {limit} per-paper limit. Trim or split it before saving.",
+    "saveRejected": "The server rejected this save; automatic retries have stopped."
   },
   "export": {
     "openExport": "Export",
@@ -1287,6 +1289,7 @@
     "badRequest": "Invalid request parameters",
     "notFound": "The requested resource was not found",
     "fileDeleteFailed": "The original file could not be deleted. The paper record was kept — please try again later.",
+    "contentTooLarge": "The content exceeds the per-paper size limit. Trim or split it before saving.",
     "twoFactorExpired": "Your two-factor session has expired. Please sign in again.",
     "unknown": "Unknown error",
     "unknownNetwork": "Unknown network error",

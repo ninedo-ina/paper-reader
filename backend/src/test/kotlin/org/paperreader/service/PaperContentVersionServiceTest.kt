@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
+import org.paperreader.config.ContentProperties
 import org.paperreader.exception.ContentVersionConflictException
 import org.paperreader.exception.InvalidParameterException
 import org.paperreader.exception.ResourceNotFoundException
@@ -21,6 +22,8 @@ import org.paperreader.model.Paper
 import org.paperreader.model.PaperContentVersion
 import org.paperreader.repository.PaperContentVersionRepository
 import org.paperreader.repository.PaperRepository
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 /**
  * W6（REQ-202609-0262）验收标准的钉子：
@@ -41,12 +44,16 @@ class PaperContentVersionServiceTest {
 
     private val objectMapper = ObjectMapper()
 
+    /** 保留策略（W9 交付物①）。可按用例调小上限，验淘汰；默认值即生产默认值。 */
+    private val contentProperties = ContentProperties()
+
     private val service by lazy {
         PaperContentVersionService(
             paperContentVersionRepository,
             paperRepository,
             objectMapper,
             auditLogService,
+            contentProperties,
         )
     }
 
@@ -78,11 +85,19 @@ class PaperContentVersionServiceTest {
 
         every { paperContentVersionRepository.save(capture(snapshotSlot)) } answers {
             val incoming = snapshotSlot.captured
-            // 模拟 IDENTITY 主键：新行由库发号，这里按插入顺序发。
-            val persisted = if (incoming.id == 0L) incoming.copy(id = (snapshots.size + 1).toLong()) else incoming
+            // 模拟 IDENTITY 主键：新行由库发号，这里按插入顺序发。用「当前最大 id + 1」而不是
+            // 行数，否则淘汰删掉几行之后再插入会发出已用过的 id，和真实自增序列不符。
+            val persisted = if (incoming.id == 0L) {
+                incoming.copy(id = (snapshots.maxOfOrNull { it.id } ?: 0L) + 1)
+            } else {
+                incoming
+            }
             snapshots.removeAll { it.id == persisted.id }
             snapshots += persisted
             persisted
+        }
+        every { paperContentVersionRepository.deleteAll(any<List<PaperContentVersion>>()) } answers {
+            snapshots.removeAll(firstArg<List<PaperContentVersion>>().toSet())
         }
         every { paperContentVersionRepository.findByIdAndPaperId(any(), any()) } answers {
             val id = firstArg<Long>()
@@ -332,5 +347,98 @@ class PaperContentVersionServiceTest {
         assertNotNull(stored.contentJson)
         assertEquals("投稿版", stored.label)
         verify(exactly = 0) { paperRepository.save(any()) }
+    }
+
+    // ---- 保留策略（W9 交付物①：历史快照保留多少）----
+
+    /** 预置一条历史快照。[ageDays] 用来构造「超龄」的行。 */
+    private fun seedSnapshot(
+        id: Long,
+        label: String? = null,
+        source: String = PaperContentVersion.SOURCE_MANUAL,
+        ageDays: Long = 0,
+    ) {
+        snapshots += PaperContentVersion(
+            id = id,
+            paperId = 7,
+            label = label,
+            source = source,
+            contentVersion = 1,
+            contentJson = body("第 $id 版"),
+            createdAt = Instant.now().minus(ageDays, ChronoUnit.DAYS),
+        )
+    }
+
+    private fun storedIds() = snapshots.map { it.id }.sorted()
+
+    @Test
+    fun `keeps at most the configured number of snapshots and drops the oldest unlabeled first`() {
+        wire(draft(contentJson = body("当前正文")))
+        contentProperties.maxSnapshotCount = 3
+        (1L..4L).forEach { seedSnapshot(it) }
+
+        service.createSnapshot(7, 42, null)
+
+        // 4 条历史 + 新写的 = 5 条，上限 3，超出的 2 条从最旧的开始淘汰。
+        assertEquals(listOf(3L, 4L, 5L), storedIds())
+    }
+
+    @Test
+    fun `never prunes the snapshot it just created`() {
+        wire(draft(contentJson = body("当前正文")))
+        contentProperties.maxSnapshotCount = 1
+        seedSnapshot(1, label = "旧标签")
+        seedSnapshot(2)
+
+        val created = service.createSnapshot(7, 42, "最新")
+
+        // 上限 1 时「保留最新」必须成立：否则用户刚点的「保存快照」当场就被自己的淘汰逻辑删掉。
+        assertEquals(listOf(created.id), storedIds())
+    }
+
+    @Test
+    fun `prunes labeled snapshots only when nothing unlabeled is left to drop`() {
+        wire(draft(contentJson = body("当前正文")))
+        contentProperties.maxSnapshotCount = 2
+        seedSnapshot(1, label = "初稿")
+        seedSnapshot(2, label = "投稿版")
+        seedSnapshot(3)
+
+        service.createSnapshot(7, 42, null)
+
+        // 先删未打标签的 3，还不够才动最旧的标签快照 1；剩下的标签快照 2 保住。
+        assertEquals(listOf(2L, 4L), storedIds())
+    }
+
+    @Test
+    fun `drops unlabeled snapshots past the retention window but keeps a labeled one`() {
+        wire(draft(contentJson = body("当前正文")))
+        contentProperties.maxSnapshotAgeDays = 90
+        contentProperties.maxSnapshotCount = 50 // 不让份数上限干扰这条断言
+        seedSnapshot(1, ageDays = 120)
+        seedSnapshot(2, label = "投稿版", ageDays = 120)
+        seedSnapshot(3, ageDays = 10)
+
+        service.createSnapshot(7, 42, null)
+
+        // 标签是用户明说「这份要留着」，不因为时间久了被静默删除。
+        assertEquals(listOf(2L, 3L, 4L), storedIds())
+    }
+
+    @Test
+    fun `rollback keeps both the snapshot it restored to and the one it left behind`() {
+        wire(draft(contentJson = body("当前正文"), contentHtml = "<p>当前正文</p>", contentVersion = 1))
+        contentProperties.maxSnapshotCount = 2
+        seedSnapshot(1, ageDays = 400) // 本次回滚的目标：即使超龄也必须留下
+        seedSnapshot(2, ageDays = 400)
+
+        service.restoreSnapshot(7, 42, 1, baseVersion = 1)
+
+        assertEquals(listOf(1L, 3L), storedIds())
+        assertEquals(body("第 1 版"), storedPaper!!.contentJson)
+        // 留下的那条是回滚前的留档——淘汰不能把「回滚可逆」这条验收标准删掉。
+        val rollback = snapshots.single { it.id == 3L }
+        assertEquals(PaperContentVersion.SOURCE_ROLLBACK, rollback.source)
+        assertEquals(body("当前正文"), rollback.contentJson)
     }
 }
