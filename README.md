@@ -6,7 +6,20 @@ The repository contains the C-side product and its API. The administration conso
 
 > **Maintainer start here:** read the [documentation index](docs/README.md), then the [new maintainer guide](docs/NEW_MAINTAINER_GUIDE.md) and [complete project status](docs/PROJECT_STATUS.md). They record the real production topology, configuration rules, known risks, and release workflow without requiring previous chat context.
 
-## Current Iteration: v0.1.59
+## Current Iteration: v0.1.60
+
+- Branch: `feature/v0.1.60`
+- Requirement: `REQ-202609-0262` — 「W6 版本历史与快照」 (writer roadmap **W6**, child of `REQ-202609-0255`). Writing is now revertible: the body can be snapshotted, browsed as a timeline, compared, labelled, and rolled back to.
+- Scope:
+  - **Body snapshots get their own table — `pr_paper_versions` is deliberately not reused.** That table's existing meaning is *storage push state* (publish records), and the requirement forbids storing body snapshots in its rows. `V19__paper_content_versions.sql` therefore adds `pr_paper_content_versions` (`paper_id` → `pr_papers`, copies of `content_json`/`content_html`, `label`, `source`, `content_version`, `created_by`), indexed `(paper_id, created_at DESC, id DESC)`.
+  - **A rollback is itself revertible.** `restore` first inserts a *pre-rollback* snapshot of the body it is about to replace (`source = ROLLBACK`, no label) and only then overwrites the paper — both inside one transaction. The rollback therefore appears on the timeline like any other entry and can be rolled back again. Taking a plain snapshot is a read-only operation: it never writes to `pr_papers`.
+  - **Optimistic locking is preserved.** `POST …/restore` requires a `baseVersion`; a stale value is rejected with `409` / code `1008`, the same conflict code the autosave path uses. The UI disables rollback while the editor has unsaved changes, so a rollback cannot race the debounced autosave.
+  - Endpoints: `POST|GET /api/papers/{paperId}/content-versions`, `GET|PATCH /api/papers/{paperId}/content-versions/{snapshotId}`, `POST /api/papers/{paperId}/content-versions/{snapshotId}/restore`. Codes reused from the existing set: `1003` invalid parameter (400), `1004` not found (404), `1008` version conflict (409); `1014` stays free.
+  - Editor integration: a **history** button in the editor header opens a dialog with per-row preview, label edit, line diff against the current body, and rollback (two-step inline confirm). Deleting a paper also deletes its snapshots.
+- Status: released 2026-09-27 UTC. Backend rebuilt & restarted (`/api/health` = `0.1.60`), Flyway `V18` → `V19`, frontend chunks sha256 verified byte-for-byte, and the new route was exercised against production with a real authenticated request (`200` / `404`+`1004`). **W1–W6 of the writer roadmap are now all delivered** (W7–W9 remain).
+- Note: `0.1.61`–`0.1.63` are claimed by three sibling worktrees cut from the same base; `0.1.60` was free on `origin` and is not shared with any of them.
+
+## Previous Iteration: v0.1.59
 
 - Branch: `feature/v0.1.59`
 - Requirement: `REQ-202609-0261` — 「文档导入、导出与投稿产物」 (writer roadmap **W5**). Paper content can be imported from Markdown and exported to Markdown / HTML / LaTeX / BibTeX / DOCX / PDF; export artifacts hook back into the existing `pr_paper_versions` release system rather than a parallel store.
