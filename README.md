@@ -1,12 +1,26 @@
 # PaperHelper
 
-PaperHelper is an academic paper reading workspace. It combines a Next.js client, a Kotlin/Spring Boot API, PDF storage, GROBID metadata extraction, annotations, notes, AI-assisted reading, research discussions, and private messaging.
+PaperHelper is an academic paper reading workspace. It combines a Next.js client, a Kotlin/Spring Boot API, PDF storage, GROBID metadata extraction, annotations, notes, AI-assisted reading and writing, research discussions, and private messaging.
 
 The repository contains the C-side product and its API. The administration console is maintained separately in the companion project at `/root/paperread-admin`; it uses the same PostgreSQL instance but keeps administrator data in the `paperread_admin` schema.
 
 > **Maintainer start here:** read the [documentation index](docs/README.md), then the [new maintainer guide](docs/NEW_MAINTAINER_GUIDE.md) and [complete project status](docs/PROJECT_STATUS.md). They record the real production topology, configuration rules, known risks, and release workflow without requiring previous chat context.
 
-## Current Iteration: v0.1.60
+## Current Iteration: v0.1.62
+
+- Branch: `feature/v0.1.62`
+- Requirement: `REQ-202609-0264` — 「AI 辅助写作」 (writer roadmap **W8**, child of `REQ-202609-0255`). Extends the product from "read a paper and ask AI" to "write a paper and ask AI": selection **continue / rewrite / translate / paraphrase**, abstract generation, **bibliography formatting suggestions**, and grammar / academic-wording review.
+- Scope:
+  - **Frontend-only, zero new backend, zero new provider.** The feature reuses the existing reader AI chain verbatim — provider + API key live in browser `localStorage` (`pr-preferences`, via `usePreferencesStore`) and requests go through `requestAiChatCompletion` (direct-to-provider first, JWT-protected `/api/provider-relay/*` as fallback). `ChatPanel.tsx`, `chat-store.ts` and the relay route are **unchanged**; W8 only adds a new call site inside the editor. No server-side model configuration was created, as the requirement demands.
+  - **New store-free logic layer `frontend/src/lib/ai-writing.ts`**: `AI_WRITING_ACTIONS` is the single source of truth for the seven actions and their `resultKind` / `needsSelection` / `needsDocument` capability flags; the toolbar and the panel both derive from it. `describeAiWritingDisclosure()` computes what will actually leave the browser (references ⇒ bibliography only, 0 body characters; abstract/grammar ⇒ document; the rest ⇒ selection, always with a character count) and the panel renders it before sending. Long documents are clipped to head `16000` + tail `8000` characters. Model output is defensively sanitised: `cleanAiWritingText` strips only a whole-answer code fence, and bibliography JSON goes through tolerant parsing plus a **`toCslItem` whitelist** (unknown `type` downgrades to `article`, entries without a non-empty `id` are dropped, duplicates removed).
+  - **Editor UI**: `AiWritingToolbar` (a toolbar row, since no `@tiptap/bubble-menu` / `@tiptap/markdown` is installed — adding one would mean a new extension, contrary to the reuse constraint) and `AiWritingPanel` (a portal showing the suggestion in an editable box). The body is **never** touched until the user clicks 写入正文, and the write path is guarded: text results re-check `isAiWritingRangeStale` against the selection captured at request time, bibliography results must satisfy `sameCslIdSet` before `replaceBibliographyEntries` runs. Writes mark the editor dirty so the W3 autosave persists them.
+  - i18n: **34 new `aiWriting*` keys** added to `zh` + `en` only (the other 12 locales fall back to Chinese, deferred to W9).
+  - No migration, no new API endpoint, no new business code.
+- Tests: new `frontend/src/test/ai-writing.test.tsx` (**30 tests**) driving a **real Tiptap editor instance**, covering prompt metadata, disclosure character counts, response sanitising, the "no write without confirmation" guarantee (the document JSON is unchanged after generation), the write path, toolbar disabled states, the two-step translate flow, and the no-provider `role="alert"`. Branch total 30 files / 228 tests; **33 files / 255 tests after merging `main`** — all green, with `tsc --noEmit` and `pnpm run build` clean.
+- Status: released 2026-09-27 UTC. Frontend-only relative to `main`: the backend was **deliberately not rebuilt or restarted** (`/api/health` still reports W6's `0.1.60`); the served editor chunk `app/[locale]/page-17dfc4645bea8a2c.js` is byte-identical (sha256 `a0d2a6b97d6ae8bcdf1a8f844fb67c4cf646c740bf510d33bfa987584a16f09c`) to the local build and contains the new `aiWriting*` keys, and the favicon cache-buster is `?v=0.1.62`. Commits `d9136c0` (feature + version bump) and `de31eae` (merge of `main`) on the feature branch, merged into `main` as the explicit `--no-ff` merge commit `7eb5001` with `dev` fast-forwarded — no force-push, no history rewrite. Deployment detail is recorded in `docs/MAINTENANCE.md`.
+- **Parallel-iteration note (version collision)**: at kick-off `main` was at `29b4158` (v0.1.59 docs) and `git worktree list` showed four concurrent BACS worktrees each holding a distinct number — `feature/v0.1.60` (W6, `REQ-202609-0262`), `feature/v0.1.61` (`REQ-202609-0265`), `feature/v0.1.62` (**this W8**) and `feature/v0.1.63` (`REQ-202609-0263`) — so `0.1.62` was unambiguous. W6 shipped `0.1.60` first and advanced `main` to `272f1e5` mid-development; this branch integrated it by `git merge origin/main` rather than rebasing, keeping `0.1.62` on all six version files. W6 then pushed two further documentation commits, so `main` had moved past this branch's code merge; the documentation sync below was integrated the same way (a second `git merge origin/main`, resolving the seven documentation files additively so W6's v0.1.60 notes survive verbatim in the "Previous Iteration: v0.1.60" block). Recorded in `docs/ATTENTION.md`.
+
+## Previous Iteration: v0.1.60
 
 - Branch: `feature/v0.1.60`
 - Requirement: `REQ-202609-0262` — 「W6 版本历史与快照」 (writer roadmap **W6**, child of `REQ-202609-0255`). Writing is now revertible: the body can be snapshotted, browsed as a timeline, compared, labelled, and rolled back to.
@@ -166,10 +180,10 @@ The repository contains the C-side product and its API. The administration conso
 
 - Default branch: `main`
 - Integration branch: `dev`
-- Released version branch: `feature/req-202609-0267-upload-quota`
-- Client version: `0.1.58`
-- Production frontend: `0.1.58` (verified 2026-09-26 UTC)
-- Production backend: `0.1.58` — rebuilt and restarted in v0.1.58 (`REQ-202609-0267`, upload quotas), superseding the frontend-only v0.1.57 release; Flyway is now at `V17`; `/api/health` reports `0.1.58`
+- Released version branch: `feature/v0.1.62`
+- Client version: `0.1.62`
+- Production frontend: `0.1.62` (verified 2026-09-27 UTC) — frontend-only release; identify it by the favicon cache-buster `?v=0.1.62` and the editor chunk `app/[locale]/page-17dfc4645bea8a2c.js` (sha256 `a0d2a6b97d6ae8bcdf1a8f844fb67c4cf646c740bf510d33bfa987584a16f09c`, byte-identical to the local build)
+- Production backend: `0.1.60` — the last backend rebuild was v0.1.60 (`REQ-202609-0262`, content history); v0.1.62 changed zero Kotlin bytes and the jar was deliberately **not** rebuilt, so `/api/health` still reports `0.1.60`; Flyway is now at `V19`
 - Default locale: Simplified Chinese (`zh`)
 - Supported locales: Simplified Chinese (`zh`), Traditional Chinese (`zh-Hant`), English (`en`), Tibetan (`bo`), Uyghur (`ug`), German (`de`), Arabic (`ar`), Korean (`ko`), Japanese (`ja`), French (`fr`), Vietnamese (`vi`), Spanish (`es`), Italian (`it`) and Persian (`fa`) — Arabic, Persian and Uyghur render right-to-left
 - Production client: `https://paper.pilo.eu.cc`
@@ -251,6 +265,7 @@ paper-reader/
 - From the Reader metadata panel, resolve exact arXiv IDs and DOIs through arXiv, DataCite, and Crossref, preview field-level candidates, and apply only selected values.
 - Metadata enrichment records source URLs, confidence, conflicts, short-lived previews, and applied-field provenance. The v0.1.23 implementation is deployed to production and supports the documented single-paper flow.
 - Edit paper metadata, favorite papers, add/remove tags, generate share text, download PDFs, and delete papers.
+- Ask AI to help write the body, not only to read (v0.1.62): selection **continue / rewrite / translate / paraphrase**, abstract generation, bibliography formatting suggestions, and grammar / academic-wording review. Results are always presented as a **suggestion** — the body is untouched until the user confirms — the panel states exactly what will be sent to the Provider (with a character count) before sending, and the feature reuses the reader's existing Provider chain and browser-side credentials rather than introducing a server-side model configuration.
 - Create and browse paper version records. External GitHub/Gitee/OSS/S3 artifact pushing is still a placeholder and must not be presented as complete.
 
 ### Reading and research
@@ -479,9 +494,11 @@ V14__two_factor_and_trusted_devices.sql
 V15__widen_user_avatar.sql
 V16__paper_content.sql
 V17__upload_quota.sql
+V18__paper_export_artifacts.sql
+V19__paper_content_versions.sql
 ```
 
-Add a new numbered migration for schema or controlled data changes. Do not edit an already-applied migration in a shared environment. V12 narrowly repairs stored titles beginning with one explicitly recognized Google permission statement; future imports use the same conservative cleanup in the TEI parser. V16 adds `pr_papers.content_json` / `content_html` / `content_version` — all nullable, so it is a metadata-only change for existing rows and needs no backfill. V17 adds `pr_upload_records`, the append-only upload ledger the quotas are computed from (plus two indexes on `(user_id, created_at)` and `created_at`); it is additive and needs no backfill — uploads made before V17 simply have no ledger row, so their bytes do not count against anyone's quota. `paper_id` is intentionally **not** a foreign key, so deleting a paper cannot remove ledger rows and refund quota.
+Add a new numbered migration for schema or controlled data changes. Do not edit an already-applied migration in a shared environment. V12 narrowly repairs stored titles beginning with one explicitly recognized Google permission statement; future imports use the same conservative cleanup in the TEI parser. V16 adds `pr_papers.content_json` / `content_html` / `content_version` — all nullable, so it is a metadata-only change for existing rows and needs no backfill. V17 adds `pr_upload_records`, the append-only upload ledger the quotas are computed from (plus two indexes on `(user_id, created_at)` and `created_at`); it is additive and needs no backfill — uploads made before V17 simply have no ledger row, so their bytes do not count against anyone's quota. `paper_id` is intentionally **not** a foreign key, so deleting a paper cannot remove ledger rows and refund quota. V18 adds `pr_paper_export_artifacts`, which hangs export outputs off the existing `pr_paper_versions` release rows. V19 adds `pr_paper_content_versions` (`paper_id` → `pr_papers`) for body snapshots — deliberately **not** reusing `pr_paper_versions`, whose established meaning is *storage push state*; both V18 and V19 are additive and need no backfill. v0.1.62 added no migration.
 
 ## API Surface
 
