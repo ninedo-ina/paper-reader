@@ -210,6 +210,47 @@ data class PaperVersionDto(
     val createdAt: Instant,
 )
 
+// ==== Paper Content Version / 正文快照 (W6) ====
+/**
+ * 正文快照（REQ-202609-0262）。与上面的 PaperVersionDto 是两回事：
+ * 那个是「发布记录 / storage push 状态」，本组是「正文在某时刻长什么样」。
+ * 列表用 summary（不带正文），取单条或对比时才取 detail（带 contentJson/contentHtml）。
+ */
+data class CreateContentSnapshotRequest(
+    /** 手动标签（「初稿」「投稿版」）；留空即未打标签。 */
+    val label: String? = null,
+)
+
+data class RenameContentSnapshotRequest(
+    val label: String? = null,
+)
+
+data class ContentSnapshotSummaryDto(
+    val id: Long,
+    val paperId: Long,
+    val label: String?,
+    /** MANUAL（手动创建）/ ROLLBACK（回滚前自动留下的当前态） */
+    val source: String,
+    val contentVersion: Int,
+    val createdAt: Instant,
+)
+
+data class ContentSnapshotDetailDto(
+    val id: Long,
+    val paperId: Long,
+    val label: String?,
+    val source: String,
+    val contentVersion: Int,
+    val contentJson: JsonNode?,
+    val contentHtml: String?,
+    val createdAt: Instant,
+)
+
+data class RestoreContentSnapshotRequest(
+    /** 同 UpdatePaperContentRequest.baseVersion：落后于服务端当前版本时拒绝回滚（409/1008）。 */
+    val baseVersion: Int? = null,
+)
+
 // ==== Paper Export / Import (W5) ====
 data class CreateExportRequest(
     /** markdown / html / latex / bibtex / docx / pdf */

@@ -6,8 +6,8 @@ import { useEditor, useEditorState, EditorContent } from "@tiptap/react"
 import type { Editor, JSONContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import Placeholder from "@tiptap/extension-placeholder"
-import type { PaperDetailDto } from "@/lib/api/types"
-import { Save, Loader2, AlertTriangle, RotateCw, FileUp } from "lucide-react"
+import type { PaperContentDto, PaperDetailDto } from "@/lib/api/types"
+import { Save, Loader2, AlertTriangle, RotateCw, FileUp, History } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { useAutosave } from "@/hooks/useAutosave"
 import { useUnsavedGuard } from "@/hooks/useUnsavedGuard"
@@ -18,6 +18,7 @@ import { AcademicToolbar, type MathDialogState } from "./AcademicToolbar"
 import { FormatToolbar } from "./FormatToolbar"
 import { TextAlign } from "./text-align"
 import { computeEditorStats } from "./editor-stats"
+import { ContentHistoryDialog } from "./ContentHistoryDialog"
 
 export interface PaperContentPayload {
   /** 权威内容：编辑器节点树 */
@@ -36,9 +37,18 @@ export interface PaperEditorProps {
   onReloadConflict?: () => Promise<void>
   /** 导入 Markdown：把文本转成 HTML 片段返回，编辑器随即 setContent 供用户确认后保存 */
   onImportMarkdown?: (markdown: string) => Promise<string>
+  /** 回滚到某条正文快照后交回覆盖后的正文，由调用方同步版本号并重挂编辑器 */
+  onContentReplaced?: (dto: PaperContentDto) => void
 }
 
-export function PaperEditor({ paper, content, onSave, onReloadConflict, onImportMarkdown }: PaperEditorProps) {
+export function PaperEditor({
+  paper,
+  content,
+  onSave,
+  onReloadConflict,
+  onImportMarkdown,
+  onContentReplaced,
+}: PaperEditorProps) {
   const t = useTranslations("papers")
   const tc = useTranslations("common")
   const ti = useTranslations("import")
@@ -46,6 +56,7 @@ export function PaperEditor({ paper, content, onSave, onReloadConflict, onImport
   const [mathDialog, setMathDialog] = useState<MathDialogState | null>(null)
   const [reloading, setReloading] = useState(false)
   const [showImport, setShowImport] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
 
   // 编辑器与自动保存互相依赖：编辑器的 onUpdate 要 markDirty，而 autosave 取内容又要读编辑器。
   // 用 ref 打破这个环——autosave 通过 editorRef 读当前内容，编辑器创建时拿到稳定的 markDirty。
@@ -162,6 +173,16 @@ export function PaperEditor({ paper, content, onSave, onReloadConflict, onImport
     markDirty()
   }
 
+  /**
+   * 回滚成功后调用方会重挂编辑器（本组件随之卸载），这里只需把结果交上去。
+   * 回滚前本地必须无未保存改动，否则那份改动会在重挂后被自动保存盖掉回滚结果 ——
+   * 弹层据此禁用回滚按钮，所以这里不再拦截。
+   */
+  const handleContentReplaced = (dto: PaperContentDto) => {
+    autosave.reset()
+    onContentReplaced?.(dto)
+  }
+
   return (
     <div className="flex flex-col h-full" style={{ background: "var(--bg-root)" }}>
       <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border-subtle)] glass-surface">
@@ -175,6 +196,10 @@ export function PaperEditor({ paper, content, onSave, onReloadConflict, onImport
               <span className="ml-1.5">{ti("importMarkdown")}</span>
             </Button>
           )}
+          <Button size="sm" variant="secondary" onClick={() => setShowHistory(true)}>
+            <History className="size-4" />
+            <span className="ml-1.5">{t("openContentHistory")}</span>
+          </Button>
           {onSave && (
           <div className="flex items-center gap-2">
             {status === "saving" && (
@@ -252,6 +277,15 @@ export function PaperEditor({ paper, content, onSave, onReloadConflict, onImport
           onSubmit={handleImportSubmit}
         />
       )}
+
+      <ContentHistoryDialog
+        open={showHistory}
+        onClose={() => setShowHistory(false)}
+        paperId={paper.id}
+        getCurrentContent={() => editorRef.current?.getJSON() ?? content}
+        dirty={isDirty}
+        onRestored={handleContentReplaced}
+      />
     </div>
   )
 }
