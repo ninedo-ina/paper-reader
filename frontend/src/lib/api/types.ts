@@ -584,6 +584,43 @@ export interface UpdatePaperContentRequest {
   baseVersion?: number
 }
 
+// --- 正文快照（W6，REQ-202609-0262）---
+// 注意与上面的 PaperVersionDto 区分：那个是「发布记录 / storage push 状态」，
+// 本组是「正文在某时刻长什么样」，两张表、两条接口。
+
+/** 快照来源：用户手动创建 / 回滚前自动留下的当前态。 */
+export type ContentSnapshotSource = "MANUAL" | "ROLLBACK"
+
+export interface ContentSnapshotSummaryDto {
+  id: number
+  paperId: number
+  /** 手动标签（「初稿」「投稿版」）；null = 未打标签 */
+  label: string | null
+  source: ContentSnapshotSource
+  /** 快照时刻的正文版本号，可与 Timeline 上的保存记录对齐 */
+  contentVersion: number
+  createdAt: string
+}
+
+/** 取单条时才带正文；列表接口不带，避免把整篇正文都传一遍。 */
+export interface ContentSnapshotDetailDto extends ContentSnapshotSummaryDto {
+  contentJson: JSONContent | null
+  contentHtml: string | null
+}
+
+export interface CreateContentSnapshotRequest {
+  label?: string | null
+}
+
+export interface RenameContentSnapshotRequest {
+  label?: string | null
+}
+
+export interface RestoreContentSnapshotRequest {
+  /** 同 UpdatePaperContentRequest.baseVersion：落后于服务端当前版本时拒绝回滚（409/1008） */
+  baseVersion?: number
+}
+
 export interface PaperTagDto {
   id: number
   paperId: number

@@ -9,6 +9,7 @@ import org.paperreader.repository.AnnotationCommentRepository
 import org.paperreader.repository.AnnotationRepository
 import org.paperreader.repository.NoteRepository
 import org.paperreader.repository.PaperChunkRepository
+import org.paperreader.repository.PaperContentVersionRepository
 import org.paperreader.repository.PaperExportArtifactRepository
 import org.paperreader.repository.PaperRepository
 import org.paperreader.repository.PaperTagRepository
@@ -26,6 +27,7 @@ class PaperDeletionService(
     private val noteRepository: NoteRepository,
     private val readingLogRepository: ReadingLogRepository,
     private val paperVersionRepository: PaperVersionRepository,
+    private val paperContentVersionRepository: PaperContentVersionRepository,
     private val paperTagRepository: PaperTagRepository,
     private val paperChunkRepository: PaperChunkRepository,
     private val paperExportArtifactRepository: PaperExportArtifactRepository,
@@ -53,6 +55,7 @@ class PaperDeletionService(
         noteRepository.deleteByPaperId(paper.id)
         readingLogRepository.deleteByPaperId(paper.id)
         paperVersionRepository.deleteByPaperId(paper.id)
+        paperContentVersionRepository.deleteByPaperId(paper.id)
         paperTagRepository.deleteByPaperId(paper.id)
         paperChunkRepository.deleteByPaperId(paper.id)
 
