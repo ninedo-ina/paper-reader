@@ -19,6 +19,7 @@ import org.paperreader.repository.AnnotationCommentRepository
 import org.paperreader.repository.AnnotationRepository
 import org.paperreader.repository.NoteRepository
 import org.paperreader.repository.PaperChunkRepository
+import org.paperreader.repository.PaperContentVersionRepository
 import org.paperreader.repository.PaperExportArtifactRepository
 import org.paperreader.repository.PaperRepository
 import org.paperreader.repository.PaperTagRepository
@@ -44,6 +45,9 @@ class PaperDeletionServiceTest {
 
     @MockK(relaxed = true)
     private lateinit var paperVersionRepository: PaperVersionRepository
+
+    @MockK(relaxed = true)
+    private lateinit var paperContentVersionRepository: PaperContentVersionRepository
 
     @MockK(relaxed = true)
     private lateinit var paperTagRepository: PaperTagRepository
@@ -76,6 +80,7 @@ class PaperDeletionServiceTest {
             noteRepository,
             readingLogRepository,
             paperVersionRepository,
+            paperContentVersionRepository,
             paperTagRepository,
             paperChunkRepository,
             paperExportArtifactRepository,
@@ -121,6 +126,7 @@ class PaperDeletionServiceTest {
         verify { noteRepository.deleteByPaperId(7) }
         verify { readingLogRepository.deleteByPaperId(7) }
         verify { paperVersionRepository.deleteByPaperId(7) }
+        verify { paperContentVersionRepository.deleteByPaperId(7) }
         verify { paperTagRepository.deleteByPaperId(7) }
         verify { paperChunkRepository.deleteByPaperId(7) }
         verify { paperExportArtifactRepository.deleteByPaperId(7) }
