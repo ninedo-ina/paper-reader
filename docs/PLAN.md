@@ -1,3 +1,25 @@
+## 迭代：v0.1.62（已发布，W8 AI 辅助写作）
+
+发布分支：`feature/v0.1.62`；类型：新功能（**纯前端，后端 Kotlin 零改动、jar 未重建**）；需求编号：`REQ-202609-0264`（writer 路线图 **W8**，`REQ-202609-0255` 的子项）；状态：2026-09-27 UTC 已合并 `main`（代码段显式 `--no-ff` 合并提交 `7eb5001`，父提交 `272f1e5`〔并行的 W6 `v0.1.60` 合并提交〕+ `de31eae`）并部署验收，随后文档同步以第二个显式 `--no-ff` 合并提交带入 `main`，`dev` 已快进（发布记录见 `docs/MAINTENANCE.md`）。
+
+- **本轮定位**：把"读论文问 AI"扩到"写论文问 AI"，**不新建 Provider、不在服务端新建模型配置**。Provider 与 API Key 仍是浏览器 `localStorage` 里的 `pr-preferences`，请求仍走既有 `requestAiChatCompletion`（先直连、失败回落 JWT 保护的 `/api/provider-relay/*`）；`ChatPanel.tsx` / `chat-store.ts` / relay 路由**一行未改**，本轮只在编辑器里加了一个调用点。
+- **交付物**：新增 `lib/ai-writing.ts`（无 store 依赖的纯逻辑层：七个动作的元数据与提示词、`describeAiWritingDisclosure()` 的发送范围口径、参考文献 CSL 白名单过滤、`isAiWritingRangeStale()` 选区失效校验、`applyAiWritingSuggestion()` 写入）；新增 `AiWritingToolbar.tsx`（编辑器第三条工具栏）与 `AiWritingPanel.tsx`（`createPortal` 到 `body` 的建议面板）；`Citation.tsx` 增 `replaceBibliographyEntries()`；`PaperEditor.tsx` 接线（`writingRequest` 为 `null` 时不挂面板，避免空跑一次生成）；`globals.css` 新增 `.ai-writing-*` 一节；`zh`/`en` 各 34 个 `aiWriting*` 文案。**无迁移、无新端点、无新依赖。**
+- **两条验收标准是代码守卫，不是文案**：① "不能直接改用户的字"——AI 结果只进 `AiWritingPanel` 的可编辑建议框，点「写入正文」才落笔，且写入前用 `isAiWritingRangeStale()` 校验生成期间选区是否已失效（失效则拒写并提示）；参考文献结果另需 `sameCslIdSet()` 通过（id 集合必须与原表完全一致）才允许写。② "发往 Provider 的内容有明确告知"——`describeAiWritingDisclosure()` 按动作算出发送范围（仅文献表 / 全文 / 选区）与字符数，面板**在发请求之前**渲染成清单；全文只发首 16000 + 尾 8000 字符（`clipDocumentText`）。
+- **七个动作**：选区续写（`continue`，插入新块）/ 改写（`rewrite`）/ 翻译（`translate`，八种目标语言）/ 降重（`paraphrase`）为替换类；全文摘要（`abstract`，插入）与语法与学术用语检查（`grammar`，报告类、只展示不写入）为全文类；参考文献格式化建议（`reference`，仅文献表）。入口做成**工具栏一行**而非选区气泡菜单——仓库里没有 `@tiptap/bubble-menu`，新引扩展等于破坏"复用现有链路"的约束。
+- **测试**：前端新增 `src/test/ai-writing.test.tsx`（30 项，全程 `vi.stubGlobal("fetch", ...)` mock 掉 Provider），**本轮实测 30 个测试文件 / 228 项全绿**；`./node_modules/.bin/tsc --noEmit` 与 `pnpm run build` 退出码 0；**后端本轮零改动、未重跑**。
+- **部署与验收**（2026-09-27 UTC，`https://paper.pilo.eu.cc`）：纯前端，故**只重建前端并按前端链路 `pm2 restart`**（重启计数 `7` → `8`）、`pm2 save`，后端 jar 有意不动。`/zh/login` 200；favicon `?v=0.1.62`；`app/[locale]/page-17dfc4645bea8a2c.js` 线上 sha256 `a0d2a6b97d6ae8bcdf1a8f844fb67c4cf646c740bf510d33bfa987584a16f09c` 与本地 `.next` 逐字节一致且含 20+ 个 `aiWriting*` 键。**`/api/health` 仍报 `0.1.60`**（= 上一轮 W6 的后端版本）——本轮后端未重建，**这不是故障**，判前端版本请以 favicon `?v=` 与上面的 chunk 哈希为准。
+- **并行撞号**：本轮开工时同一仓库有四个 BACS 工作流并行（`git worktree list`：W6 = `feature/v0.1.60`、`REQ-202609-0265` = `feature/v0.1.61`、本轮 = `feature/v0.1.62`、`REQ-202609-0263` = `feature/v0.1.63`），版本号先到先得。开发期间 W6 先进了 `main`（`272f1e5`，含真实 Kotlin 改动与 `V19`），本轮按仓库先例**把 `main` 合并进需求分支**（提交 `de31eae`，不 rebase、不强推），六处版本号文件取本分支的 `0.1.62`、`PaperEditor.tsx` 手工做加法合并（`writingRequest`/`AiWritingPanel` 与 W6 的 `showHistory`/`ContentHistoryDialog` 都保留）。合并后整跑为 **33 个测试文件 / 255 项全绿**。
+- **遗留**：① **单测全程 mock `fetch`，从未跑过真实 Provider**——"七个动作的提示词在真实模型上产出可用结果"没有证据；② 无登录态浏览器端到端人工点击（生产只开管理员 GitHub 登录）；③ 无并发与取消（一次一个请求，关面板不发 abort）；④ `grammar`/`abstract` 会发全文且只有一次性告知、没有逐次二次确认；⑤ 参考文献只做格式化建议，不联网查证条目真伪；⑥ 其余 12 语言文案回退中文（随 W9）。
+
+## 迭代：v0.1.60（已发布，W6 版本历史与快照）
+
+> 由**并行工作流**（`REQ-202609-0262`）交付，本文件不作为主要记录方，发布细节见 `docs/MAINTENANCE.md` 与 `docs/PROJECT_STATUS.md`。此处只记与本文件 writer 计划相关的部分。
+
+发布分支：`feature/v0.1.60`；类型：新功能（**有真实 Kotlin 改动 + 迁移 `V19`，后端 jar 已重建重启**）；需求编号：`REQ-202609-0262`（writer 路线图 **W6**）；状态：2026-09-27 UTC 前已合并 `main`（合并提交 `272f1e5`）并部署，`/api/health` 报 `0.1.60`，PM2 id `5` → `6`。
+
+- 正文快照落在**新建的** `pr_paper_content_versions`（`V19__paper_content_versions.sql`），**没有复用** `pr_paper_versions` 的"发布记录"语义——这正是路线图 W6 里"注意"那一条要求的做法；提供时间线查看、回滚（回滚本身也产生新快照，可再回滚回来）与手动打标签。前端入口挂在编辑器顶栏（「版本历史」按钮）与 `ContentHistoryDialog`。
+- **本轮 W8 与它撞过 `PaperEditor.tsx` 和 `common.json`**，已加法合并；W8 另修了 W6 新增测试 `content-history-wiring.test.tsx` 里 mock editor 缺 `state` 的问题（W8 的工具栏要从 `editor.state` 读选区），因为真实的 Tiptap `Editor` 必然有 `state`，不应为迁就 mock 在生产代码里加防御分支。
+
 ## 迭代：v0.1.59（已发布，W5 导入、导出与投稿）
 
 发布分支：`feature/v0.1.59`；类型：新功能（后端导出/导入引擎 + 迁移，前端导出/导入弹窗）；需求编号：`REQ-202609-0261`（writer 路线图 **W5**，`REQ-202609-0255` 的子项）；状态：2026-09-26 UTC 已合并 `main`（代码段显式 `--no-ff` 合并提交 `a1c2ed0`，父提交 `772dc58` + `e7d9416`）并部署验收，随后文档同步以第二个显式 `--no-ff` 合并提交带入 `main`，`dev` 已快进（发布记录见 `docs/MAINTENANCE.md`）。
@@ -521,9 +543,9 @@ v0.1.40 把两步验证补成闭环时，表单沿用了最朴素的排法：标
 4. ~~**`v0.1.56` 导出与投稿（W5 剩余）**~~ **该号已被自动保存（W3）占用**：W3 与 W5 无依赖，且"写了一半会丢"比"导出格式"更痛，因此 `0.1.56` 先发 W3（见本文件上文的 v0.1.56 条目）；紧接着 `0.1.57` 又给了 W2（W2 原先要的 `0.1.55` 已作废）。**W5（导入导出 + 导出与投稿）顺延到 `v0.1.58` 起**，[WRITER_ROADMAP.md](WRITER_ROADMAP.md) 第 5 节的迭代表已按新号重排。
 5. ~~**`v0.1.58` 导入导出（W5 的 Markdown 部分 + 图片）**~~ **`0.1.58` 已被并行的上传论文限额需求（`REQ-202609-0267`）占用，不属 W5**：W5 未按原表拆成"Markdown 部分"单独一版；图片插入与存储顺延到后续。
 6. ~~**`v0.1.59` 导出与投稿（W5 剩余）**~~ **已发布，实际把 W5 整条一次交付**：Markdown 导入 + 导出 PDF（Typst）/ DOCX（Pandoc）/ LaTeX / BibTeX / Markdown，均以独立进程 + 五道安全闸门（大小上限 / 并发上限 / 引擎探活 / 超时 / 目录隔离+脱敏）运行，导出产物回挂 `pr_paper_versions`（Flyway `V18`）。详见本文件上文 v0.1.59 条目。**至此 W1-W5 全部落地。**
-7. **`v0.1.60` 版本历史（W6）**：正文快照、对比、回滚、手动打标签。**W3 落地后这条更值得做**——冲突现在只解决"谁的写入算数"，没有历史版本、不能看差异也不能回滚。
+7. ~~**`v0.1.60` 版本历史（W6）**~~ **已发布（`REQ-202609-0262`，由并行工作流交付）**：正文快照（新建 `pr_paper_content_versions`，Flyway `V19`，没有复用 `pr_paper_versions` 的"发布记录"语义）、时间线查看、回滚（回滚本身产生新快照）、手动打标签。W3 之后冲突只解决"谁的写入算数"，这条补上了"能看差异、能回滚"。详见本文件上文 v0.1.60 条目。**注意：`v0.1.61`（`REQ-202609-0265`）是并行的非 writer 需求占用的号，不属本计划。**
 8. **`v0.2.0` 协作（W7 + 安全债）**：**先修 `/ws` 的 STOMP 身份绑定**（见 [PROJECT_STATUS.md](PROJECT_STATUS.md) 第 11 节安全债），再上 Yjs + Hocuspocus 协作编辑。
-9. **`v0.2.x` 写作工作台整合（W8 + W9）**：AI 写作辅助 + 写作台整合 + 性能与合规收口。
+9. ~~**`v0.2.x` 写作工作台整合（W8 + W9）**~~ **W8 已单独拆出来发版**：**`v0.1.62` AI 辅助写作（W8）已发布（`REQ-202609-0264`，纯前端）**——选区续写/改写/翻译/降重、摘要生成、参考文献格式化建议、语法与学术用语检查，复用 `localStorage` Provider 直连链路，**未新建 Provider、未动后端**（详见本文件上文 v0.1.62 条目）。**剩下的 `v0.2.x` 只含 W9 + 写作台整合**：全文检索联动、性能与合规收口、编辑器文案 14 语言覆盖。**注意：`v0.1.63`（`REQ-202609-0263`）是并行的非 writer 需求占用的号，不属本计划。**
 
 "引入开源论文编辑器"的实际形态是**分层复用**（编辑器内核 Tiptap 3 + 排版引擎 Typst/Pandoc + 引用生态 CSL），不是引入某个论文编辑器产品；理由与实测数据见 [PAPER_EDITOR_SELECTION.md](PAPER_EDITOR_SELECTION.md)。**这一条在 `v0.1.54` 上已经验证过一次：学术能力用的是 Tiptap 官方 MIT 扩展，"借用"的粒度是扩展而不是产品。**
 
