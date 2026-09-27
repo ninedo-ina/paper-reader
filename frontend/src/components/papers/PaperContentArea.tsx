@@ -6,8 +6,10 @@ import type { JSONContent } from "@tiptap/react"
 import { PDFViewer } from "@/components/reader/PDFViewer"
 import { PaperEditor } from "@/components/papers/PaperEditor/PaperEditor"
 import type { PaperContentPayload } from "@/components/papers/PaperEditor/PaperEditor"
+import { CollaborativeEditor } from "@/components/papers/CollaborativeEditor"
 import * as papersApi from "@/lib/api/papers"
 import { importMarkdown as importMarkdownApi } from "@/lib/api/export"
+import { useUserStore } from "@/stores/user-store"
 import type { PaperDetailDto } from "@/lib/api/types"
 
 interface PaperContentAreaProps {
@@ -22,6 +24,11 @@ export function PaperContentArea({ paper, onUploadClick }: PaperContentAreaProps
   const paperId = paper?.id ?? null
   const isManual = paper?.sourceType === "MANUAL"
 
+  // 手写论文默认走实时协作；但协作要绑定当前登录用户（角色/光标/权限）。
+  // 拿不到 profile（如未登录、或组件在无会话上下文里被测试挂载）时退回原单机编辑路径。
+  const profile = useUserStore((s) => s.profile)
+  const collabEnabled = isManual && !!profile?.id
+
   const [content, setContent] = useState<JSONContent | null>(null)
   const [loadFailed, setLoadFailed] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -31,7 +38,8 @@ export function PaperContentArea({ paper, onUploadClick }: PaperContentAreaProps
   const versionRef = useRef(0)
 
   useEffect(() => {
-    if (paperId === null || !isManual) return
+    // 协作模式下正文由 Y.Doc / 协作快照承载，这里不再走单机的 getPaperContent。
+    if (paperId === null || !isManual || collabEnabled) return
     let cancelled = false
     setIsLoading(true)
     setLoadFailed(false)
@@ -53,7 +61,7 @@ export function PaperContentArea({ paper, onUploadClick }: PaperContentAreaProps
     return () => {
       cancelled = true
     }
-  }, [paperId, isManual])
+  }, [paperId, isManual, collabEnabled])
 
   const handleSave = useCallback(
     async (payload: PaperContentPayload) => {
@@ -98,6 +106,11 @@ export function PaperContentArea({ paper, onUploadClick }: PaperContentAreaProps
   }
 
   if (paper.sourceType === "MANUAL") {
+    // 已登录 + 手写论文：整块交给实时协作外壳（自带正文加载 / 权限 / 批注 / 分享）。
+    if (collabEnabled && profile) {
+      return <CollaborativeEditor paper={paper} profile={profile} />
+    }
+
     if (loadFailed) {
       return (
         <div className="flex-1 flex items-center justify-center" style={{ background: "var(--bg-root)" }}>

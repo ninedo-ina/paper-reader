@@ -628,7 +628,14 @@
     "crossRefTable": "Table",
     "crossRefFigure": "Fig.",
     "academicInsert": "Insert",
-    "academicUpdate": "Update"
+    "academicUpdate": "Update",
+    "collabConnecting": "Connecting to collaboration session…",
+    "collabLoadFailed": "Failed to load collaboration session",
+    "collabOnline": "Connected",
+    "collabOffline": "Offline",
+    "comments": "Comments",
+    "manageCollab": "Collaborate & Share",
+    "sharedWithMe": "Shared with me"
   },
   "export": {
     "openExport": "Export",
@@ -1246,5 +1253,42 @@
   "notifications": {
     "welcomeTitle": "What is new",
     "welcomeMessage": "Welcome to PaperHelper! Tap to see what this version can do."
+  },
+  "comments": {
+    "title": "Comments",
+    "close": "Close",
+    "empty": "No comments yet",
+    "someone": "Someone",
+    "resolve": "Mark resolved",
+    "reopen": "Reopen",
+    "delete": "Delete",
+    "placeholder": "Write a comment…",
+    "send": "Send"
+  },
+  "collab": {
+    "title": "Collaborate & Share",
+    "collaborators": "Collaborators",
+    "noCollaborators": "No collaborators yet",
+    "role_OWNER": "Author",
+    "role_EDITOR": "Editor",
+    "role_VIEWER": "Viewer",
+    "removeCollaborator": "Remove",
+    "emailPlaceholder": "Invite by email",
+    "add": "Add",
+    "shareLinks": "Read-only share links",
+    "createLink": "New link",
+    "noShareLinks": "No share links yet",
+    "revoked": "Revoked",
+    "copyLink": "Copy link",
+    "revoke": "Revoke",
+    "copied": "Link copied",
+    "copyFailed": "Copy failed"
+  },
+  "share": {
+    "invalidTitle": "Link invalid or expired",
+    "invalidHint": "This share link may have been revoked or has expired.",
+    "readOnlyBadge": "Read-only share",
+    "abstract": "Abstract",
+    "empty": "This paper has no content yet."
   }
 }

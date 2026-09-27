@@ -628,7 +628,14 @@
     "crossRefTable": "表",
     "crossRefFigure": "图",
     "academicInsert": "插入",
-    "academicUpdate": "更新"
+    "academicUpdate": "更新",
+    "collabConnecting": "正在连接协作会话…",
+    "collabLoadFailed": "协作会话加载失败",
+    "collabOnline": "已连接",
+    "collabOffline": "未连接",
+    "comments": "批注",
+    "manageCollab": "协作与分享",
+    "sharedWithMe": "与我协作"
   },
   "export": {
     "openExport": "导出",
@@ -1246,5 +1253,42 @@
   "notifications": {
     "welcomeTitle": "系统功能介绍",
     "welcomeMessage": "欢迎使用 PaperHelper！点击查看当前版本功能特性"
+  },
+  "comments": {
+    "title": "批注",
+    "close": "关闭",
+    "empty": "还没有批注",
+    "someone": "某人",
+    "resolve": "标记已解决",
+    "reopen": "重新打开",
+    "delete": "删除",
+    "placeholder": "写下批注…",
+    "send": "发送"
+  },
+  "collab": {
+    "title": "协作与分享",
+    "collaborators": "协作者",
+    "noCollaborators": "还没有协作者",
+    "role_OWNER": "作者",
+    "role_EDITOR": "可编辑",
+    "role_VIEWER": "只读",
+    "removeCollaborator": "移除",
+    "emailPlaceholder": "输入邮箱邀请协作者",
+    "add": "添加",
+    "shareLinks": "只读分享链接",
+    "createLink": "新建链接",
+    "noShareLinks": "还没有分享链接",
+    "revoked": "已撤销",
+    "copyLink": "复制链接",
+    "revoke": "撤销",
+    "copied": "链接已复制",
+    "copyFailed": "复制失败"
+  },
+  "share": {
+    "invalidTitle": "链接无效或已失效",
+    "invalidHint": "这个分享链接可能已被撤销或过期。",
+    "readOnlyBadge": "只读分享",
+    "abstract": "摘要",
+    "empty": "这篇论文还没有正文。"
   }
 }
