@@ -70,3 +70,9 @@ class ExportBusyException(message: String = "导出服务繁忙，请稍后重�
  */
 class ExportFailedException(message: String = "导出失败，请稍后重试") :
     BusinessException(1013, message, 502)
+
+/**
+ * 只读分享 token 无效（不存在 / 已撤销 / 已过期）。W7，见 V19__collaboration.sql。
+ * 统一用 404 而不区分「不存在」和「已失效」，避免泄露某篇论文是否存在或曾被分享过。
+ */
+class ShareLinkInvalidException : BusinessException(1014, "分享链接无效或已失效", 404)

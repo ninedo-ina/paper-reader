@@ -45,6 +45,8 @@ class SecurityConfig(
                         "/api/auth/two-factor/verify",
                     ).permitAll()
                     .requestMatchers("/api/health").permitAll()
+                    // 只读分享：凭 token 免登录读取正文（W7）。token 本身即凭据，有效性在 ShareService 里校验。
+                    .requestMatchers("/api/share/**").permitAll()
                     .requestMatchers("/ws/**").permitAll()
                     .anyRequest().authenticated()
             }

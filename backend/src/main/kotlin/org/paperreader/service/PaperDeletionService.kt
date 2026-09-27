@@ -9,8 +9,12 @@ import org.paperreader.repository.AnnotationCommentRepository
 import org.paperreader.repository.AnnotationRepository
 import org.paperreader.repository.NoteRepository
 import org.paperreader.repository.PaperChunkRepository
+import org.paperreader.repository.PaperCollabStateRepository
+import org.paperreader.repository.PaperCollaboratorRepository
+import org.paperreader.repository.PaperCommentRepository
 import org.paperreader.repository.PaperExportArtifactRepository
 import org.paperreader.repository.PaperRepository
+import org.paperreader.repository.PaperShareRepository
 import org.paperreader.repository.PaperTagRepository
 import org.paperreader.repository.PaperVersionRepository
 import org.paperreader.repository.ReadingLogRepository
@@ -29,6 +33,10 @@ class PaperDeletionService(
     private val paperTagRepository: PaperTagRepository,
     private val paperChunkRepository: PaperChunkRepository,
     private val paperExportArtifactRepository: PaperExportArtifactRepository,
+    private val paperCollabStateRepository: PaperCollabStateRepository,
+    private val paperCollaboratorRepository: PaperCollaboratorRepository,
+    private val paperShareRepository: PaperShareRepository,
+    private val paperCommentRepository: PaperCommentRepository,
     private val aiChatRepository: AiChatRepository,
     private val aiMessageRepository: AiMessageRepository,
     private val fileStorageService: FileStorageService,
@@ -62,6 +70,13 @@ class PaperDeletionService(
                 .resolve(paper.id.toString()).toFile().deleteRecursively()
         }
         paperExportArtifactRepository.deleteByPaperId(paper.id)
+
+        // 协作与分享（W7）：协同全量状态、结构化协作者、只读分享链接、正文批注。
+        // V19 里虽有 ON DELETE CASCADE 兜底，但测试库（H2，实体建表无外键）不级联，必须显式删。
+        paperCollabStateRepository.deleteByPaperId(paper.id)
+        paperCollaboratorRepository.deleteByPaperId(paper.id)
+        paperShareRepository.deleteByPaperId(paper.id)
+        paperCommentRepository.deleteByPaperId(paper.id)
 
         // 正文（content_json / content_html）是 pr_papers 的列，随本行一起删除，无需单独清理。
         paperRepository.delete(paper)
