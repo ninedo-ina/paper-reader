@@ -4,7 +4,7 @@ import jakarta.persistence.*
 import java.time.Instant
 
 /**
- * 只读分享链接（W7，见 V19__collaboration.sql）。凭 [token] 免登录读取论文正文（只读），
+ * 只读分享链接（W7，见 V20__collaboration.sql）。凭 [token] 免登录读取论文正文（只读），
  * 供没有账号的导师/合作者查看。role 预留 EDITOR 以便将来做"可编辑邀请链接"，本轮只签发 VIEWER。
  */
 @Entity

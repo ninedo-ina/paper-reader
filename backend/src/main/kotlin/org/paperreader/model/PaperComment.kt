@@ -4,7 +4,7 @@ import jakarta.persistence.*
 import java.time.Instant
 
 /**
- * 稿件批注/评论（W7，见 V19__collaboration.sql）。
+ * 稿件批注/评论（W7，见 V20__collaboration.sql）。
  * 区别于 [AnnotationComment]（PDF 阅读标注下的回复）——这是编辑器正文里的批注。
  * [anchor] 是编辑器 comment 标记的 id；[quote] 是被批注的原文片段，锚点失效时仍可读。
  */

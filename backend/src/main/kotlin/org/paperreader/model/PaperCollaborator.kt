@@ -4,7 +4,7 @@ import jakarta.persistence.*
 import java.time.Instant
 
 /**
- * 结构化协作者（W7，见 V19__collaboration.sql）：某个真实注册用户对某篇论文的读写/只读授权。
+ * 结构化协作者（W7，见 V20__collaboration.sql）：某个真实注册用户对某篇论文的读写/只读授权。
  * 论文作者是隐式 EDITOR，不落这张表；这里只存作者额外授予权限的其他用户。
  * 与自由文本的 [Paper.participants]（署名）互补：participants 只是展示，权限判定看这里。
  */
