@@ -299,7 +299,8 @@ export function CreatePaperDialog({ open, onClose }: CreatePaperDialogProps) {
           <div>
             {step > 0 && (
               <Button type="button" variant="secondary" onClick={() => setStep(step - 1)} disabled={isCreating}>
-                <ChevronLeft className="size-4 mr-1" />
+                {/* 前进/后退是语义方向而非屏幕方向：RTL 下图标要跟着镜像 */}
+                <ChevronLeft className="size-4 me-1 rtl:rotate-180" />
                 {c("back")}
               </Button>
             )}
@@ -308,13 +309,13 @@ export function CreatePaperDialog({ open, onClose }: CreatePaperDialogProps) {
             {step < STEPS.length - 1 ? (
               <Button type="button" onClick={() => setStep(step + 1)} disabled={!canNext}>
                 {c("next")}
-                <ChevronRight className="size-4 ml-1" />
+                <ChevronRight className="size-4 ms-1 rtl:rotate-180" />
               </Button>
             ) : (
               <Button type="button" onClick={handleSubmit} disabled={isCreating || !title.trim()}>
                 {isCreating ? (
                   <>
-                    <Loader2 className="size-4 mr-1.5 animate-spin" />
+                    <Loader2 className="size-4 me-1.5 animate-spin" />
                     {t("creating")}
                   </>
                 ) : (

@@ -9,9 +9,12 @@ import Placeholder from "@tiptap/extension-placeholder"
 import type { PaperContentDto, PaperDetailDto } from "@/lib/api/types"
 import { Save, Loader2, AlertTriangle, RotateCw, FileUp, History } from "lucide-react"
 import { Button } from "@/components/ui/Button"
-import { useAutosave } from "@/hooks/useAutosave"
+import { CONTENT_TOO_LARGE_CODE, useAutosave } from "@/hooks/useAutosave"
+import { useContentLimits } from "@/hooks/useContentLimits"
 import { useUnsavedGuard } from "@/hooks/useUnsavedGuard"
 import { ImportMarkdownDialog } from "@/components/papers/ImportMarkdownDialog"
+import { checkContentSize } from "@/lib/content-limits"
+import { formatFileSize } from "@/lib/utils"
 import "katex/dist/katex.min.css"
 import { academicExtensions } from "./extensions"
 import { AcademicToolbar, type MathDialogState } from "./AcademicToolbar"
@@ -66,6 +69,11 @@ export function PaperEditor({
   // 用 ref 打破这个环——autosave 通过 editorRef 读当前内容，编辑器创建时拿到稳定的 markDirty。
   const editorRef = useRef<Editor | null>(null)
 
+  // 体积上限只在提交前自检用，拿不到就不拦（服务端照样会判）
+  const limits = useContentLimits()
+  const limitsRef = useRef(limits)
+  limitsRef.current = limits
+
   const autosave = useAutosave<PaperContentPayload>({
     getPayload: () => {
       const ed = editorRef.current
@@ -76,8 +84,9 @@ export function PaperEditor({
       if (!onSave) return
       await onSave(payload)
     },
+    guard: (payload) => checkContentSize(payload, limitsRef.current),
   })
-  const { status, isDirty, markDirty, saveNow } = autosave
+  const { status, isDirty, rejection, markDirty, saveNow } = autosave
 
   // 有未保存改动时拦截离开：关闭标签页走浏览器原生确认，应用内跳转走自定义确认。
   useUnsavedGuard(isDirty, t("unsavedLeaveConfirm"))
@@ -151,6 +160,18 @@ export function PaperEditor({
 
   const isSaving = status === "saving"
 
+  /**
+   * 保存被拒后显示什么：本地自检拦下的知道具体体积，能说清「多大 / 上限多少」；
+   * 服务端才发现的只有业务码，退回服务端那句（已在 API 层按界面语言本地化）。
+   */
+  const rejectedText =
+    rejection?.code === CONTENT_TOO_LARGE_CODE && rejection.size != null && rejection.limit != null
+      ? t("editorContentTooLarge", {
+          size: formatFileSize(rejection.size),
+          limit: formatFileSize(rejection.limit),
+        })
+      : (rejection?.message ?? t("saveRejected"))
+
   // 字数统计随内容实时更新；用 useEditorState 订阅，只在纯文本变化时才重算
   const stats = useEditorState({
     editor,
@@ -197,7 +218,7 @@ export function PaperEditor({
           {onImportMarkdown && (
             <Button size="sm" variant="secondary" onClick={() => setShowImport(true)}>
               <FileUp className="size-4" />
-              <span className="ml-1.5">{ti("importMarkdown")}</span>
+              <span className="ms-1.5">{ti("importMarkdown")}</span>
             </Button>
           )}
           <Button size="sm" variant="secondary" onClick={() => setShowHistory(true)}>
@@ -226,6 +247,12 @@ export function PaperEditor({
                 </button>
               </span>
             )}
+            {status === "rejected" && (
+              <span className="flex items-center gap-1 text-xs text-red-500" data-testid="autosave-rejected">
+                <AlertTriangle className="size-3" />
+                {rejectedText}
+              </span>
+            )}
             {status === "conflict" && (
               <span className="flex items-center gap-1 text-xs text-amber-500">
                 <AlertTriangle className="size-3" />
@@ -249,7 +276,7 @@ export function PaperEditor({
               ) : (
                 <Save className="size-4" />
               )}
-              <span className="ml-1.5">{tc("save")}</span>
+              <span className="ms-1.5">{tc("save")}</span>
             </Button>
           </div>
           )}

@@ -621,6 +621,25 @@ export interface RestoreContentSnapshotRequest {
   baseVersion?: number
 }
 
+/**
+ * 正文体积上限与快照保留策略（W9）。
+ *
+ * 服务端是权威判定（超限返回 1014/413），这份数据只用来在提交前本地先拦一次，
+ * 避免把注定被拒的正文反复发上去。字段含义见后端 ContentProperties。
+ */
+export interface ContentLimitsDto {
+  /** 单篇正文（contentJson）字节上限，UTF-8 计 */
+  maxJsonBytes: number
+  /** 单篇渲染结果（contentHtml）字节上限 */
+  maxHtmlBytes: number
+  /** 单个请求体读取上限，超出直接在过滤器层被拒 */
+  maxReadableBytes: number
+  /** 每篇保留的历史快照份数上限 */
+  maxSnapshotCount: number
+  /** 历史快照保留天数上限 */
+  maxSnapshotAgeDays: number
+}
+
 export interface PaperTagDto {
   id: number
   paperId: number

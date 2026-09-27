@@ -150,7 +150,7 @@ export function AcademicToolbar({
         {crossRefOpen && (
           <>
             <div className="fixed inset-0 z-40" onClick={() => setCrossRefOpen(false)} />
-            <div className="absolute left-0 top-full z-50 mt-1 min-w-52 rounded-xl border border-[var(--border-color)] glass-surface-strong p-1 shadow-2xl">
+            <div className="absolute start-0 top-full z-50 mt-1 min-w-52 rounded-xl border border-[var(--border-color)] glass-surface-strong p-1 shadow-2xl">
               {targets.length === 0 ? (
                 <p className="px-3 py-2 text-xs text-[var(--text-tertiary)]">
                   {t("crossReferenceEmpty")}
@@ -160,7 +160,7 @@ export function AcademicToolbar({
                   <button
                     key={target.id}
                     type="button"
-                    className="block w-full rounded-lg px-3 py-1.5 text-left text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+                    className="block w-full rounded-lg px-3 py-1.5 text-start text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
                     onClick={() => insertCrossReference(target.id, target.kind, target.number)}
                   >
                     {crossReferenceText(labels, target.kind, target.number)}

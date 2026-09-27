@@ -1,6 +1,7 @@
 package org.paperreader.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.paperreader.config.ContentProperties
 import org.paperreader.dto.ContentSnapshotDetailDto
 import org.paperreader.dto.ContentSnapshotSummaryDto
 import org.paperreader.dto.PaperContentDto
@@ -14,6 +15,7 @@ import org.paperreader.repository.PaperRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 /**
  * 正文快照与回滚（W6，REQ-202609-0262）。
@@ -32,6 +34,7 @@ class PaperContentVersionService(
     private val paperRepository: PaperRepository,
     private val objectMapper: ObjectMapper,
     private val auditLogService: AuditLogService,
+    private val contentProperties: ContentProperties,
 ) {
     /** 手动打快照，可带标签。正文为空（从未写过）时没有可留的快照，直接拒绝。 */
     @Transactional
@@ -55,6 +58,7 @@ class PaperContentVersionService(
             )
         )
         auditLogService.log(userId, "创建正文快照", saved.label ?: paper.title)
+        pruneSnapshots(paper.id, saved.id)
         return saved.toSummaryDto()
     }
 
@@ -119,7 +123,7 @@ class PaperContentVersionService(
 
         // 回滚前留档：这一步让「回滚」本身可逆。当前正文为空时不产生空快照。
         val currentBody = paper.contentJson
-        if (!currentBody.isNullOrBlank()) {
+        val rollbackSnapshot = if (!currentBody.isNullOrBlank()) {
             paperContentVersionRepository.save(
                 PaperContentVersion(
                     paperId = paper.id,
@@ -131,6 +135,8 @@ class PaperContentVersionService(
                     createdBy = userId,
                 )
             )
+        } else {
+            null
         }
 
         val saved = paperRepository.save(
@@ -142,7 +148,50 @@ class PaperContentVersionService(
             )
         )
         auditLogService.log(userId, "回滚正文", snapshot.label ?: saved.title)
+        // 刚留的档和刚回滚到的目标快照都不能在淘汰里被删掉，否则「回滚可逆」当场失效。
+        pruneSnapshots(paper.id, *listOfNotNull(rollbackSnapshot?.id, snapshot.id).toLongArray())
         return saved.toContentDto()
+    }
+
+    /**
+     * 快照保留策略（W9 交付物①：历史快照保留多少）。
+     *
+     * 快照里装的是整篇正文，只增不减的话「历史」就是无界的——一篇 2MB 的论文留 200 份就是 400MB。
+     * 上限由 [ContentProperties.maxSnapshotCount] / [ContentProperties.maxSnapshotAgeDays] 定，
+     * 并通过 `GET /api/papers/content-limits` 下发给客户端，服务端与前端读的是同一份契约。
+     *
+     * 淘汰顺序（每次写入快照后执行）：
+     *  1. **按年龄**：删掉未打标签、且早于保留期的快照。手动标签是用户明说「这份要留着」，
+     *     不因为时间久了被静默删除。
+     *  2. **按份数**：仍超过上限时从最旧的开始删，先删未打标签的；只有剩下的全是标签快照时
+     *     才动最旧的标签快照。份数是硬上限——否则「保留多少」就只是一句口号。
+     *
+     * [keepIds] 是本次写入涉及、必须留下的快照（刚创建的、刚回滚到的）。
+     */
+    private fun pruneSnapshots(paperId: Long, vararg keepIds: Long) {
+        val keep = keepIds.toSet()
+        val all = paperContentVersionRepository.findByPaperIdOrderByCreatedAtDescIdDesc(paperId)
+        val candidates = all.filter { it.id !in keep }
+        if (candidates.isEmpty()) return
+
+        val cutoff = Instant.now().minus(contentProperties.maxSnapshotAgeDays.toLong(), ChronoUnit.DAYS)
+        val expired = candidates.filter { it.label == null && it.createdAt.isBefore(cutoff) }
+
+        val maxCount = contentProperties.maxSnapshotCount.coerceAtLeast(1)
+        val overflow = all.size - expired.size - maxCount
+        val byCount = if (overflow <= 0) {
+            emptyList()
+        } else {
+            (candidates - expired.toSet())
+                // 未打标签的排在前面，同组内最旧的排在前面。
+                .sortedWith(compareBy({ it.label != null }, { it.createdAt }, { it.id }))
+                .take(overflow)
+        }
+
+        val doomed = expired + byCount
+        if (doomed.isNotEmpty()) {
+            paperContentVersionRepository.deleteAll(doomed)
+        }
     }
 
     private fun requirePaper(paperId: Long, userId: Long): Paper =

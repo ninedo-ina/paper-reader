@@ -89,7 +89,7 @@ export function ImportMarkdownDialog({ open, onClose, onSubmit }: ImportMarkdown
               onClick={() => fileRef.current?.click()}
               disabled={importing}
             >
-              <FileUp className="size-4 mr-1.5" />
+              <FileUp className="size-4 me-1.5" />
               {t("chooseFile")}
             </Button>
           </div>
@@ -111,12 +111,12 @@ export function ImportMarkdownDialog({ open, onClose, onSubmit }: ImportMarkdown
           <Button type="button" onClick={handleImport} disabled={importing || !markdown.trim()}>
             {importing ? (
               <>
-                <Loader2 className="size-4 mr-1.5 animate-spin" />
+                <Loader2 className="size-4 me-1.5 animate-spin" />
                 {t("importing")}
               </>
             ) : (
               <>
-                <Upload className="size-4 mr-1.5" />
+                <Upload className="size-4 me-1.5" />
                 {t("preview")}
               </>
             )}

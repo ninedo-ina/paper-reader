@@ -211,12 +211,12 @@ export function ExportDialog({ open, paperId, paperTitle, defaultVersionId, onCl
               >
                 {generating ? (
                   <>
-                    <Loader2 className="size-4 mr-1.5 animate-spin" />
+                    <Loader2 className="size-4 me-1.5 animate-spin" />
                     {t("generating")}
                   </>
                 ) : (
                   <>
-                    <FileDown className="size-4 mr-1.5" />
+                    <FileDown className="size-4 me-1.5" />
                     {t("generate")}
                   </>
                 )}

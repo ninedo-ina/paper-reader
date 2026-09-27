@@ -42,6 +42,9 @@ vi.mock("@tiptap/react", async (importOriginal) => {
 vi.mock("@/lib/api/papers", () => ({
   getPaperContent: mocks.getPaperContent,
   updatePaperContent: mocks.updatePaperContent,
+  // W9：编辑器挂载时会读一次体积上限，读不到就退回「全靠服务端拦」。
+  // 这里给 null，让本文件专注在版本历史这条链路上。
+  getContentLimits: vi.fn(() => Promise.resolve(null)),
 }))
 
 vi.mock("@/lib/api/contentVersions", () => ({

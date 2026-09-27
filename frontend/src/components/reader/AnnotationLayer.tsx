@@ -537,7 +537,7 @@ function MenuItem({ icon, label, onClick }: { icon: React.ReactNode; label: stri
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors text-left"
+      className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors text-start"
     >
       <span className="text-[var(--text-tertiary)] shrink-0">{icon}</span>
       <span>{label}</span>

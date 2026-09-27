@@ -78,6 +78,15 @@ app:
     output-dir: ${EXPORT_OUTPUT_DIR:./uploads/exports}
     pdf-font-family: ${EXPORT_PDF_FONT_FAMILY:Noto Serif CJK SC}
 
+  # 正文读写的体积闸门与快照保留策略（W9）。参数含义见 ContentProperties。
+  # 写闸门超限返回 1014/413（前端不重试）；读闸门只兜底历史大正文，正常写作碰不到。
+  content:
+    max-json-bytes: ${CONTENT_MAX_JSON_BYTES:2000000}
+    max-html-bytes: ${CONTENT_MAX_HTML_BYTES:4000000}
+    max-readable-bytes: ${CONTENT_MAX_READABLE_BYTES:16000000}
+    max-snapshot-count: ${CONTENT_MAX_SNAPSHOT_COUNT:20}
+    max-snapshot-age-days: ${CONTENT_MAX_SNAPSHOT_AGE_DAYS:90}
+
   mail:
     from: ${MAIL_FROM:noreply@paperreader.local}
 

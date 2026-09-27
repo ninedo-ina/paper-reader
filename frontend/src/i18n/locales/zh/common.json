@@ -663,7 +663,9 @@
     "aiWritingEmpty": "模型没有返回内容，请重试",
     "aiWritingStaleRange": "生成期间正文已被改动，原选区失效，请重新选中后再试",
     "aiWritingReferenceParseFailed": "模型返回的不是有效的参考文献数据，请重试",
-    "aiWritingReferenceIdMismatch": "返回的条目标识与当前文献表不一致，已拒绝写入，以免正文引用失效"
+    "aiWritingReferenceIdMismatch": "返回的条目标识与当前文献表不一致，已拒绝写入，以免正文引用失效",
+    "editorContentTooLarge": "正文体积 {size} 超过单篇上限 {limit}，请精简或拆分后再保存",
+    "saveRejected": "保存被服务端拒绝，已停止自动重试"
   },
   "export": {
     "openExport": "导出",
@@ -1287,6 +1289,7 @@
     "badRequest": "参数错误",
     "notFound": "资源不存在",
     "fileDeleteFailed": "原文件删除失败，论文记录已保留，请稍后重试",
+    "contentTooLarge": "正文体积超过单篇上限，请精简或拆分后再保存",
     "twoFactorExpired": "两步验证会话已过期，请重新登录",
     "unknown": "未知错误",
     "unknownNetwork": "未知网络错误",

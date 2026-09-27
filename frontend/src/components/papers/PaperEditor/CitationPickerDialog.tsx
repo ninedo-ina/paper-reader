@@ -115,9 +115,9 @@ export function CitationPickerDialog({ onSelect, onClose }: CitationPickerDialog
         </div>
 
         <div className="relative mt-4">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
+          <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
           <input
-            className={`${fieldClass} pl-9`}
+            className={`${fieldClass} ps-9`}
             value={keyword}
             placeholder={t("citationPickerSearch")}
             autoFocus
@@ -147,7 +147,7 @@ export function CitationPickerDialog({ onSelect, onClose }: CitationPickerDialog
                   <li key={paper.id}>
                     <button
                       type="button"
-                      className="w-full rounded-lg px-3 py-2 text-left text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+                      className="w-full rounded-lg px-3 py-2 text-start text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
                       onClick={() => onSelect(item)}
                     >
                       {formatBibliographyEntry(item, locale)}
@@ -207,7 +207,7 @@ export function CitationPickerDialog({ onSelect, onClose }: CitationPickerDialog
         ) : (
           <div className="mt-4 border-t border-[var(--border-subtle)] pt-3">
             <Button variant="ghost" size="sm" onClick={() => setManualOpen(true)}>
-              <Plus className="mr-1.5 size-3.5" />
+              <Plus className="me-1.5 size-3.5" />
               {t("citationPickerManual")}
             </Button>
           </div>

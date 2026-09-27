@@ -1,7 +1,9 @@
 package org.paperreader.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.paperreader.config.ContentProperties
 import org.paperreader.dto.*
+import org.paperreader.exception.ContentTooLargeException
 import org.paperreader.exception.ContentVersionConflictException
 import org.paperreader.exception.InvalidParameterException
 import org.paperreader.exception.ResourceNotFoundException
@@ -24,6 +26,7 @@ class PaperService(
     private val objectMapper: ObjectMapper,
     private val auditLogService: AuditLogService,
     private val uploadQuotaService: UploadQuotaService,
+    private val contentProperties: ContentProperties,
 ) {
     /**
      * 上传 PDF。单文件大小与三个口径的额度都必须在上传动作之前判掉，落盘成功后才记台账。
@@ -191,18 +194,45 @@ class PaperService(
     /**
      * 读取正文。正文与元数据是两条独立的路径：这里只动 content_* 列，
      * abstractText（摘要）永远不会被这里的返回或写入影响。
+     *
+     * 读取硬上限（app.content.max-readable-bytes）：正常写作碰不到，它挡的是闸门上线之前
+     * 写进来的历史大正文——一次 GET 就把整串读进内存再解析成 JsonNode，是可以被反复触发的放大面。
+     * 不在这里返回 413，而是显式说明「只读不写」，用户仍能用别的方式取回并自行删减。
      */
     fun getPaperContent(id: Long, userId: Long): PaperContentDto {
         val paper = paperRepository.findByIdAndUserId(id, userId)
             ?: throw ResourceNotFoundException("Paper", id)
+        val storedBytes = paper.contentJson?.let { utf8Length(it) } ?: 0L
+        if (storedBytes > contentProperties.maxReadableBytes) {
+            throw ContentTooLargeException(storedBytes, contentProperties.maxReadableBytes, "正文（读取）")
+        }
         return paper.toContentDto()
     }
+
+    /** 正文体积与快照保留策略，供前端本地预检（服务端仍是唯一权威）。 */
+    fun contentLimits(): ContentLimitsDto = ContentLimitsDto(
+        maxJsonBytes = contentProperties.maxJsonBytes,
+        maxHtmlBytes = contentProperties.maxHtmlBytes,
+        maxReadableBytes = contentProperties.maxReadableBytes,
+        maxSnapshotCount = contentProperties.maxSnapshotCount,
+        maxSnapshotAgeDays = contentProperties.maxSnapshotAgeDays,
+    )
 
     /**
      * 保存正文（PUT 语义：整篇覆盖）。加悲观锁，避免并发保存下后写者读到陈旧版本号。
      * contentVersion 每次保存自增，供前端判断自己写的是第几版。
      * 若请求带了 baseVersion（保存前读到的版本），且已落后于当前版本，说明有别的会话
      * 已经写过——拒绝这次后写覆盖并抛 409，让前端明确告知用户而不是静默盖掉别人的改动。
+     *
+     * ## 写放大控制（W9）
+     * 自动保存是防抖后的**整篇覆盖**：编辑器里点一下加粗又撤销、拖一下选区后回退、
+     * 或前端防抖窗口重叠，都会送上来一份与库里逐字节相同的正文。这种请求如果照常落库，
+     * 就白白换来一次整行重写 + WAL + 版本号自增 + 一条审计日志——版本号自增尤其有害，
+     * 它会让另一个正在编辑的会话凭空撞出 409。
+     * 因此先比内容再写：内容与 contentHtml 都没变时直接返回当前状态，不写库、不动版本号、不记审计。
+     *
+     * 体积闸门：contentJson / contentHtml 各有上限（app.content.*），超限抛 1014/413。
+     * 放在写之前、锁之后——先写后判会留下垃圾数据，锁前判则要在拿到锁后再判一次。
      */
     @Transactional
     fun updatePaperContent(id: Long, userId: Long, request: UpdatePaperContentRequest): PaperContentDto {
@@ -218,9 +248,17 @@ class PaperService(
             throw ContentVersionConflictException(currentVersion)
         }
 
+        val json = body.toString()
+        ensureWithin(json, contentProperties.maxJsonBytes, "正文")
+        request.contentHtml?.let { ensureWithin(it, contentProperties.maxHtmlBytes, "正文渲染结果") }
+
+        if (json == paper.contentJson && request.contentHtml == paper.contentHtml) {
+            return paper.toContentDto()
+        }
+
         val saved = paperRepository.save(
             paper.copy(
-                contentJson = body.toString(),
+                contentJson = json,
                 contentHtml = request.contentHtml,
                 contentVersion = currentVersion + 1,
                 updatedAt = Instant.now(),
@@ -228,6 +266,40 @@ class PaperService(
         )
         auditLogService.log(userId, "保存正文", saved.title)
         return saved.toContentDto()
+    }
+
+    /** 超限即 1014/413。字节数按 UTF-8 计——中文一字 3 字节，按字符数判会漏掉三分之二。 */
+    private fun ensureWithin(value: String, limitBytes: Long, field: String) {
+        val actual = utf8Length(value)
+        if (actual > limitBytes) {
+            throw ContentTooLargeException(actual, limitBytes, field)
+        }
+    }
+
+    /**
+     * UTF-8 字节数。用编码长度而非 `String.length`（UTF-16 码元数）：两者对纯 ASCII 相同，
+     * 但中文、emoji、阿拉伯文下差得多，而正文恰恰以这些为主。
+     * 不调 `toByteArray().size`——那会为一次判定额外复制一整份正文。
+     */
+    private fun utf8Length(value: String): Long {
+        var bytes = 0L
+        var i = 0
+        while (i < value.length) {
+            val c = value[i]
+            bytes += when {
+                c.code < 0x80 -> 1
+                c.code < 0x800 -> 2
+                // 代理对（emoji 等增补平面字符）占 4 字节，且必须是成对的两个 char
+                Character.isHighSurrogate(c) && i + 1 < value.length &&
+                    Character.isLowSurrogate(value[i + 1]) -> {
+                    i++
+                    4
+                }
+                else -> 3
+            }
+            i++
+        }
+        return bytes
     }
 
     @Transactional

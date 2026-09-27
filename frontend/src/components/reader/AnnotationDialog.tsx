@@ -126,7 +126,7 @@ export function AnnotationDialog({ open, onClose, onSubmit, mode, selectedText, 
             autoFocus
           />
           {mode === "annotation" && (
-            <p className={cn("text-xs mt-1 text-right", isOverLimit ? "text-red-500" : "text-[var(--text-tertiary)]")}>
+            <p className={cn("text-xs mt-1 text-end", isOverLimit ? "text-red-500" : "text-[var(--text-tertiary)]")}>
               {charCount}/{charLimit}
             </p>
           )}
@@ -140,7 +140,7 @@ export function AnnotationDialog({ open, onClose, onSubmit, mode, selectedText, 
                 <img src={src} alt="" className="size-16 rounded-lg object-cover border border-[var(--border-subtle)]" />
                 <button
                   onClick={() => removeImage(idx)}
-                  className="absolute -top-1.5 -right-1.5 size-5 rounded-full bg-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute -top-1.5 -end-1.5 size-5 rounded-full bg-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                 >
                   <X className="size-3 text-white" />
                 </button>
