@@ -152,7 +152,7 @@ npm 实测（版本 / 许可证）：
 
 **引用层（第 3 步）**：引用节点存 CSL-JSON 条目 ID；文献来源复用已有 `/api/papers/{id}/metadata/*`（arXiv/Crossref/DataCite/DBLP）与 `pr_paper_metadata_resolutions`；格式化用 CSL 模板 + citation-js。
 
-**协作层（最后）**：Yjs + Hocuspocus。**前置条件**：修好 `/ws` 的 STOMP 身份绑定（现状 `senderId` 来自客户端，可伪造，见 [PROJECT_STATUS.md](PROJECT_STATUS.md) 第 11 节）。在身份问题解决前不要上线协作编辑。
+**协作层（最后）**：Yjs + Hocuspocus。**前置条件**：修好 `/ws` 的 STOMP 身份绑定（现状 `senderId` 来自客户端，可伪造，见 [PROJECT_STATUS.md](PROJECT_STATUS.md) 第 11 节）。在身份问题解决前不要上线协作编辑。〔**已落地（`v0.1.63` / W7）**：身份债已由 `StompAuthChannelInterceptor` 还清；协作层**未采用 Hocuspocus**（会多一个独立 Node 进程 / 新基础设施，不合本项目「一后端 + PM2 + Apache 反代」拓扑），改为 **Yjs 直接骑既有 Spring STOMP `/ws`**、服务端只做带鉴权的中继 + 全量快照持久化、不引入服务端 Yjs——详见 [W7_COLLABORATION_TECHNICAL_SOLUTION.md](W7_COLLABORATION_TECHNICAL_SOLUTION.md)。〕
 
 **明确不做**：不引入 Fidus Writer / Overleaf / TeXlyre / ONLYOFFICE / Collabora / HedgeDoc 作为编辑器内核；不引入 Zettlr / SwiftLaTeX；不在本期引入 Quarto 的叙事模板体系。
 

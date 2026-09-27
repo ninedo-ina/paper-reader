@@ -1,3 +1,23 @@
+## v0.1.63 协作与分享（W7：实时协同 / 正文批注 / 只读分享 / 真实读写授权，`REQ-202609-0263`）
+
+- **本轮有真实 Kotlin + 前端改动、后端 jar 已重建并重启**（PM2 id `7` → `8`），`/api/health` 本机与公网均返回 `0.1.63`，favicon `?v=0.1.63`，是有效版本依据。**新增迁移 `V20__collaboration.sql`，Flyway 到 `V20`**——版本涨了要去找 `V20`，不是 `V19`。
+- **`/ws` 在 `SecurityConfig` 里是 `permitAll`，这不是漏洞、不要去 HTTP 过滤器链上「补鉴权」。** 真正的身份与授权发生在 STOMP **入站通道拦截器** `StompAuthChannelInterceptor`（`configureClientInboundChannel`）上：`CONNECT` 校验 `Authorization: Bearer <jwt>`（`isTokenValid` + 非 2FA 挑战态 + `deviceService.isDeviceActive`）后把 `UserPrincipal(userId,email)` 绑到 `accessor.user`。把握手也拦在 HTTP 层会连正常订阅一起挡掉。
+- **STOMP 消息里客户端自带的 `senderId` 一律不可信，身份只认 `accessor.user`。** 这是本轮堵掉的核心安全债（旧通道 `senderId` 可伪造 + 直连文档写入）。新增任何 collab/chat 目的地时，鉴权都要走拦截器里已有的 `requireReadable`/`requireWritable`，**不要**从消息体读用户 id。
+- **服务端从不解析 CRDT，`CollabController` 只做「带鉴权的中继」。** 载荷是**不透明 base64**（`CollabRelayPayload(update, origin)`），原样转发到 `/topic/collab/{id}`。**不要为了「服务端也算一份」而引入服务端 Yjs 依赖**——冲突消解 100% 在客户端 Yjs（CRDT）完成，服务端一旦开始理解内容，就要背上版本一致性的债。
+- **`pr_paper_collab_state` 的 seed-if-absent：并发播种的落败方必须采用胜者已写入的状态，不能重试再插。** `POST …/collab/state` 靠主键（`paper_id`）竞争兜底，`DataIntegrityViolationException` 的处理是**读回胜者的 state 返回**——这样所有客户端收敛到**同一个文档身份**，正文不会被复制成两份。改成「冲突就重试 upsert」会破坏这条收敛。
+- **`PUT …/collab/state` 是 last-writer-wins 全量覆盖，这只在「客户端已收敛」的前提下才安全，别把它挪到服务端做合并。** 并发对等端在客户端 Yjs 层已经收敛，服务端 LWW 全量覆盖整份快照，同时把派生的 `content_json`/`content_html` 经 `findForUpdateById` 回写 `pr_papers` 并 `content_version + 1`（非协同路径靠这个看到最新正文）。**不要**改成「服务端按增量合并」。
+- **`originId = String(doc.clientID)` 是刻意转成字符串的，别改回数字。** 自回显过滤靠 `payload.origin === originId` 比较，而数字经 Jackson JSON 往返会丢类型、比较失败，导致本端把自己的更新又 apply 一遍。
+- **协同模式下 `StarterKit` 必须 `undoRedo: false`。** Yjs 的 `UndoManager` 接管撤销/重做，两套历史并存会打架。挂 `@tiptap/extension-collaboration` + `collaboration-caret`（3.27.3）时一并确认这条没被复原。
+- **`PaperAccessService` 是全应用唯一的论文 ACL 入口，REST 与 STOMP 都走它，别在别处另写一套判定。** `requireReadable` 对无关系者返回 **404 而不是 403**（不暴露论文是否存在），`requireWritable` 对 `VIEWER` 返回 **403**，`requireOwner` 仅作者。改权限语义只改这一个类。
+- **`GET /api/papers/shared-with-me` 的字面路径必须声明在 `/{id}` 之前**，否则被当成 `id = "shared-with-me"` 解析（同 `upload-quota`/`content-limits` 的老坑）。
+- **只读分享 token 的失效一律 404 + 业务码 `1015`，不区分「不存在 / 已撤销 / 已过期」。** `resolvePublic` 统一抛 `ShareLinkInvalidException`，避免泄露某篇论文是否存在或曾被分享。`token` 由 `SecureRandom` 32 字节 URL-safe 无填充生成，落 `VARCHAR(64)`。`pr_paper_shares.role` 预留了 `EDITOR`，**本轮只签发 `VIEWER`**，别以为「可编辑邀请链接」已经能用。
+- **业务码 `1015 = ShareLinkInvalidException`（404），不要再取 `1014`。** 本轮分享失效码原写作 `1014`，但 `1014` 已被 W9 的 `ContentTooLargeException`（413）占用，故顺延为 `1015`；`1008`/`1009`/`1010`/`1011`/`1012`/`1013`/`1014` 都有主了，别复用。
+- **Flyway 迁移是 `V20__collaboration.sql`，不是 `V19`。** 本分支原写 `V19__collaboration.sql`，但 W6 已占用 `V19__paper_content_versions.sql`；两个 `V19` 会让 Flyway **在生产启动时**失败，而测试用 Hibernate `ddl-auto`、绿色构建**发现不了**这个碰撞。合并后已 `git mv` 顺延为 `V20`（提交 `b16162c`）并同步 5 处 `.kt` 注释引用。**将来并行分支再加迁移，先 `git worktree list` + 看 `origin/main` 上已占用的最大号，别拍脑袋写 `V20`。**
+- **W9 留的「协作房间表待并入 `PaperDeletionInvariantTest` 白名单」本轮已了结。** `V20` 四张表（`pr_paper_collaborators`/`pr_paper_collab_state`/`pr_paper_shares`/`pr_paper_comments`）`paper_id` 全部 `→ pr_papers(id) ON DELETE CASCADE`，且被 `PaperDeletionService` 显式清理，测试绿。**以后再加挂 `pr_papers` 的子表，仍必须 cascade 或进白名单 + `deleteByPaperId`，否则 `./gradlew test` 直接红。**
+- **`pr_paper_comments` 是编辑器正文批注，别和阅读器 PDF 标注下的 `pr_annotation_comments` 搞混。** 权限：任何可读者（含 `VIEWER`/导师）可新增评论；`resolved` 切换限作者或 `EDITOR`；删除限「评论作者或论文作者」。`anchor` 失效时靠 `quote` 仍可读被批注的原文。
+- **未验证，别当成已验过**：① **没有登录态双浏览器端到端人工验收**（生产只开管理员 GitHub 登录、C 端测试账号密码未记录），所以「两人同编一段不乱码」「断线重连本地改动不丢」两条验收目前**由客户端 Yjs 语义 + `onConnect` 重发完整状态 + 后端中继/ACL 测试**支撑，**没在两个真实浏览器里人工对编过**，建议补一次点检。② `/topic/group.*`（论坛群聊订阅）本轮**未**收紧，仍沿用旧订阅逻辑，属遗留，**别以为整条 STOMP 通道都已上锁**。③ 多客户端在线时 `PUT …/collab/state` 可能被多个对等端**冗余提交**（写放大）——功能正确，后续可加选主优化。
+- **版本链**：`… → v0.1.60（W6）→ v0.1.62（W8）→ v0.1.61（W9）→ v0.1.63（W7，本轮，最后落地）`。**四条并行号（0.1.60/0.1.61/0.1.62/0.1.63）现已全部发布，writer 路线图 W1–W9 全部完成。****落地顺序（W6 → W8 → W9 → W7）与版本号顺序刻意不一致**：号是各并行 worktree 开工时按 `origin` 上空闲号预定的，先做完先合，`0.1.63`（W7）最后落地、在 `0.1.61` 之后上线是预期结果。**判线上版本一律以版本文件、`/api/health`、favicon `?v=` 与产物哈希为准。**
+
 ## v0.1.61 平台、运维与合规（W9：体积上限/写放大控制/导出资源闸门复核/14 语言文案含 RTL/删除不留残余/「保存正文」审计，`REQ-202609-0265`）
 
 - **本轮有真实 Kotlin 改动、后端 jar 已重建并重启**（PM2 id `6` → `7`），`/api/health` 本机与公网均返回 `0.1.61`，favicon `?v=0.1.61`，是有效版本依据。**无新迁移，Flyway 仍为 `V19`**——不要因为版本涨了就去找 `V20`。
@@ -11,11 +31,11 @@
 - **RTL 的正确做法是逻辑属性，`rtl:rotate-180` 只是方向性图标的补丁。** 本轮把 17 个组件从物理属性（`ml-*`/`pl-*`/`left-*`/`float: left`/`text-align: left`）迁到逻辑属性（`ms-*`/`me-*`/`ps-*`/`start-*`/`text-start`、`float: inline-start`），覆盖验收标准点名的**学术工具栏**与**引用弹层**。**遇到新的方向问题先想逻辑属性，别上来就 `rtl:` 硬掰。**
 - **14 语言的键集合现在是强约束：新增任何一个 i18n 键都必须 14 种语言一起加**（不能再沿用 W8 那种"只补 `zh`/`en`、其余回退中文"的做法）。`frontend/src/test/locale-coverage.test.ts` 会按语言求键集合并断言「对 `zh` 的差为空」，还会拒绝非中文语言复用中文原文；`ar`/`fa`/`ug` 的 `contentHistory`(41 键) 与 `aiWriting`(34 键) 齐全也被钉住。当前基线：**14 种语言各 870 键**。
 - **交付物「服务端导出进程的资源闸门」是 W5（`REQ-202609-0257`）就已经交付的，W9 一行没写、只做复核。** 别把它算成 W9 的产出，也别在 W9 之后重复实现一遍：`ExportProperties` 的超时/并发/输入上限 + `DocumentExportEngine` 的信号量与 `destroyForcibly` 都在 `app.export.*`。
-- **「删除论文不留残余」现在是构建级约束。** `PaperDeletionInvariantTest` 扫描 `V*.sql` 里所有指向 `pr_papers(id)` 的外键，要求每张表要么 `ON DELETE CASCADE`、要么在清理白名单里且有 `deleteByPaperId`。**将来加挂 `pr_papers` 的子表时必须同步处理，否则 `./gradlew test` 直接红。** 协作房间表属 W7、本轮尚不存在，测试里已注明 W7 落地后须并入白名单。
+- **「删除论文不留残余」现在是构建级约束。** `PaperDeletionInvariantTest` 扫描 `V*.sql` 里所有指向 `pr_papers(id)` 的外键，要求每张表要么 `ON DELETE CASCADE`、要么在清理白名单里且有 `deleteByPaperId`。**将来加挂 `pr_papers` 的子表时必须同步处理，否则 `./gradlew test` 直接红。** 协作房间表属 W7、本轮尚不存在，测试里已注明 W7 落地后须并入白名单〔**已更新（`v0.1.63` / W7）**：`pr_paper_collaborators`/`pr_paper_collab_state`/`pr_paper_shares`/`pr_paper_comments` 四表已建、全部 `ON DELETE CASCADE` 并纳入本测试白名单，测试绿〕。
 - **部署收尾照旧不能 `pm2 restart paper-reader-backend`**（会复用旧版本 jar 路径）：同一 shell 里 `set -a; . ./.env; set +a` 后 `pm2 delete` + `pm2 start --name paper-reader-backend --cwd /root/paper-reader/backend java -- -jar <绝对路径 jar>`，最后 `pm2 save`。本轮后端 id `6` → `7`（pid 2639134、`restart_time=0`），前端重启计数 `8` → `9`。
 - **本轮线上实测做到了「真实鉴权 + 真实拒绝」**：`GET /api/papers/content-limits` → `200`（返回五项上限）、`GET /api/papers/7/content` → `200`、**17,825,792 字节的 `PUT /api/papers/7/content` → `413` + code `1014`**，且事后核对论文 7 **未被改动**（`content_version=1`、`length(content_json)=1860`、`updated_at` 未变）——证明拒绝发生在写入之前。探测用的自签令牌与临时大 body **均未回显、未落盘、验完即删**。
 - **未验证，别当成已验过**：① **没有登录态浏览器端到端人工验收**（生产只开管理员 GitHub 登录、C 端测试账号密码未记录），因此验收标准「**RTL 语言下工具栏与引用弹层方向正确**」目前**只有逻辑属性改造 + `locale-coverage.test.ts` 的 RTL 断言**支撑，**没在真实浏览器里人工看过**，建议补一次点检；② 生产只做了只读 + 一次「必定被拒」的写入探测，**没有在线上跑过「超限被拒 → 编辑器停重试」的完整交互**，也**没在生产触发过快照裁剪**（会改动用户数据，仅由后端单测覆盖）；③ 快照上限 20 条 / 90 天是**本轮选定的默认值**，用户写满后的取舍（是否提供"保留这条"的显式操作）待有真实数据再定。
-- **版本链（并修正 W8 文档中的错误表述）**：`v0.1.54 → v0.1.56（W3）→ v0.1.57（W2）→ v0.1.58（上传限额）→ v0.1.59（W5）→ v0.1.60（W6）→ v0.1.62（W8）→ v0.1.61（W9，本轮）`。**落地顺序（W6 → W8 → W9）与版本号顺序刻意不一致**：号是各并行 worktree 开工时按 `origin` 上空闲号预定的，先做完先合，所以 `0.1.61` 在 `0.1.62` 之后上线是预期的。**判线上版本一律以版本文件、`/api/health`、favicon `?v=` 与产物哈希为准。** 上文 `## v0.1.62` 段里「`0.1.61` 是并行非 writer 需求占用的号、与 writer 路线图无关、没有线上版本」这句**已不成立**（`0.1.61` 正是 writer 路线图 **W9** 且已有线上版本），以本段为准。至此 writer 路线图 **W1–W6、W8、W9 完成，只剩 W7（协作，被 `/ws` 身份债阻塞）**。
+- **版本链（并修正 W8 文档中的错误表述）**：`v0.1.54 → v0.1.56（W3）→ v0.1.57（W2）→ v0.1.58（上传限额）→ v0.1.59（W5）→ v0.1.60（W6）→ v0.1.62（W8）→ v0.1.61（W9，本轮）`。**落地顺序（W6 → W8 → W9）与版本号顺序刻意不一致**：号是各并行 worktree 开工时按 `origin` 上空闲号预定的，先做完先合，所以 `0.1.61` 在 `0.1.62` 之后上线是预期的。**判线上版本一律以版本文件、`/api/health`、favicon `?v=` 与产物哈希为准。** 上文 `## v0.1.62` 段里「`0.1.61` 是并行非 writer 需求占用的号、与 writer 路线图无关、没有线上版本」这句**已不成立**（`0.1.61` 正是 writer 路线图 **W9** 且已有线上版本），以本段为准。至此 writer 路线图 **W1–W6、W8、W9 完成，只剩 W7（协作，被 `/ws` 身份债阻塞）**〔**已更新**：W7 已由 `v0.1.63` 落地、`/ws` 身份债已在 W7 前置安全债（`StompAuthChannelInterceptor`）中还清，writer 路线图 **W1–W9 全部完成**，以顶部 `## v0.1.63` 段为准〕。
 
 ## v0.1.62 AI 辅助写作（W8：选区续写/改写/翻译/降重、摘要生成、参考文献格式化建议、语法与学术用语检查，`REQ-202609-0264`）
 
@@ -31,7 +51,7 @@
 - **本轮顺手修了 W6 新增测试 `content-history-wiring.test.tsx`**：其 hoisted mock editor 缺少 `state`，而本轮的 `AiWritingToolbar` 要从 `editor.state` 读选区，导致 2 项失败。修法是给 mock 补 `state` 桩（`selection` + `doc.textBetween`/`doc.descendants`），**没有**在生产代码里加 `instance.state?` 之类的防御分支——真实的 Tiptap `Editor` 必然有 `state`，为迁就 mock 而加分支是错的方向。
 - **测试**：前端新增 `src/test/ai-writing.test.tsx`（30 项），本分支 **30 个文件 / 228 项**全绿；合并 `main` 带入 W6 的 3 个文件 / 27 项后为 **33 个文件 / 255 项**，同样全绿；`./node_modules/.bin/tsc --noEmit` 与 `pnpm run build` 退出码 0。**后端本轮零改动、未重跑**。以上是**期望值**，不是可放宽的上限。（跑检查用 `./node_modules/.bin/tsc`、`./node_modules/.bin/vitest`，**不要用 `npx` / `pnpm exec`**——会触发 pnpm 解析/安装。）
 - **未验证，别当成已验过**：单测全程 `vi.stubGlobal("fetch", ...)` mock 掉 Provider，**从未跑过真实模型**，"七个动作的提示词在真实 Provider 上产出可用结果"没有证据；也**没有登录态下的真实浏览器人工点击**（生产只开管理员 GitHub 登录）。其余边界：无并发/取消（关面板不 abort）、`grammar`/`abstract` 会发全文且只有一次性告知无逐次二次确认、参考文献不联网查证、其余 12 语言文案回退中文。
-- **版本链**：`v0.1.54 → v0.1.56（W3）→ v0.1.57（W2）→ v0.1.58（上传限额）→ v0.1.59（W5）→ v0.1.60（W6，并行交付）→ v0.1.62（W8）`；`0.1.61`/`0.1.63` 是并行非 writer 需求占用的号，**没有线上版本**〔**此句已被顶部 `## v0.1.61` 段修正**：`0.1.61` = W9，已发布；`0.1.63` = W7，仍未发布〕。至此 writer 路线图 **W1-W6 与 W8 完成，只剩 W7（协作，被 `/ws` 身份债阻塞）与 W9（平台合规与多语言完整本地化）**。
+- **版本链**：`v0.1.54 → v0.1.56（W3）→ v0.1.57（W2）→ v0.1.58（上传限额）→ v0.1.59（W5）→ v0.1.60（W6，并行交付）→ v0.1.62（W8）`；`0.1.61`/`0.1.63` 是并行非 writer 需求占用的号，**没有线上版本**〔**此句已被顶部段修正**：`0.1.61` = W9、`0.1.63` = W7，**两者均已发布上线**〕。至此 writer 路线图 **W1-W6 与 W8 完成，只剩 W7（协作，被 `/ws` 身份债阻塞）与 W9（平台合规与多语言完整本地化）**〔**已更新**：W9 已由 `v0.1.61`、W7 已由 `v0.1.63` 落地，**W1–W9 全部完成**〕。
 
 ## v0.1.60 版本历史与快照（W6：正文快照 / 时间线 / 对比 / 回滚 / 手动标签，`REQ-202609-0262`）
 
@@ -43,7 +63,7 @@
 - **前端在编辑器有未保存改动时禁用回滚**（`disabled={dirty}` 并有 `dirtyHint` 提示）：回滚走的是另一条写路径，和 2 秒防抖的自动保存并发时会被 `1008` 顶掉，让用户在界面上先保存或丢弃改动比事后弹冲突更清楚。回滚成功后要 `autosave.reset()` 并把返回的 `contentVersion` 写回编辑器的 `versionRef`，否则下一次自动保存会立刻报冲突。
 - **本轮实测了线上真实鉴权接口**：以自签 HS512 访问令牌（`sub` = 用户 id、无 `did` 声明，`JwtAuthFilter` 对无设备声明的令牌按 legacy 放行）调生产 `GET /api/papers/7/content-versions` 得 `200`/空数组，调不存在的快照与跨用户论文均得 `404`/`1004`——**只做了只读验证，没有在生产上跑写回滚**，写路径由后端单测钉住。
 - **版本号**：`0.1.61`/`0.1.62`/`0.1.63` 已被三个并行 worktree（`-202609-0263`/`-0264`/`-0265`，同一基线 `29b4158`）预定，W6 取的是当时 `origin` 上仍空闲的 `0.1.60`。**若后续任一并行分支要用 `0.1.60`，先确认本分支已合入**，否则按既有先例顺延、不要共号。
-- **版本链**：`v0.1.54 → v0.1.56（W3）→ v0.1.57（W2）→ v0.1.58（上传限额）→ v0.1.59（W5）→ v0.1.60（W6）`。至此 writer 路线图 **W1-W6 全部完成**，余 W7（协作）/W8（AI 写作辅助）/W9（写作工作台整合）。
+- **版本链**：`v0.1.54 → v0.1.56（W3）→ v0.1.57（W2）→ v0.1.58（上传限额）→ v0.1.59（W5）→ v0.1.60（W6）`。至此 writer 路线图 **W1-W6 全部完成**，余 W7（协作）/W8（AI 写作辅助）/W9（写作工作台整合）〔**已更新**：W8 已由 `v0.1.62`、W9 已由 `v0.1.61`、W7 已由 `v0.1.63` 落地，**W1–W9 全部完成**，以顶部 `## v0.1.63` 段为准〕。
 
 ## v0.1.59 导入、导出与投稿（W5：Markdown 导入 + PDF/DOCX/LaTeX/BibTeX/Markdown/HTML 导出，`REQ-202609-0261`）
 

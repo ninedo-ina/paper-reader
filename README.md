@@ -6,7 +6,25 @@ The repository contains the C-side product and its API. The administration conso
 
 > **Maintainer start here:** read the [documentation index](docs/README.md), then the [new maintainer guide](docs/NEW_MAINTAINER_GUIDE.md) and [complete project status](docs/PROJECT_STATUS.md). They record the real production topology, configuration rules, known risks, and release workflow without requiring previous chat context.
 
-## Current Iteration: v0.1.61
+## Current Iteration: v0.1.63
+
+- Branch: `feature/v0.1.63`
+- Requirement: `REQ-202609-0263` — 「W7 协作与分享」 (writer roadmap **W7**, child of `REQ-202609-0255`). The last unshipped writer-roadmap theme: real-time collaboration, editor-body comments, read-only share links, and hooking the mentor/collaborator concept into real read/write authorization.
+- **Mandatory pre-blocking security fix (landed first).** `/ws` was public and the STOMP `senderId` was client-supplied and unbound to a server identity — a forgeable realtime channel wired to document writes. `StompAuthChannelInterceptor` now forces JWT validation on `CONNECT` (mirroring `JwtAuthFilter`: valid token, not a 2FA-challenge scope, device not revoked) and binds the server-verified `UserPrincipal` to the STOMP session; `SUBSCRIBE`/`SEND` are then authorized against the paper ACL. `/ws` stays `permitAll` for the handshake only; identity is enforced on the inbound channel.
+- Scope:
+  - **Realtime collaboration without a new service.** Hocuspocus was rejected (it would add a standalone Node process / new infrastructure). Instead Yjs rides the existing Spring STOMP `/ws`: the client `StompYjsProvider` (`frontend/src/lib/collab/`) publishes opaque base64 CRDT/awareness updates to `/app/collab/{id}/update` and `/app/collab/{id}/awareness`, and `CollabController` relays them verbatim to `/topic/collab/{id}`. The server never parses the CRDT — conflict resolution is entirely client-side Yjs, so two people editing the same paragraph converge instead of clobbering (acceptance ①). Self-echo is filtered by `origin = String(doc.clientID)`.
+  - **Document identity + persistence.** `pr_paper_collab_state` holds one full-state base64 snapshot per paper. `POST …/collab/state` is seed-if-absent (a primary-key race resolves to the first writer, so all clients converge on one document identity and the body is never duplicated); `PUT …/collab/state` is a debounced last-writer-wins full-snapshot overwrite (concurrent peers have already converged via Yjs) that also mirrors the derived `content_json`/`content_html` back into `pr_papers` and bumps `content_version`, so the non-collab paths (list/export/AI/read-only share) see the latest body. On (re)connect the client re-subscribes and re-pushes its full state, so edits made while offline are not lost (acceptance ②).
+  - **Access-control kernel.** `PaperAccessService` is the single ACL entry point (author = implicit `EDITOR`; others via `pr_paper_collaborators`): `requireReadable` (no relation → `404`, hiding existence), `requireWritable` (`VIEWER` → `403`), `requireOwner` (collaborator → `403`, stranger → `404`). Unauthorized users cannot read the document over REST or the realtime channel (acceptance ③).
+  - **Comments/annotations** (`pr_paper_comments`): editor-body comments keyed by the Tiptap comment-mark `anchor` with a `quote` fallback; any reader (incl. `VIEWER`/mentor) can add, resolve is author-or-`EDITOR`, delete is comment-author-or-paper-author. Distinct from PDF-annotation replies (`pr_annotation_comments`).
+  - **Structured collaborators** (`pr_paper_collaborators`) via `GET|POST|DELETE /api/papers/{id}/collaborators` plus `GET /api/papers/shared-with-me`; complements the free-text `participants` byline (display only) with real read/write authorization.
+  - **Read-only share links** (`pr_paper_shares`): the author issues/lists/revokes `/api/papers/{id}/shares`; the public `GET /api/share/{token}` reads the mirrored read-only body with no login (`permitAll`). Invalid / revoked / expired all raise `ShareLinkInvalidException` (business code **1015**, HTTP `404`) without distinguishing the reason. The token is a 32-byte URL-safe `SecureRandom` string.
+  - **Business code**: `1015` = share-link-invalid. `1014` was taken by W9's content-size gate (`ContentTooLargeException`, `413`) when `main` was merged in, so this round's share code was renumbered `1014 → 1015`.
+  - **Flyway**: adds `V20__collaboration.sql` (four tables, every `paper_id → pr_papers ON DELETE CASCADE`, and each explicitly cleaned by `PaperDeletionService`). It was authored as `V19__collaboration.sql`, but the merged-in W6 already shipped `V19__paper_content_versions.sql`; two `V19`s would fail Flyway at startup (the test profile uses Hibernate `ddl-auto`, so the green build does **not** catch it), so it was renumbered to `V20` after the merge.
+- Tests: backend `./gradlew clean test bootJar` → **23 test classes / 169 tests, 0 failures**, jar `paper-reader-backend-0.1.63.jar`; frontend `vitest` → **35 files / 273 tests**, `pnpm run build` clean (the `/[locale]/share/[token]` public route builds). All 14 locales carry the 38 new W7 keys and stay identical to `zh` (`locale-coverage.test.ts` green).
+- Status: **released 2026-09-27 UTC.** Code commit `b16162c` (migration `V19→V20` + comment sync, on top of the W7 backend/frontend commits) on `feature/v0.1.63`, merged into `main` as the explicit `--no-ff` merge commit `7d2567f` with `dev` fast-forwarded — no force-push, no history rewrite. Production verified on `0.1.63`: `/api/health` reports `0.1.63` (public + `127.0.0.1:8080`), Flyway applied `V20 - collaboration`, and the served editor / shared chunks are byte-identical to the local build (sha256 match). Full hashes are in the "Current Release" block below and in `docs/MAINTENANCE.md`.
+- **Parallel-iteration note**: `0.1.60`–`0.1.63` were four sibling worktrees cut from the same base; W6 (`0.1.60`), W8 (`0.1.62`) and W9 (`0.1.61`) shipped first and W7 (`0.1.63`) lands **last**, so version order and landing order intentionally disagree. The `V19` migration-number collision above is the textbook symptom of that parallelism; the version files are the authority. Recorded in `docs/ATTENTION.md`.
+
+## Previous Iteration: v0.1.61
 
 - Branch: `feature/v0.1.61`
 - Requirement: `REQ-202609-0265` — 「W9 平台、运维与合规」 (writer roadmap **W9**, child of `REQ-202609-0255`). Six deliverables: ① 正文读写的性能与体积上限（单篇正文多大、历史快照保留多少）, ② 自动保存的写放大控制, ③ 服务端导出进程的资源闸门, ④ 编辑器相关文案的 14 语言覆盖（含 RTL）, ⑤ 草稿内容的隐私与删除, ⑥ 审计日志覆盖「保存正文」动作.
@@ -196,10 +214,10 @@ The repository contains the C-side product and its API. The administration conso
 
 - Default branch: `main`
 - Integration branch: `dev`
-- Released version branch: `feature/v0.1.61`
-- Client version: `0.1.61`
-- Production frontend: `0.1.61` (verified 2026-09-27 UTC) — identify it by the favicon cache-buster `?v=0.1.61` and the editor chunk `app/[locale]/page-08856aa07f6a5fd8.js` (sha256 `80f3dc264482bfc2e44eb685556d6c457c78aa01e1029976ff3d074519d61c01`) plus the shared chunk `110-b66e7ac779a375f3.js` (sha256 `31b80fd59bd37f5e12aefac8299188d9116fdc3b9462513657ff3d3803a2c03e`, which carries the new `content-limits` module) — both byte-identical to the local build
-- Production backend: `0.1.61` — rebuilt and restarted for this release (`REQ-202609-0265`); the running jar is `paper-reader-backend-0.1.61.jar` (sha256 `dff782be066e645f58e677e7e36257b33f99a8cff72d301a469d09f9707dd93a`); Flyway remains at `V19` (no migration was added in v0.1.61)
+- Released version branch: `feature/v0.1.63`
+- Client version: `0.1.63`
+- Production frontend: `0.1.63` (verified 2026-09-27 UTC) — identify it by the favicon cache-buster `?v=0.1.63` and the editor chunk `app/[locale]/page-4c42e5088af23160.js` (sha256 `b6abbc6da4ab915cb9b25c16815153b349e773ab83c18f0abb048af0146802d3`) plus the shared chunk `920-4ec0d00615a32288.js` (sha256 `a5c9d3e64a5c63dc0f41d3ac3626bce0bd2f60cb689f9c16f02c38d4229c3685`) — both byte-identical to the local build
+- Production backend: `0.1.63` — rebuilt and restarted for this release (`REQ-202609-0263`); the running jar is `paper-reader-backend-0.1.63.jar` (sha256 `624e783e36973888b7ff917f0ee9dcb8c7e4494d403b7d5cf069755bec60da8a`); Flyway advanced `V19` → `V20` (`V20__collaboration.sql`, the four W7 collaboration tables, applied at startup — log line "Migrating schema \"public\" to version \"20 - collaboration\"")
 - Default locale: Simplified Chinese (`zh`)
 - Supported locales: Simplified Chinese (`zh`), Traditional Chinese (`zh-Hant`), English (`en`), Tibetan (`bo`), Uyghur (`ug`), German (`de`), Arabic (`ar`), Korean (`ko`), Japanese (`ja`), French (`fr`), Vietnamese (`vi`), Spanish (`es`), Italian (`it`) and Persian (`fa`) — Arabic, Persian and Uyghur render right-to-left
 - Production client: `https://paper.pilo.eu.cc`
@@ -283,6 +301,13 @@ paper-reader/
 - Edit paper metadata, favorite papers, add/remove tags, generate share text, download PDFs, and delete papers.
 - Ask AI to help write the body, not only to read (v0.1.62): selection **continue / rewrite / translate / paraphrase**, abstract generation, bibliography formatting suggestions, and grammar / academic-wording review. Results are always presented as a **suggestion** — the body is untouched until the user confirms — the panel states exactly what will be sent to the Provider (with a character count) before sending, and the feature reuses the reader's existing Provider chain and browser-side credentials rather than introducing a server-side model configuration.
 - Create and browse paper version records. External GitHub/Gitee/OSS/S3 artifact pushing is still a placeholder and must not be presented as complete.
+
+### Collaboration and sharing (v0.1.63)
+
+- **Edit the body together in real time.** Multiple people can open the same paper and type in the same paragraph without garbling or losing each other's text — conflict resolution is client-side Yjs (CRDT), carried over the existing Spring STOMP `/ws` channel rather than a separate collaboration server. The server relays opaque updates and never parses the document; edits made while briefly disconnected are re-synced on reconnect.
+- **Structured collaborators with real permissions.** The author can invite collaborators as `EDITOR` (read + write) or `VIEWER` (read-only); "shared with me" lists papers others have shared. This complements the free-text participant byline (display only) with actual read/write authorization, and unauthorized users cannot read a paper's body over either the REST API or the realtime channel.
+- **Editor-body comments.** Any reader — including a view-only mentor — can leave comments anchored to a passage (with the quoted text kept as a fallback if the anchor drifts); resolving is limited to the author or an editor. These are distinct from the reader's PDF-annotation replies.
+- **Read-only share links.** The author can issue, list, and revoke tokenized links that let someone without an account open a read-only view of the body. An invalid, revoked, or expired link returns a single indistinguishable "link invalid" response so it never reveals whether a paper exists.
 
 ### Reading and research
 
@@ -512,9 +537,10 @@ V16__paper_content.sql
 V17__upload_quota.sql
 V18__paper_export_artifacts.sql
 V19__paper_content_versions.sql
+V20__collaboration.sql
 ```
 
-Add a new numbered migration for schema or controlled data changes. Do not edit an already-applied migration in a shared environment. V12 narrowly repairs stored titles beginning with one explicitly recognized Google permission statement; future imports use the same conservative cleanup in the TEI parser. V16 adds `pr_papers.content_json` / `content_html` / `content_version` — all nullable, so it is a metadata-only change for existing rows and needs no backfill. V17 adds `pr_upload_records`, the append-only upload ledger the quotas are computed from (plus two indexes on `(user_id, created_at)` and `created_at`); it is additive and needs no backfill — uploads made before V17 simply have no ledger row, so their bytes do not count against anyone's quota. `paper_id` is intentionally **not** a foreign key, so deleting a paper cannot remove ledger rows and refund quota. V18 adds `pr_paper_export_artifacts`, which hangs export outputs off the existing `pr_paper_versions` release rows. V19 adds `pr_paper_content_versions` (`paper_id` → `pr_papers`) for body snapshots — deliberately **not** reusing `pr_paper_versions`, whose established meaning is *storage push state*; both V18 and V19 are additive and need no backfill. v0.1.62 added no migration.
+Add a new numbered migration for schema or controlled data changes. Do not edit an already-applied migration in a shared environment. V12 narrowly repairs stored titles beginning with one explicitly recognized Google permission statement; future imports use the same conservative cleanup in the TEI parser. V16 adds `pr_papers.content_json` / `content_html` / `content_version` — all nullable, so it is a metadata-only change for existing rows and needs no backfill. V17 adds `pr_upload_records`, the append-only upload ledger the quotas are computed from (plus two indexes on `(user_id, created_at)` and `created_at`); it is additive and needs no backfill — uploads made before V17 simply have no ledger row, so their bytes do not count against anyone's quota. `paper_id` is intentionally **not** a foreign key, so deleting a paper cannot remove ledger rows and refund quota. V18 adds `pr_paper_export_artifacts`, which hangs export outputs off the existing `pr_paper_versions` release rows. V19 adds `pr_paper_content_versions` (`paper_id` → `pr_papers`) for body snapshots — deliberately **not** reusing `pr_paper_versions`, whose established meaning is *storage push state*; both V18 and V19 are additive and need no backfill. v0.1.62 added no migration. V20 (`V20__collaboration.sql`, v0.1.63) adds the four W7 collaboration tables — `pr_paper_collaborators`, `pr_paper_collab_state`, `pr_paper_shares`, `pr_paper_comments` — each with `paper_id` → `pr_papers(id) ON DELETE CASCADE`; it is additive and needs no backfill. It was authored as `V19` in parallel with W6 and renumbered to `V20` after the merge so the two migrations do not collide on the same version number (the test profile uses Hibernate `ddl-auto` rather than Flyway, so a duplicate version would only fail at production startup — see `docs/ATTENTION.md`).
 
 ## API Surface
 
@@ -530,6 +556,11 @@ All business API routes are under `/api` and require the client token unless exp
 | Paper question context | `/api/papers/{paperId}/context` |
 | GROBID | `/api/papers/{paperId}/grobid` |
 | Versions | `/api/papers/{paperId}/versions` |
+| Collaborators | `/api/papers/{paperId}/collaborators`, plus `/api/papers/shared-with-me` (literal path declared before `/{id}`, so it never resolves as a paper id) |
+| Collaboration state | `/api/papers/{paperId}/collab/state` (Yjs full-state snapshot: `GET` read, `POST` seed-if-absent, `PUT` last-writer-wins) |
+| Paper comments | `/api/papers/{paperId}/comments` (editor-body comments) |
+| Share links | `/api/papers/{paperId}/shares` (author issues / lists / revokes) |
+| Public read-only share | `/api/share/{token}` (**public**, no login) |
 | Reading history | `/api/reading-logs` |
 | Notes | `/api/notes` |
 | Annotations and comments | `/api/annotations` |
@@ -539,7 +570,7 @@ All business API routes are under `/api` and require the client token unless exp
 | Storage configurations | `/api/storage-configs` |
 | User settings | `/api/settings` |
 | Audit log | `/api/audit-logs` |
-| WebSocket/STOMP | `/ws` |
+| WebSocket/STOMP | `/ws` (STOMP; realtime collaboration relays Yjs updates on `/app/collab/{id}/update` → `/topic/collab/{id}`, awareness on `…/awareness`; the inbound channel authenticates the JWT on `CONNECT` and authorizes each `SUBSCRIBE`/`SEND` against the paper ACL) |
 
 The frontend API wrapper is in [frontend/src/lib/api](frontend/src/lib/api), and DTO contracts are centralized in [frontend/src/lib/api/types.ts](frontend/src/lib/api/types.ts).
 
@@ -630,6 +661,7 @@ Make sure the Compose environment provides `REDIS_PASSWORD` and the backend `.en
 - [Documentation index](docs/README.md)
 - [New maintainer guide](docs/NEW_MAINTAINER_GUIDE.md)
 - [Complete project status](docs/PROJECT_STATUS.md)
+- [W7 collaboration & sharing technical solution](docs/W7_COLLABORATION_TECHNICAL_SOLUTION.md)
 - [Deployment guide](docs/DEPLOY.md)
 - [PDF rendering pipeline](docs/PDF_RENDERING_PIPELINE.md)
 - [Create paper feature](docs/CREATE_PAPER_FEATURE.md)
