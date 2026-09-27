@@ -1,3 +1,18 @@
+## 迭代：v0.1.60（已发布，W6 版本历史与快照）
+
+发布分支：`feature/v0.1.60`；类型：新功能（后端快照服务/接口 + 迁移，前端版本历史弹层）；需求编号：`REQ-202609-0262`（writer 路线图 **W6**，`REQ-202609-0255` 的子项）；状态：2026-09-27 UTC 已合并 `main`（代码段显式 `--no-ff` 合并提交 `272f1e5`，父提交 `29b4158` + `b932d2c`）并部署验收，随后文档同步以第二个显式 `--no-ff` 合并提交带入 `main`，`dev` 已快进（发布记录见 `docs/MAINTENANCE.md`）。
+
+- **需求原文要点**：目标「写作是可回退的」；交付物为**内容快照**（区别于 `pr_paper_versions` 里的"发布记录"）、按时间线查看/对比/回滚、手动打标签；验收标准「回滚到任意历史快照后正文与当前一致，**且回滚动作本身也产生一条新快照**（可再回滚回来）」；需求明确**不要复用 `pr_paper_versions` 的行来存正文快照**。
+- **表设计（本轮最容易做错的地方）**：新建 `pr_paper_content_versions`（迁移 `V19__paper_content_versions.sql`）而不是改造 `pr_paper_versions`。后者语义是"storage push 状态"（发布记录，W5 的 `pr_paper_export_artifacts.version_id` 还回挂着它），改造它是破坏性的、需单独评估——需求正文里已写明这条红线。新表字段：`paper_id`（→ `pr_papers`）、`label`、`source`（`MANUAL`/`ROLLBACK`）、`content_version`、`content_json`、`content_html`、`created_by`、`created_at`；索引 `(paper_id, created_at DESC, id DESC)`。
+- **交付物（后端）**：实体 `PaperContentVersion` + `PaperContentVersionRepository`；`PaperContentVersionService`（`createSnapshot` / `listSnapshots` / `getSnapshot` / `renameSnapshot` / `restoreSnapshot`）；`PaperContentVersionController`（`POST|GET /api/papers/{paperId}/content-versions`、`GET|PATCH …/{snapshotId}`、`POST …/{snapshotId}/restore`）；DTO 与迁移；`PaperDeletionService` 删论文时同步清快照。**建快照是纯读**（只插快照行，不动 `pr_papers`、不 bump `content_version`）。
+- **回滚的可逆性（验收标准的实现）**：`restoreSnapshot` 在一个 `@Transactional` 里**先**把当前正文写成一条 `source=ROLLBACK`、`label` 为空的**前置快照**，**再**用目标快照的正文覆盖论文并把 `content_version` 加一。因此回滚本身在时间线上留痕、可再回滚回来。并发用悲观锁（`findForUpdateByIdAndUserId`）+ 客户端 `baseVersion` 校验，不符即 `409` / 业务码 `1008`（复用 W3 自动保存的 `ContentVersionConflictException`，**本轮不新造错误码**；`1003` 参数非法、`1004` 找不到、`1014` 仍空闲）。
+- **交付物（前端）**：`components/papers/PaperEditor/ContentHistoryDialog.tsx`（时间线列表 + 每行「预览／改标签／对比／回滚」，回滚为行内两步确认）、`content-diff.ts`（纯函数逐行 LCS diff + 未变更行折叠 + 大文档降级为粗粒度，`MAX_DP_CELLS` 上限）、`PaperEditor.tsx` 头部「版本历史」按钮与接线、`PaperContentArea.tsx` 应用回滚结果的 `contentVersion`、`lib/api/contentVersions.ts`、`types.ts`、`common.json` 中英文案；六处版本号升至 `0.1.60`。
+- **与自动保存的竞态**：编辑器 `dirty` 时**禁用回滚**并提示先保存/丢弃改动（回滚走另一条写路径，与 2 秒防抖自动保存并发会被 `1008` 顶掉）；回滚成功后 `autosave.reset()` 并把返回的 `contentVersion` 写回编辑器 `versionRef`，否则下一次自动保存立刻报冲突。
+- **测试**：后端 `./gradlew clean test bootJar` **20 个测试类 / 144 项 / 0 失败**（新增 `PaperContentVersionServiceTest` 17 项，含回滚往返到 `contentVersion == 6`、跨论文/跨用户 `404`、冲突拒绝、建快照 `verify(exactly = 0) { paperRepository.save(any()) }`），产出 `paper-reader-backend-0.1.60.jar`；前端新增 `content-diff.test.ts`（13）、`content-history-dialog.test.tsx`（12）、`content-history-wiring.test.tsx`（2，断言回滚后 `updatePaperContent` 收到 `baseVersion: 5`），全量 **32 个测试文件 / 225 项全绿**，`tsc --noEmit`、`pnpm run build` 退出码 0。
+- **部署与验收**（2026-09-27 UTC，`https://paper.pilo.eu.cc`）：本轮有真实 Kotlin 改动，后端 jar 重建后按老规矩 `pm2 delete` + `pm2 start`（同 shell `. ./.env`，不用 `pm2 restart`），PM2 id `5` → `6`、`restart_time=0`；前端 `rm -rf .next && pnpm run build` 后 `pm2 restart`（重启计数 `6` → `7`）、`pm2 save`。`/api/health` 本机与公网均报 `0.1.60`；favicon `?v=0.1.60`；`app/[locale]/page-ab1001c207d2b088.js` 线上 sha256 与本地 `.next` 逐字节一致且含 `content-versions`/`contentHistory`/`compareCoarse`/`dirtyHint`；**Flyway `V18` → `V19`**（`ddl-auto: validate` 下 19 个迁移校验通过）。真实鉴权实测（自签 HS512、`sub` 为用户 id、无 `did` 声明按 legacy 放行）：`GET /api/papers/7/content-versions` → `200` 空数组；不存在的快照与跨用户论文 → `404`/`1004`。**只做了只读实测，未在生产上跑写回滚**。
+- **版本号**：`0.1.61`/`0.1.62`/`0.1.63` 已被三个并行 worktree（`-202609-0263`/`-0264`/`-0265`，同一基线 `29b4158`）预定，`0.1.60` 当时在 origin 上空闲，W6 按其原表建议号发布，未撞号、无需顺延。
+- **遗留**：① 无登录态浏览器端到端验收（快照/对比/回滚由后端 17 项 + 前端 27 项测试与一次线上只读实测覆盖，未在真实浏览器人工点一遍）；② 快照只增不减，**当前无保留策略/上限**，长期会累积（删论文时随论文一起清）；③ `dynamic({ssr:false})` barrel 取舍仍未做（属 W2 遗留）。
+
 ## 迭代：v0.1.59（已发布，W5 导入、导出与投稿）
 
 发布分支：`feature/v0.1.59`；类型：新功能（后端导出/导入引擎 + 迁移，前端导出/导入弹窗）；需求编号：`REQ-202609-0261`（writer 路线图 **W5**，`REQ-202609-0255` 的子项）；状态：2026-09-26 UTC 已合并 `main`（代码段显式 `--no-ff` 合并提交 `a1c2ed0`，父提交 `772dc58` + `e7d9416`）并部署验收，随后文档同步以第二个显式 `--no-ff` 合并提交带入 `main`，`dev` 已快进（发布记录见 `docs/MAINTENANCE.md`）。
@@ -521,7 +536,7 @@ v0.1.40 把两步验证补成闭环时，表单沿用了最朴素的排法：标
 4. ~~**`v0.1.56` 导出与投稿（W5 剩余）**~~ **该号已被自动保存（W3）占用**：W3 与 W5 无依赖，且"写了一半会丢"比"导出格式"更痛，因此 `0.1.56` 先发 W3（见本文件上文的 v0.1.56 条目）；紧接着 `0.1.57` 又给了 W2（W2 原先要的 `0.1.55` 已作废）。**W5（导入导出 + 导出与投稿）顺延到 `v0.1.58` 起**，[WRITER_ROADMAP.md](WRITER_ROADMAP.md) 第 5 节的迭代表已按新号重排。
 5. ~~**`v0.1.58` 导入导出（W5 的 Markdown 部分 + 图片）**~~ **`0.1.58` 已被并行的上传论文限额需求（`REQ-202609-0267`）占用，不属 W5**：W5 未按原表拆成"Markdown 部分"单独一版；图片插入与存储顺延到后续。
 6. ~~**`v0.1.59` 导出与投稿（W5 剩余）**~~ **已发布，实际把 W5 整条一次交付**：Markdown 导入 + 导出 PDF（Typst）/ DOCX（Pandoc）/ LaTeX / BibTeX / Markdown，均以独立进程 + 五道安全闸门（大小上限 / 并发上限 / 引擎探活 / 超时 / 目录隔离+脱敏）运行，导出产物回挂 `pr_paper_versions`（Flyway `V18`）。详见本文件上文 v0.1.59 条目。**至此 W1-W5 全部落地。**
-7. **`v0.1.60` 版本历史（W6）**：正文快照、对比、回滚、手动打标签。**W3 落地后这条更值得做**——冲突现在只解决"谁的写入算数"，没有历史版本、不能看差异也不能回滚。
+7. ~~**`v0.1.60` 版本历史（W6）**~~ **已发布（`REQ-202609-0262`）**：正文快照另起 `pr_paper_content_versions`（Flyway `V19`，**不复用语义为"storage push 状态"的 `pr_paper_versions`**）、时间线浏览、逐行对比、回滚、手动打标签；回滚在一个事务里先落一条 `source=ROLLBACK` 的前置快照再覆盖正文，因此**回滚本身可再回滚**（需求验收标准）；乐观锁沿用 `409`/`1008`。详见本文件上文 v0.1.60 条目。**至此 W1-W6 全部落地**，余 W7/W8/W9。
 8. **`v0.2.0` 协作（W7 + 安全债）**：**先修 `/ws` 的 STOMP 身份绑定**（见 [PROJECT_STATUS.md](PROJECT_STATUS.md) 第 11 节安全债），再上 Yjs + Hocuspocus 协作编辑。
 9. **`v0.2.x` 写作工作台整合（W8 + W9）**：AI 写作辅助 + 写作台整合 + 性能与合规收口。
 
