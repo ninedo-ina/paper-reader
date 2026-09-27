@@ -1,3 +1,19 @@
+## 迭代：v0.1.61（已发布，W9 平台、运维与合规）
+
+发布分支：`feature/v0.1.61`；类型：新功能（后端体积闸门/快照保留策略/审计 + 前端写放大控制/14 语言文案；**无新迁移，Flyway 仍为 `V19`**）；需求编号：`REQ-202609-0265`（writer 路线图 **W9**，`REQ-202609-0255` 的子项）；状态：2026-09-27 UTC 已合并 `main`（代码段显式 `--no-ff` 合并提交 `a7fc36f`，父提交 `8979c22` + `b749de6`）并部署验收，随后文档段第二次 `--no-ff` 合入。
+
+- **本轮定位**：W1–W8 铺完了「正文怎么存、怎么自动保存、怎么版本回滚、怎么写论文」，W9 给它们**加上限、去重、清干净、配上文案**。因此本轮**没有新增业务接口**（只加只读的 `GET /api/papers/content-limits`）、**没有新增 Flyway 迁移**、**没有新增 Provider**。
+- **交付物① 体积上限**：`ContentProperties`（`app.content`）给出三道独立闸门——`maxJsonBytes` 2 MB（编辑器 JSON 写入）、`maxHtmlBytes` 4 MB（渲染 HTML 写入）、`maxReadableBytes` 16 MB（单篇正文读写硬上限），全部可用 `CONTENT_MAX_*` 环境变量覆盖，**运维调上限不用发版**；`ContentPayloadSizeFilter` 在反序列化**之前**按 `Content-Length` 拒绝超限 `PUT`（`413`/`1014`），服务层再用 UTF-8 字节数兜底（含 chunked 请求）；存量超限正文读取时抛错而**不截断**。快照保留 `maxSnapshotCount` 20 / `maxSnapshotAgeDays` 90，由 `pruneSnapshots()` 在写入路径上执行（**不用定时任务**）。
+- **交付物② 写放大控制**：后端把 body 转 JSON 一次后与库中 `contentJson`/`contentHtml` **字节比较**，相同即早退——**不 UPDATE、不加 `content_version`、不写审计**；前端 `useAutosave` 新增 `fingerprint` 与 `guard`（发请求前用服务端公布的上限复算体积），命中即进 `rejected`，并把 `1002/1003/1004/1014` 列入 `NON_RETRYABLE_CODES` **停止重试**。
+- **交付物③ 导出闸门：W5 已交付，本轮只复核、未新增代码**（如实记录，避免把它算成本轮产出）。`ExportProperties` 的超时/并发/输入上限与 `DocumentExportEngine` 的信号量 + `destroyForcibly` 都是 `REQ-202609-0257`（v0.1.59）的产物。
+- **交付物④ 14 语言覆盖（含 RTL）**：一次还清 W2/W5/W6/W8 欠账——12 个非 `zh` 语言各补 **131 键**，14 种语言**全部 870 键、对 `zh` 缺失 0**；新增 `locale-coverage.test.ts` 把「键集合差为空」「非中文语言不得复用中文原文」「`ar`/`fa`/`ug` 的 `contentHistory`(41) 与 `aiWriting`(34) 键齐全」钉死。RTL 侧 `globals.css` + **17 个组件**由物理属性迁到逻辑属性（`ms-*`/`me-*`/`ps-*`/`start-*`/`text-start`、`float: inline-start`），方向性图标用 `rtl:rotate-180`，覆盖验收标准点名的**学术工具栏**与**引用弹层**。
+- **交付物⑤ 删除不留残余（用测试钉住）**：新增 `PaperDeletionInvariantTest` **扫描 `V*.sql`**，凡外键指向 `pr_papers(id)` 的表必须是 `ON DELETE CASCADE` 或出现在清理白名单里且存在 `deleteByPaperId`，否则构建变红。协作房间表属 W7、本轮尚不存在，测试已注明 W7 落地后须并入白名单。
+- **交付物⑥ 审计**：`updatePaperContent` 仅在**真正写入**时记 `auditLogService.log(userId, "保存正文", title)`；幂等早退分支不写审计（审计记「改动」而非「按了一次保存」，否则自动保存会把日志刷满），由 `PaperContentServiceTest` 的 `verify` 钉住。
+- **测试**：后端 `./gradlew clean test bootJar` **22 个测试类 / 164 项 / 0 失败 / 0 跳过**，产出 `paper-reader-backend-0.1.61.jar`（78,944,845 字节，sha256 `dff782be…dd93a`）；前端 **35 个文件 / 273 项全绿**，`pnpm run build` 退出码 0。
+- **部署与验收**（2026-09-27 UTC，`https://paper.pilo.eu.cc`）：有真实 Kotlin 改动，后端 jar 重建后按老规矩 `pm2 delete` + `pm2 start`（同 shell `set -a; . ./.env`，**不用 `pm2 restart`**），PM2 id `6` → `7`、pid 2639134、`restart_time=0`；前端 `rm -rf .next && pnpm run build` 后 `pm2 restart`（重启计数 `8` → `9`），`pm2 save`。**`/api/health` 本地与公网均 `0.1.61`**、favicon `?v=0.1.61`；编辑器 chunk `app/[locale]/page-08856aa07f6a5fd8.js` 与公共 chunk `110-b66e7ac779a375f3.js` 线上 sha256 与本地 `.next` **逐字节一致**；用真实鉴权请求实测 `GET /api/papers/content-limits` → `200`、`GET /api/papers/7/content` → `200`、**17,825,792 字节的 `PUT` → `413`/`1014`**，且论文 7 事后核对未被改动（`content_version=1`、`updated_at` 未变）。
+- **并行撞号与落地顺序**：开工时四条 worktree 各持一号（`0.1.60`=W6、`0.1.61`=本轮 W9、`0.1.62`=W8、`0.1.63`=W7）；实际落地 **W6 → W8 → W9**，故「`0.1.61` 在 `0.1.62` 之后上线」是**预期的**。W8 的 `docs/ATTENTION.md` 曾把 `0.1.61` 写成「并行非 writer 需求占用的号、没有线上版本」，本轮已修正。分支上原有的 `wip(w9)` 提交在合并前 rebase 到 `origin/main` 压成单个干净提交 `b749de6`（62 文件 / +3109−106），该分支为本轮新开、**未强推、未改写他人历史**。
+- **遗留**：① **无登录态浏览器端到端人工验收**（生产只开管理员 GitHub 登录、C 端测试账号密码未记录）——**RTL 下工具栏与引用弹层的方向**只有逻辑属性改造 + `locale-coverage.test.ts` 的断言，**没在真实浏览器里人工看过**，建议补一次点检；② 生产只做了只读实测与一次「必定被拒」的写入探测，未在线上跑「被拒后停重试」的完整交互，也未在生产触发快照裁剪（会动用户数据）；③ 快照上限 20 条 / 90 天是**本轮选定的默认值**，用户写满后的取舍（是否给"保留这条"的显式操作）待有数据再定；④ 协作房间清理待 W7 落地后并入删除不变量测试。
+
 ## 迭代：v0.1.62（已发布，W8 AI 辅助写作）
 
 发布分支：`feature/v0.1.62`；类型：新功能（**纯前端，后端 Kotlin 零改动、jar 未重建**）；需求编号：`REQ-202609-0264`（writer 路线图 **W8**，`REQ-202609-0255` 的子项）；状态：2026-09-27 UTC 已合并 `main`（代码段显式 `--no-ff` 合并提交 `7eb5001`，父提交 `272f1e5`〔并行的 W6 `v0.1.60` 合并提交〕+ `de31eae`）并部署验收，随后文档同步以第二个显式 `--no-ff` 合并提交带入 `main`，`dev` 已快进（发布记录见 `docs/MAINTENANCE.md`）。
