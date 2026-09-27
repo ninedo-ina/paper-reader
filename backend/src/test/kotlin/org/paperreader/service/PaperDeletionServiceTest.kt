@@ -19,9 +19,13 @@ import org.paperreader.repository.AnnotationCommentRepository
 import org.paperreader.repository.AnnotationRepository
 import org.paperreader.repository.NoteRepository
 import org.paperreader.repository.PaperChunkRepository
+import org.paperreader.repository.PaperCollabStateRepository
+import org.paperreader.repository.PaperCollaboratorRepository
+import org.paperreader.repository.PaperCommentRepository
 import org.paperreader.repository.PaperContentVersionRepository
 import org.paperreader.repository.PaperExportArtifactRepository
 import org.paperreader.repository.PaperRepository
+import org.paperreader.repository.PaperShareRepository
 import org.paperreader.repository.PaperTagRepository
 import org.paperreader.repository.PaperVersionRepository
 import org.paperreader.repository.ReadingLogRepository
@@ -59,6 +63,18 @@ class PaperDeletionServiceTest {
     private lateinit var paperExportArtifactRepository: PaperExportArtifactRepository
 
     @MockK(relaxed = true)
+    private lateinit var paperCollabStateRepository: PaperCollabStateRepository
+
+    @MockK(relaxed = true)
+    private lateinit var paperCollaboratorRepository: PaperCollaboratorRepository
+
+    @MockK(relaxed = true)
+    private lateinit var paperShareRepository: PaperShareRepository
+
+    @MockK(relaxed = true)
+    private lateinit var paperCommentRepository: PaperCommentRepository
+
+    @MockK(relaxed = true)
     private lateinit var aiChatRepository: AiChatRepository
 
     @MockK(relaxed = true)
@@ -84,6 +100,10 @@ class PaperDeletionServiceTest {
             paperTagRepository,
             paperChunkRepository,
             paperExportArtifactRepository,
+            paperCollabStateRepository,
+            paperCollaboratorRepository,
+            paperShareRepository,
+            paperCommentRepository,
             aiChatRepository,
             aiMessageRepository,
             fileStorageService,
@@ -130,6 +150,10 @@ class PaperDeletionServiceTest {
         verify { paperTagRepository.deleteByPaperId(7) }
         verify { paperChunkRepository.deleteByPaperId(7) }
         verify { paperExportArtifactRepository.deleteByPaperId(7) }
+        verify { paperCollabStateRepository.deleteByPaperId(7) }
+        verify { paperCollaboratorRepository.deleteByPaperId(7) }
+        verify { paperShareRepository.deleteByPaperId(7) }
+        verify { paperCommentRepository.deleteByPaperId(7) }
         verify { paperRepository.delete(paper) }
         verify { paperRepository.flush() }
         verify(exactly = 0) { fileStorageService.delete(any()) }

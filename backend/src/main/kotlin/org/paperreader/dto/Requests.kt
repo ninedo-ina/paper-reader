@@ -510,3 +510,123 @@ data class FileInfoDto(
     val fileSize: Long,
     val pageCount: Int?,
 )
+
+// ==== Collaboration & Sharing (W7, REQ-202609-0263) ====
+
+/**
+ * Yjs 文档全量快照。服务端当不透明 base64 存储，不解析 CRDT。
+ * [state] 为空表示这篇论文还没有任何协同状态（新加入者应据 [PaperContentDto] 播种）。
+ */
+data class CollabStateDto(
+    val paperId: Long,
+    val state: String?,
+    val updatedAt: Instant?,
+    /** 调用方在这篇论文里的角色：OWNER（作者）/ EDITOR / VIEWER。前端据此决定可写与可管理。 */
+    val role: String = "VIEWER",
+    /** 是否可写（作者或 EDITOR）；VIEWER / 导师为 false，只读 + 可批注。 */
+    val canWrite: Boolean = false,
+    /** 是否为论文作者：仅作者可播种既有正文、管理协作者与分享链接。 */
+    val isOwner: Boolean = false,
+)
+
+/** 首次播种：谁先插入谁为准（seed-if-absent），并发落后者读回胜出者的状态。 */
+data class SeedCollabStateRequest(
+    val state: String,
+)
+
+/**
+ * 防抖保存：整份 Yjs 快照按最后写入者覆盖（LWW，并发方经 Yjs 已收敛）。
+ * 同时把派生的可读正文镜像回 pr_papers（[contentJson]/[contentHtml]），
+ * 让列表 / 导出 / AI 上下文 / 只读分享这些非协同路径继续拿到最新正文。
+ */
+data class SaveCollabStateRequest(
+    val state: String,
+    val contentJson: JsonNode? = null,
+    val contentHtml: String? = null,
+)
+
+/** 「与我协作」列表项：我是协作者（而非作者）的论文。 */
+data class SharedPaperDto(
+    val paperId: Long,
+    val title: String,
+    val role: String,
+    val ownerId: Long,
+    val ownerName: String?,
+    val updatedAt: Instant,
+)
+
+/** 结构化协作者。[email]/[displayName] 便于前端展示，判权只看 [role]。 */
+data class CollaboratorDto(
+    val id: Long,
+    val paperId: Long,
+    val userId: Long,
+    val email: String,
+    val displayName: String?,
+    val role: String,
+    val createdAt: Instant,
+)
+
+data class AddCollaboratorRequest(
+    val email: String,
+    /** EDITOR 可读写协同；VIEWER 只读+可批注。 */
+    val role: String = "EDITOR",
+)
+
+/** 编辑器正文里的批注。[authorName] 供展示，锚点失效时靠 [quote] 仍可读。 */
+data class PaperCommentDto(
+    val id: Long,
+    val paperId: Long,
+    val userId: Long,
+    val authorName: String?,
+    val anchor: String?,
+    val quote: String?,
+    val body: String,
+    val resolved: Boolean,
+    val createdAt: Instant,
+    val updatedAt: Instant,
+)
+
+data class CreateCommentRequest(
+    val anchor: String? = null,
+    val quote: String? = null,
+    val body: String,
+)
+
+data class UpdateCommentRequest(
+    val body: String? = null,
+    val resolved: Boolean? = null,
+)
+
+/**
+ * 只读分享链接。[token] 供拼 URL（前端加 origin + /share/{token}）；本轮 role 恒为 VIEWER。
+ * 已撤销 / 已过期的链接仍会在作者的列表里出现，供其查看历史，但公开解析会 404。
+ */
+data class ShareLinkDto(
+    val id: Long,
+    val paperId: Long,
+    val token: String,
+    val role: String,
+    val expiresAt: Instant?,
+    val revoked: Boolean,
+    val createdAt: Instant,
+)
+
+data class CreateShareRequest(
+    /** 有效天数；为空 = 永不过期。 */
+    val expiresInDays: Long? = null,
+)
+
+/**
+ * 免登录读取的只读正文（W7 只读分享）。凭有效 token 返回，内容取自 pr_papers 镜像的最新正文。
+ * 不含任何身份 / 权限信息，纯展示。
+ */
+data class PublicSharePaperDto(
+    val paperId: Long,
+    val title: String,
+    val authors: String?,
+    val participants: String?,
+    val abstractText: String?,
+    val contentHtml: String?,
+    val contentJson: JsonNode?,
+    val updatedAt: Instant,
+)

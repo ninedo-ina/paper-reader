@@ -665,7 +665,14 @@
     "aiWritingReferenceParseFailed": "Mô hình không trả về dữ liệu tài liệu tham khảo hợp lệ. Hãy thử lại.",
     "aiWritingReferenceIdMismatch": "Mã mục trả về không khớp với danh mục hiện tại nên đã từ chối ghi, để trích dẫn trong bài không bị hỏng.",
     "editorContentTooLarge": "Nội dung có dung lượng {size}, vượt giới hạn {limit} mỗi bài. Hãy rút gọn hoặc chia nhỏ trước khi lưu.",
-    "saveRejected": "Máy chủ đã từ chối lần lưu này; đã dừng tự động thử lại."
+    "saveRejected": "Máy chủ đã từ chối lần lưu này; đã dừng tự động thử lại.",
+    "collabConnecting": "Đang kết nối phiên cộng tác…",
+    "collabLoadFailed": "Không tải được phiên cộng tác",
+    "collabOnline": "Đã kết nối",
+    "collabOffline": "Đã ngắt kết nối",
+    "comments": "Bình luận",
+    "manageCollab": "Cộng tác và chia sẻ",
+    "sharedWithMe": "Được chia sẻ với tôi"
   },
   "export": {
     "openExport": "Xuất",
@@ -1326,5 +1333,42 @@
   "notifications": {
     "welcomeTitle": "Giới thiệu tính năng hệ thống",
     "welcomeMessage": "Chào mừng bạn đến với PaperHelper! Nhấp để xem các tính năng của phiên bản hiện tại"
+  },
+  "comments": {
+    "title": "Bình luận",
+    "close": "Đóng",
+    "empty": "Chưa có bình luận nào",
+    "someone": "Ai đó",
+    "resolve": "Đánh dấu đã giải quyết",
+    "reopen": "Mở lại",
+    "delete": "Xóa",
+    "placeholder": "Viết bình luận…",
+    "send": "Gửi"
+  },
+  "collab": {
+    "title": "Cộng tác và chia sẻ",
+    "collaborators": "Cộng tác viên",
+    "noCollaborators": "Chưa có cộng tác viên nào",
+    "role_OWNER": "Tác giả",
+    "role_EDITOR": "Có thể chỉnh sửa",
+    "role_VIEWER": "Chỉ đọc",
+    "removeCollaborator": "Xóa",
+    "emailPlaceholder": "Nhập email để mời cộng tác viên",
+    "add": "Thêm",
+    "shareLinks": "Liên kết chia sẻ chỉ đọc",
+    "createLink": "Tạo liên kết",
+    "noShareLinks": "Chưa có liên kết chia sẻ nào",
+    "revoked": "Đã thu hồi",
+    "copyLink": "Sao chép liên kết",
+    "revoke": "Thu hồi",
+    "copied": "Đã sao chép liên kết",
+    "copyFailed": "Sao chép thất bại"
+  },
+  "share": {
+    "invalidTitle": "Liên kết không hợp lệ hoặc đã hết hạn",
+    "invalidHint": "Liên kết chia sẻ này có thể đã bị thu hồi hoặc hết hạn.",
+    "readOnlyBadge": "Chia sẻ chỉ đọc",
+    "abstract": "Tóm tắt",
+    "empty": "Bài báo này chưa có nội dung."
   }
 }

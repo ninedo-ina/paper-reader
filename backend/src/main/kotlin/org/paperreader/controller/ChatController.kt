@@ -6,8 +6,10 @@ import org.paperreader.service.ChatService
 import org.springframework.messaging.handler.annotation.MessageMapping
 import org.springframework.messaging.handler.annotation.Payload
 import org.springframework.messaging.simp.SimpMessagingTemplate
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
+import java.security.Principal
 
 @RestController
 @RequestMapping("/api/chat")
@@ -56,19 +58,27 @@ class ChatController(
     ): ApiResponse<*> = ApiResponse(data = chatService.toggleFollow(principal.userId, id))
 
     @MessageMapping("/chat.private")
-    fun handlePrivateMessage(@Payload payload: PrivateMessagePayload) {
-        val msg = chatService.sendMessage(payload.senderId, payload.receiverId, payload.content)
+    fun handlePrivateMessage(@Payload payload: PrivateMessagePayload, principal: Principal) {
+        // senderId 一律取自服务端在 CONNECT 时核实并绑定的身份，忽略 payload 里客户端自填的
+        // senderId——否则任何人都能冒充别人发消息（见 StompAuthChannelInterceptor）。
+        val senderId = userId(principal)
+        val msg = chatService.sendMessage(senderId, payload.receiverId, payload.content)
         messagingTemplate.convertAndSend("/topic/chat.${payload.receiverId}", msg)
-        messagingTemplate.convertAndSend("/topic/chat.${payload.senderId}", msg)
+        messagingTemplate.convertAndSend("/topic/chat.$senderId", msg)
     }
 
     @MessageMapping("/chat.group")
-    fun handleGroupMessage(@Payload payload: GroupMessagePayload) {
-        val msg = chatService.sendGroupMessage(payload.groupId, payload.senderId, payload.content)
+    fun handleGroupMessage(@Payload payload: GroupMessagePayload, principal: Principal) {
+        val senderId = userId(principal)
+        val msg = chatService.sendGroupMessage(payload.groupId, senderId, payload.content)
         messagingTemplate.convertAndSend("/topic/group.${payload.groupId}", msg)
     }
 
+    private fun userId(principal: Principal): Long =
+        ((principal as UsernamePasswordAuthenticationToken).principal as UserPrincipal).userId
+
     data class CreateGroupBody(val name: String, val memberIds: List<Long>)
-    data class PrivateMessagePayload(val senderId: Long, val receiverId: Long, val content: String)
-    data class GroupMessagePayload(val groupId: Long, val senderId: Long, val content: String)
+    // senderId 保留仅为兼容旧前端的报文格式，服务端不信任它（改用 Principal），见上。
+    data class PrivateMessagePayload(val senderId: Long? = null, val receiverId: Long, val content: String)
+    data class GroupMessagePayload(val senderId: Long? = null, val groupId: Long, val content: String)
 }

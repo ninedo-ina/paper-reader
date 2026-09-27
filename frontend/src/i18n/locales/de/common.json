@@ -665,7 +665,14 @@
     "aiWritingReferenceParseFailed": "Das Modell hat keine gültigen Literaturdaten zurückgegeben. Bitte erneut versuchen.",
     "aiWritingReferenceIdMismatch": "Die zurückgegebenen Kennungen passen nicht zur aktuellen Literaturliste; das Schreiben wurde abgelehnt, damit die Zitate im Text nicht ungültig werden.",
     "editorContentTooLarge": "Der Text umfasst {size} und überschreitet das Limit von {limit} pro Paper. Bitte kürzen oder aufteilen.",
-    "saveRejected": "Der Server hat das Speichern abgelehnt; automatische Versuche wurden beendet."
+    "saveRejected": "Der Server hat das Speichern abgelehnt; automatische Versuche wurden beendet.",
+    "collabConnecting": "Verbindung zur Kollaborationssitzung…",
+    "collabLoadFailed": "Kollaborationssitzung konnte nicht geladen werden",
+    "collabOnline": "Verbunden",
+    "collabOffline": "Getrennt",
+    "comments": "Kommentare",
+    "manageCollab": "Zusammenarbeit & Freigabe",
+    "sharedWithMe": "Mit mir geteilt"
   },
   "export": {
     "openExport": "Exportieren",
@@ -1326,5 +1333,42 @@
   "notifications": {
     "welcomeTitle": "Systemfunktionen",
     "welcomeMessage": "Willkommen bei PaperHelper! Klicken Sie hier, um die Funktionen der aktuellen Version anzuzeigen"
+  },
+  "comments": {
+    "title": "Kommentare",
+    "close": "Schließen",
+    "empty": "Noch keine Kommentare",
+    "someone": "Jemand",
+    "resolve": "Als erledigt markieren",
+    "reopen": "Erneut öffnen",
+    "delete": "Löschen",
+    "placeholder": "Kommentar schreiben…",
+    "send": "Senden"
+  },
+  "collab": {
+    "title": "Zusammenarbeit & Freigabe",
+    "collaborators": "Mitarbeitende",
+    "noCollaborators": "Noch keine Mitarbeitenden",
+    "role_OWNER": "Autor",
+    "role_EDITOR": "Bearbeiten",
+    "role_VIEWER": "Nur Lesen",
+    "removeCollaborator": "Entfernen",
+    "emailPlaceholder": "E-Mail eingeben, um eine Person einzuladen",
+    "add": "Hinzufügen",
+    "shareLinks": "Schreibgeschützte Freigabelinks",
+    "createLink": "Link erstellen",
+    "noShareLinks": "Noch keine Freigabelinks",
+    "revoked": "Widerrufen",
+    "copyLink": "Link kopieren",
+    "revoke": "Widerrufen",
+    "copied": "Link kopiert",
+    "copyFailed": "Kopieren fehlgeschlagen"
+  },
+  "share": {
+    "invalidTitle": "Link ungültig oder abgelaufen",
+    "invalidHint": "Dieser Freigabelink wurde möglicherweise widerrufen oder ist abgelaufen.",
+    "readOnlyBadge": "Schreibgeschützte Freigabe",
+    "abstract": "Zusammenfassung",
+    "empty": "Dieses Papier hat noch keinen Inhalt."
   }
 }

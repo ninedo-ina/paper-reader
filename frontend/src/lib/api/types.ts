@@ -650,3 +650,103 @@ export interface PaperTagDto {
 export interface SharePaperResponse {
   shareText: string
 }
+
+// --- W7 协作与分享 ---
+
+/** 协作正文的 CRDT 快照（Yjs 全量状态的 base64）。state 为 null 表示尚未初始化。 */
+export interface CollabStateDto {
+  paperId: number
+  state: string | null
+  updatedAt: string | null
+  /** 当前用户在这篇论文里的角色：OWNER（作者）/ EDITOR / VIEWER */
+  role: "OWNER" | "EDITOR" | "VIEWER"
+  /** 是否可写（作者或 EDITOR）；VIEWER/导师为 false，只读+可批注 */
+  canWrite: boolean
+  /** 是否为论文作者：仅作者可播种既有正文、管理协作者与分享链接 */
+  isOwner: boolean
+}
+
+export interface SeedCollabStateRequest {
+  state: string
+}
+
+export interface SaveCollabStateRequest {
+  state: string
+  contentJson?: JSONContent | null
+  contentHtml?: string | null
+}
+
+/** 「与我协作」列表项：我作为协作者被授权的论文。 */
+export interface SharedPaperDto {
+  paperId: number
+  title: string
+  role: string
+  ownerId: number
+  ownerName: string | null
+  updatedAt: string
+}
+
+export interface CollaboratorDto {
+  id: number
+  paperId: number
+  userId: number
+  email: string
+  displayName: string | null
+  role: string
+  createdAt: string
+}
+
+export interface AddCollaboratorRequest {
+  email: string
+  role?: string
+}
+
+export interface PaperCommentDto {
+  id: number
+  paperId: number
+  userId: number
+  authorName: string | null
+  anchor: string | null
+  quote: string | null
+  body: string
+  resolved: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateCommentRequest {
+  anchor?: string | null
+  quote?: string | null
+  body: string
+}
+
+export interface UpdateCommentRequest {
+  body?: string | null
+  resolved?: boolean | null
+}
+
+export interface ShareLinkDto {
+  id: number
+  paperId: number
+  token: string
+  role: string
+  expiresAt: string | null
+  revoked: boolean
+  createdAt: string
+}
+
+export interface CreateShareRequest {
+  expiresInDays?: number | null
+}
+
+/** 免登录只读分享页的数据。 */
+export interface PublicSharePaperDto {
+  paperId: number
+  title: string
+  authors: string | null
+  participants: string | null
+  abstractText: string | null
+  contentHtml: string | null
+  contentJson: JSONContent | null
+  updatedAt: string
+}

@@ -84,3 +84,10 @@ class ContentTooLargeException(val actualBytes: Long, val limitBytes: Long, fiel
         "$field 大小 ${formatBytes(actualBytes)} 超过单篇上限 ${formatBytes(limitBytes)}",
         413,
     )
+
+/**
+ * 只读分享 token 无效（不存在 / 已撤销 / 已过期）。W7，见 V20__collaboration.sql。
+ * 统一用 404 而不区分「不存在」和「已失效」，避免泄露某篇论文是否存在或曾被分享过。
+ * 注：1014 已被正文体积闸门（REQ-202609-0265 / W9）占用，本轮分享错误码顺延至 1015。
+ */
+class ShareLinkInvalidException : BusinessException(1015, "分享链接无效或已失效", 404)

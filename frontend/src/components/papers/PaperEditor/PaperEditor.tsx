@@ -1,11 +1,15 @@
 "use client"
 
-import { useCallback, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { useEditor, useEditorState, EditorContent } from "@tiptap/react"
-import type { Editor, JSONContent } from "@tiptap/react"
+import type { Editor, Extensions, JSONContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import Placeholder from "@tiptap/extension-placeholder"
+import Collaboration from "@tiptap/extension-collaboration"
+import CollaborationCaret from "@tiptap/extension-collaboration-caret"
+import type { Doc } from "yjs"
+import type { StompYjsProvider } from "@/lib/collab/stompYjsProvider"
 import type { PaperContentDto, PaperDetailDto } from "@/lib/api/types"
 import { Save, Loader2, AlertTriangle, RotateCw, FileUp, History } from "lucide-react"
 import { Button } from "@/components/ui/Button"
@@ -32,9 +36,23 @@ export interface PaperContentPayload {
   contentHtml: string
 }
 
+/**
+ * 协作模式配置（W7）。传入即启用 Yjs 实时协作：编辑器不再吃 content prop，
+ * 正文由共享的 Y.Doc 承载；StarterKit 的撤销/重做交给 Yjs，避免与 CRDT 打架。
+ */
+export interface CollabConfig {
+  doc: Doc
+  provider: StompYjsProvider
+  user: { name: string; color: string }
+  /** 当前用户是否可写（作者或 EDITOR）；VIEWER/导师只读，仅能在侧栏评论。 */
+  canWrite: boolean
+  /** 首次播种用的既有正文；仅当服务端尚无快照且当前用户是作者时传入，否则为 null。 */
+  seedContent: JSONContent | null
+}
+
 export interface PaperEditorProps {
   paper: PaperDetailDto
-  /** 已落库的正文；调用方保证加载完成后才挂载本组件 */
+  /** 已落库的正文；调用方保证加载完成后才挂载本组件。协作模式下忽略（由 Y.Doc 提供）。 */
   content: JSONContent | null
   /** 保存正文；版本冲突时应抛出带 code===1008 的错误（后写覆盖被拒） */
   onSave?: (payload: PaperContentPayload) => Promise<void>
@@ -44,6 +62,8 @@ export interface PaperEditorProps {
   onImportMarkdown?: (markdown: string) => Promise<string>
   /** 回滚到某条正文快照后交回覆盖后的正文，由调用方同步版本号并重挂编辑器 */
   onContentReplaced?: (dto: PaperContentDto) => void
+  /** 传入即启用实时协作（Yjs over STOMP） */
+  collab?: CollabConfig
 }
 
 export function PaperEditor({
@@ -53,6 +73,7 @@ export function PaperEditor({
   onReloadConflict,
   onImportMarkdown,
   onContentReplaced,
+  collab,
 }: PaperEditorProps) {
   const t = useTranslations("papers")
   const tc = useTranslations("common")
@@ -119,32 +140,46 @@ export function PaperEditor({
    * 所以按真正会进扩展选项的这几处文案做 memo。
    */
   const extensions = useMemo(
-    () => [
-      StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
-      }),
-      Placeholder.configure({
-        placeholder: t("editorPlaceholder"),
-      }),
-      // 对齐属性挂在标题/段落上，导出的 HTML 用行内 style 承载，脱离编辑器也能还原
-      TextAlign.configure({ types: ["heading", "paragraph"] }),
-      ...academicExtensions({
-        locale,
-        footnoteTitle,
-        bibliographyTitle,
-        crossReferenceLabels: labels,
-        onMathClick,
-      }),
-    ],
+    () => {
+      const base: Extensions = [
+        StarterKit.configure({
+          heading: { levels: [1, 2, 3] },
+          // 协作模式下撤销/重做交给 Yjs 的 UndoManager，关掉本地 history 以免与 CRDT 打架。
+          ...(collab ? { undoRedo: false as const } : {}),
+        }),
+        Placeholder.configure({
+          placeholder: t("editorPlaceholder"),
+        }),
+        // 对齐属性挂在标题/段落上，导出的 HTML 用行内 style 承载，脱离编辑器也能还原
+        TextAlign.configure({ types: ["heading", "paragraph"] }),
+        ...academicExtensions({
+          locale,
+          footnoteTitle,
+          bibliographyTitle,
+          crossReferenceLabels: labels,
+          onMathClick,
+        }),
+      ]
+      if (collab) {
+        // field 必须与后续任何 Y.Doc 播种用的 XmlFragment 名一致（统一为 "default"）。
+        base.push(
+          Collaboration.configure({ document: collab.doc, field: "default" }),
+          CollaborationCaret.configure({ provider: collab.provider, user: collab.user }),
+        )
+      }
+      return base
+    },
     // t 每次渲染都是新对象，依赖它反而会让 memo 失效；真正相关的只有下面这几项
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [locale, footnoteTitle, bibliographyTitle, labels, onMathClick],
+    [locale, footnoteTitle, bibliographyTitle, labels, onMathClick, collab],
   )
 
   const editor = useEditor(
     {
       extensions,
-      content: content ?? "",
+      // 协作模式下正文由 Y.Doc 承载，绝不能再喂 content，否则与 CRDT 内容叠加成重复正文。
+      content: collab ? undefined : (content ?? ""),
+      editable: collab ? collab.canWrite : true,
       editorProps: {
         attributes: {
           class: "prose prose-sm dark:prose-invert max-w-none focus:outline-none",
@@ -157,6 +192,17 @@ export function PaperEditor({
     [extensions],
   )
   editorRef.current = editor
+
+  // 协作首次播种：仅作者、服务端尚无快照时把既有正文写进空的 Y.Doc 并立即保存（占位为权威快照）。
+  // 只在编辑器确实为空时写入，避免与已同步进来的对端内容相互覆盖。
+  const seededRef = useRef(false)
+  useEffect(() => {
+    if (!collab || !editor || collab.seedContent == null || seededRef.current) return
+    seededRef.current = true
+    if (!editor.isEmpty) return
+    editor.commands.setContent(collab.seedContent)
+    void saveNow()
+  }, [collab, editor, saveNow])
 
   const isSaving = status === "saving"
 
