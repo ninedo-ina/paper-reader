@@ -1290,6 +1290,29 @@
       "label": "특허 문헌"
     }
   },
+  "feedback": {
+    "button": "문제 신고",
+    "title": "무슨 일 있으세요?",
+    "subtitle": "버그, 불평, 칭찬 모두 환영합니다",
+    "titleLabel": "제목",
+    "titlePlaceholder": "한 줄이면 충분해요",
+    "contentLabel": "내용",
+    "contentPlaceholder": "자세히 적어 주시면 더 좋아요",
+    "screenshotLabel": "스크린샷",
+    "screenshotLimit": "최대 3장, 장당 5MB",
+    "screenshotAdd": "스크린샷 추가",
+    "screenshotRemove": "이 스크린샷 삭제",
+    "screenshotHint": "왼쪽 칸에서 고르거나, 그냥 붙여넣어도 됩니다",
+    "screenshotRejected": "일부는 추가되지 않았습니다: PNG/JPEG/WebP/GIF만, 장당 5MB, 최대 3장",
+    "submit": "보내기",
+    "submitting": "보내는 중…",
+    "success": "잘 받았습니다. 또 봐요!",
+    "failed": "전송하지 못했어요. 잠시 후 다시 시도해 주세요",
+    "titleRequired": "제목을 입력해 주세요",
+    "contentRequired": "내용을 입력해 주세요",
+    "cancel": "다음에",
+    "close": "닫기"
+  },
   "errors": {
     "loginExpired": "로그인이 만료되었습니다. 다시 로그인해 주세요",
     "forbidden": "권한이 부족합니다",

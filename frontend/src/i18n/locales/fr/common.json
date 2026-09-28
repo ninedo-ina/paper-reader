@@ -1290,6 +1290,29 @@
       "label": "Brevet"
     }
   },
+  "feedback": {
+    "button": "Envoyer un retour",
+    "title": "Dites-nous tout",
+    "subtitle": "Bugs, coups de gueule ou compliments — tout est bon",
+    "titleLabel": "Titre",
+    "titlePlaceholder": "Une ligne suffit",
+    "contentLabel": "Détails",
+    "contentPlaceholder": "Écrivez ce que vous voulez — plus c'est précis, mieux c'est",
+    "screenshotLabel": "Captures d'écran",
+    "screenshotLimit": "3 max, 5 Mo chacune",
+    "screenshotAdd": "Ajouter une capture",
+    "screenshotRemove": "Retirer celle-ci",
+    "screenshotHint": "Cliquez sur le cadre pour choisir une image, ou collez directement une capture",
+    "screenshotRejected": "Certaines n'ont pas été prises en compte : PNG/JPEG/WebP/GIF uniquement, 5 Mo max, 3 au total",
+    "submit": "Envoyer",
+    "submitting": "Envoi…",
+    "success": "Bien reçu — à bientôt !",
+    "failed": "L'envoi a échoué. Réessayez plus tard",
+    "titleRequired": "Il manque le titre",
+    "contentRequired": "Il manque les détails",
+    "cancel": "Laissez tomber",
+    "close": "Fermer"
+  },
   "errors": {
     "loginExpired": "Session expirée, veuillez vous reconnecter",
     "forbidden": "Permissions insuffisantes",

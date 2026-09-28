@@ -1290,6 +1290,29 @@
       "label": "专利文献"
     }
   },
+  "feedback": {
+    "button": "问题反馈",
+    "title": "有事儿您说话",
+    "subtitle": "吐槽、报 bug、夸两句，都行",
+    "titleLabel": "标题",
+    "titlePlaceholder": "一句话说清是啥事",
+    "contentLabel": "内容",
+    "contentPlaceholder": "想说什么都行，越具体越好",
+    "screenshotLabel": "截图",
+    "screenshotLimit": "最多 3 张，单张 5MB 以内",
+    "screenshotAdd": "添加截图",
+    "screenshotRemove": "移除这张",
+    "screenshotHint": "点左边的方块选图，也可以直接把截图粘进来",
+    "screenshotRejected": "有几张没加进去：只收 PNG/JPEG/WebP/GIF，单张不超过 5MB，最多 3 张",
+    "submit": "发出去",
+    "submitting": "发送中…",
+    "success": "收到了，回见！",
+    "failed": "没发出去，待会儿再试试",
+    "titleRequired": "标题还没写呢",
+    "contentRequired": "内容还没写呢",
+    "cancel": "再想想",
+    "close": "关闭"
+  },
   "errors": {
     "loginExpired": "登录已过期，请重新登录",
     "forbidden": "权限不足",

@@ -1290,6 +1290,29 @@
       "label": "پاتېنت ھۆججىتى"
     }
   },
+  "feedback": {
+    "button": "پىكىر يوللاش",
+    "title": "نېمە ئىش بولغانلىقىنى ئېيتىڭ",
+    "subtitle": "خاتالىق، ئەرز ياكى ماختاش — ھەممىسى قوبۇل",
+    "titleLabel": "تېما",
+    "titlePlaceholder": "بىر قۇر يېتەرلىك",
+    "contentLabel": "مەزمۇن",
+    "contentPlaceholder": "خالىغىنىڭىزنى يېزىڭ، قانچە ئېنىق بولسا شۇنچە ياخشى",
+    "screenshotLabel": "ئېكران كۆرۈنۈشى",
+    "screenshotLimit": "ئەڭ كۆپ 3 پارچە، ھەر بىرى 5MB",
+    "screenshotAdd": "كۆرۈنۈش قوشۇش",
+    "screenshotRemove": "بۇنى ئۆچۈرۈش",
+    "screenshotHint": "رەسىم تاللاش ئۈچۈن سول تەرەپتىكى كاتەكنى بېسىڭ، ياكى كۆرۈنۈشنى بىۋاسىتە چاپلاڭ",
+    "screenshotRejected": "بەزىلىرى قوشۇلمىدى: پەقەت PNG/JPEG/WebP/GIF، ھەر بىرى 5MB، ئەڭ كۆپ 3 پارچە",
+    "submit": "يوللا",
+    "submitting": "يوللىنىۋاتىدۇ…",
+    "success": "تاپشۇرۇۋالدۇق، كۆرۈشكەنچە!",
+    "failed": "يوللانمىدى. سەل تۇرۇپ قايتا سىناڭ",
+    "titleRequired": "تېما يېزىلمىدى",
+    "contentRequired": "مەزمۇن يېزىلمىدى",
+    "cancel": "ئاندىن",
+    "close": "تاقاش"
+  },
   "errors": {
     "loginExpired": "كىرىش مۇددىتى ئۆتتى، قايتا كىرىڭ",
     "forbidden": "ھوقۇق يېتىشمەيدۇ",

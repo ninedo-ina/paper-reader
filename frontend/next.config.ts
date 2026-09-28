@@ -1,10 +1,18 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
+// 前端版本号只认 VERSION 这一个来源，构建时注入给浏览器（问题反馈要带上客户端版本）。
+const appVersion = readFileSync(join(__dirname, 'VERSION'), 'utf-8').trim();
+
 const nextConfig: NextConfig = {
   outputFileTracingRoot: __dirname,
+  env: {
+    NEXT_PUBLIC_APP_VERSION: appVersion,
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**' },

@@ -1290,6 +1290,29 @@
       "label": "Documento de patente"
     }
   },
+  "feedback": {
+    "button": "Enviar comentarios",
+    "title": "Cuéntanos qué pasa",
+    "subtitle": "Fallos, quejas o halagos: todo vale",
+    "titleLabel": "Título",
+    "titlePlaceholder": "Con una línea basta",
+    "contentLabel": "Detalles",
+    "contentPlaceholder": "Escribe lo que quieras; cuanto más concreto, mejor",
+    "screenshotLabel": "Capturas",
+    "screenshotLimit": "Máximo 3, de 5MB cada una",
+    "screenshotAdd": "Añadir una captura",
+    "screenshotRemove": "Quitar esta",
+    "screenshotHint": "Haz clic en el recuadro para elegir imágenes o pega una captura directamente",
+    "screenshotRejected": "Algunas no se añadieron: solo PNG/JPEG/WebP/GIF, 5MB cada una, 3 como máximo",
+    "submit": "Enviar",
+    "submitting": "Enviando…",
+    "success": "¡Recibido! Hasta pronto",
+    "failed": "No se pudo enviar. Inténtalo más tarde",
+    "titleRequired": "Falta el título",
+    "contentRequired": "Faltan los detalles",
+    "cancel": "Mejor no",
+    "close": "Cerrar"
+  },
   "errors": {
     "loginExpired": "La sesión ha caducado. Vuelve a iniciar sesión.",
     "forbidden": "Permisos insuficientes",

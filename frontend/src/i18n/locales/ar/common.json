@@ -1290,6 +1290,29 @@
       "label": "وثيقة براءة"
     }
   },
+  "feedback": {
+    "button": "إرسال ملاحظات",
+    "title": "قل لنا ما الأمر",
+    "subtitle": "أخطاء أو شكاوى أو كلمة إعجاب — كلها مرحّب بها",
+    "titleLabel": "العنوان",
+    "titlePlaceholder": "سطر واحد يكفي",
+    "contentLabel": "التفاصيل",
+    "contentPlaceholder": "اكتب ما تريد، وكلما كان أوضح كان أفضل",
+    "screenshotLabel": "لقطات الشاشة",
+    "screenshotLimit": "حتى 3 لقطات، كل واحدة 5MB",
+    "screenshotAdd": "إضافة لقطة",
+    "screenshotRemove": "إزالة هذه اللقطة",
+    "screenshotHint": "اضغط على المربع لاختيار الصور، أو الصق لقطة الشاشة مباشرة",
+    "screenshotRejected": "لم تُضف بعض الملفات: يُقبل PNG/JPEG/WebP/GIF فقط، بحجم 5MB لكل ملف، و3 كحد أقصى",
+    "submit": "أرسل",
+    "submitting": "جارٍ الإرسال…",
+    "success": "وصلنا، إلى اللقاء!",
+    "failed": "لم يتم الإرسال. حاول لاحقًا",
+    "titleRequired": "العنوان مطلوب",
+    "contentRequired": "التفاصيل مطلوبة",
+    "cancel": "في وقت لاحق",
+    "close": "إغلاق"
+  },
   "errors": {
     "loginExpired": "انتهت صلاحية تسجيل الدخول، يرجى تسجيل الدخول مرة أخرى",
     "forbidden": "صلاحيات غير كافية",

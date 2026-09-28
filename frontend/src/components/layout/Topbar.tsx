@@ -2,6 +2,7 @@
 
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
+import { FeedbackDialog } from "@/components/layout/FeedbackDialog";
 import { NotificationDropdown } from "@/components/layout/NotificationDropdown";
 import { SearchDialog } from "@/components/layout/SearchDialog";
 import { UserMenu } from "@/components/layout/UserMenu";
@@ -18,6 +19,7 @@ export function Topbar({ onProfile, onPreferences }: TopbarProps) {
       <div className="flex-1" />
       <div className="flex items-center gap-1 ml-3">
         <SearchDialog />
+        <FeedbackDialog />
         <LanguageSwitcher />
         <NotificationDropdown />
         <ThemeToggle />

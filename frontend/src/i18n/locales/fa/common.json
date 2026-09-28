@@ -1290,6 +1290,29 @@
       "label": "سند اختراع"
     }
   },
+  "feedback": {
+    "button": "ارسال بازخورد",
+    "title": "بگو چه خبر است",
+    "subtitle": "اشکال، گلایه یا تعریف — همه خوش‌آمد است",
+    "titleLabel": "عنوان",
+    "titlePlaceholder": "یک خط کافی است",
+    "contentLabel": "توضیحات",
+    "contentPlaceholder": "هر چه می‌خواهی بنویس؛ هر چه دقیق‌تر، بهتر",
+    "screenshotLabel": "تصاویر صفحه",
+    "screenshotLimit": "حداکثر ۳ تصویر، هر کدام ۵MB",
+    "screenshotAdd": "افزودن تصویر",
+    "screenshotRemove": "حذف این تصویر",
+    "screenshotHint": "برای انتخاب تصویر روی کادر بزن، یا تصویر را مستقیم بچسبان",
+    "screenshotRejected": "بعضی تصاویر اضافه نشدند: فقط PNG/JPEG/WebP/GIF، هر کدام ۵MB، حداکثر ۳ تصویر",
+    "submit": "بفرست",
+    "submitting": "در حال ارسال…",
+    "success": "رسید، می‌بینمت!",
+    "failed": "ارسال نشد. کمی بعد دوباره امتحان کن",
+    "titleRequired": "عنوان را ننوشته‌ای",
+    "contentRequired": "توضیحات را ننوشته‌ای",
+    "cancel": "بی‌خیال",
+    "close": "بستن"
+  },
   "errors": {
     "loginExpired": "ورود منقضی شده است؛ لطفاً دوباره وارد شوید",
     "forbidden": "دسترسی کافی نیست",

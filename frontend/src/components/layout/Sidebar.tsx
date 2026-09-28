@@ -107,7 +107,10 @@ export function Sidebar({ activePanel, onNavigate }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "relative z-30 border-r border-[var(--border-subtle)] flex flex-col py-3 select-none shrink-0 transition-all duration-200",
+        // 折叠按钮探出侧栏 10px，正好压在顶栏地盘上。顶栏是 z-40 且 DOM 在后，
+        // 侧栏只要低于它，按钮的外侧半圆就被顶栏盖住——看得见却点不着。
+        // 抬到 45：高于顶栏，仍低于顶栏里的下拉菜单（z-50）与弹层（z-[9999]）。
+        "relative z-[45] border-r border-[var(--border-subtle)] flex flex-col py-3 select-none shrink-0 transition-all duration-200",
         collapsed ? "w-[52px]" : "w-[220px]",
       )}
       style={{ background: "var(--surface-1)", backdropFilter: "blur(20px) saturate(180%)" }}

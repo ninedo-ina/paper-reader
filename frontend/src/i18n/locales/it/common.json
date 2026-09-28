@@ -1290,6 +1290,29 @@
       "label": "Documento brevettuale"
     }
   },
+  "feedback": {
+    "button": "Invia un feedback",
+    "title": "Dicci come va",
+    "subtitle": "Bug, lamentele o complimenti: va bene tutto",
+    "titleLabel": "Titolo",
+    "titlePlaceholder": "Basta una riga",
+    "contentLabel": "Dettagli",
+    "contentPlaceholder": "Scrivi quello che vuoi: più sei preciso, meglio è",
+    "screenshotLabel": "Schermate",
+    "screenshotLimit": "Al massimo 3, da 5MB ciascuna",
+    "screenshotAdd": "Aggiungi una schermata",
+    "screenshotRemove": "Rimuovi questa",
+    "screenshotHint": "Clicca sul riquadro per scegliere le immagini, oppure incolla direttamente una schermata",
+    "screenshotRejected": "Alcune non sono state aggiunte: solo PNG/JPEG/WebP/GIF, 5MB ciascuna, massimo 3",
+    "submit": "Invia",
+    "submitting": "Invio…",
+    "success": "Ricevuto, a presto!",
+    "failed": "Non è partito. Riprova più tardi",
+    "titleRequired": "Manca il titolo",
+    "contentRequired": "Mancano i dettagli",
+    "cancel": "Lasciamo perdere",
+    "close": "Chiudi"
+  },
   "errors": {
     "loginExpired": "Sessione scaduta, accedi di nuovo",
     "forbidden": "Permessi insufficienti",

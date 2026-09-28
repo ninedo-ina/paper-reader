@@ -1290,6 +1290,29 @@
       "label": "Tài liệu bằng sáng chế"
     }
   },
+  "feedback": {
+    "button": "Gửi phản hồi",
+    "title": "Có chuyện gì cứ nói",
+    "subtitle": "Lỗi, góp ý hay lời khen — đều được",
+    "titleLabel": "Tiêu đề",
+    "titlePlaceholder": "Một dòng là đủ",
+    "contentLabel": "Nội dung",
+    "contentPlaceholder": "Viết gì cũng được, càng cụ thể càng tốt",
+    "screenshotLabel": "Ảnh chụp",
+    "screenshotLimit": "Tối đa 3 ảnh, mỗi ảnh 5MB",
+    "screenshotAdd": "Thêm ảnh",
+    "screenshotRemove": "Bỏ ảnh này",
+    "screenshotHint": "Bấm vào ô bên trái để chọn ảnh, hoặc dán thẳng ảnh chụp vào",
+    "screenshotRejected": "Có ảnh chưa thêm được: chỉ nhận PNG/JPEG/WebP/GIF, mỗi ảnh 5MB, tối đa 3 ảnh",
+    "submit": "Gửi đi",
+    "submitting": "Đang gửi…",
+    "success": "Đã nhận được, hẹn gặp lại!",
+    "failed": "Chưa gửi được. Thử lại sau nhé",
+    "titleRequired": "Chưa có tiêu đề",
+    "contentRequired": "Chưa có nội dung",
+    "cancel": "Để sau",
+    "close": "Đóng"
+  },
   "errors": {
     "loginExpired": "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại",
     "forbidden": "Không đủ quyền",
