@@ -1290,6 +1290,29 @@
       "label": "專利文獻"
     }
   },
+  "feedback": {
+    "button": "問題回報",
+    "title": "有事兒您說話",
+    "subtitle": "吐槽、報 bug、誇兩句，都行",
+    "titleLabel": "標題",
+    "titlePlaceholder": "一句話說清是什麼事",
+    "contentLabel": "內容",
+    "contentPlaceholder": "想說什麼都行，越具體越好",
+    "screenshotLabel": "截圖",
+    "screenshotLimit": "最多 3 張，單張 5MB 以內",
+    "screenshotAdd": "新增截圖",
+    "screenshotRemove": "移除這張",
+    "screenshotHint": "點左邊的方塊選圖，也可以直接把截圖貼進來",
+    "screenshotRejected": "有幾張沒加進去：只收 PNG/JPEG/WebP/GIF，單張不超過 5MB，最多 3 張",
+    "submit": "送出去",
+    "submitting": "傳送中…",
+    "success": "收到了，再見！",
+    "failed": "沒送出去，等一下再試試",
+    "titleRequired": "標題還沒寫呢",
+    "contentRequired": "內容還沒寫呢",
+    "cancel": "再想想",
+    "close": "關閉"
+  },
   "errors": {
     "loginExpired": "登入已過期，請重新登入",
     "forbidden": "權限不足",

@@ -48,6 +48,28 @@ class FileStorageService(
     }
 
     /**
+     * 落盘一段已有字节（调用方给完整对象路径，如 `feedback/42/<uuid>.png`）。
+     * 与 [store] 的区别只是入口：论文上传拿的是 MultipartFile、且路径由 userId/paperId 拼；
+     * 反馈截图要自己定路径、且已经读成字节校验过大小。存储后端（local/dufs）走同一套开关。
+     */
+    fun storeBytes(objectPath: String, bytes: ByteArray): String {
+        return when (storageType) {
+            "local" -> {
+                val target = Paths.get(localPath, objectPath)
+                Files.createDirectories(target.parent)
+                Files.write(target, bytes)
+                target.toString()
+            }
+            else -> {
+                ensureDufsDirectory(objectPath)
+                val req = RequestEntity.put(URI("$dufsUrl/$objectPath")).body(bytes)
+                restTemplate.exchange(req, Void::class.java)
+                objectPath
+            }
+        }.also { logger.info("Stored file: {}", it) }
+    }
+
+    /**
      * 从 URL 下载并落盘。maxBytes 是硬上限：下载时就按它截断，超了直接抛 FileTooLargeException，
      * 不能先读完整包再校验——URL 由用户给，不设上限就是一个"让服务器把任意大小文件读进内存"的口子。
      */

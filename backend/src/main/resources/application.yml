@@ -35,7 +35,8 @@ spring:
       # 单文件 10MB 上传上限的第一道防线（业务侧 UploadQuotaService 还有一道，规则一致）。
       # 超限时由 GlobalExceptionHandler 转成 1009/413，而不是 500。
       max-file-size: 10MB
-      max-request-size: 12MB
+      # 单请求 16MB：问题反馈一次最多带 3 张 5MB 截图（FeedbackService），加上表单字段要留出余量。
+      max-request-size: 16MB
 
 server:
   address: ${SERVER_ADDRESS:127.0.0.1}

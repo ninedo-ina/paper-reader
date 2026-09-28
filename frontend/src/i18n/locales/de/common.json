@@ -1290,6 +1290,29 @@
       "label": "Patentdokument"
     }
   },
+  "feedback": {
+    "button": "Feedback senden",
+    "title": "Sag uns, was los ist",
+    "subtitle": "Bugs, Kritik oder Lob — alles willkommen",
+    "titleLabel": "Titel",
+    "titlePlaceholder": "Eine Zeile reicht",
+    "contentLabel": "Details",
+    "contentPlaceholder": "Schreib, was du magst — je konkreter, desto besser",
+    "screenshotLabel": "Screenshots",
+    "screenshotLimit": "Max. 3, je 5MB",
+    "screenshotAdd": "Screenshot hinzufügen",
+    "screenshotRemove": "Diesen entfernen",
+    "screenshotHint": "Klick auf das Feld, um Bilder zu wählen — oder füge einen Screenshot direkt ein",
+    "screenshotRejected": "Einige wurden übersprungen: nur PNG/JPEG/WebP/GIF, je 5MB, max. 3",
+    "submit": "Abschicken",
+    "submitting": "Wird gesendet…",
+    "success": "Ist angekommen — bis bald!",
+    "failed": "Hat nicht geklappt. Versuch es später noch einmal",
+    "titleRequired": "Der Titel fehlt noch",
+    "contentRequired": "Die Details fehlen noch",
+    "cancel": "Lieber nicht",
+    "close": "Schließen"
+  },
   "errors": {
     "loginExpired": "Anmeldung abgelaufen, bitte erneut anmelden",
     "forbidden": "Keine Berechtigung",

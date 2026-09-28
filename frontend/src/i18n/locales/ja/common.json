@@ -1290,6 +1290,29 @@
       "label": "特許文献"
     }
   },
+  "feedback": {
+    "button": "ご意見・不具合",
+    "title": "何かありましたか",
+    "subtitle": "不具合でも感想でも、どうぞ",
+    "titleLabel": "タイトル",
+    "titlePlaceholder": "一言でけっこうです",
+    "contentLabel": "内容",
+    "contentPlaceholder": "具体的に書いていただけると助かります",
+    "screenshotLabel": "スクリーンショット",
+    "screenshotLimit": "最大3枚、1枚5MBまで",
+    "screenshotAdd": "画像を追加",
+    "screenshotRemove": "この画像を削除",
+    "screenshotHint": "左の枠から画像を選ぶか、そのまま貼り付けてください",
+    "screenshotRejected": "一部を追加できませんでした：PNG/JPEG/WebP/GIFのみ、1枚5MBまで、最大3枚",
+    "submit": "送信する",
+    "submitting": "送信中…",
+    "success": "受け取りました。またね！",
+    "failed": "送信できませんでした。しばらくしてからどうぞ",
+    "titleRequired": "タイトルを入力してください",
+    "contentRequired": "内容を入力してください",
+    "cancel": "やめておく",
+    "close": "閉じる"
+  },
   "errors": {
     "loginExpired": "ログインの有効期限が切れました。再度ログインしてください",
     "forbidden": "権限がありません",

@@ -1290,6 +1290,29 @@
       "label": "Patent"
     }
   },
+  "feedback": {
+    "button": "Send feedback",
+    "title": "Tell us what's up",
+    "subtitle": "Bugs, gripes, or a compliment — all welcome",
+    "titleLabel": "Title",
+    "titlePlaceholder": "One line is enough",
+    "contentLabel": "Details",
+    "contentPlaceholder": "Say whatever you like — the more specific the better",
+    "screenshotLabel": "Screenshots",
+    "screenshotLimit": "Up to 3, 5MB each",
+    "screenshotAdd": "Add a screenshot",
+    "screenshotRemove": "Remove this one",
+    "screenshotHint": "Click the box to pick images, or just paste a screenshot in",
+    "screenshotRejected": "Some were skipped: PNG/JPEG/WebP/GIF only, 5MB each, 3 at most",
+    "submit": "Send it",
+    "submitting": "Sending…",
+    "success": "Got it — see you around!",
+    "failed": "It didn't go through. Try again in a bit",
+    "titleRequired": "Needs a title",
+    "contentRequired": "Needs some details",
+    "cancel": "Never mind",
+    "close": "Close"
+  },
   "errors": {
     "loginExpired": "Your session has expired. Please sign in again.",
     "forbidden": "You do not have permission to do that",
