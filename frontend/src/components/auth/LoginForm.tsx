@@ -31,7 +31,9 @@ export function LoginForm() {
     error,
     clearError,
   } = useAuthStore()
-  const [mode, setMode] = useState<LoginMode>("password")
+  // 默认走验证码：它对新老邮箱都成立（未注册的会在这里建号），
+  // 而密码模式现在只对已经有密码的老账号有效——后端不再给未知邮箱自动建号了。
+  const [mode, setMode] = useState<LoginMode>("code")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [code, setCode] = useState("")

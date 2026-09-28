@@ -1320,6 +1320,7 @@
     "notFound": "Risorsa non trovata",
     "fileDeleteFailed": "Eliminazione del file originale non riuscita; il record dell'articolo è stato conservato. Riprova più tardi.",
     "contentTooLarge": "Il contenuto supera il limite per articolo. Riducilo o dividilo prima di salvare.",
+    "tooManyRequests": "Troppi tentativi. Riprova tra qualche istante.",
     "twoFactorExpired": "Sessione di autenticazione a due fattori scaduta, accedi di nuovo",
     "unknown": "Errore sconosciuto",
     "unknownNetwork": "Errore di rete sconosciuto",

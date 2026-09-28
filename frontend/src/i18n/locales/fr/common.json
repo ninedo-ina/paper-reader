@@ -1320,6 +1320,7 @@
     "notFound": "Ressource introuvable",
     "fileDeleteFailed": "Échec de la suppression du fichier d'origine ; l'enregistrement de l'article a été conservé, veuillez réessayer plus tard",
     "contentTooLarge": "Le contenu dépasse la limite par article. Allégez-le ou scindez-le avant d'enregistrer.",
+    "tooManyRequests": "Trop de tentatives. Veuillez réessayer dans un instant.",
     "twoFactorExpired": "La session d'authentification à deux facteurs a expiré, veuillez vous reconnecter",
     "unknown": "Erreur inconnue",
     "unknownNetwork": "Erreur réseau inconnue",

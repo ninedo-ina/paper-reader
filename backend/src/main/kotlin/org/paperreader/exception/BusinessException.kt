@@ -91,3 +91,10 @@ class ContentTooLargeException(val actualBytes: Long, val limitBytes: Long, fiel
  * 注：1014 已被正文体积闸门（REQ-202609-0265 / W9）占用，本轮分享错误码顺延至 1015。
  */
 class ShareLinkInvalidException : BusinessException(1015, "分享链接无效或已失效", 404)
+
+/**
+ * 同一来源在时间窗口内打登录 / 注册 / 发码接口太多次（见 AuthRateLimiter）。
+ * 用 429 而不是 403：窗口一过就能重试。1015 已被分享链接占用（W7），本轮顺延至 1016，
+ * 前端把它映射成 errors.tooManyRequests——与同样 429 的 1010/1012 文案不同，别合并。
+ */
+class RateLimitedException : BusinessException(1016, "操作过于频繁，请稍后再试", 429)

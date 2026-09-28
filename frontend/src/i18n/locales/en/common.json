@@ -1320,6 +1320,7 @@
     "notFound": "The requested resource was not found",
     "fileDeleteFailed": "The original file could not be deleted. The paper record was kept — please try again later.",
     "contentTooLarge": "The content exceeds the per-paper size limit. Trim or split it before saving.",
+    "tooManyRequests": "Too many attempts. Please wait a moment and try again.",
     "twoFactorExpired": "Your two-factor session has expired. Please sign in again.",
     "unknown": "Unknown error",
     "unknownNetwork": "Unknown network error",

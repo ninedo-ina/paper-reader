@@ -128,20 +128,16 @@ class AuthServiceTest {
     }
 
     @Test
-    fun `login should create a local account for an unknown email`() {
-        val request = LoginRequest("new@example.com", "password123")
-        val newUser = User(id = 3, email = request.email, passwordHash = "hashed", authProvider = "local")
+    fun `login must not create an account for an unknown email`() {
+        // 曾经的自动建号分支：任意邮箱 + 任意密码都能换到一个真账号，是探测脚本的入口。
+        every { userRepository.findByEmail("new@example.com") } returns Optional.empty()
 
-        every { userRepository.findByEmail(request.email) } returns Optional.empty()
-        every { passwordEncoder.encode(request.password) } returns "hashed"
-        every { userRepository.save(any()) } returns newUser
-        every { jwtUtil.generateAccessToken(3, request.email, any()) } returns "access-token"
-        every { jwtUtil.generateRefreshToken(3, request.email, any()) } returns "refresh-token"
+        assertThrows<InvalidCredentialsException> {
+            createService().login(LoginRequest("new@example.com", "password123"), device)
+        }
 
-        val result = createService().login(request, device)
-
-        assertEquals("access-token", result.accessToken)
-        assertEquals(true, result.isNewUser)
+        verify(exactly = 0) { userRepository.save(any()) }
+        verify(exactly = 0) { passwordEncoder.encode(any()) }
     }
 
     @Test
@@ -150,9 +146,37 @@ class AuthServiceTest {
         every { userRepository.findByEmail(user.email) } returns Optional.of(user)
         every { passwordEncoder.matches("wrong", user.passwordHash) } returns false
 
-        assertThrows<IllegalArgumentException> {
+        // 和「查无此邮箱」回同一个错误，否则响应差异本身就是「这个邮箱注册过没有」的探针
+        assertThrows<InvalidCredentialsException> {
             createService().login(LoginRequest(user.email, "wrong"), device)
         }
+    }
+
+    @Test
+    fun `login should look up an email that was typed with stray case or spaces`() {
+        val user = User(id = 1, email = "test@example.com", passwordHash = "hashed")
+        every { userRepository.findByEmail("test@example.com") } returns Optional.of(user)
+        every { passwordEncoder.matches("password123", user.passwordHash) } returns true
+        stubTokensFor(1, "test@example.com")
+
+        val result = createService().login(LoginRequest("  Test@Example.COM  ", "password123"), device)
+
+        assertEquals("access-token", result.accessToken)
+    }
+
+    @Test
+    fun `register should store the email normalised`() {
+        val saved = mutableListOf<User>()
+        every { userRepository.existsByEmail("test@example.com") } returns false
+        every { passwordEncoder.encode("password123") } returns "hashed"
+        every { userRepository.save(any()) } answers {
+            firstArg<User>().copy(id = 1).also { saved += it }
+        }
+        stubTokensFor(1, "test@example.com")
+
+        createService().register(RegisterRequest("  Test@Example.COM  ", "password123", null), device)
+
+        assertEquals("test@example.com", saved.single().email)
     }
 
     @Test
