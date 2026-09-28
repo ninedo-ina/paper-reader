@@ -1,3 +1,23 @@
+## v0.1.65-beta 登录自动建号漏洞修复 + 鉴权入参校验 + 接口限流（维护者口头需求，无 `REQ-` 文档）
+
+- **本轮后端与前端都有真实改动、两端都已重建重启**，`/api/health` 返回 `0.1.65-beta`，favicon `?v=0.1.65-beta`，是有效版本依据。**但本轮没有迁移：Flyway 仍是 `V21`，与上一版相同**——想靠 Flyway 版本号判断「部署上去没有」会得到错误结论，只能看 `/api/health`、favicon `?v=` 与产物哈希。
+- **根因不在 `register`，在 `login`。** `AuthService.login()` 原先对未知邮箱**顺手建号**，于是任意邮箱 + 任意密码都能造出真实账号（同一天早先清掉的那批探测账号就是这么来的，**不是被注册出来的**）。**别在 `login` 里再加任何「查不到就创建」的分支。** `emailCodeLogin` **刻意保留自动建号**——它必须先把 6 位码发到目标邮箱本身，等价于「邮箱即身份」的注册，**这不是漏改，别顺手堵掉**。OAuth 账号（`password_hash` 为 NULL）走密码登录同样拒绝，且**不要**为它返回不同的错误——「这个邮箱是不是 OAuth 账号」会变成可探测信息。
+- **Kotlin data class 的校验注解必须带 `@field:`，否则静默失效。** Jakarta 校验读字段/getter，不读构造参数——`@NotBlank` 直接写在 data class 构造参数上，**编译通过、运行时不报错、也不生效**。新增/修改 DTO 时逐条核对：邮箱 `@field:NotBlank` + `@field:Email` + `@field:Size(max = 254)`（RFC 5321 上限），注册密码 6–72，验证码 `@field:Pattern("\\d{6}")`。`AuthRequestValidationTest` 用真 `Validator` 钉住这一点。
+- **登录密码的下限是刻意不给的**：登录侧只挡空值与 `>128`（128 只是不想为超长串白算一次 bcrypt）。加「至少 6 位」会把持有历史短密码的真实用户直接锁死——**要收紧先确认线上没有短密码账号**。
+- **`@Valid` 挂在 `@RequestBody` 上不等于校验生效**：DTO 里没有约束时它什么也不做。改 DTO 前先确认注解真的在。
+- **`MethodArgumentNotValidException` 必须由 `GlobalExceptionHandler.handleValidation` 明确接管**——本项目 advice **没有**继承 `ResponseEntityExceptionHandler`，不写这个 handler 它就会掉进 `9999 / 500` 兜底（修的正是这个：畸形邮箱此前对外表现是「服务器内部错误」）。现在返回 400 / **1003**，且**只报第一条**字段错误。
+- **业务码 `1016` / HTTP 429 是本轮新增**，`1015` 及以下各有其主，不要复用。**新增业务码必须同步在前端 `lib/api/client.ts` 的 `errorMessage()` 里加 `case`**，否则会掉进 `default` 分支把服务端中文原样透出——13 种非中文语言会看到中文。
+- **限流的身份必须取 `CF-Connecting-IP`，不能用 `X-Forwarded-For` 首段。** 回源 vhost 只放行 Cloudflare 网段，该头由 CF 注入、客户端改不了；而 **`X-Forwarded-For` 首段是客户端自己写的**（CF 把真实 IP 追加在后面），拿它做键等于**限流可绕过**。回退顺序 `CF-Connecting-IP → X-Real-IP → X-Forwarded-For 首段 → remoteAddr`，每段截断 64 字符。
+- **计数键的 TTL 必须与计数一起下达，绝不写成 `INCR` 后再 `EXPIRE`。** 两次调用之间只要断一次（进程重启、Redis 抖动、代码提前 return），就会留下**没有过期时间的计数键**——那个 IP 就此**永久被封**，症状是「某个人突然再也登不上」，极难归因。现实现是 `setIfAbsent(key, "0", window)` 再 `increment`；`AuthRateLimiterTest` 有一条专门钉住「TTL 必须随计数一起下发」。**改这段代码前先看那条测试。**
+- **Redis 异常时是 fail-open（放行 + 告警），这是刻意的**：限流是加固，不该成为登录入口的单点故障。**不要「顺手」改成 fail-closed**——Redis 一抖就是全站登不上。
+- **限流覆盖面没盖全，别以为已经全站有防护**：只挂在 `login` / `register` / `send-code` / `email-login` 四条上，**`/api/auth/refresh`、`/api/auth/two-factor/verify`、`/api/auth/github` 没有任何限流**。另外 `AuthRateLimiter` 与 `AuthService` 的 60 秒「同邮箱发码冷却」是**两层独立机制**，改一层别以为另一层兜得住。
+- **额度按来源 IP，同一出口 IP 后面的真实用户共享额度**（校园网、公司 NAT）。10 次 / 5 分钟对正常人手速够，但「一个 IP 后面很多人」的场景需改成 IP + 邮箱双维度。固定窗口在边界上最多放过两倍流量——这是**已知取舍，不是 bug**。
+- **登录页默认页签是「邮箱验证码」，这是有意的**：密码登录已不再为新邮箱建号，验证码是唯一还能合法建号的路径，**把默认改回密码页会让新用户第一步就撞墙**。
+- **`pr_users` 里 id `9` `nobody@example.com` 是有密码的 `local` 账号（创建于 2026-09-14），疑似自动建号漏洞的直接产物。** 本轮**未删除**（删用户数据不属于根因修复范围），维护者尚未定夺——**看到它别当脏数据随手清掉**。
+- **探测账号的 IP 封禁在 Apache 源站层、不在仓库里**：`/etc/apache2/paper-reader-blocked-ips.conf`（两个 vhost 都 Include）。本机没有任何持有 `pilo.eu.cc` WAF/Firewall 写权限的令牌，所以没做在 Cloudflare 上；维护者选定「Cloudflare 封该 IP（会误伤）」并**接受了连带封掉同 IP 上的真实用户 `15523362813cz@gmail.com`（id 11）**。**换机部署 / 重建 Apache 时这份配置不随仓库走，要手工重建**；排查「某人登不上」时先看这份文件。
+- **未验证 / 需人工跟进**：① **`bo`（藏文）与 `ug`（维吾尔文）的 `errors.tooManyRequests` 是英文占位**，等母语校对（与既有 14 语言机翻那批一起）。② 线上验收走的是**不带令牌的真实 HTTP 请求**（畸形邮箱 400/1003；未注册邮箱 400/1006 且查库证明 `pr_users` 仍 9 行、该邮箱 0 行；第 11 次登录 429/1016 且 Redis 计数键 `ttl=289`），**没有真人在真实浏览器里点过登录页**——生产只开管理员 GitHub 登录、C 端测试账号密码未记录，与 W6–W9 同一限制。③ 验证用的限流计数键**已删除**，不给服务器自己的出口 IP 留残留计数。
+- **版本链**：`… → v0.1.63（W7）→ v0.1.64-beta（问题反馈入口）→ v0.1.65-beta（本轮，分支 `fix/auth-hardening`）`。本轮**无并行抢号、无跳号、无重号**（开工时 `git worktree list` 只有主仓库；遍历 `origin/*` 各分支 `frontend/VERSION`，最高 `0.1.64-beta`）。**判线上版本一律以版本文件、`/api/health`、favicon `?v=` 与产物哈希为准。**
+
 ## v0.1.64-beta 问题反馈入口 + 侧栏折叠按钮点击区修复（维护者口头需求，无 `REQ-` 文档）
 
 - **本轮后端与前端都有真实改动、两端都已重建重启**，`/api/health` 返回 `0.1.64-beta`，favicon `?v=0.1.64-beta`，是有效版本依据。**新增迁移 `V21__feedback.sql`，Flyway 到 `V21`**——版本涨了要去找 `V21`，不是 `V20`。
