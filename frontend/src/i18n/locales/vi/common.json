@@ -1320,6 +1320,7 @@
     "notFound": "Không tìm thấy tài nguyên",
     "fileDeleteFailed": "Xóa tệp gốc thất bại, bản ghi bài báo đã được giữ lại, vui lòng thử lại sau",
     "contentTooLarge": "Nội dung vượt giới hạn mỗi bài. Hãy rút gọn hoặc chia nhỏ trước khi lưu.",
+    "tooManyRequests": "Quá nhiều lần thử. Vui lòng thử lại sau giây lát.",
     "twoFactorExpired": "Phiên xác thực hai bước đã hết hạn, vui lòng đăng nhập lại",
     "unknown": "Lỗi không xác định",
     "unknownNetwork": "Lỗi mạng không xác định",

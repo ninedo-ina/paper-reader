@@ -79,6 +79,9 @@ function errorMessage(code: number, fallback: string): string {
     // （papers.editorContentTooLarge）；这条是不带数字的兜底，别把服务端的中文原文
     // 直接漏到其他语言的界面上。
     case 1014: return t("contentTooLarge")
+    // 登录类接口撞了限流（1016/429）。服务端原文是中文，这里按界面语言重写，
+    // 和 1014 同理——别把中文漏到其他语言的界面上。
+    case 1016: return t("tooManyRequests")
     default: return fallback
   }
 }

@@ -5,6 +5,7 @@ import org.paperreader.service.UploadQuotaService
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.multipart.MaxUploadSizeExceededException
@@ -31,6 +32,19 @@ class GlobalExceptionHandler {
         val limit = formatBytes(UploadQuotaService.MAX_FILE_BYTES)
         return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
             .body(ApiResponse(code = 1009, message = "文件大小超过单文件上限 $limit"))
+    }
+
+    /**
+     * `@Valid` 在进 Controller 之前拦下的参数校验失败。本类没有继承
+     * ResponseEntityExceptionHandler，不显式接住的话会落到下面的 catch-all 变成 500/9999。
+     * 只回第一条错误：报错是给人看的，一次提示一条比堆一串更容易照做。
+     */
+    @ExceptionHandler(MethodArgumentNotValidException::class)
+    fun handleValidation(ex: MethodArgumentNotValidException): ResponseEntity<ApiResponse<Nothing>> {
+        val first = ex.bindingResult.fieldErrors.firstOrNull()
+        val message = first?.defaultMessage ?: "Invalid argument"
+        logger.warn("Validation failed: {} - {}", first?.field, message)
+        return ResponseEntity.badRequest().body(ApiResponse(code = 1003, message = message))
     }
 
     @ExceptionHandler(IllegalArgumentException::class)

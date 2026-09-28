@@ -1,6 +1,6 @@
 {
   "name": "paperhelper-frontend",
-  "version": "0.1.64-beta",
+  "version": "0.1.65-beta",
   "private": true,
   "scripts": {
     "dev": "next dev",

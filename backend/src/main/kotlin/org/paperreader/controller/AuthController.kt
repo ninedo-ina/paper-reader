@@ -8,6 +8,7 @@ import org.paperreader.exception.ResourceNotFoundException
 import org.paperreader.repository.UserRepository
 import org.paperreader.security.JwtUtil
 import org.paperreader.security.UserPrincipal
+import org.paperreader.service.AuthRateLimiter
 import org.paperreader.service.AuthService
 import org.paperreader.service.DeviceService
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -20,25 +21,35 @@ class AuthController(
     private val userRepository: UserRepository,
     private val jwtUtil: JwtUtil,
     private val deviceService: DeviceService,
+    private val rateLimiter: AuthRateLimiter,
 ) {
 
     @PostMapping("/register")
     fun register(
         @Valid @RequestBody request: RegisterRequest,
         httpRequest: HttpServletRequest,
-    ): ApiResponse<TokenResponse> =
-        ApiResponse(data = authService.register(request, deviceContext(httpRequest, null, null)))
+    ): ApiResponse<TokenResponse> {
+        rateLimiter.check(AuthRateLimiter.Kind.REGISTER, clientIp(httpRequest))
+        return ApiResponse(data = authService.register(request, deviceContext(httpRequest, null, null)))
+    }
 
     @PostMapping("/login")
     fun login(
         @Valid @RequestBody request: LoginRequest,
         httpRequest: HttpServletRequest,
-    ): ApiResponse<TokenResponse> = ApiResponse(
-        data = authService.login(request, deviceContext(httpRequest, request.deviceId, request.deviceName)),
-    )
+    ): ApiResponse<TokenResponse> {
+        rateLimiter.check(AuthRateLimiter.Kind.LOGIN, clientIp(httpRequest))
+        return ApiResponse(
+            data = authService.login(request, deviceContext(httpRequest, request.deviceId, request.deviceName)),
+        )
+    }
 
     @PostMapping("/send-code")
-    fun sendCode(@Valid @RequestBody request: SendCodeRequest): ApiResponse<Nothing> {
+    fun sendCode(
+        @Valid @RequestBody request: SendCodeRequest,
+        httpRequest: HttpServletRequest,
+    ): ApiResponse<Nothing> {
+        rateLimiter.check(AuthRateLimiter.Kind.SEND_CODE, clientIp(httpRequest))
         authService.sendEmailCode(request)
         return ApiResponse(message = "Verification code sent")
     }
@@ -47,9 +58,12 @@ class AuthController(
     fun emailLogin(
         @Valid @RequestBody request: EmailLoginRequest,
         httpRequest: HttpServletRequest,
-    ): ApiResponse<TokenResponse> = ApiResponse(
-        data = authService.emailCodeLogin(request, deviceContext(httpRequest, request.deviceId, request.deviceName)),
-    )
+    ): ApiResponse<TokenResponse> {
+        rateLimiter.check(AuthRateLimiter.Kind.EMAIL_LOGIN, clientIp(httpRequest))
+        return ApiResponse(
+            data = authService.emailCodeLogin(request, deviceContext(httpRequest, request.deviceId, request.deviceName)),
+        )
+    }
 
     @PostMapping("/github")
     fun githubLogin(
@@ -127,9 +141,20 @@ class AuthController(
         ipAddress = clientIp(request),
     )
 
-    private fun clientIp(request: HttpServletRequest): String? {
-        val forwarded = request.getHeader("X-Forwarded-For")
-        if (!forwarded.isNullOrBlank()) return forwarded.substringBefore(',').trim().take(64)
-        return request.getHeader("X-Real-IP")?.take(64) ?: request.remoteAddr?.take(64)
+    /**
+     * 来源 IP，限流按它计数，所以必须取不可伪造的那个。
+     *
+     * 回源只放行 Cloudflare 段（/etc/apache2/paper-reader-cloudflare-ips.conf），
+     * `CF-Connecting-IP` 由 Cloudflare 注入、客户端伪造不了；而 X-Forwarded-For 的
+     * 首段是客户端自己写的（Cloudflare 把真实 IP 追加在后面），拿它计数等于没限流。
+     */
+    private fun clientIp(request: HttpServletRequest): String {
+        val candidates = listOf(
+            request.getHeader("CF-Connecting-IP"),
+            request.getHeader("X-Real-IP"),
+            request.getHeader("X-Forwarded-For")?.substringBefore(','),
+        )
+        return candidates.firstNotNullOfOrNull { it?.trim()?.takeIf(String::isNotEmpty) }?.take(64)
+            ?: request.remoteAddr.take(64)
     }
 }

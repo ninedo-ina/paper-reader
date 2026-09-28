@@ -63,11 +63,12 @@ class AuthService(
     )
 
     fun register(request: RegisterRequest, ctx: DeviceContext): TokenResponse {
-        require(!userRepository.existsByEmail(request.email)) { "Email already registered" }
+        val email = request.email.trim().lowercase()
+        require(!userRepository.existsByEmail(email)) { "Email already registered" }
 
         val user = userRepository.save(
             User(
-                email = request.email,
+                email = email,
                 passwordHash = passwordEncoder.encode(request.password),
                 displayName = request.displayName,
                 authProvider = "local",
@@ -76,29 +77,24 @@ class AuthService(
         return finishLogin(user, isNewUser = true, ctx = ctx, trust = false)
     }
 
+    /**
+     * 密码登录，只认已存在的账号。
+     *
+     * 这里**不再**给未知邮箱自动建号：那条分支让任何人拿任意邮箱 + 任意密码就能换到一个
+     * 真实账号，正是探测脚本批量造号的入口（见 AuthRateLimiter 里的建号限额）。
+     * 现在没有账号就当作凭据错误，并且和「密码不对」回同一个错误码，不把「这个邮箱是否
+     * 注册过」暴露出去。
+     */
     fun login(request: LoginRequest, ctx: DeviceContext): TokenResponse {
-        val existing = userRepository.findByEmail(request.email)
-        val (user, isNew) = if (existing.isPresent) {
-            val u = existing.get()
-            require(u.passwordHash != null) {
-                "This account uses ${u.authProvider} login, not password"
-            }
-            require(passwordEncoder.matches(request.password, u.passwordHash)) {
-                "Invalid credentials"
-            }
-            u to false
-        } else {
-            userRepository.save(
-                User(
-                    email = request.email.trim().lowercase(),
-                    passwordHash = passwordEncoder.encode(request.password),
-                    // 不再拿邮箱前缀当用户名：界面上显示的名字由前端统一兜底成「用户{id}」
-                    displayName = null,
-                    authProvider = "local",
-                )
-            ) to true
+        val user = userRepository.findByEmail(request.email.trim().lowercase())
+            .orElseThrow { InvalidCredentialsException("邮箱或密码不正确") }
+        require(user.passwordHash != null) {
+            "This account uses ${user.authProvider} login, not password"
         }
-        return completeLogin(user, isNewUser = isNew, ctx = ctx)
+        if (!passwordEncoder.matches(request.password, user.passwordHash)) {
+            throw InvalidCredentialsException("邮箱或密码不正确")
+        }
+        return completeLogin(user, isNewUser = false, ctx = ctx)
     }
 
     fun sendEmailCode(request: SendCodeRequest) {
