@@ -1,3 +1,22 @@
+## v0.1.66-beta URL 导入修复（维护者口头需求，无 `REQ-` 文档）
+
+- **触发来源是真实用户反馈**：`pr_feedbacks.id = 6`，用户 14（`2634182127@qq.com`），app 版本 `0.1.64-beta`，页面 `/zh`，标题「URL解析失败」，正文「通过URL上传论文，解析失败」。这是外部用户提的第一条反馈（反馈入口是 `v0.1.64-beta` 才加的），也是**除我们自己以外第一次有人真的走完 URL 导入**。
+- **本轮后端与前端都有真实改动、两端都已重建重启**，`/api/health` 返回 `0.1.66-beta`，favicon `?v=0.1.66-beta`。**但本轮没有迁移：Flyway 仍是 `V21`，与 `v0.1.64-beta`/`v0.1.65-beta` 相同**——想靠 Flyway 版本号判断「部署上去没有」会得到错误结论，只能看 `/api/health`、favicon `?v=` 与产物哈希。
+- **根因是两个各自独立的缺陷，缺一条都不会有这条反馈，但也都不是「下载失败」这么简单：**
+  - **① 路径约定不一致（真正的 500 来源）。** `FileStorageService.storeFromUrl` 在 `app.storage.type=local` 下返回的是**对象路径**（`14/25/<uuid>.pdf`），而 `store` 与 `storeBytes` 返回的是**绝对路径**。`readAsResource` 于是把一个相对路径交给 `FileSystemResource`，它按后端**工作目录**（`/root/paper-reader/backend`，来自 PM2 的 `exec cwd`）解析 → `GET /api/papers/25/download` 抛 `FileNotFoundException` → 接口 500 → react-pdf 渲染成「Failed to load PDF. Check the file URL or backend.」。`pr_papers` 里**只有 id 25 一行的 `file_path` 是相对路径**，走 multipart 的上传全部正常——**这就是为什么症状看起来像「URL 导入坏了」而不是「下载坏了」。**
+  - **② 下载器不校验内容（HTML 被当 PDF 存了）。** 原先 `downloadPdf` 是裸 `openStream()`：没有 `User-Agent`、没有超时、不校验内容，而 `storeFromUrl` 把扩展名**写死成 `.pdf`**。用户给的链接是 arXiv 的 **`/html/`** 落地页，于是 **299,653 字节的 `<!DOCTYPE html>` 被写进了 `.pdf` 文件**——就算没有缺陷①，也根本没有可解析的 PDF（论文 25 的 GROBID 解析失败是同一个原因）。
+- **路径约定：local 一律返回绝对路径，别退回去。** `store` / `storeBytes` / `storeFromUrl` 三者对 `local` 都必须返回绝对路径；dufs 分支仍返回对象路径，两边本来就是两套语义。`read` / `readAsResource` / `fileSize` / `delete` 都直接吃这个返回值——**改任一处前先确认四处入口的约定一致**。
+- **下载必须：跟随重定向 + 设超时 + 带浏览器 UA + 卡上限 + 校验内容。** 缺任何一条都会重演本轮：不带 UA 会被 arXiv 之类挡（或被换成 HTML）；不设超时会占住工作线程；`Accept: application/pdf,*/*`。**上限是「边读边卡」而不是「读完再查」**——URL 由用户给，「先整个读进内存再判断大小」等于开了一个「让服务器把任意大小文件读进内存」的口子。声明的 `Content-Length` 只是**提前**判一次，`readAtMost` 的 64 KB 分块读取才是真正生效的那道闸（响应可能是 chunked、没有 `Content-Length`）。
+- **判「是不是 PDF」看魔数 `%PDF-`，不要看 `Content-Type`。** 规范允许 `%PDF-` 出现在开头 1 KB 内的任意位置（部分生成器会先塞几个字节），所以检查窗口是 1 KB。**用 `Content-Type` 判会误杀 `application/octet-stream` 的正常 PDF**——不是所有站点都标对。
+- **arXiv 的 `/html/`、`/abs/` 会在下载前改写为 `/pdf/`**（仅 `arxiv.org` / `www.arxiv.org`，保留 query 与 fragment）。用户从地址栏复制过来的就是落地页，**这是本轮反馈的直接触发点，别把这段改写删掉**。
+- **业务码 `1017`（`NotPdfException`）与 `1018`（`UrlDownloadFailedException`）是本轮新增，都是 HTTP 400。** `1016` 及以下各有其主，不要复用。两者**刻意分开**：1017 要用户去找 PDF 直链，1018 是链接本身拿不到（消息里带 HTTP 状态码）——**给用户的改法不同，别合并成一个码**。两者都靠 `GlobalExceptionHandler` 里既有的 `handleBusiness(BusinessException)` 透出，**本轮没有新增 handler**。
+- **新增业务码必须同步在前端 `lib/api/client.ts` 的 `errorMessage()` 里加 `case`**，否则掉进 `default` 分支把服务端中文原样透出，13 种非中文语言会看到中文。本轮补了 `errors.notPdf` / `errors.urlDownloadFailed`（14 种语言全给）。
+- **单文件 10 MB 上限是维护者明确要求「保持」的，不要擅自抬高。** 用户 14 实际要下的是 `arxiv.org/pdf/2609.25851v1`，**26,538,500 字节（25.3 MB）**，超上限 2.5 倍——**修完之后这篇仍然导不进来**，本轮买到的是「**失败要诚实且可操作**」（明确的体积超限 / 明确的内容不是 PDF），而不是「500 + 静默解析失败」。抬高上限是另一个决策，会牵动存储额度。
+- **刻意没做：SSRF 校验。** 下载器仍会去取用户指到的**任意主机**（含 `127.0.0.1` 与内网地址），`ProviderRelayTargetValidator` 仍是推荐但未做的收尾。**别以为「URL 导入已经安全了」**；同样也没有做 HTTP 重定向以外的通用跳转。
+- **未验证 / 需人工跟进**：① **`bo`（藏文）与 `ug`（维吾尔文）的 `errors.notPdf` / `errors.urlDownloadFailed` 是英文占位**，等母语校对（与既有那批一起）。② 线上验收只做到「产物证明」——`/api/health` = `0.1.66-beta`、favicon `?v=0.1.66-beta`、线上 chunk `659-4fc24d38cb391555.js` 与本地 `.next` 逐字节一致（sha256 `c1a5cdf4…93afc55`）且内含 `1017:return n("notPdf")` / `1018:return n("urlDownloadFailed")`；**没有用真实账号在浏览器里走一遍「贴链接 → 导入 → 打开阅读器」**（C 端测试账号密码未记录，与 W6–W9 同一限制）。新增的 7 条 `FileStorageServiceUrlImportTest` 是拿真 `HttpServer` 跑的行为测试，是当前最接近端到端的证据。
+- **不做静默数据修复**：论文 25 里那 299,653 字节 HTML 仍以 `.pdf` 名字躺着，`pr_feedbacks.id = 6` 也保持原样——**删除或重导会动真实用户的数据，留给维护者定夺**。通知用户走的是通知中心一次性调用（`message.private` + `paperhelper-message` 模板，`target_user_ids=14`、`email_to=2634182127@qq.com`，契约见 `docs/NOTIFICATION_TEMPLATES.md`），**没有为这一条消息在产品里加任何代码路径**。
+- **版本链**：`… → v0.1.64-beta（问题反馈入口）→ v0.1.65-beta（登录自动建号漏洞修复）→ v0.1.66-beta（本轮，分支 `fix/v0.1.66-url-import`）`。本轮**无并行抢号、无跳号、无重号**（开工时 `git worktree list` 只有主仓库；遍历 `origin/*` 各分支 `frontend/VERSION`，最高 `0.1.65-beta`）。**判线上版本一律以版本文件、`/api/health`、favicon `?v=` 与产物哈希为准。**
+
 ## v0.1.65-beta 登录自动建号漏洞修复 + 鉴权入参校验 + 接口限流（维护者口头需求，无 `REQ-` 文档）
 
 - **本轮后端与前端都有真实改动、两端都已重建重启**，`/api/health` 返回 `0.1.65-beta`，favicon `?v=0.1.65-beta`，是有效版本依据。**但本轮没有迁移：Flyway 仍是 `V21`，与上一版相同**——想靠 Flyway 版本号判断「部署上去没有」会得到错误结论，只能看 `/api/health`、favicon `?v=` 与产物哈希。
