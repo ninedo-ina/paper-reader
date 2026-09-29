@@ -1321,6 +1321,8 @@
     "fileDeleteFailed": "原文件删除失败，论文记录已保留，请稍后重试",
     "contentTooLarge": "正文体积超过单篇上限，请精简或拆分后再保存",
     "tooManyRequests": "操作过于频繁，请稍后再试",
+    "notPdf": "该链接返回的不是 PDF 文件，请使用论文的 PDF 直链",
+    "urlDownloadFailed": "无法从该链接下载文件，请确认链接可访问后重试",
     "twoFactorExpired": "两步验证会话已过期，请重新登录",
     "unknown": "未知错误",
     "unknownNetwork": "未知网络错误",

@@ -1321,6 +1321,8 @@
     "fileDeleteFailed": "No se pudo eliminar el archivo original. El registro del artículo se conservó; inténtalo de nuevo más tarde.",
     "contentTooLarge": "El contenido supera el límite por artículo. Redúcelo o divídelo antes de guardar.",
     "tooManyRequests": "Demasiados intentos. Espera un momento e inténtalo de nuevo.",
+    "notPdf": "Ese enlace no devuelve un archivo PDF. Usa el enlace directo al PDF del artículo.",
+    "urlDownloadFailed": "No se pudo descargar el archivo desde ese enlace. Comprueba que el enlace sea accesible e inténtalo de nuevo.",
     "twoFactorExpired": "La sesión de verificación en dos pasos ha caducado. Inicia sesión de nuevo.",
     "unknown": "Error desconocido",
     "unknownNetwork": "Error de red desconocido",

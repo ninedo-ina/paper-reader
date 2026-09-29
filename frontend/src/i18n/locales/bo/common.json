@@ -1321,6 +1321,8 @@
     "fileDeleteFailed": "མ་གཞིའི་ཡིག་ཆ་བསུབ་མ་ཐུབ། དཔྱད་རྩོམ་ཐོ་བཀོད་ཉར་ཡོད། དུས་ཚོད་ཅིག་རྗེས་ཡང་བསྐྱར་ཚོད་ལྟ་བྱོས།",
     "contentTooLarge": "ནང་དོན་གྱི་ཚད་སློབ་ཡིག་རེའི་མཐོ་ཚད་ལས་བརྒལ་ཡོད། ཉར་བའི་སྔོན་དུ་བསྡུས་པའམ་ཁ་གྱེས་གཏོང་རོགས།",
     "tooManyRequests": "Too many attempts. Please wait a moment and try again.",
+    "notPdf": "That link did not return a PDF file. Use the paper's direct PDF link.",
+    "urlDownloadFailed": "Could not download the file from that link. Check that the link is reachable and try again.",
     "twoFactorExpired": "རིམ་པ་གཉིས་ཀྱི་བདེན་སྦྱོར་དུས་ཚོད་ལས་བརྒལ་སོང་། ཡང་བསྐྱར་ནང་འཛུལ་བྱོས།",
     "unknown": "རྒྱུ་མ་ཤེས་པའི་ནོར་འཁྲུལ།",
     "unknownNetwork": "རྒྱུ་མ་ཤེས་པའི་དྲ་རྒྱའི་ནོར་འཁྲུལ།",
