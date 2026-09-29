@@ -82,6 +82,10 @@ function errorMessage(code: number, fallback: string): string {
     // 登录类接口撞了限流（1016/429）。服务端原文是中文，这里按界面语言重写，
     // 和 1014 同理——别把中文漏到其他语言的界面上。
     case 1016: return t("tooManyRequests")
+    // URL 导入的两个失败（1017/1018，都是 400）。服务端原文是中文，同 1014 的处理。
+    // 两条分开：1017 要用户换成 PDF 直链，1018 是链接本身拿不到，改法不同。
+    case 1017: return t("notPdf")
+    case 1018: return t("urlDownloadFailed")
     default: return fallback
   }
 }

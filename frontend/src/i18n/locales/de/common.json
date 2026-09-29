@@ -1321,6 +1321,8 @@
     "fileDeleteFailed": "Originaldatei konnte nicht gelöscht werden; der Paper-Eintrag wurde beibehalten. Bitte später erneut versuchen.",
     "contentTooLarge": "Der Text überschreitet das Limit pro Paper. Bitte vor dem Speichern kürzen oder aufteilen.",
     "tooManyRequests": "Zu viele Versuche. Bitte in einem Moment erneut versuchen.",
+    "notPdf": "Dieser Link liefert keine PDF-Datei. Bitte den direkten PDF-Link der Arbeit verwenden.",
+    "urlDownloadFailed": "Die Datei konnte über diesen Link nicht geladen werden. Bitte prüfen, ob der Link erreichbar ist, und erneut versuchen.",
     "twoFactorExpired": "Zwei-Faktor-Sitzung abgelaufen, bitte erneut anmelden",
     "unknown": "Unbekannter Fehler",
     "unknownNetwork": "Unbekannter Netzwerkfehler",

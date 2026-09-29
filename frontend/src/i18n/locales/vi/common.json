@@ -1321,6 +1321,8 @@
     "fileDeleteFailed": "Xóa tệp gốc thất bại, bản ghi bài báo đã được giữ lại, vui lòng thử lại sau",
     "contentTooLarge": "Nội dung vượt giới hạn mỗi bài. Hãy rút gọn hoặc chia nhỏ trước khi lưu.",
     "tooManyRequests": "Quá nhiều lần thử. Vui lòng thử lại sau giây lát.",
+    "notPdf": "Liên kết này không trả về tệp PDF. Hãy dùng liên kết trực tiếp tới PDF của bài báo.",
+    "urlDownloadFailed": "Không thể tải tệp từ liên kết này. Vui lòng kiểm tra liên kết có truy cập được không rồi thử lại.",
     "twoFactorExpired": "Phiên xác thực hai bước đã hết hạn, vui lòng đăng nhập lại",
     "unknown": "Lỗi không xác định",
     "unknownNetwork": "Lỗi mạng không xác định",

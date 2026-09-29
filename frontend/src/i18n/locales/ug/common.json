@@ -1321,6 +1321,8 @@
     "fileDeleteFailed": "ئەسلى ھۆججەتنى ئۆچۈرۈش مەغلۇپ بولدى، ماقالە خاتىرىسى ساقلىنىپ قالدى، سەل تۇرۇپ قايتا سىناڭ",
     "contentTooLarge": "مەزمۇن ھەر ماقالىنىڭ چېكىدىن ئاشتى. ساقلاشتىن بۇرۇن قىسقارتىڭ ياكى بۆلۈڭ.",
     "tooManyRequests": "Too many attempts. Please wait a moment and try again.",
+    "notPdf": "That link did not return a PDF file. Use the paper's direct PDF link.",
+    "urlDownloadFailed": "Could not download the file from that link. Check that the link is reachable and try again.",
     "twoFactorExpired": "ئىككى باسقۇچلۇق دەلىللەش سېسسىيەسىنىڭ مۇددىتى ئۆتتى، قايتا كىرىڭ",
     "unknown": "نامەلۇم خاتالىق",
     "unknownNetwork": "نامەلۇم تور خاتالىقى",

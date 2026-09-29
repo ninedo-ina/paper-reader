@@ -98,3 +98,17 @@ class ShareLinkInvalidException : BusinessException(1015, "分享链接无效或
  * 前端把它映射成 errors.tooManyRequests——与同样 429 的 1010/1012 文案不同，别合并。
  */
 class RateLimitedException : BusinessException(1016, "操作过于频繁，请稍后再试", 429)
+
+/**
+ * URL 导入时目标地址返回的不是 PDF（HTML 落地页、接口 JSON、图片等）。
+ * 用 400 而不是 5xx：链接是用户给的，内容对不对是用户能改的。
+ * 1016 已被登录限流占用，本轮顺延至 1017，前端把它映射成 errors.notPdf。
+ */
+class NotPdfException : BusinessException(1017, "该链接返回的不是 PDF 文件，请使用论文的 PDF 直链", 400)
+
+/**
+ * URL 导入时压根没能把文件拿下来（连不上 / 超时 / 4xx、5xx）。与 1017 分开：
+ * 「拿不到」和「拿到了但不是 PDF」对用户是两件事，改法也不同。
+ * 前端映射成 errors.urlDownloadFailed。
+ */
+class UrlDownloadFailedException(message: String) : BusinessException(1018, message, 400)

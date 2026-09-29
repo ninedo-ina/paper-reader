@@ -1321,6 +1321,8 @@
     "fileDeleteFailed": "Eliminazione del file originale non riuscita; il record dell'articolo è stato conservato. Riprova più tardi.",
     "contentTooLarge": "Il contenuto supera il limite per articolo. Riducilo o dividilo prima di salvare.",
     "tooManyRequests": "Troppi tentativi. Riprova tra qualche istante.",
+    "notPdf": "Il link non restituisce un file PDF. Usa il link diretto al PDF dell’articolo.",
+    "urlDownloadFailed": "Impossibile scaricare il file da questo link. Verifica che il link sia raggiungibile e riprova.",
     "twoFactorExpired": "Sessione di autenticazione a due fattori scaduta, accedi di nuovo",
     "unknown": "Errore sconosciuto",
     "unknownNetwork": "Errore di rete sconosciuto",
